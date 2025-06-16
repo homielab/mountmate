@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SUPublicEDKey</key>
+	<string>UN9VpzA76tcbRJA1pvVliMnMPcYyEiUGRugKM7ISucY=</string>
+	<key>SUFeedURL</key>
+	<string>https://homielab.github.io/mountmate/appcast.xml</string>
+</dict>
+</plist>

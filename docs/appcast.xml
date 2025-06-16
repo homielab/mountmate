@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>MountMate</title>
+        <item>
+            <title>1.1</title>
+            <pubDate>Mon, 16 Jun 2025 18:28:36 +0700</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://homielab.github.io/MountMate_1.1.zip" length="3079901" type="application/octet-stream" sparkle:edSignature="BFjV17JgnKpxqY47g5AUSY+HKLyfxP1763LggytZJPFy8THZRQ/8eZWNH+mUPFgsni3tnOYzR6hC6ZQceFf4BQ=="/>
+        </item>
+    </channel>
+</rss>
