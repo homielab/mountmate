@@ -5,9 +5,9 @@
 import Foundation
 
 
-enum DriveType {
-    case userVolume
-    case systemPartition
+enum DriveCategory: String {
+    case user
+    case system
 }
 
 struct Drive: Identifiable, Hashable {
@@ -20,5 +20,7 @@ struct Drive: Identifiable, Hashable {
     let totalSize: String?
     let fileSystemType: String?
     let usagePercentage: Double?
-    let type: DriveType
+    
+    let category: DriveCategory
+    let connectionType: String // e.g., "USB", "Disk Image", "Thunderbolt"
 }

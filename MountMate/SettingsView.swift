@@ -32,7 +32,7 @@ struct SettingsView: View {
             Section {
                 Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
                 
-                Toggle("Auto-mount new disks", isOn: $diskMounter.shouldAutoMount)
+                Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
                 
                 Picker("Language", selection: $selectedLanguage) {
                     Text("English").tag("en")

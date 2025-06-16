@@ -7,20 +7,34 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var driveManager = DriveManager()
     @Environment(\.openWindow) var openWindow
-    
-    private var userVolumes: [Drive] {
-        driveManager.drives.filter { $0.type == .userVolume }
+
+    private var groupedDrives: [String: [Drive]] {
+        Dictionary(grouping: driveManager.drives, by: { $0.connectionType })
     }
     
-    private var systemPartitions: [Drive] {
-        driveManager.drives.filter { $0.type == .systemPartition }
+    private var sortedGroupKeys: [String] {
+        let preferredOrder = [
+            NSLocalizedString("USB", comment: "..."),
+            NSLocalizedString("Thunderbolt", comment: "..."),
+            NSLocalizedString("Disk Image", comment: "...")
+        ]
+        
+        return groupedDrives.keys.sorted {
+            let firstIndex = preferredOrder.firstIndex(of: $0) ?? Int.max
+            let secondIndex = preferredOrder.firstIndex(of: $1) ?? Int.max
+            
+            if firstIndex == secondIndex {
+                return $0 < $1
+            }
+            
+            return firstIndex < secondIndex
+        }
+    }
+    
+    private var canUnmountAll: Bool {
+        return driveManager.drives.contains { $0.isMounted && $0.category == .user }
     }
 
-    private var canUnmountAll: Bool {
-        // True if there is at least one mounted user volume
-        return userVolumes.contains { $0.isMounted }
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             headerView
@@ -31,7 +45,6 @@ struct MainView: View {
             }
         }
         .frame(width: 320)
-        // Add some bottom padding to prevent the list from touching the edge
         .padding(.bottom, 8)
         .onAppear(perform: driveManager.refreshDrives)
     }
@@ -42,7 +55,6 @@ struct MainView: View {
                 .font(.headline)
             Spacer()
 
-            // Unmount All Button
             Button(action: {
                 driveManager.unmountAllDrives()
             }) {
@@ -54,73 +66,71 @@ struct MainView: View {
             // Disable if there's nothing to unmount OR if it's already in progress
             .disabled(!canUnmountAll || driveManager.isUnmountingAll)
             .overlay {
-                // Show spinner when loading
                 if driveManager.isUnmountingAll {
                     ProgressView().controlSize(.small)
                 }
             }
             
-            // Settings Button
             Button {
                 openWindow(id: "settings-window")
             } label: {
                 Image(systemName: "gearshape.fill")
             }
             .buttonStyle(.plain)
-            .help("Settings") // Tooltip for clarity
+            .help("Settings")
             
-            // Refresh Button
             Button(action: {
                 driveManager.refreshDrives()
             }) {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(.plain)
-            .help("Refresh Drives") // Tooltip for clarity
+            .help("Refresh Drives")
             
-            // Quit Button
             Button(action: {
                 NSApplication.shared.terminate(nil)
             }) {
                 Image(systemName: "power")
-                    .foregroundColor(.red) // Color signifies a final action
+                    .foregroundColor(.red)
             }
             .buttonStyle(.plain)
-            // The existing localized string is now used for the tooltip
             .help(NSLocalizedString("Quit MountMate", comment: "Quit button tooltip"))
         }
         .padding()
     }
     
     private var driveListView: some View {
-            List {
-                if !userVolumes.isEmpty {
-                    Section(header: Text(NSLocalizedString("User Volumes", comment: "Section header"))) {
-                        ForEach(userVolumes) { drive in
-                            DriveRowView(drive: drive, manager: driveManager)
-                        }
-                    }
-                }
-                
-                if !systemPartitions.isEmpty {
-                    Section(header: Text(NSLocalizedString("System & Developer", comment: "Section header"))) {
-                        ForEach(systemPartitions) { drive in
+        List {
+            ForEach(sortedGroupKeys, id: \.self) { key in
+                Section(header: Text(key)) {
+                    if let drives = groupedDrives[key] {
+                        ForEach(drives) { drive in
                             DriveRowView(drive: drive, manager: driveManager)
                         }
                     }
                 }
             }
-            .listStyle(.sidebar)
-            .frame(maxHeight: 300)
         }
+        .listStyle(.sidebar)
+        .frame(maxHeight: 300)
+    }
     
     private var noDrivesView: some View {
-        VStack {
-            Text("No external drives detected.")
+        VStack(spacing: 8) {
+            Image(systemName: "externaldrive.fill.badge.questionmark")
+                .font(.system(size: 40))
                 .foregroundColor(.secondary)
-                .padding()
+            
+            Text(NSLocalizedString("No Drives Found", comment: "Empty state title"))
+                .font(.headline)
+            
+            Text(NSLocalizedString("Connect a USB drive, SD card, or mount a disk image to see it here.", comment: "Empty state description"))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
         }
-        .frame(height: 100)
+        .frame(height: 150)
     }
     
 }
@@ -135,7 +145,7 @@ struct DriveRowView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) { // Main container with zero spacing
+        HStack(spacing: 0) {
             
             HStack {
                 Image(systemName: "externaldrive")
