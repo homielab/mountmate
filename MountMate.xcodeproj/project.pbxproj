@@ -1,0 +1,635 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B4AADB432DFE3C9900EDAAC2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */; };
+		B4B37DEB2DFE68A600A60D0D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B4B37DEA2DFE68A600A60D0D /* Sparkle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B4AADB202DFE3BBD00EDAAC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B4AADB092DFE3BBC00EDAAC2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4AADB102DFE3BBC00EDAAC2;
+			remoteInfo = MountMate;
+		};
+		B4AADB2A2DFE3BBD00EDAAC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B4AADB092DFE3BBC00EDAAC2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4AADB102DFE3BBC00EDAAC2;
+			remoteInfo = MountMate;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MountMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4AADB422DFE3C9900EDAAC2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B4AADB452DFE3CFB00EDAAC2 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B4B37DE32DFE47F600A60D0D /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B4AADB3E2DFE3C2A00EDAAC2 /* Exceptions for "MountMate" folder in "MountMate" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B4AADB102DFE3BBC00EDAAC2 /* MountMate */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B4AADB132DFE3BBC00EDAAC2 /* MountMate */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B4AADB3E2DFE3C2A00EDAAC2 /* Exceptions for "MountMate" folder in "MountMate" target */,
+			);
+			path = MountMate;
+			sourceTree = "<group>";
+		};
+		B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MountMateTests;
+			sourceTree = "<group>";
+		};
+		B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MountMateUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B4AADB0E2DFE3BBC00EDAAC2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4B37DEB2DFE68A600A60D0D /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB1C2DFE3BBD00EDAAC2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB262DFE3BBD00EDAAC2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B4AADB082DFE3BBC00EDAAC2 = {
+			isa = PBXGroup;
+			children = (
+				B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */,
+				B4AADB132DFE3BBC00EDAAC2 /* MountMate */,
+				B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */,
+				B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */,
+				B4AADB4E2DFE3E1600EDAAC2 /* Frameworks */,
+				B4AADB122DFE3BBC00EDAAC2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B4AADB122DFE3BBC00EDAAC2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */,
+				B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */,
+				B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B4AADB4E2DFE3E1600EDAAC2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B4B37DE32DFE47F600A60D0D /* ServiceManagement.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B4AADB102DFE3BBC00EDAAC2 /* MountMate */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4AADB332DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMate" */;
+			buildPhases = (
+				B4AADB0D2DFE3BBC00EDAAC2 /* Sources */,
+				B4AADB0E2DFE3BBC00EDAAC2 /* Frameworks */,
+				B4AADB0F2DFE3BBC00EDAAC2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B4AADB132DFE3BBC00EDAAC2 /* MountMate */,
+			);
+			name = MountMate;
+			packageProductDependencies = (
+				B4B37DEA2DFE68A600A60D0D /* Sparkle */,
+			);
+			productName = MountMate;
+			productReference = B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B4AADB1E2DFE3BBD00EDAAC2 /* MountMateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4AADB362DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateTests" */;
+			buildPhases = (
+				B4AADB1B2DFE3BBD00EDAAC2 /* Sources */,
+				B4AADB1C2DFE3BBD00EDAAC2 /* Frameworks */,
+				B4AADB1D2DFE3BBD00EDAAC2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B4AADB212DFE3BBD00EDAAC2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */,
+			);
+			name = MountMateTests;
+			packageProductDependencies = (
+			);
+			productName = MountMateTests;
+			productReference = B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B4AADB282DFE3BBD00EDAAC2 /* MountMateUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4AADB392DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateUITests" */;
+			buildPhases = (
+				B4AADB252DFE3BBD00EDAAC2 /* Sources */,
+				B4AADB262DFE3BBD00EDAAC2 /* Frameworks */,
+				B4AADB272DFE3BBD00EDAAC2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B4AADB2B2DFE3BBD00EDAAC2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */,
+			);
+			name = MountMateUITests;
+			packageProductDependencies = (
+			);
+			productName = MountMateUITests;
+			productReference = B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B4AADB092DFE3BBC00EDAAC2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					B4AADB102DFE3BBC00EDAAC2 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					B4AADB1E2DFE3BBD00EDAAC2 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B4AADB102DFE3BBC00EDAAC2;
+					};
+					B4AADB282DFE3BBD00EDAAC2 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B4AADB102DFE3BBC00EDAAC2;
+					};
+				};
+			};
+			buildConfigurationList = B4AADB0C2DFE3BBC00EDAAC2 /* Build configuration list for PBXProject "MountMate" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				vi,
+			);
+			mainGroup = B4AADB082DFE3BBC00EDAAC2;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B4B37DE92DFE681700A60D0D /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B4AADB122DFE3BBC00EDAAC2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B4AADB102DFE3BBC00EDAAC2 /* MountMate */,
+				B4AADB1E2DFE3BBD00EDAAC2 /* MountMateTests */,
+				B4AADB282DFE3BBD00EDAAC2 /* MountMateUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B4AADB0F2DFE3BBC00EDAAC2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4AADB432DFE3C9900EDAAC2 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB1D2DFE3BBD00EDAAC2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB272DFE3BBD00EDAAC2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B4AADB0D2DFE3BBC00EDAAC2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB1B2DFE3BBD00EDAAC2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4AADB252DFE3BBD00EDAAC2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B4AADB212DFE3BBD00EDAAC2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4AADB102DFE3BBC00EDAAC2 /* MountMate */;
+			targetProxy = B4AADB202DFE3BBD00EDAAC2 /* PBXContainerItemProxy */;
+		};
+		B4AADB2B2DFE3BBD00EDAAC2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4AADB102DFE3BBC00EDAAC2 /* MountMate */;
+			targetProxy = B4AADB2A2DFE3BBD00EDAAC2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B4AADB422DFE3C9900EDAAC2 /* en */,
+				B4AADB452DFE3CFB00EDAAC2 /* vi */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		B4AADB312DFE3BBD00EDAAC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B4AADB322DFE3BBD00EDAAC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		B4AADB342DFE3BBD00EDAAC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MountMate/MountMate.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79LQ4MHVMG;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MountMate/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MountMate;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B4AADB352DFE3BBD00EDAAC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MountMate/MountMate.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79LQ4MHVMG;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MountMate/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MountMate;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B4AADB372DFE3BBD00EDAAC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MountMate.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MountMate";
+			};
+			name = Debug;
+		};
+		B4AADB382DFE3BBD00EDAAC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MountMate.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MountMate";
+			};
+			name = Release;
+		};
+		B4AADB3A2DFE3BBD00EDAAC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MountMate;
+			};
+			name = Debug;
+		};
+		B4AADB3B2DFE3BBD00EDAAC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MountMate;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B4AADB0C2DFE3BBC00EDAAC2 /* Build configuration list for PBXProject "MountMate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4AADB312DFE3BBD00EDAAC2 /* Debug */,
+				B4AADB322DFE3BBD00EDAAC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4AADB332DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4AADB342DFE3BBD00EDAAC2 /* Debug */,
+				B4AADB352DFE3BBD00EDAAC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4AADB362DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4AADB372DFE3BBD00EDAAC2 /* Debug */,
+				B4AADB382DFE3BBD00EDAAC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4AADB392DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4AADB3A2DFE3BBD00EDAAC2 /* Debug */,
+				B4AADB3B2DFE3BBD00EDAAC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B4B37DE92DFE681700A60D0D /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B4B37DEA2DFE68A600A60D0D /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B4B37DE92DFE681700A60D0D /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = B4AADB092DFE3BBC00EDAAC2 /* Project object */;
+}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="MountMate - A simple macOS menubar app to manage your external drives."
+    />
+    <title>MountMate – macOS Drive Manager</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #f9fafb;
+        --text: #111827;
+        --accent: #3b82f6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --text: #f1f5f9;
+          --accent: #60a5fa;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 4rem 1rem;
+      }
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+      p {
+        max-width: 600px;
+        font-size: 1.125rem;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .btn {
+        display: inline-block;
+        background-color: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: background 0.3s ease;
+      }
+      .btn:hover {
+        background-color: #2563eb;
+      }
+      .screenshot {
+        margin-top: 3rem;
+        max-width: 100%;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+      footer {
+        margin-top: 4rem;
+        font-size: 0.875rem;
+        color: #64748b;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚀 MountMate</h1>
+    <p>
+      A lightweight and elegant macOS menubar app to mount and unmount your
+      external drives effortlessly.
+    </p>
+    <a
+      class="btn"
+      href="https://github.com/homielab/mountmate/releases/latest"
+      target="_blank"
+      >Download MountMate</a
+    >
+
+    <img
+      src="screenshots/dark.png"
+      alt="MountMate Screenshot"
+      class="screenshot"
+    />
+
+    <footer>
+      &copy; 2025 MountMate. Built with ❤️ by
+      <a
+        href="https://github.com/homielab"
+        target="_blank"
+        style="color: var(--accent); text-decoration: none"
+        >@homielab</a
+      >
+    </footer>
+  </body>
+</html>
