@@ -1,0 +1,32 @@
+/*
+  Localizable.strings (Vietnamese)
+*/
+
+// Main View
+"Quit MountMate" = "Thoát MountMate";
+"Unmount" = "Đẩy ra";
+"Mount" = "Gắn";
+"No external drives detected." = "Không tìm thấy ổ đĩa ngoài.";
+"Mounted" = "Đã gắn";
+"Unmounted" = "Chưa gắn";
+"Free:" = "Trống:";
+
+// Settings View
+"MountMate Settings" = "Cài đặt MountMate";
+"General" = "Chung";
+"Start MountMate at Login" = "Khởi động cùng máy";
+"Language" = "Ngôn ngữ";
+"About" = "Giới thiệu";
+"Homepage" = "Trang chủ";
+"Support Email" = "Email hỗ trợ";
+"Check for Updates..." = "Kiểm tra cập nhật...";
+"Restart Required" = "Cần khởi động lại";
+"Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
+"Restart Now" = "Khởi động lại ngay";
+"Later" = "Để sau";
+"free of" = "trống trong tổng số";
+"Unknown" = "Không rõ";
+"User Volumes" = "Phân vùng người dùng";
+"System & Developer" = "Hệ thống & Lập trình";
+"Unmount All" = "Đẩy ra tất cả phân vùng người dùng";
+"Auto-mount new disks" = "Tự động gắn ổ đĩa mới";

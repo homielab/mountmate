@@ -1,0 +1,32 @@
+/*
+  Localizable.strings (English)
+*/
+
+// Main View
+"Quit MountMate" = "Quit MountMate";
+"Unmount" = "Unmount";
+"Mount" = "Mount";
+"No external drives detected." = "No external drives detected.";
+"Mounted" = "Mounted";
+"Unmounted" = "Unmounted";
+"Free:" = "Free:";
+
+// Settings View
+"MountMate Settings" = "MountMate Settings";
+"General" = "General";
+"Start MountMate at Login" = "Start MountMate at Login";
+"Language" = "Language";
+"About" = "About";
+"Homepage" = "Homepage";
+"Support Email" = "Support Email";
+"Check for Updates..." = "Check for Updates...";
+"Restart Required" = "Restart Required";
+"Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
+"Restart Now" = "Restart Now";
+"Later" = "Later";
+"free of" = "free of";
+"Unknown" = "Unknown";
+"User Volumes" = "User Volumes";
+"System & Developer" = "System & Developer";
+"Unmount All" = "Unmount All User Volumes";
+"Auto-mount new disks" = "Auto-mount new disks";
