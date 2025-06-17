@@ -36,7 +36,7 @@ DMG_NAME="${APP_NAME}_${VERSION}.dmg"
 APPCAST_NAME="appcast.xml"
 UPDATE_URL="https://github.com/homielab/mountmate/releases/download/v${VERSION}"
 DOCS_DIR="$PROJECT_ROOT/docs"
-ASSETS_DIR="$PROJECT_ROOT/assets"
+ASSETS_DIR="$PROJECT_ROOT/docs/assets"
 
 echo "📦 Building ${APP_NAME} v${VERSION}"
 echo "🧹 Cleaning up old files..."

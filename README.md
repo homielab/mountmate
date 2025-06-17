@@ -75,9 +75,15 @@ Just a clean utility that does one job well.
 
 - If you see a warning that MountMate is from an unidentified developer, go to:  
   **System Settings → Privacy & Security → Open Anyway**
-- Make sure you're connected to the internet to allow macOS to verify the app and receive updates (if supported)
+- Make sure you're connected to the internet to allow macOS to verify the app and receive updates
 
 ## 📫 Feedback & Contributions
 
 MountMate was built to solve my personal workflow issue, but I’d love to improve it for others too.
 Feel free to [open an issue](https://github.com/homielab/mountmate/issues) or suggest improvements!
+
+## 🤝 Support
+
+If you found MountMate helpful, please consider supporting its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/homielab)

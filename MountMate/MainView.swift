@@ -72,7 +72,7 @@ struct MainView: View {
             }
             
             Button {
-                openWindow(id: "settings-window")
+                openAndFocusSettingsWindow()
             } label: {
                 Image(systemName: "gearshape.fill")
             }
@@ -97,6 +97,20 @@ struct MainView: View {
             .help(NSLocalizedString("Quit MountMate", comment: "Quit button tooltip"))
         }
         .padding()
+    }
+    
+    private func openAndFocusSettingsWindow() {
+        let settingsWindowTitle = NSLocalizedString("MountMate Settings", comment: "")
+        
+        // Check if the window is already open.
+        if let window = NSApp.windows.first(where: { $0.title == settingsWindowTitle }) {
+            // If it is, bring it to the front and make it the key window.
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else {
+            // If it's not open, use the SwiftUI 'openWindow' environment action to create it.
+            openWindow(id: "settings-window")
+        }
     }
     
     private var driveListView: some View {

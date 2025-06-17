@@ -61,6 +61,18 @@ struct SettingsView: View {
                     }
                 }
                 
+                Button(action: {
+                    if let url = URL(string: "https://ko-fi.com/homielab") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                        Text(NSLocalizedString("Donate", comment: "Donate button"))
+                    }
+                }
+                
                 Button("Check for Updates...") {
                     updaterViewModel.checkForUpdates()
                 }

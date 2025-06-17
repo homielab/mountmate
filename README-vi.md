@@ -70,9 +70,15 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 
 - Nếu macOS cảnh báo ứng dụng không rõ nguồn gốc, hãy vào:  
   **System Settings → Privacy & Security → Open Anyway**
-- Đảm bảo bạn kết nối mạng để macOS xác minh và tự động cập nhật (nếu có)
+- Đảm bảo bạn kết nối mạng để macOS xác minh và tự động cập nhật
 
 ## 📫 Đóng góp & phản hồi
 
 MountMate được tạo để giải quyết nhu cầu cá nhân của tôi – nhưng tôi rất sẵn lòng cải thiện nó cho cộng đồng.
 Nếu bạn có góp ý hoặc muốn tham gia phát triển, [hãy mở issue tại đây](https://github.com/homielab/mountmate/issues)!
+
+## 🤝 Hỗ trợ
+
+Nếu bạn thấy MountMate hữu ích, hãy ủng hộ phát triển:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/homielab)
