@@ -4,6 +4,8 @@ _A simple macOS menu bar app to manage your external drives._
 
 ---
 
+<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/assets/icon.png" alt="MountMate Icon" width="100" height="100" style="border-radius: 22%; border: 0.5px solid rgba(0,0,0,0.1);" />
+
 ## 🧩 What is MountMate?
 
 MountMate is a lightweight macOS menu bar utility that lets you **mount and unmount external drives with a single click** – no Terminal, no Disk Utility, no hassle.
