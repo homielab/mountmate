@@ -158,25 +158,42 @@ struct DriveRowView: View {
         return manager.busyDriveIdentifier == drive.deviceIdentifier
     }
     
+    private func usageColor(for percentage: Double) -> Color {
+        if percentage > 0.9 {
+            return .red
+        } else if percentage > 0.75 {
+            return .orange
+        }
+        return .accentColor
+    }
+    
     var body: some View {
         HStack(spacing: 0) {
             
             HStack {
-                Image(systemName: "externaldrive")
-                    .font(.title2)
-                    .foregroundColor(drive.isMounted ? .accentColor : .secondary)
-                    .frame(width: 30, alignment: .center)
+                ZStack {
+                    Image(systemName: "externaldrive")
+                        .font(.title2)
+                        .foregroundColor(drive.isMounted ? .accentColor : .secondary)
+
+                    if drive.isMounted, let percentage = drive.usagePercentage {
+                        CircularProgressRing(
+                            progress: percentage,
+                            color: usageColor(for: percentage),
+                            lineWidth: 3.5
+                        )
+                        .frame(width: 34, height: 34)
+                    }
+                }
+                // The ZStack's frame remains to ensure alignment
+                .frame(width: 40, height: 40, alignment: .center)
+                .padding(.trailing, 8)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(drive.name)
                         .fontWeight(.bold)
                     
                     if drive.isMounted {
-                        if let percentage = drive.usagePercentage {
-                            ProgressView(value: percentage)
-                                .progressViewStyle(.linear)
-                        }
-                        
                         HStack {
                             if let free = drive.freeSpace, let total = drive.totalSize {
                                 Text("\(free) \(NSLocalizedString("free of", comment: "e.g., 100GB free of 500GB")) \(total)")
@@ -199,17 +216,15 @@ struct DriveRowView: View {
                     }
                 }
                 
-                Spacer() // Pushes the button to the right
+                Spacer()
             }
-            .contentShape(Rectangle()) // Makes the entire area of this HStack tappable
+            .contentShape(Rectangle())
             .onTapGesture {
                 if drive.isMounted, let mountPoint = drive.mountPoint {
                     NSWorkspace.shared.open(URL(fileURLWithPath: mountPoint))
                 }
             }
             
-            // The Mount/Unmount button is now a sibling to the clickable area,
-            // so their gestures do not conflict.
             Button(action: {
                 if drive.isMounted {
                     manager.unmount(drive: drive)
@@ -228,7 +243,6 @@ struct DriveRowView: View {
                     ProgressView().controlSize(.small)
                 }
             }
-            // Add a little padding to separate it from the edge
             .padding(.leading, 8)
         }
     }
