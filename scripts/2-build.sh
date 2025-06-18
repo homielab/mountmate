@@ -34,7 +34,7 @@ DMG_NAME="${APP_NAME}_${VERSION}.dmg"
 # Build Release
 
 APPCAST_NAME="appcast.xml"
-UPDATE_URL="https://github.com/homielab/mountmate/releases/download/v${VERSION}"
+UPDATE_URL="https://github.com/homielab/mountmate/releases/download/v${VERSION}/"
 DOCS_DIR="$PROJECT_ROOT/docs"
 ASSETS_DIR="$PROJECT_ROOT/docs/assets"
 
