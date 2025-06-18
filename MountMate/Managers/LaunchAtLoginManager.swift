@@ -1,6 +1,4 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import Foundation
 import ServiceManagement
@@ -17,7 +15,6 @@ class LaunchAtLoginManager: ObservableObject {
     
     init() {
         self.service = SMAppService()
-        
         if UserDefaults.standard.object(forKey: "launchAtLoginEnabled") == nil {
             self.isEnabled = true
         } else {
@@ -27,20 +24,15 @@ class LaunchAtLoginManager: ObservableObject {
     
     private func updateLoginItemStatus() {
         guard #available(macOS 13.0, *) else { return }
-        
         do {
             if isEnabled {
                 try service.register()
-                print("Successfully registered for launch at login.")
             } else {
                 try service.unregister()
-                print("Successfully unregistered from launch at login.")
             }
         } catch {
             print("Failed to update login item status: \(error)")
-            DispatchQueue.main.async {
-                self.isEnabled.toggle()
-            }
+            DispatchQueue.main.async { self.isEnabled.toggle() }
         }
     }
 }

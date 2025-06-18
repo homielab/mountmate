@@ -2,7 +2,6 @@
   Localizable.strings (Vietnamese)
 */
 
-// Main View
 "Quit MountMate" = "Thoát MountMate";
 "Unmount" = "Đẩy ra";
 "Mount" = "Gắn";
@@ -10,8 +9,6 @@
 "Mounted" = "Đã gắn";
 "Unmounted" = "Chưa gắn";
 "Free:" = "Trống:";
-
-// Settings View
 "MountMate Settings" = "Cài đặt MountMate";
 "General" = "Chung";
 "Start MountMate at Login" = "Khởi động cùng máy";
@@ -24,16 +21,16 @@
 "Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
 "Restart Now" = "Khởi động lại ngay";
 "Later" = "Để sau";
-"free of" = "trống trong tổng số";
 "Unknown" = "Không rõ";
-"User Volumes" = "Phân vùng người dùng";
-"System & Developer" = "Hệ thống & Lập trình";
+"free of" = "trống trong tổng số";
+"Eject" = "Đẩy ra an toàn";
 "Unmount All" = "Đẩy ra tất cả phân vùng người dùng";
+"No Drives Found" = "Không tìm thấy ổ đĩa";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Kết nối ổ USB, thẻ SD, hoặc gắn ảnh đĩa để xem tại đây.";
+"Donate" = "Ủng hộ";
+"Block USB Auto-Mount" = "Chặn tự động gắn USB";
+"Disk Image" = "Ảnh đĩa";
 "USB" = "USB";
 "Thunderbolt" = "Thunderbolt";
-"Disk Image" = "Ảnh đĩa";
-"Block USB Auto-Mount" = "Chặn tự động gắn USB";
-"No Drives Found" = "Không tìm thấy ổ đĩa";
-"Connect a USB drive..." = "Kết nối ổ USB, thẻ SD, hoặc gắn ảnh đĩa để xem tại đây.";
-"Donate" = "Ủng hộ";
-
+"External Disks" = "Ổ đĩa ngoài";
+"Disk Images" = "Ảnh đĩa";

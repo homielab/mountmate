@@ -1,6 +1,4 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import Foundation
 import DiskArbitration
@@ -36,22 +34,17 @@ class DiskMounter: ObservableObject {
     @objc private func handleWillMount(notification: Notification) {
         clearApprovalWorkItem?.cancel()
         if let identifier = notification.userInfo?["deviceIdentifier"] as? String {
-            print("Received manual mount approval for \(identifier)")
             self.approvingManualMountFor = identifier
-            
             let workItem = DispatchWorkItem { [weak self] in
-                print("Whitelist timer expired. Clearing manual mount approval for \(identifier).")
                 self?.approvingManualMountFor = nil
             }
             self.clearApprovalWorkItem = workItem
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
         }
     }
     
     private func startDiskArbitration() {
         guard session == nil else { return }
-        print("✅ Starting Disk Arbitration session to block USB auto-mounting.")
         session = DASessionCreate(kCFAllocatorDefault)
         guard let session = session else { return }
         
@@ -61,24 +54,18 @@ class DiskMounter: ObservableObject {
 
             if let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) }) {
                 if let approvedDisk = this.approvingManualMountFor, approvedDisk == bsdName {
-                    print("👍 Approving whitelisted manual mount for \(bsdName).")
                     return nil
                 }
             }
             
             if let desc = DADiskCopyDescription(disk) {
                 let description = desc as! [String: Any]
-                
                 let protocolName = description[kDADiskDescriptionDeviceProtocolKey as String] as? String
-                
                 if protocolName == "USB" {
-                    print("🚫 Dissenting auto-mount for USB disk.")
                     let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
                     return Unmanaged.passRetained(dissenter)
                 }
             }
-            
-            print("👍 Approving auto-mount for non-USB device.")
             return nil
         }
         
@@ -90,7 +77,6 @@ class DiskMounter: ObservableObject {
     
     private func stopDiskArbitration() {
         guard let session = session else { return }
-        print("🛑 Stopping Disk Arbitration session.")
         DASessionSetDispatchQueue(session, nil)
         self.session = nil
     }

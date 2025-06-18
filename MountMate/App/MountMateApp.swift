@@ -1,22 +1,7 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import SwiftUI
 import Sparkle
-
-final class UpdaterController: NSObject, ObservableObject {
-    private let updater: SPUUpdater
-    
-    init(updater: SPUUpdater) {
-        self.updater = updater
-        super.init()
-    }
-    
-    @objc func checkForUpdates() {
-        updater.checkForUpdates()
-    }
-}
 
 @main
 struct MountMateApp: App {
@@ -32,8 +17,6 @@ struct MountMateApp: App {
     var body: some Scene {
         MenuBarExtra("MountMate", systemImage: "externaldrive.fill.badge.plus") {
             MainView()
-                .environmentObject(launchManager)
-                .environmentObject(updaterViewModel)
         }
         .menuBarExtraStyle(.window)
         

@@ -1,6 +1,4 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import Foundation
 
@@ -12,7 +10,7 @@ func runShell(_ command: String) -> String? {
     task.standardOutput = pipe
     task.standardError = pipe
     task.arguments = ["-c", command]
-    task.launchPath = "/bin/zsh" // Using zsh, can also be /bin/bash
+    task.launchPath = "/bin/zsh"
     task.standardInput = nil
 
     do {

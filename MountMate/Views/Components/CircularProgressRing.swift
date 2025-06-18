@@ -1,6 +1,4 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import SwiftUI
 
@@ -16,7 +14,6 @@ struct CircularProgressRing: View {
                     color.opacity(0.3),
                     lineWidth: lineWidth
                 )
-
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(

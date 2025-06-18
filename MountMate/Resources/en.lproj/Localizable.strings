@@ -2,7 +2,6 @@
   Localizable.strings (English)
 */
 
-// Main View
 "Quit MountMate" = "Quit MountMate";
 "Unmount" = "Unmount";
 "Mount" = "Mount";
@@ -10,8 +9,6 @@
 "Mounted" = "Mounted";
 "Unmounted" = "Unmounted";
 "Free:" = "Free:";
-
-// Settings View
 "MountMate Settings" = "MountMate Settings";
 "General" = "General";
 "Start MountMate at Login" = "Start MountMate at Login";
@@ -24,15 +21,16 @@
 "Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
 "Restart Now" = "Restart Now";
 "Later" = "Later";
-"free of" = "free of";
 "Unknown" = "Unknown";
-"User Volumes" = "User Volumes";
-"System & Developer" = "System & Developer";
+"free of" = "free of";
+"Eject" = "Eject";
 "Unmount All" = "Unmount All User Volumes";
+"No Drives Found" = "No Drives Found";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
+"Donate" = "Donate";
+"Block USB Auto-Mount" = "Block USB Auto-Mount";
+"Disk Image" = "Disk Image";
 "USB" = "USB";
 "Thunderbolt" = "Thunderbolt";
-"Disk Image" = "Disk Image";
-"Block USB Auto-Mount" = "Block USB Auto-Mount";
-"No Drives Found" = "No Drives Found";
-"Connect a USB drive..." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
-"Donate" = "Ủng hộ";
+"External Disks" = "External Disks";
+"Disk Images" = "Disk Images";

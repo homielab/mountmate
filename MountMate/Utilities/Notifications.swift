@@ -1,6 +1,4 @@
-//
-//  Created by homielab
-//
+//  Created by homielab.com
 
 import Foundation
 

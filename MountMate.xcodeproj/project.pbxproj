@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B4AADB432DFE3C9900EDAAC2 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */; };
 		B4B37DEB2DFE68A600A60D0D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B4B37DEA2DFE68A600A60D0D /* Sparkle */; };
 /* End PBXBuildFile section */
 
@@ -32,8 +31,6 @@
 		B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MountMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B4AADB422DFE3C9900EDAAC2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		B4AADB452DFE3CFB00EDAAC2 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B4B37DE32DFE47F600A60D0D /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -54,16 +51,6 @@
 				B4AADB3E2DFE3C2A00EDAAC2 /* Exceptions for "MountMate" folder in "MountMate" target */,
 			);
 			path = MountMate;
-			sourceTree = "<group>";
-		};
-		B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MountMateTests;
-			sourceTree = "<group>";
-		};
-		B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MountMateUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -97,10 +84,7 @@
 		B4AADB082DFE3BBC00EDAAC2 = {
 			isa = PBXGroup;
 			children = (
-				B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */,
 				B4AADB132DFE3BBC00EDAAC2 /* MountMate */,
-				B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */,
-				B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */,
 				B4AADB4E2DFE3E1600EDAAC2 /* Frameworks */,
 				B4AADB122DFE3BBC00EDAAC2 /* Products */,
 			);
@@ -163,9 +147,6 @@
 			dependencies = (
 				B4AADB212DFE3BBD00EDAAC2 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				B4AADB222DFE3BBD00EDAAC2 /* MountMateTests */,
-			);
 			name = MountMateTests;
 			packageProductDependencies = (
 			);
@@ -185,9 +166,6 @@
 			);
 			dependencies = (
 				B4AADB2B2DFE3BBD00EDAAC2 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				B4AADB2C2DFE3BBD00EDAAC2 /* MountMateUITests */,
 			);
 			name = MountMateUITests;
 			packageProductDependencies = (
@@ -249,7 +227,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B4AADB432DFE3C9900EDAAC2 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,18 +282,6 @@
 			targetProxy = B4AADB2A2DFE3BBD00EDAAC2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		B4AADB412DFE3C9900EDAAC2 /* Localizable.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				B4AADB422DFE3C9900EDAAC2 /* en */,
-				B4AADB452DFE3CFB00EDAAC2 /* vi */,
-			);
-			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		B4AADB312DFE3BBD00EDAAC2 /* Debug */ = {
@@ -461,7 +426,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -495,7 +460,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
