@@ -33,7 +33,10 @@ if ! gh release view "${TAG}" --repo "${GITHUB_REPO}" &>/dev/null; then
   gh release create "${TAG}" \
     --repo "${GITHUB_REPO}" \
     --title "MountMate ${VERSION}" \
-    --notes "Release for MountMate version ${VERSION}. Download the DMG file from the GitHub release page. Please report any bugs at https://github.com/homielab/mountmate/issues" \
+    --notes "Release for MountMate version ${VERSION}.
+[Download the DMG file from the GitHub release page](https://github.com/homielab/mountmate/releases/tag/v${VERSION})
+
+Please report any bugs at https://github.com/homielab/mountmate/issues" \
     --target main
 fi
 
