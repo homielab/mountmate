@@ -2,9 +2,34 @@
 
 _A simple macOS menu bar app to manage your external drives._
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/assets/icon.png" alt="MountMate Icon" width="100" height="100" style="border-radius: 22%; border: 0.5px solid rgba(0,0,0,0.1);" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/homielab/mountmate/releases">
+    <img src="https://img.shields.io/github/v/release/homielab/mountmate?label=release&style=flat-square" />
+  </a>
+  <a href="https://github.com/homielab/mountmate">
+    <img src="https://img.shields.io/github/downloads/homielab/mountmate/total?style=flat-square" />
+  </a>
+  <a href="https://brew.sh">
+    <img src="https://img.shields.io/badge/homebrew-supported-blue?style=flat-square" />
+  </a>
+</p>
+
 ---
 
-<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/assets/icon.png" alt="MountMate Icon" width="100" height="100" style="border-radius: 22%; border: 0.5px solid rgba(0,0,0,0.1);" />
+## ⚡️ Quick Start
+
+Install via [Homebrew](https://brew.sh):
+
+```bash
+brew tap homielab/mountmate https://github.com/homielab/mountmate
+brew install --cask mountmate
+```
+
+Or [download the latest .dmg](https://github.com/homielab/mountmate/releases) and drag MountMate.app into your Applications folder.
 
 ## 🧩 What is MountMate?
 
@@ -72,6 +97,15 @@ Just a clean utility that does one job well.
 3. Drag `MountMate.app` into the **Applications** folder
 4. Eject the installer disk image
 5. Launch MountMate from **Applications**
+
+### Install via Homebrew
+
+If you have [Homebrew](https://brew.sh) installed, you can install MountMate directly from this repository:
+
+```bash
+brew tap homielab/mountmate https://github.com/homielab/mountmate
+brew install --cask mountmate
+```
 
 ### First-Time Use on macOS
 
