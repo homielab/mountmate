@@ -11,9 +11,7 @@ struct SettingsView: View {
     
     @State private var selectedLanguage: String = {
         guard let preferredLanguages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
-              let firstLanguage = preferredLanguages.first else {
-            return "en"
-        }
+              let firstLanguage = preferredLanguages.first else { return "en" }
         if firstLanguage.starts(with: "vi") { return "vi" }
         return "en"
     }()
@@ -31,16 +29,23 @@ struct SettingsView: View {
             
             Section {
                 Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
-                
                 Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
                 
-                Picker("Language", selection: $selectedLanguage) {
-                    Text("English").tag("en")
-                    Text("Tiếng Việt").tag("vi")
+                HStack {
+                    Text("Language")
+                    Spacer()
+                    Picker("Language", selection: $selectedLanguage) {
+                        Text("English").tag("en")
+                        Text("Tiếng Việt").tag("vi")
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 120)
+                    .onChange(of: selectedLanguage) { _ in
+                        showRestartAlert = true
+                    }
                 }
-                .onChange(of: selectedLanguage) { _ in
-                    showRestartAlert = true
-                }
+                
             } header: {
                 Text("General")
                     .font(.headline)
@@ -49,34 +54,22 @@ struct SettingsView: View {
             Divider()
             
             Section {
-                Button("Homepage") {
-                    if let url = URL(string: "https://homielab.com/page/mountmate") {
-                        NSWorkspace.shared.open(url)
-                    }
+                SettingsButton(title: "Homepage", icon: "house.fill") {
+                    if let url = URL(string: "https://homielab.com/page/mountmate") { NSWorkspace.shared.open(url) }
                 }
                 
-                Button("Support Email") {
-                    if let url = URL(string: "mailto:contact@homielab.com") {
-                        NSWorkspace.shared.open(url)
-                    }
+                SettingsButton(title: "Support Email", icon: "envelope.fill") {
+                    if let url = URL(string: "mailto:contact@homielab.com") { NSWorkspace.shared.open(url) }
                 }
                 
-                Button(action: {
-                    if let url = URL(string: "https://ko-fi.com/homielab") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "heart.fill")
-                            .foregroundColor(.red)
-                        Text(NSLocalizedString("Donate", comment: "Donate button"))
-                    }
+                SettingsButton(title: "Donate", icon: "heart.fill", iconColor: .red) {
+                    if let url = URL(string: "https://ko-fi.com/homielab") { NSWorkspace.shared.open(url) }
                 }
-                
-                Button("Check for Updates...") {
+
+                SettingsButton(title: "Check for Updates...", icon: "arrow.up.circle.fill") {
                     updaterViewModel.checkForUpdates()
                 }
-                
+
             } header: {
                 Text("About")
                     .font(.headline)
@@ -88,7 +81,6 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
-        .buttonStyle(.plain)
         .padding()
         .frame(width: 320)
         .alert("Restart Required", isPresented: $showRestartAlert) {
@@ -110,5 +102,27 @@ struct SettingsView: View {
         task.arguments = ["-n", path]
         task.launch()
         NSApplication.shared.terminate(self)
+    }
+}
+
+
+struct SettingsButton: View {
+    let title: LocalizedStringKey
+    let icon: String
+    var iconColor: Color = .accentColor
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.body)
+                    .foregroundColor(iconColor)
+                    .frame(width: 20)
+                Text(title)
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
