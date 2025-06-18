@@ -32,6 +32,8 @@ xcodebuild \
   -scheme "$SCHEME" \
   -configuration "$CONFIGURATION" \
   -derivedDataPath "$BUILD_DIR" \
+  "ONLY_ACTIVE_ARCH=NO" \
+  -destination "generic/platform=macOS" \
   clean build
 
 BUILT_APP_PATH=$(find "$BUILD_DIR/Build/Products/$CONFIGURATION" -name "${APP_NAME}.app" -type d | head -n 1)
