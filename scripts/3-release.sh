@@ -34,8 +34,8 @@ if ! gh release view "${TAG}" --repo "${GITHUB_REPO}" &>/dev/null; then
     --repo "${GITHUB_REPO}" \
     --title "MountMate ${VERSION}" \
     --notes "Release for MountMate version ${VERSION}.
-[Download the DMG file from the GitHub release page](https://github.com/homielab/mountmate/releases/tag/v${VERSION})
 
+Download the DMG file and drag MountMate.app into your Applications folder.
 Please report any bugs at https://github.com/homielab/mountmate/issues" \
     --target main
 fi
