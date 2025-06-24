@@ -7,6 +7,9 @@ struct SettingsView: View {
     @EnvironmentObject var diskMounter: DiskMounter
     @EnvironmentObject var updaterViewModel: UpdaterController
     
+    @StateObject private var persistence = PersistenceManager.shared
+    @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
+    
     @State private var selectedLanguage: String = {
         guard let preferredLanguages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
               let firstLanguage = preferredLanguages.first else { return "en" }
@@ -21,66 +24,13 @@ struct SettingsView: View {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
         return "Version \(version) (\(build))"
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            
-            Section {
-                Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
-                Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
-                
-                HStack {
-                    Text("Language")
-                    Spacer()
-                    Picker("Language", selection: $selectedLanguage) {
-                        Text("English").tag("en")
-                        Text("Tiếng Việt").tag("vi")
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    .frame(width: 120)
-                    .onChange(of: selectedLanguage) { _ in
-                        showRestartAlert = true
-                    }
-                }
-                
-            } header: {
-                Text("General")
-                    .font(.headline)
-            }
-            
-            Divider()
-            
-            Section {
-                SettingsButton(title: "Homepage", icon: "house.fill") {
-                    if let url = URL(string: "https://homielab.com/page/mountmate") { NSWorkspace.shared.open(url) }
-                }
-                
-                SettingsButton(title: "Support Email", icon: "envelope.fill") {
-                    if let url = URL(string: "mailto:contact@homielab.com") { NSWorkspace.shared.open(url) }
-                }
-                
-                SettingsButton(title: "Donate", icon: "heart.fill", iconColor: .red) {
-                    if let url = URL(string: "https://ko-fi.com/homielab") { NSWorkspace.shared.open(url) }
-                }
-
-                SettingsButton(title: "Check for Updates...", icon: "arrow.up.circle.fill") {
-                    updaterViewModel.checkForUpdates()
-                }
-
-            } header: {
-                Text("About")
-                    .font(.headline)
-            }
-            
-            Spacer()
-            Text(appVersion)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
+        TabView {
+            generalSettings.tabItem { Label("General", systemImage: "gear") }
+            managementSettings.tabItem { Label("Management", systemImage: "slider.horizontal.3") }
         }
-        .padding()
-        .frame(width: 320)
+        .frame(width: 450, height: 350)
         .alert("Restart Required", isPresented: $showRestartAlert) {
             Button("Restart Now", role: .destructive) {
                 UserDefaults.standard.set([selectedLanguage], forKey: "AppleLanguages")
@@ -92,6 +42,89 @@ struct SettingsView: View {
         }
     }
     
+    private var generalSettings: some View {
+        Form {
+            Section {
+                Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
+                Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
+                Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)
+                Picker("Language", selection: $selectedLanguage) {
+                    Text("English").tag("en")
+                    Text("Tiếng Việt").tag("vi")
+                }
+                .pickerStyle(.menu)
+                .onChange(of: selectedLanguage) { _ in showRestartAlert = true }
+            }
+
+            Section("About & Updates") {
+                Link(destination: URL(string: "https://homielab.com/page/mountmate")!) {
+                    Label("Homepage", systemImage: "house.fill")
+                }
+                Link(destination: URL(string: "mailto:contact@homielab.com")!) {
+                    Label("Support Email", systemImage: "envelope.fill")
+                }
+                Link(destination: URL(string: "https://ko-fi.com/homielab")!) {
+                    Label(title: { Text("Donate") }, icon: { Image(systemName: "heart.fill").foregroundColor(.red) })
+                }
+                Button(action: { updaterViewModel.checkForUpdates() }) {
+                    Label("Check for Updates...", systemImage: "arrow.down.circle.fill")
+                }
+            }
+            .foregroundColor(.primary)
+
+            Spacer()
+            Text(appVersion).font(.caption).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .center)
+        }
+        .formStyle(.grouped).padding()
+    }
+    
+    private var managementSettings: some View {
+        Form {
+            Section(header: Text("Ignored Disks"), footer: Text("Right-click a disk to ignore it. Useful for disk readers or hubs that appear as empty devices.")) {
+                if persistence.ignoredDisks.isEmpty {
+                    CenteredContent {
+                        Image(systemName: "eye.slash.circle").font(.title).foregroundColor(.secondary)
+                        Text("No Ignored Disks").fontWeight(.semibold)
+                    }
+                } else {
+                    List {
+                        ForEach(persistence.ignoredDisks, id: \.self) { id in
+                            HStack {
+                                Text(id); Spacer()
+                                Button(role: .destructive) {
+                                    persistence.unignore(diskID: id)
+                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
+                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Section(header: Text("Protected Volumes"), footer: Text("Right-click a volume to protect it from 'Unmount All' and sleep actions.")) {
+                if persistence.protectedVolumes.isEmpty {
+                    CenteredContent {
+                        Image(systemName: "lock.shield").font(.title).foregroundColor(.secondary)
+                        Text("No Protected Volumes").fontWeight(.semibold)
+                    }
+                } else {
+                    List {
+                        ForEach(persistence.protectedVolumes, id: \.self) { id in
+                            HStack {
+                                Text(id); Spacer()
+                                Button(role: .destructive) {
+                                    persistence.unprotect(volumeID: id)
+                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
+                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+    }
+
     private func relaunchApp() {
         let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
         let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
@@ -103,24 +136,24 @@ struct SettingsView: View {
     }
 }
 
-
-struct SettingsButton: View {
-    let title: LocalizedStringKey
-    let icon: String
-    var iconColor: Color = .accentColor
-    let action: () -> Void
+struct CenteredContent<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
     
     var body: some View {
-        Button(action: action) {
+        VStack {
+            Spacer()
             HStack {
-                Image(systemName: icon)
-                    .font(.body)
-                    .foregroundColor(iconColor)
-                    .frame(width: 20)
-                Text(title)
+                Spacer()
+                VStack(spacing: 8) {
+                    content
+                }
                 Spacer()
             }
+            Spacer()
         }
-        .buttonStyle(.plain)
     }
 }
