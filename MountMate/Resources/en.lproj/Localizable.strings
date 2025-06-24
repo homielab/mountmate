@@ -2,67 +2,94 @@
   Localizable.strings (English)
 */
 
-"Quit MountMate" = "Quit MountMate";
-"Unmount" = "Unmount";
+// MARK: - Main View & Actions
+//=============================================
+
+"No Drives Found" = "No Drives Found";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
+"External Disks" = "External Disks";
+"Disk Images" = "Disk Images";
+
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Unmount All" = "Unmount All User Volumes";
+"Eject" = "Eject";
 "Mount" = "Mount";
-"No external drives detected." = "No external drives detected.";
-"Mounted" = "Mounted";
+"Unmount" = "Unmount";
+"Quit MountMate" = "Quit MountMate";
+
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"free of" = "free of";
+"Unknown" = "Unknown";
 "Unmounted" = "Unmounted";
-"Free:" = "Free:";
+
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "Ignore This Disk";
+"Protect from 'Unmount All'" = "Protect from 'Unmount All'";
+"Unprotect from 'Unmount All'" = "Unprotect from 'Unmount All'";
+"Open in Finder" = "Open in Finder";
+
+
+// MARK: - Settings View
+//=============================================
+
 "MountMate Settings" = "MountMate Settings";
+
+// Tabs
 "General" = "General";
+"Management" = "Management";
+
+// General Tab
 "Start MountMate at Login" = "Start MountMate at Login";
+"Block USB Auto-Mount" = "Block USB Auto-Mount";
+"Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
 "Language" = "Language";
-"About" = "About";
+
+// About & Updates Section
 "Homepage" = "Homepage";
 "Support Email" = "Support Email";
+"Donate" = "Donate";
 "Check for Updates..." = "Check for Updates...";
+
+// Management Tab
+"Ignored Disks" = "Ignored Disks";
+"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
+"Protected Volumes" = "Protected Volumes";
+"No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions.";
+
+
+// MARK: - Alerts & Errors
+//=============================================
+
+"OK" = "OK";
+"Eject Failed" = "Eject Failed";
+"Mount Failed" = "Mount Failed";
+"Unmount Failed" = "Unmount Failed";
+
+// Verbs for error messages
+"unmount" = "unmount";
+"eject" = "eject";
+"mount" = "mount";
+
+// Error message formats
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
+"Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
+"An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
+
+
+// MARK: - App Lifecycle
+//=============================================
+
 "Restart Required" = "Restart Required";
 "Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
 "Restart Now" = "Restart Now";
 "Later" = "Later";
-"Unknown" = "Unknown";
-"free of" = "free of";
-"Eject" = "Eject";
-"Unmount All" = "Unmount All User Volumes";
-"No Drives Found" = "No Drives Found";
-"Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
-"Donate" = "Donate";
-"Block USB Auto-Mount" = "Block USB Auto-Mount";
-"Disk Image" = "Disk Image";
-"USB" = "USB";
-"Thunderbolt" = "Thunderbolt";
-"External Disks" = "External Disks";
-"Disk Images" = "Disk Images";
-"Eject Failed" = "Eject Failed";
-"Mount Failed" = "Mount Failed";
-"Unmount Failed" = "Unmount Failed";
-"unmount" = "unmount";
-"eject" = "eject";
-"mount" = "mount";
-"Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
-"Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
-"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
-"An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
-"OK" = "OK";
-"Loading Disks..." = "Loading Disks...";
-
-// MARK: - Settings View
-
-"General" = "General";
-"Management" = "Management";
-"Block USB Auto-Mount" = "Block USB Auto-Mount";
-"Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
-"Ignored Disks" = "Ignored Disks";
-"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
-"Protected Volumes" = "Protected Volumes";
-"No protected volumes. Right-click a volume to protect it from 'Unmount All'." = "No protected volumes. Right-click a volume to protect it from 'Unmount All'.";
-
-
-// MARK: - Context Menus
-
-"Ignore This Disk" = "Ignore This Disk";
-"Eject" = "Eject"; // This might be a duplicate, but good to have
-"Protect from 'Unmount All'" = "Protect from 'Unmount All'";
-"Unprotect from 'Unmount All'" = "Unprotect from 'Unmount All'";
-"Open in Finder" = "Open in Finder";
