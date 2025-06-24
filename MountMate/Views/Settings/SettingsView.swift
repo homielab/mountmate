@@ -14,6 +14,7 @@ struct SettingsView: View {
         guard let preferredLanguages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
               let firstLanguage = preferredLanguages.first else { return "en" }
         if firstLanguage.starts(with: "vi") { return "vi" }
+        if firstLanguage.starts(with: "zh") { return "zh-Hans" }
         return "en"
     }()
     
@@ -51,6 +52,7 @@ struct SettingsView: View {
                 Picker("Language", selection: $selectedLanguage) {
                     Text("English").tag("en")
                     Text("Tiếng Việt").tag("vi")
+                    Text("中文").tag("zh-Hans")
                 }
                 .pickerStyle(.menu)
                 .onChange(of: selectedLanguage) { _ in showRestartAlert = true }
