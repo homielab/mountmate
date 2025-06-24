@@ -1,0 +1,89 @@
+/*
+  Localizable.strings (English)
+*/
+
+// MARK: - Main View & Actions
+//=============================================
+
+"No Drives Found" = "未找到磁盘";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "连接 USB 设备、SD 卡或挂载磁盘镜像后将在此显示。";
+"External Disks" = "外置磁盘";
+"Disk Images" = "磁盘镜像";
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Unmount All" = "卸载所有用户卷";
+"Eject" = "弹出";
+"Mount" = "挂载";
+"Unmount" = "卸载";
+"Quit MountMate" = "退出 MountMate";
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"free of" = "剩余空间";
+"Unknown" = "未知";
+"Unmounted" = "已卸载";
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "忽略此磁盘";
+"Protect from 'Unmount All'" = "保护，防止“卸载所有”";
+"Unprotect from 'Unmount All'" = "取消保护，允许“卸载所有”";
+"Open in Finder" = "在访达中打开";
+
+// MARK: - Settings View
+//=============================================
+
+"MountMate Settings" = "MountMate 设置";
+
+// Tabs
+"General" = "常规";
+"Management" = "管理";
+
+// General Tab
+"Start MountMate at Login" = "登录时启动 MountMate";
+"Block USB Auto-Mount" = "阻止 USB 自动挂载";
+"Unmount All Disks on Sleep" = "休眠时卸载所有磁盘";
+"Language" = "语言";
+
+// About & Updates Section
+"Homepage" = "主页";
+"Support Email" = "支持邮箱";
+"Donate" = "捐赠";
+"Check for Updates..." = "检查更新...";
+
+// Management Tab
+"Ignored Disks" = "已忽略磁盘";
+"No ignored disks. Right-click a disk in the main list to ignore it." = "暂无已忽略磁盘。右键点击磁盘可选择忽略。";
+"Protected Volumes" = "受保护卷";
+"No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "暂无受保护卷。右键点击卷可设置保护，防止被“卸载所有”或系统休眠时卸载。";
+
+// MARK: - Alerts & Errors
+//=============================================
+
+"OK" = "确定";
+"Eject Failed" = "弹出失败";
+"Mount Failed" = "挂载失败";
+"Unmount Failed" = "卸载失败";
+
+// Verbs for error messages
+"unmount" = "卸载";
+"eject" = "弹出";
+"mount" = "挂载";
+
+// Error message formats
+"Failed to eject “%@” because one of its volumes is busy or in use." = "由于部分卷正在使用，无法弹出“%@”。";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "“EFI” 分区为系统特殊分区，无法直接挂载，属正常现象。";
+"Failed to %@ “%@” because it is currently in use by another application." = "由于“%@”正被其他应用占用，无法 %@。";
+"An unknown error occurred while trying to %@ “%@”." = "尝试 %@ “%@” 时发生未知错误。";
+
+// MARK: - App Lifecycle
+//=============================================
+
+"Restart Required" = "需要重启";
+"Please restart MountMate for the language change to take effect." = "请重启 MountMate 以应用语言更改。";
+"Restart Now" = "立即重启";
+"Later" = "稍后";
