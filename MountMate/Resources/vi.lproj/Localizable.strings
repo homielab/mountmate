@@ -1,0 +1,68 @@
+/*
+  Localizable.strings (Vietnamese)
+*/
+
+"Quit MountMate" = "Thoát MountMate";
+"Unmount" = "Đẩy ra";
+"Mount" = "Gắn";
+"No external drives detected." = "Không tìm thấy ổ đĩa ngoài.";
+"Mounted" = "Đã gắn";
+"Unmounted" = "Chưa gắn";
+"Free:" = "Trống:";
+"MountMate Settings" = "Cài đặt MountMate";
+"General" = "Chung";
+"Start MountMate at Login" = "Khởi động cùng máy";
+"Language" = "Ngôn ngữ";
+"About" = "Giới thiệu";
+"Homepage" = "Trang chủ";
+"Support Email" = "Email hỗ trợ";
+"Check for Updates..." = "Kiểm tra cập nhật...";
+"Restart Required" = "Cần khởi động lại";
+"Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
+"Restart Now" = "Khởi động lại ngay";
+"Later" = "Để sau";
+"Unknown" = "Không rõ";
+"free of" = "trống trong tổng số";
+"Eject" = "Đẩy ra an toàn";
+"Unmount All" = "Đẩy ra tất cả phân vùng người dùng";
+"No Drives Found" = "Không tìm thấy ổ đĩa";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Kết nối ổ USB, thẻ SD, hoặc gắn ảnh đĩa để xem tại đây.";
+"Donate" = "Ủng hộ";
+"Block USB Auto-Mount" = "Chặn tự động gắn USB";
+"Disk Image" = "Ảnh đĩa";
+"USB" = "USB";
+"Thunderbolt" = "Thunderbolt";
+"External Disks" = "Ổ đĩa ngoài";
+"Disk Images" = "Ảnh đĩa";
+"Eject Failed" = "Đẩy ra thất bại";
+"Mount Failed" = "Gắn thất bại";
+"Unmount Failed" = "Tháo thất bại";
+"unmount" = "tháo";
+"eject" = "đẩy ra";
+"mount" = "gắn";
+"Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Không thể gắn trực tiếp phân vùng “EFI”. Đây là một phân vùng hệ thống đặc biệt và hành vi này là bình thường.";
+"An unknown error occurred while trying to %@ “%@”." = "Đã xảy ra lỗi không xác định khi đang cố gắng %@ “%@”.";
+"OK" = "OK";
+"Loading Disks..." = "Đang tải ổ đĩa...";
+
+// MARK: - Settings View
+
+"General" = "Chung";
+"Management" = "Quản lý";
+"Block USB Auto-Mount" = "Chặn tự động gắn USB";
+"Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
+"Ignored Disks" = "Ổ đĩa bị bỏ qua";
+"No ignored disks. Right-click a disk in the main list to ignore it." = "Không có ổ đĩa nào bị bỏ qua. Nhấp chuột phải vào một ổ đĩa trong danh sách chính để bỏ qua nó.";
+"Protected Volumes" = "Phân vùng được bảo vệ";
+"No protected volumes. Right-click a volume to protect it from 'Unmount All'." = "Không có phân vùng nào được bảo vệ. Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả'.";
+
+
+// MARK: - Context Menus
+
+"Ignore This Disk" = "Bỏ qua ổ đĩa này";
+"Eject" = "Đẩy ra an toàn"; // This might be a duplicate
+"Protect from 'Unmount All'" = "Bảo vệ khỏi 'Tháo tất cả'";
+"Unprotect from 'Unmount All'" = "Bỏ bảo vệ khỏi 'Tháo tất cả'";
+"Open in Finder" = "Mở trong Finder";

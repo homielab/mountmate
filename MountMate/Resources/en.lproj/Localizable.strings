@@ -1,0 +1,68 @@
+/*
+  Localizable.strings (English)
+*/
+
+"Quit MountMate" = "Quit MountMate";
+"Unmount" = "Unmount";
+"Mount" = "Mount";
+"No external drives detected." = "No external drives detected.";
+"Mounted" = "Mounted";
+"Unmounted" = "Unmounted";
+"Free:" = "Free:";
+"MountMate Settings" = "MountMate Settings";
+"General" = "General";
+"Start MountMate at Login" = "Start MountMate at Login";
+"Language" = "Language";
+"About" = "About";
+"Homepage" = "Homepage";
+"Support Email" = "Support Email";
+"Check for Updates..." = "Check for Updates...";
+"Restart Required" = "Restart Required";
+"Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
+"Restart Now" = "Restart Now";
+"Later" = "Later";
+"Unknown" = "Unknown";
+"free of" = "free of";
+"Eject" = "Eject";
+"Unmount All" = "Unmount All User Volumes";
+"No Drives Found" = "No Drives Found";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
+"Donate" = "Donate";
+"Block USB Auto-Mount" = "Block USB Auto-Mount";
+"Disk Image" = "Disk Image";
+"USB" = "USB";
+"Thunderbolt" = "Thunderbolt";
+"External Disks" = "External Disks";
+"Disk Images" = "Disk Images";
+"Eject Failed" = "Eject Failed";
+"Mount Failed" = "Mount Failed";
+"Unmount Failed" = "Unmount Failed";
+"unmount" = "unmount";
+"eject" = "eject";
+"mount" = "mount";
+"Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
+"An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
+"OK" = "OK";
+"Loading Disks..." = "Loading Disks...";
+
+// MARK: - Settings View
+
+"General" = "General";
+"Management" = "Management";
+"Block USB Auto-Mount" = "Block USB Auto-Mount";
+"Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
+"Ignored Disks" = "Ignored Disks";
+"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
+"Protected Volumes" = "Protected Volumes";
+"No protected volumes. Right-click a volume to protect it from 'Unmount All'." = "No protected volumes. Right-click a volume to protect it from 'Unmount All'.";
+
+
+// MARK: - Context Menus
+
+"Ignore This Disk" = "Ignore This Disk";
+"Eject" = "Eject"; // This might be a duplicate, but good to have
+"Protect from 'Unmount All'" = "Protect from 'Unmount All'";
+"Unprotect from 'Unmount All'" = "Unprotect from 'Unmount All'";
+"Open in Finder" = "Open in Finder";
