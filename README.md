@@ -1,3 +1,34 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=it">Itapano</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=homielab&project=mountmate&lang=id">Bahasa Indonesia</a>
+      </div>
+    </div>
+  </details>
+</div>
+
 # 🚀 MountMate
 
 _A simple macOS menu bar app to manage your external drives._
