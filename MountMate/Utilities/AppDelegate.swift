@@ -35,8 +35,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.informativeText = appAlert.message
         alert.alertStyle = .warning
         alert.addButton(withTitle: NSLocalizedString("OK", comment: "OK button"))
+
+        // TODO: Use Auto Layout
+        let secureTextField = NSSecureTextField(frame: NSRect(origin: .zero, size: CGSize(width: 225, height: 20)))
+        secureTextField.translatesAutoresizingMaskIntoConstraints = false
+        secureTextField.placeholderString = "Password"
+        secureTextField.contentType = .password
+        
+        if case .lockedVolume = appAlert.kind {
+            alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+
+            alert.accessoryView = secureTextField
+        }
+
         NSApp.activate(ignoringOtherApps: true)
-        alert.runModal()
+
+        let response = alert.runModal()
         DriveManager.shared.operationError = nil
+
+        guard response == .alertFirstButtonReturn else {
+            return
+        }
+
+        if case let .lockedVolume(alert) = appAlert.kind {
+            alert.action(secureTextField.stringValue)
+        }
     }
 }
