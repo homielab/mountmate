@@ -39,6 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // TODO: Use Auto Layout
         let secureTextField = NSSecureTextField(frame: NSRect(origin: .zero, size: CGSize(width: 225, height: 20)))
         secureTextField.translatesAutoresizingMaskIntoConstraints = false
+        // TODO: Localize.
         secureTextField.placeholderString = "Password"
         secureTextField.contentType = .password
         
