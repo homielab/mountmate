@@ -70,6 +70,7 @@
 //=============================================
 
 "OK" = "OK";
+"Cancel" = "Cancel"
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";

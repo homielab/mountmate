@@ -92,13 +92,130 @@ class DriveManager: ObservableObject {
             let result = runShell("diskutil eject \(disk.id)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    let friendlyMessage = self.parseDiskUtilError(error, for: disk.name ?? disk.id, operation: .eject)
-                    self.operationError = AppAlert(title: NSLocalizedString("Eject Failed", comment: "Alert title"), message: friendlyMessage)
+                    self.handleDiskUtilError(
+                        error,
+                        volume: nil,
+                        volumeName: disk.name ?? disk.id,
+                        operation: .eject,
+                    )
                 }
                 self.busyEjectingIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
             }
         }
+    }
+
+    private func handleDiskUtilError(_ error: String, volume: Volume?, volumeName: String, operation: DiskOperation) {
+        let err = self.parseDiskUtilError2(error, for: volumeName, operation: operation)
+        let title: String
+        let message: String
+        let kind: AppAlertKind
+
+        switch err {
+            case .mountLockedVolume:
+                // TODO: Localize.
+                title = String(
+                    format: "“%@” is locked",
+                    volumeName
+                )
+
+                message = String(
+                    format: "Enter the password to unlock “%@”",
+                    volumeName
+                )
+
+                kind = .lockedVolume(LockedVolumeAppAlert { passphrase in
+                    guard let volume else {
+                        print("handleDiskUtilError was called for error '\(err)' without volume")
+
+                        return
+                    }
+
+                    self.mountLockedVolume(volume, passphrase: passphrase)
+                })
+            case .mountEFIVolume:
+                title = NSLocalizedString("Mount Failed", comment: "Alert title")
+                message = String(
+                    format: NSLocalizedString(
+                        "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.",
+                        comment: "User-friendly error for a failed EFI mount."
+                    ),
+                    volumeName
+                )
+
+                kind = .basic
+            case .unmountBusyVolume:
+                title = NSLocalizedString("Unmount Failed", comment: "Alert title")
+                message = String(
+                    format: NSLocalizedString(
+                        "Failed to eject “%@” because one of its volumes is busy or in use.",
+                        comment: "User-friendly error for a partial eject failure. %@ is disk name."
+                    ),
+                    volumeName
+                )
+
+                kind = .basic
+            case .mountInUseVolume:
+                title = NSLocalizedString("Mount Failed", comment: "Alert title")
+                message = String(
+                    format: NSLocalizedString(
+                        "Failed to %@ “%@” because it is currently in use by another application.",
+                        comment: "Error message"
+                    ),
+                    NSLocalizedString("mount", comment: "verb"),
+                    volumeName
+                )
+
+                kind = .basic
+            case .unmountInUseVolume:
+                title = NSLocalizedString("Unmount Failed", comment: "Alert title")
+                message = String(
+                    format: NSLocalizedString(
+                        "Failed to %@ “%@” because it is currently in use by another application.",
+                        comment: "Error message"
+                    ),
+                    NSLocalizedString("unmount", comment: "verb"),
+                    volumeName
+                )
+
+                kind = .basic
+            case .ejectInUseVolume:
+                title = NSLocalizedString("Eject Failed", comment: "Alert title")
+                message = String(
+                    format: NSLocalizedString(
+                        "Failed to %@ “%@” because it is currently in use by another application.",
+                        comment: "Error message"
+                    ),
+                    NSLocalizedString("eject", comment: "verb"),
+                    volumeName
+                )
+
+                kind = .basic
+            case .other:
+                let genericFormatString = NSLocalizedString(
+                    "An unknown error occurred while trying to %@ “%@”.",
+                    comment: "Error message"
+                )
+
+                let actionString: String
+
+                switch operation {
+                    case .mount:
+                        title = NSLocalizedString("Mount Failed", comment: "Alert title")
+                        actionString = "mount"
+                    case .unmount:
+                        title = NSLocalizedString("Unmount Failed", comment: "Alert title")
+                        actionString = "unmount"
+                    case .eject:
+                        title = NSLocalizedString("Eject Failed", comment: "Alert title")
+                        actionString = "eject"
+                }
+
+                message = "\(String(format: genericFormatString, actionString, volumeName))\n\nDetails:\n\(error)"
+                kind = .basic
+        }
+
+        self.operationError = AppAlert(title: title, message: message, kind: kind)
     }
 
     func mount(volume: Volume) {
@@ -109,23 +226,56 @@ class DriveManager: ObservableObject {
             let result = runShell("diskutil mount \(volume.id)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    let friendlyMessage = self.parseDiskUtilError(error, for: volume.name, operation: .mount)
-                    self.operationError = AppAlert(title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: friendlyMessage)
+                    self.handleDiskUtilError(
+                        error,
+                        volume: volume,
+                        volumeName: volume.name,
+                        operation: .mount
+                    )
                 }
                 self.busyVolumeIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
             }
         }
     }
-    
+
+    func mountLockedVolume(_ volume: Volume, passphrase: String) {
+        let userInfo = ["deviceIdentifier": volume.id]
+        NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+        DispatchQueue.main.async {
+            self.busyVolumeIdentifier = volume.id
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = runShell("diskutil apfs unlockVolume \(volume.id) -stdinpassphrase", input: Data(passphrase.utf8))
+
+            DispatchQueue.main.async {
+                if let error = result.error, !error.isEmpty {
+                    self.handleDiskUtilError(
+                        error,
+                        volume: nil,
+                        volumeName: volume.name,
+                        operation: .mount
+                    )
+                }
+                self.busyVolumeIdentifier = nil
+                self.refreshDrives(qos: .userInitiated)
+            }
+        }
+    }
+
     func unmount(volume: Volume) {
         DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
         DispatchQueue.global(qos: .userInitiated).async {
             let result = runShell("diskutil unmount \(volume.id)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    let friendlyMessage = self.parseDiskUtilError(error, for: volume.name, operation: .unmount)
-                    self.operationError = AppAlert(title: NSLocalizedString("Unmount Failed", comment: "Alert title"), message: friendlyMessage)
+                    self.handleDiskUtilError(
+                        error,
+                        volume: nil,
+                        volumeName: volume.name,
+                        operation: .unmount,
+                    )
                 }
                 self.busyVolumeIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
@@ -283,41 +433,42 @@ class DriveManager: ObservableObject {
     
     private enum DiskOperation { case mount, unmount, eject }
 
-    private func parseDiskUtilError(_ rawError: String, for name: String, operation: DiskOperation) -> String {
-        let lowercasedError = rawError.lowercased()
-        
-        if operation == .mount && name.uppercased() == "EFI" {
-            let formatString = NSLocalizedString("The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.", comment: "User-friendly error for a failed EFI mount.")
-            return String(format: formatString, name)
-        }
-
-        if lowercasedError.contains("at least one volume could not be unmounted") {
-            let formatString = NSLocalizedString("Failed to eject “%@” because one of its volumes is busy or in use.", comment: "User-friendly error for a partial eject failure. %@ is disk name.")
-            return String(format: formatString, name)
-        }
-
-        if lowercasedError.contains("busy") || lowercasedError.contains("in use") {
-            let actionString: String
-            switch operation {
-            case .unmount: actionString = NSLocalizedString("unmount", comment: "verb")
-            case .eject: actionString = NSLocalizedString("eject", comment: "verb")
-            case .mount: actionString = NSLocalizedString("mount", comment: "verb")
-            }
-            let formatString = NSLocalizedString("Failed to %@ “%@” because it is currently in use by another application.", comment: "Error message")
-            return String(format: formatString, actionString, name)
-        }
-        
-        let genericFormatString = NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message")
-        let actionString: String
-        switch operation {
-        case .mount: actionString = "mount"
-        case .unmount: actionString = "unmount"
-        case .eject: actionString = "eject"
-        }
-        
-        return "\(String(format: genericFormatString, actionString, name))\n\nDetails:\n\(rawError)"
+    private enum DiskUtilError {
+        case mountEFIVolume,
+             unmountBusyVolume,
+             mountInUseVolume,
+             unmountInUseVolume,
+             ejectInUseVolume,
+             mountLockedVolume,
+             other
     }
-    
+
+    private func parseDiskUtilError2(_ rawError: String, for name: String, operation: DiskOperation) -> DiskUtilError {
+        let lowerCaseError = rawError.lowercased()
+
+        if operation == .mount && name.uppercased() == "EFI" {
+            return .mountEFIVolume
+        }
+
+        if lowerCaseError.contains("at least one volume could not be unmounted") {
+            return .unmountBusyVolume
+        }
+
+        if lowerCaseError.contains("busy") || lowerCaseError.contains("in use") {
+            return switch operation {
+                case .mount: .mountInUseVolume
+                case .unmount: .unmountInUseVolume
+                case .eject: .ejectInUseVolume
+            }
+        }
+
+        if rawError.contains("This is an encrypted and locked APFS Volume; use \"diskutil apfs unlockVolume\"") {
+            return .mountLockedVolume
+        }
+
+        return .other
+    }
+
     private func getFileSystemAttributes(for path: String) -> (free: Int64, total: Int64)? {
         do {
             let attributes = try FileManager.default.attributesOfFileSystem(forPath: path)
