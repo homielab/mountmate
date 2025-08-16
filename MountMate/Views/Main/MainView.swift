@@ -248,6 +248,13 @@ struct VolumeRowView: View {
             }
             .contextMenu {
                 if volume.isMounted {
+                    Button { manager.unmount(volume: volume) } label: { Label("Unmount", systemImage: "xmark.circle") }
+                    Button {
+                        if let path = volume.mountPoint { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
+                    } label: {
+                        Label("Open in Finder", systemImage: "folder")
+                    }
+                    Divider()
                     if volume.isProtected {
                         Button {
                             PersistenceManager.shared.unprotect(volumeID: volume.id)
@@ -263,16 +270,18 @@ struct VolumeRowView: View {
                             Label("Protect from 'Unmount All'", systemImage: "lock.fill")
                         }
                     }
-                    Divider()
-                    Button { manager.unmount(volume: volume) } label: { Label("Unmount", systemImage: "xmark.circle") }
-                    Button {
-                        if let path = volume.mountPoint { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
-                    } label: {
-                        Label("Open in Finder", systemImage: "folder")
-                    }
                 } else {
                     Button { manager.mount(volume: volume) } label: { Label("Mount", systemImage: "arrow.up.circle") }
+                    Divider()
                 }
+                
+                Button(role: .destructive) {
+                    PersistenceManager.shared.ignore(volumeID: volume.id)
+                    DriveManager.shared.refreshDrives(qos: .userInitiated)
+                } label: {
+                    Label("Ignore This Volume", systemImage: "eye.slash")
+                }
+                
             }
 
             Button(action: {

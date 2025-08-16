@@ -83,7 +83,7 @@ struct SettingsView: View {
     
     private var managementSettings: some View {
         Form {
-            Section(header: Text("Ignored Disks"), footer: Text("Right-click a disk to ignore it. Useful for disk readers or hubs that appear as empty devices.")) {
+            Section(header: Text("Ignored Disks").bold(), footer: Text("Right-click a disk to ignore it. Useful for disk readers or hubs that appear as empty devices.")) {
                 if persistence.ignoredDisks.isEmpty {
                     CenteredContent {
                         Image(systemName: "eye.slash.circle").font(.title).foregroundColor(.secondary)
@@ -104,7 +104,28 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Protected Volumes"), footer: Text("Right-click a volume to protect it from 'Unmount All' and sleep actions.")) {
+            Section(header: Text("Ignored Volumes").bold(), footer: Text("Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.")) {
+                if persistence.ignoredVolumes.isEmpty {
+                    CenteredContent {
+                        Image(systemName: "eye.slash.circle.fill").font(.title).foregroundColor(.secondary)
+                        Text("No Ignored Volumes").fontWeight(.semibold)
+                    }
+                } else {
+                    List {
+                        ForEach(persistence.ignoredVolumes, id: \.self) { id in
+                            HStack {
+                                Text(id); Spacer()
+                                Button(role: .destructive) {
+                                    persistence.unignore(volumeID: id)
+                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
+                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Section(header: Text("Protected Volumes").bold(), footer: Text("Right-click a volume to protect it from 'Unmount All' and sleep actions.")) {
                 if persistence.protectedVolumes.isEmpty {
                     CenteredContent {
                         Image(systemName: "lock.shield").font(.title).foregroundColor(.secondary)
@@ -125,7 +146,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .padding()
+        .formStyle(.grouped).padding()
     }
 
     private func relaunchApp() {

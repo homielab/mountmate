@@ -32,6 +32,7 @@
 //=============================================
 
 "Ignore This Disk" = "忽略此磁盘";
+"Ignore This Volume" = "Ignore This Volume";
 "Protect from 'Unmount All'" = "保护，防止“卸载所有”";
 "Unprotect from 'Unmount All'" = "取消保护，允许“卸载所有”";
 "Open in Finder" = "在访达中打开";
@@ -61,6 +62,9 @@
 // Management Tab
 "Ignored Disks" = "已忽略磁盘";
 "No ignored disks. Right-click a disk in the main list to ignore it." = "暂无已忽略磁盘。右键点击磁盘可选择忽略。";
+"Ignored Volumes" = "Ignored Volumes";
+"No Ignored Volumes" = "No Ignored Volumes";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
 "Protected Volumes" = "受保护卷";
 "No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "暂无受保护卷。右键点击卷可设置保护，防止被“卸载所有”或系统休眠时卸载。";
 
