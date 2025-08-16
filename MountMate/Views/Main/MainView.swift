@@ -170,8 +170,8 @@ struct DiskHeaderRow: View {
             .contentShape(Rectangle())
             .contextMenu {
                 Button(NSLocalizedString("Ignore This Disk", comment: "Context menu action")) {
-                    PersistenceManager.shared.ignore(diskID: disk.id)
-                    DriveManager.shared.refreshDrives()
+                    PersistenceManager.shared.ignore(volumes: disk.volumes)
+                    DriveManager.shared.refreshDrives(qos: .userInitiated)
                 }
                 Button(NSLocalizedString("Eject", comment: "Context menu action")) {
                     manager.eject(disk: disk)
@@ -257,15 +257,15 @@ struct VolumeRowView: View {
                     Divider()
                     if volume.isProtected {
                         Button {
-                            PersistenceManager.shared.unprotect(volumeID: volume.id)
-                            DriveManager.shared.refreshDrives()
+                            PersistenceManager.shared.unprotect(volumeUUID: volume.id)
+                            DriveManager.shared.refreshDrives(qos: .userInitiated)
                         } label: {
                             Label("Unprotect from 'Unmount All'", systemImage: "lock.open.fill")
                         }
                     } else {
                         Button {
-                            PersistenceManager.shared.protect(volumeID: volume.id)
-                            DriveManager.shared.refreshDrives()
+                            PersistenceManager.shared.protect(volume: volume)
+                            DriveManager.shared.refreshDrives(qos: .userInitiated)
                         } label: {
                             Label("Protect from 'Unmount All'", systemImage: "lock.fill")
                         }
@@ -276,7 +276,7 @@ struct VolumeRowView: View {
                 }
                 
                 Button(role: .destructive) {
-                    PersistenceManager.shared.ignore(volumeID: volume.id)
+                    PersistenceManager.shared.ignore(volume: volume)
                     DriveManager.shared.refreshDrives(qos: .userInitiated)
                 } label: {
                     Label("Ignore This Volume", systemImage: "eye.slash")

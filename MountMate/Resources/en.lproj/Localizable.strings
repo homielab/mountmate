@@ -63,13 +63,14 @@
 "Check for Updates..." = "Check for Updates...";
 
 // Management Tab
-"Ignored Disks" = "Ignored Disks";
-"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
+//"Ignored Disks" = "Ignored Disks";
+//"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
 "Ignored Volumes" = "Ignored Volumes";
 "No Ignored Volumes" = "No Ignored Volumes";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
 "Protected Volumes" = "Protected Volumes";
-"No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions.";
+"No protected volumes" = "No protected volumes";
+"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "Right-click a volume to protect it from 'Unmount All' and system sleep actions.";
 
 
 // MARK: - Alerts & Errors

@@ -6,62 +6,81 @@ import Combine
 class PersistenceManager: ObservableObject {
     static let shared = PersistenceManager()
 
-    private let ignoredDisksKey = "mountmate_ignoredDisks"
-    private let ignoredVolumesKey = "mountmate_ignoredVolumes"
-    private let protectedVolumesKey = "mountmate_protectedVolumes"
+    private let protectedVolumesKey = "mountmate_protectedVolumes_v2"
+    private let ignoredVolumesKey = "mountmate_ignoredVolumes_v2"
     
-    @Published var ignoredDisks: [String]
-    @Published var ignoredVolumes: [String]
-    @Published var protectedVolumes: [String]
+    @Published var protectedVolumes: [ManagedVolumeInfo]
+    @Published var ignoredVolumes: [ManagedVolumeInfo]
     
     private init() {
-        self.ignoredDisks = UserDefaults.standard.stringArray(forKey: ignoredDisksKey) ?? []
-        self.ignoredVolumes = UserDefaults.standard.stringArray(forKey: ignoredVolumesKey) ?? []
-        self.protectedVolumes = UserDefaults.standard.stringArray(forKey: protectedVolumesKey) ?? []
+        if let data = UserDefaults.standard.data(forKey: protectedVolumesKey) {
+            self.protectedVolumes = (try? JSONDecoder().decode([ManagedVolumeInfo].self, from: data)) ?? []
+        } else {
+            self.protectedVolumes = []
+        }
+        
+        if let data = UserDefaults.standard.data(forKey: ignoredVolumesKey) {
+            self.ignoredVolumes = (try? JSONDecoder().decode([ManagedVolumeInfo].self, from: data)) ?? []
+        } else {
+            self.ignoredVolumes = []
+        }
     }
     
-    func ignore(diskID: String) {
-        guard !ignoredDisks.contains(diskID) else { return }
-        ignoredDisks.append(diskID)
-        saveIgnoredDisks()
-    }
-    
-    func unignore(diskID: String) {
-        ignoredDisks.removeAll { $0 == diskID }
-        saveIgnoredDisks()
-    }
-
-    func ignore(volumeID: String) {
-        guard !ignoredVolumes.contains(volumeID) else { return }
-        ignoredVolumes.append(volumeID)
-        saveIgnoredVolumes()
-    }
-    
-    func unignore(volumeID: String) {
-        ignoredVolumes.removeAll { $0 == volumeID }
-        saveIgnoredVolumes()
-    }
-    
-    func protect(volumeID: String) {
-        guard !protectedVolumes.contains(volumeID) else { return }
-        protectedVolumes.append(volumeID)
+    func protect(volume: Volume) {
+        guard !isProtected(volumeUUID: volume.id) else { return }
+        let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
+        protectedVolumes.append(info)
         saveProtectedVolumes()
     }
     
-    func unprotect(volumeID: String) {
-        protectedVolumes.removeAll { $0 == volumeID }
+    func unprotect(volumeUUID: String) {
+        protectedVolumes.removeAll { $0.id == volumeUUID }
         saveProtectedVolumes()
     }
     
-    private func saveIgnoredDisks() {
-        UserDefaults.standard.set(ignoredDisks, forKey: ignoredDisksKey)
+    func ignore(volume: Volume) {
+        guard !isIgnored(volumeUUID: volume.id) else { return }
+        let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
+        ignoredVolumes.append(info)
+        saveIgnoredVolumes()
     }
-
-    private func saveIgnoredVolumes() {
-        UserDefaults.standard.set(ignoredVolumes, forKey: ignoredVolumesKey)
+    
+    func ignore(volumes: [Volume]) {
+        for volume in volumes {
+            if !isIgnored(volumeUUID: volume.id) {
+                let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
+                ignoredVolumes.append(info)
+            }
+        }
+        saveIgnoredVolumes()
     }
+    
+    func unignore(volumeUUID: String) {
+        ignoredVolumes.removeAll { $0.id == volumeUUID }
+        saveIgnoredVolumes()
+    }
+    
+    // MARK: - Helper Checkers
+    
+    func isProtected(volumeUUID: String) -> Bool {
+        protectedVolumes.contains { $0.id == volumeUUID }
+    }
+    
+    func isIgnored(volumeUUID: String) -> Bool {
+        ignoredVolumes.contains { $0.id == volumeUUID }
+    }
+    
+    // MARK: - Private Save Methods
     
     private func saveProtectedVolumes() {
-        UserDefaults.standard.set(protectedVolumes, forKey: protectedVolumesKey)
+        if let data = try? JSONEncoder().encode(protectedVolumes) {
+            UserDefaults.standard.set(data, forKey: protectedVolumesKey)
+        }
+    }
+    
+    private func saveIgnoredVolumes() {
+        if let data = try? JSONEncoder().encode(ignoredVolumes) {
+            UserDefaults.standard.set(data, forKey: ignoredVolumesKey)
+        }
     }
 }
