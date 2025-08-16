@@ -13,9 +13,11 @@ struct Volume: Identifiable, Hashable {
     let usagePercentage: Double?
     let category: DriveCategory
     var isProtected: Bool
+    let usedSpace: String?
 }
 
 enum PhysicalDiskType {
+    case internalDisk
     case physical
     case diskImage
 }
@@ -29,6 +31,7 @@ struct PhysicalDisk: Identifiable {
     let freeSpace: String?
     let usagePercentage: Double?
     let type: PhysicalDiskType
+    let usedSpace: String?
 }
 
 enum DriveCategory: String {

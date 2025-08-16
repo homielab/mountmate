@@ -9,6 +9,7 @@
 "Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
 "External Disks" = "External Disks";
 "Disk Images" = "Disk Images";
+"Internal Disks" = "Internal Disks";
 
 
 // MARK: - Action Buttons & Tooltips
@@ -51,6 +52,7 @@
 "Start MountMate at Login" = "Start MountMate at Login";
 "Block USB Auto-Mount" = "Block USB Auto-Mount";
 "Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
+"Show Internal Disks" = "Show Internal Disks";
 "Language" = "Language";
 
 // About & Updates Section
@@ -70,7 +72,7 @@
 //=============================================
 
 "OK" = "OK";
-"Cancel" = "Cancel"
+"Cancel" = "Cancel";
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";

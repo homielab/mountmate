@@ -9,6 +9,7 @@
 "Connect a USB drive, SD card, or mount a disk image to see it here." = "Kết nối ổ USB, thẻ SD, hoặc gắn ảnh đĩa để xem tại đây.";
 "External Disks" = "Ổ đĩa ngoài";
 "Disk Images" = "Ảnh đĩa";
+"Internal Disks" = "Internal Disks";
 
 
 // MARK: - Action Buttons & Tooltips
@@ -51,6 +52,7 @@
 "Start MountMate at Login" = "Khởi động cùng máy";
 "Block USB Auto-Mount" = "Chặn tự động gắn USB";
 "Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
+"Show Internal Disks" = "Show Internal Disks";
 "Language" = "Ngôn ngữ";
 
 // About & Updates Section
@@ -70,6 +72,7 @@
 //=============================================
 
 "OK" = "OK";
+"Cancel" = "Bỏ qua";
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
