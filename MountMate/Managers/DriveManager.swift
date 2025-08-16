@@ -223,11 +223,13 @@ class DriveManager: ObservableObject {
     }
 
     func mount(volume: Volume) {
-        let userInfo = ["deviceIdentifier": volume.id]
+        let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+        
         DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
+        
         DispatchQueue.global(qos: .userInitiated).async {
-            let result = runShell("diskutil mount \(volume.id)")
+            let result = runShell("diskutil mount \(volume.deviceIdentifier)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
                     self.handleDiskUtilError(
@@ -270,8 +272,9 @@ class DriveManager: ObservableObject {
 
     func unmount(volume: Volume) {
         DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
+
         DispatchQueue.global(qos: .userInitiated).async {
-            let result = runShell("diskutil unmount \(volume.id)")
+            let result = runShell("diskutil unmount \(volume.deviceIdentifier)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
                     self.handleDiskUtilError(
@@ -293,18 +296,11 @@ class DriveManager: ObservableObject {
         guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else { return [] }
         var newDisks: [PhysicalDisk] = []
         
-        let ignoredDiskIDs = PersistenceManager.shared.ignoredDisks
         let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
         
         for diskData in allDisksAndPartitions {
-            guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
-            
-            if ignoredDiskIDs.contains(physicalIdentifier) {
-                continue
-            }
-            
             let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
-            
+
             let isInternal = (infoPlist?["Internal"] as? Bool) ?? false
             if isInternal && !shouldShowInternalDisks {
                 continue
@@ -372,7 +368,7 @@ class DriveManager: ObservableObject {
         }
     }
 
-    private func getInfoForDisk(for identifier: String) -> [String: Any]? {
+    public func getInfoForDisk(for identifier: String) -> [String: Any]? {
         guard !identifier.isEmpty else { return nil }
         let infoOutput = runShell("diskutil info -plist \(identifier)").output
         return infoOutput?.data(using: .utf8)
@@ -425,14 +421,18 @@ class DriveManager: ObservableObject {
 
     private func createVolume(from volumeData: [String: Any]) -> Volume? {
         guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String,
-              let volumeName = volumeData["VolumeName"] as? String else { return nil }
+              let volumeName = volumeData["VolumeName"] as? String,
+              let volumeUUID = volumeData["VolumeUUID"] as? String else {
+            // skip if no UUID
+            return nil
+        }
 
-        if PersistenceManager.shared.ignoredVolumes.contains(deviceIdentifier) {
+        if PersistenceManager.shared.isIgnored(volumeUUID: volumeUUID) {
             return nil
         }
         
-        let isProtected = PersistenceManager.shared.protectedVolumes.contains(deviceIdentifier)
-        
+        let isProtected = PersistenceManager.shared.isProtected(volumeUUID: volumeUUID)
+
         let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
         let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
         
@@ -452,9 +452,20 @@ class DriveManager: ObservableObject {
             if attributes.total > 0 { usagePercentage = Double(attributes.total - attributes.free) / Double(attributes.total) }
         }
         
-        return Volume(id: deviceIdentifier, name: volumeName, isMounted: isMounted, mountPoint: mountPoint,
-                      freeSpace: freeSpaceStr, totalSize: totalSizeStr, fileSystemType: fileSystemType,
-                      usagePercentage: usagePercentage, category: category, isProtected: isProtected, usedSpace: usedSpaceStr)
+        return Volume(
+            id: volumeUUID,
+            deviceIdentifier: deviceIdentifier,
+            name: volumeName,
+            isMounted: isMounted,
+            mountPoint: mountPoint,
+            freeSpace: freeSpaceStr,
+            totalSize: totalSizeStr,
+            fileSystemType: fileSystemType,
+            usagePercentage: usagePercentage,
+            category: category,
+            isProtected: isProtected,
+            usedSpace: usedSpaceStr
+        )
     }
 
     private func getConnectionInfo(from infoPlist: [String: Any]?, isInternal: Bool) -> (type: String, diskType: PhysicalDiskType) {

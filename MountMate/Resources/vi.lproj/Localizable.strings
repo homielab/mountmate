@@ -63,13 +63,14 @@
 "Check for Updates..." = "Kiểm tra cập nhật...";
 
 // Management Tab
-"Ignored Disks" = "Ổ đĩa bị bỏ qua";
-"No ignored disks. Right-click a disk in the main list to ignore it." = "Không có ổ đĩa nào bị bỏ qua. Nhấp chuột phải vào một ổ đĩa trong danh sách chính để bỏ qua nó.";
+//"Ignored Disks" = "Ổ đĩa bị bỏ qua";
+//"No ignored disks. Right-click a disk in the main list to ignore it." = "Không có ổ đĩa nào bị bỏ qua. Nhấp chuột phải vào một ổ đĩa trong danh sách chính để bỏ qua nó.";
 "Ignored Volumes" = "Phân vùng bị bỏ qua";
 "No Ignored Volumes" = "Không có phân vùng bị bỏ qua";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Nhấp chuột phải vào một phân vùng để bỏ qua. Hữu ích cho các phân vùng hệ thống như 'EFI' mà bạn không cần quản lý.";
 "Protected Volumes" = "Phân vùng được bảo vệ";
-"No protected volumes. Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "Không có phân vùng nào được bảo vệ. Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả' và khi máy ngủ.";
+"No protected volumes" = "Không có phân vùng nào được bảo vệ";
+"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả' và khi máy ngủ.";
 
 
 // MARK: - Alerts & Errors

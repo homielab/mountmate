@@ -26,6 +26,9 @@ struct SettingsView: View {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
         return "Version \(version) (\(build))"
     }
+    private var allKnownVolumes: [Volume] {
+        DriveManager.shared.physicalDisks.flatMap { $0.volumes }
+    }
 
     var body: some View {
         TabView {
@@ -83,27 +86,6 @@ struct SettingsView: View {
     
     private var managementSettings: some View {
         Form {
-            Section(header: Text("Ignored Disks").bold(), footer: Text("Right-click a disk to ignore it. Useful for disk readers or hubs that appear as empty devices.")) {
-                if persistence.ignoredDisks.isEmpty {
-                    CenteredContent {
-                        Image(systemName: "eye.slash.circle").font(.title).foregroundColor(.secondary)
-                        Text("No Ignored Disks").fontWeight(.semibold)
-                    }
-                } else {
-                    List {
-                        ForEach(persistence.ignoredDisks, id: \.self) { id in
-                            HStack {
-                                Text(id); Spacer()
-                                Button(role: .destructive) {
-                                    persistence.unignore(diskID: id)
-                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
-                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
-                            }
-                        }
-                    }
-                }
-            }
-            
             Section(header: Text("Ignored Volumes").bold(), footer: Text("Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.")) {
                 if persistence.ignoredVolumes.isEmpty {
                     CenteredContent {
@@ -112,14 +94,12 @@ struct SettingsView: View {
                     }
                 } else {
                     List {
-                        ForEach(persistence.ignoredVolumes, id: \.self) { id in
-                            HStack {
-                                Text(id); Spacer()
-                                Button(role: .destructive) {
-                                    persistence.unignore(volumeID: id)
-                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
-                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
-                            }
+                        ForEach(persistence.ignoredVolumes) { managedVolume in
+                            ManagedVolumeRow(
+                                name: managedVolume.name,
+                                uuid: managedVolume.id,
+                                onDelete: { persistence.unignore(volumeUUID: managedVolume.id) }
+                            )
                         }
                     }
                 }
@@ -133,14 +113,12 @@ struct SettingsView: View {
                     }
                 } else {
                     List {
-                        ForEach(persistence.protectedVolumes, id: \.self) { id in
-                            HStack {
-                                Text(id); Spacer()
-                                Button(role: .destructive) {
-                                    persistence.unprotect(volumeID: id)
-                                    DriveManager.shared.refreshDrives(qos: .userInitiated)
-                                } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
-                            }
+                        ForEach(persistence.protectedVolumes) { managedVolume in
+                            ManagedVolumeRow(
+                                name: managedVolume.name,
+                                uuid: managedVolume.id,
+                                onDelete: { persistence.unprotect(volumeUUID: managedVolume.id) }
+                            )
                         }
                     }
                 }
@@ -159,6 +137,35 @@ struct SettingsView: View {
         NSApplication.shared.terminate(self)
     }
 }
+
+struct ManagedVolumeRow: View {
+    let name: String
+    let uuid: String
+    let onDelete: () -> Void
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).fontWeight(.semibold)
+                Text(uuid)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer()
+
+            Button(role: .destructive) {
+                onDelete()
+                DriveManager.shared.refreshDrives(qos: .userInitiated)
+            } label: {
+                Image(systemName: "trash")
+            }.buttonStyle(.borderless)
+        }
+    }
+}
+
 
 struct CenteredContent<Content: View>: View {
     let content: Content

@@ -3,7 +3,8 @@
 import Foundation
 
 struct Volume: Identifiable, Hashable {
-    let id: String
+    let id: String // The persistent VolumeUUID
+    let deviceIdentifier: String // e.g., disk4s1
     let name: String
     let isMounted: Bool
     let mountPoint: String?
