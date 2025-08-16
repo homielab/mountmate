@@ -426,6 +426,10 @@ class DriveManager: ObservableObject {
     private func createVolume(from volumeData: [String: Any]) -> Volume? {
         guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String,
               let volumeName = volumeData["VolumeName"] as? String else { return nil }
+
+        if PersistenceManager.shared.ignoredVolumes.contains(deviceIdentifier) {
+            return nil
+        }
         
         let isProtected = PersistenceManager.shared.protectedVolumes.contains(deviceIdentifier)
         
