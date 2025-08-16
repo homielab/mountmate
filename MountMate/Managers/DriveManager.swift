@@ -70,7 +70,11 @@ class DriveManager: ObservableObject {
     }
     
     func unmountAllDrives() {
-        let drivesToUnmount = self.physicalDisks.flatMap { $0.volumes }.filter { $0.isMounted && $0.category == .user && !$0.isProtected }
+        let drivesToUnmount = self.physicalDisks
+                .filter { $0.type == .physical || $0.type == .diskImage }
+                .flatMap { $0.volumes }
+                .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
+        
         guard !drivesToUnmount.isEmpty else { return }
 
         DispatchQueue.main.async { self.isUnmountingAll = true }
@@ -287,9 +291,11 @@ class DriveManager: ObservableObject {
 
     private func parseDisks(from plist: [String: Any]) -> [PhysicalDisk] {
         guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else { return [] }
-        let ignoredDiskIDs = PersistenceManager.shared.ignoredDisks
         var newDisks: [PhysicalDisk] = []
-
+        
+        let ignoredDiskIDs = PersistenceManager.shared.ignoredDisks
+        let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
+        
         for diskData in allDisksAndPartitions {
             guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
             
@@ -298,7 +304,9 @@ class DriveManager: ObservableObject {
             }
             
             let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
-            if (infoPlist?["Internal"] as? Bool) ?? false {
+            
+            let isInternal = (infoPlist?["Internal"] as? Bool) ?? false
+            if isInternal && !shouldShowInternalDisks {
                 continue
             }
 
@@ -310,13 +318,14 @@ class DriveManager: ObservableObject {
             guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
             
             var allVolumes: [Volume] = []
-            
+            var apfsContainer: [String: Any]?
+                    
             if let partitions = diskData["Partitions"] as? [[String: Any]] {
                 for partitionData in partitions {
                     if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
                         let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
-                        if let container = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions),
-                           let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
+                        apfsContainer = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions)
+                        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
                             allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
                         }
                     } else {
@@ -330,17 +339,35 @@ class DriveManager: ObservableObject {
             }
 
             if !allVolumes.isEmpty {
-                let connectionInfo = getConnectionInfo(from: infoPlist)
+                let connectionInfo = getConnectionInfo(from: infoPlist, isInternal: isInternal)
                 let diskName = infoPlist?["IORegistryEntryName"] as? String ?? infoPlist?["MediaName"] as? String ?? allVolumes.first(where: { $0.category == .user })?.name
-                let (totalSizeStr, freeSpaceStr, usagePercentage) = calculateParentDiskStats(totalBytes: diskData["Size"] as? Int64 ?? 0, volumes: allVolumes)
+                let totalBytes = diskData["Size"] as? Int64 ?? 0
+                let (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage) = calculateParentDiskStats(
+                    totalBytes: totalBytes,
+                    volumes: allVolumes,
+                    apfsContainer: apfsContainer
+                )
 
-                let physicalDisk = PhysicalDisk(id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes, name: diskName, totalSize: totalSizeStr, freeSpace: freeSpaceStr, usagePercentage: usagePercentage, type: connectionInfo.diskType)
+                let physicalDisk = PhysicalDisk(
+                    id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes,
+                    name: diskName, totalSize: totalSizeStr, freeSpace: freeSpaceStr,
+                    usagePercentage: usagePercentage, type: connectionInfo.diskType, usedSpace: usedSpaceStr
+                )
                 newDisks.append(physicalDisk)
             }
         }
         return newDisks.sorted {
-            if $0.type == .physical && $1.type == .diskImage { return true }
-            if $0.type == .diskImage && $1.type == .physical { return false }
+            // Custom sort order: Internal -> Physical -> Disk Image
+            let order: (PhysicalDiskType) -> Int = { type in
+                switch type {
+                case .internalDisk: return 0
+                case .physical: return 1
+                case .diskImage: return 2
+                }
+            }
+            if order($0.type) != order($1.type) {
+                return order($0.type) < order($1.type)
+            }
             return ($0.name ?? "") < ($1.name ?? "")
         }
     }
@@ -362,24 +389,38 @@ class DriveManager: ObservableObject {
         }
     }
     
-    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume]) -> (String?, String?, Double?) {
+    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume], apfsContainer: [String: Any]?) -> (String?, String?, String?, Double?) {
+        guard totalBytes > 0 else { return (nil, nil, nil, nil) }
+
         var usedBytes: Int64 = 0
-        let hasMountedVolume = volumes.contains { $0.isMounted }
-        
-        for volume in volumes {
-            if volume.isMounted, let mountPoint = volume.mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
-                usedBytes += (attributes.total - attributes.free)
+
+        if let container = apfsContainer, let capacityInUse = container["CapacityInUse"] as? Int64 {
+            // For APFS, the container gives the single, true 'used' value.
+            usedBytes = capacityInUse
+        } else {
+            // non-APFS disks (like ExFAT, HFS+) ---
+            var hasMountedVolume = false
+            for volume in volumes {
+                if volume.isMounted, let mountPoint = volume.mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
+                    usedBytes = (attributes.total - attributes.free)
+                    hasMountedVolume = true
+                    if (apfsContainer != nil) {
+                        break
+                    }
+                }
             }
+            // If no volumes are mounted, we can't calculate used space.
+            guard hasMountedVolume else { return (nil, nil, nil, nil) }
         }
         
-        if hasMountedVolume && totalBytes > 0 {
-            let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
-            let totalSizeStr = formatter.string(fromByteCount: totalBytes)
-            let freeSpaceStr = formatter.string(fromByteCount: totalBytes - usedBytes)
-            let usagePercentage = Double(usedBytes) / Double(totalBytes)
-            return (totalSizeStr, freeSpaceStr, usagePercentage)
-        }
-        return (nil, nil, nil)
+        let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
+        let totalSizeStr = formatter.string(fromByteCount: totalBytes)
+        let freeBytes = totalBytes - usedBytes
+        let freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0) // Ensure free space is not negative
+        let usedSpaceStr = formatter.string(fromByteCount: usedBytes)
+        let usagePercentage = Double(usedBytes) / Double(totalBytes)
+        
+        return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage)
     }
 
     private func createVolume(from volumeData: [String: Any]) -> Volume? {
@@ -388,45 +429,51 @@ class DriveManager: ObservableObject {
         
         let isProtected = PersistenceManager.shared.protectedVolumes.contains(deviceIdentifier)
         
-        var isVirtualDisk = false
-        if let session = DASessionCreate(kCFAllocatorDefault) {
-            if let disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, deviceIdentifier) {
-                if let desc = DADiskCopyDescription(disk) {
-                    let description = desc as! [String: Any]
-                    if description[kDADiskDescriptionDeviceModelKey as String] as? String == "Disk Image" {
-                        isVirtualDisk = true
-                    }
-                }
-            }
-        }
+        let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
+        let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
         
         let contentType = volumeData["Content"] as? String
-        let category: DriveCategory = (contentType == "EFI" && isVirtualDisk) ? .system : .user
+        let category: DriveCategory = (contentType == "EFI" && isParentVirtual) ? .system : .user
+        
         let isMounted = volumeData["MountPoint"] != nil
         let mountPoint = volumeData["MountPoint"] as? String
         let fileSystemType = contentType ?? (volumeData["FilesystemName"] as? String) ?? "Unknown"
-        var freeSpaceStr: String?, totalSizeStr: String?, usagePercentage: Double?
+        var freeSpaceStr: String?, totalSizeStr: String?, usedSpaceStr: String?, usagePercentage: Double?
 
         if isMounted, let mountPoint = mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
             let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
             freeSpaceStr = formatter.string(fromByteCount: attributes.free)
             totalSizeStr = formatter.string(fromByteCount: attributes.total)
+            usedSpaceStr = formatter.string(fromByteCount: attributes.total - attributes.free)
             if attributes.total > 0 { usagePercentage = Double(attributes.total - attributes.free) / Double(attributes.total) }
         }
         
         return Volume(id: deviceIdentifier, name: volumeName, isMounted: isMounted, mountPoint: mountPoint,
                       freeSpace: freeSpaceStr, totalSize: totalSizeStr, fileSystemType: fileSystemType,
-                      usagePercentage: usagePercentage, category: category, isProtected: isProtected)
+                      usagePercentage: usagePercentage, category: category, isProtected: isProtected, usedSpace: usedSpaceStr)
     }
 
-    private func getConnectionInfo(from infoPlist: [String: Any]?) -> (type: String, diskType: PhysicalDiskType) {
+    private func getConnectionInfo(from infoPlist: [String: Any]?, isInternal: Bool) -> (type: String, diskType: PhysicalDiskType) {
         let defaultType = NSLocalizedString("Unknown", comment: "Unknown connection type")
         guard let info = infoPlist else { return (defaultType, .physical) }
-        if info["VirtualOrPhysical"] as? String == "Virtual" {
-            return (NSLocalizedString("Disk Image", comment: "Disk Image"), .diskImage)
+        
+        let diskType: PhysicalDiskType
+        if isInternal {
+            diskType = .internalDisk
+        } else if info["VirtualOrPhysical"] as? String == "Virtual" {
+            diskType = .diskImage
+        } else {
+            diskType = .physical
         }
-        let connectionType = info["BusProtocol"] as? String ?? defaultType
-        return (connectionType, .physical)
+        
+        let connectionType: String
+        if diskType == .diskImage {
+            connectionType = NSLocalizedString("Disk Image", comment: "Disk Image")
+        } else {
+            connectionType = info["BusProtocol"] as? String ?? defaultType
+        }
+        
+        return (connectionType, diskType)
     }
     
     // MARK: - Error Parsing

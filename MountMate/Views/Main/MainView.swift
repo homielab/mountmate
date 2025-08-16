@@ -46,6 +46,10 @@ struct HeaderActionsView: View {
 struct MainView: View {
     @StateObject private var driveManager = DriveManager.shared
     @Environment(\.openWindow) var openWindow
+    
+    private var internalDisks: [PhysicalDisk] {
+        driveManager.physicalDisks.filter { $0.type == .internalDisk }
+    }
 
     private var externalDisks: [PhysicalDisk] {
         driveManager.physicalDisks.filter { $0.type == .physical }
@@ -85,6 +89,17 @@ struct MainView: View {
 
     private var driveListView: some View {
         List {
+            if !internalDisks.isEmpty {
+                Section(header: Text(NSLocalizedString("Internal Disks", comment: "Section header"))) {
+                    ForEach(internalDisks) { disk in
+                        DiskHeaderRow(disk: disk, manager: driveManager)
+                        ForEach(disk.volumes) { volume in
+                            VolumeRowView(volume: volume, manager: driveManager).padding(.leading, 24)
+                        }
+                    }
+                }
+            }
+            
             if !externalDisks.isEmpty {
                 Section(header: Text(NSLocalizedString("External Disks", comment: "Section header"))) {
                     ForEach(externalDisks) { disk in
@@ -144,8 +159,9 @@ struct DiskHeaderRow: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(disk.name ?? disk.connectionType).font(.headline)
-                    if let total = disk.totalSize, let free = disk.freeSpace {
-                        Text("\(disk.connectionType) • \(free) free of \(total)").font(.caption).foregroundColor(.secondary)
+                    if let total = disk.totalSize, let used = disk.usedSpace, let free = disk.freeSpace {
+                        Text("\(used) used / \(total) (\(free) free)")
+                            .font(.caption).foregroundColor(.secondary)
                     } else {
                         Text(disk.connectionType).font(.caption).foregroundColor(.secondary)
                     }
@@ -164,13 +180,15 @@ struct DiskHeaderRow: View {
 
             Spacer()
 
-            let isEjecting = manager.busyEjectingIdentifier == disk.id
-            Button(action: { manager.eject(disk: disk) }) {
-                Image(systemName: "eject.fill").opacity(isEjecting ? 0 : 1)
+            if disk.type != .internalDisk {
+                let isEjecting = manager.busyEjectingIdentifier == disk.id
+                Button(action: { manager.eject(disk: disk) }) {
+                    Image(systemName: "eject.fill").opacity(isEjecting ? 0 : 1)
+                }
+                .buttonStyle(.bordered).tint(.purple).disabled(isEjecting)
+                .overlay { if isEjecting { ProgressView().controlSize(.small) } }
+                .help(NSLocalizedString("Eject", comment: "Eject button tooltip"))
             }
-            .buttonStyle(.bordered).tint(.purple).disabled(isEjecting)
-            .overlay { if isEjecting { ProgressView().controlSize(.small) } }
-            .help(NSLocalizedString("Eject", comment: "Eject button tooltip"))
         }
         .padding(.vertical, 8)
     }
@@ -209,10 +227,15 @@ struct VolumeRowView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(volume.isMounted ? .primary : .secondary)
 
-                    if !volume.isMounted {
-                        Text("Unmounted").font(.caption).foregroundColor(.secondary)
-                    } else if let fsType = volume.fileSystemType {
-                        Text(fsType).font(.caption).foregroundColor(.secondary)
+                    if volume.isMounted {
+                       if let total = volume.totalSize, let used = volume.usedSpace {
+                           Text("\(used) / \(total)")
+                               .font(.caption).foregroundColor(.secondary)
+                       } else if let fsType = volume.fileSystemType {
+                           Text(fsType).font(.caption).foregroundColor(.secondary)
+                       }
+                    } else {
+                       Text("Unmounted").font(.caption).foregroundColor(.secondary)
                     }
                 }
                 Spacer()

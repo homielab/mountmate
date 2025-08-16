@@ -9,6 +9,7 @@ struct SettingsView: View {
     
     @StateObject private var persistence = PersistenceManager.shared
     @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
+    @AppStorage("showInternalDisks") private var showInternalDisks = false
     
     @State private var selectedLanguage: String = {
         guard let preferredLanguages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
@@ -49,6 +50,7 @@ struct SettingsView: View {
                 Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
                 Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
                 Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)
+                Toggle("Show Internal Disks", isOn: $showInternalDisks)
                 Picker("Language", selection: $selectedLanguage) {
                     Text("English").tag("en")
                     Text("Tiếng Việt").tag("vi")
@@ -74,7 +76,6 @@ struct SettingsView: View {
             }
             .foregroundColor(.primary)
 
-            Spacer()
             Text(appVersion).font(.caption).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .center)
         }
         .formStyle(.grouped).padding()

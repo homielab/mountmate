@@ -9,6 +9,8 @@
 "Connect a USB drive, SD card, or mount a disk image to see it here." = "连接 USB 设备、SD 卡或挂载磁盘镜像后将在此显示。";
 "External Disks" = "外置磁盘";
 "Disk Images" = "磁盘镜像";
+"Internal Disks" = "Internal Disks";
+
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
@@ -47,6 +49,7 @@
 "Start MountMate at Login" = "登录时启动 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自动挂载";
 "Unmount All Disks on Sleep" = "休眠时卸载所有磁盘";
+"Show Internal Disks" = "Show Internal Disks";
 "Language" = "语言";
 
 // About & Updates Section
@@ -65,6 +68,7 @@
 //=============================================
 
 "OK" = "确定";
+"Cancel" = "Cancel";
 "Eject Failed" = "弹出失败";
 "Mount Failed" = "挂载失败";
 "Unmount Failed" = "卸载失败";
