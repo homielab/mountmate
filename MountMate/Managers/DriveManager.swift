@@ -299,7 +299,9 @@ class DriveManager: ObservableObject {
         let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
         
         for diskData in allDisksAndPartitions {
-            let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
+            guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
+            
+            let infoPlist = getInfoForDisk(for: physicalIdentifier)
 
             let isInternal = (infoPlist?["Internal"] as? Bool) ?? false
             if isInternal && !shouldShowInternalDisks {
@@ -310,8 +312,6 @@ class DriveManager: ObservableObject {
             if isContainer {
                 continue
             }
-            
-            guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
             
             var allVolumes: [Volume] = []
             var apfsContainer: [String: Any]?
@@ -421,29 +421,28 @@ class DriveManager: ObservableObject {
 
     private func createVolume(from volumeData: [String: Any]) -> Volume? {
         guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String,
-              let diskID = volumeData["DiskUUID"] as? String,
-              let volumeName = volumeData["VolumeName"] as? String else {
-            // skip if no UUID
-            return nil
-        }
-
-        if PersistenceManager.shared.isVolumeIgnored(id: diskID) {
+              let volumeName = volumeData["VolumeName"] as? String,
+              let volumeUUID = volumeData["VolumeUUID"] as? String,
+              let diskUUID = volumeData["DiskUUID"] as? String else {
             return nil
         }
         
-        let isProtected = PersistenceManager.shared.isVolumeProtected(id: diskID)
+        if PersistenceManager.shared.isVolumeIgnored(volumeUUID: volumeUUID, diskUUID: diskUUID) {
+            return nil
+        }
+        
+        let isProtected = PersistenceManager.shared.isVolumeProtected(volumeUUID: volumeUUID, diskUUID: diskUUID)
 
         let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
         let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
-        
         let contentType = volumeData["Content"] as? String
         let category: DriveCategory = (contentType == "EFI" && isParentVirtual) ? .system : .user
-        
+
         let isMounted = volumeData["MountPoint"] != nil
         let mountPoint = volumeData["MountPoint"] as? String
         let fileSystemType = contentType ?? (volumeData["FilesystemName"] as? String) ?? "Unknown"
+        
         var freeSpaceStr: String?, totalSizeStr: String?, usedSpaceStr: String?, usagePercentage: Double?
-
         if isMounted, let mountPoint = mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
             let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
             freeSpaceStr = formatter.string(fromByteCount: attributes.free)
@@ -453,8 +452,9 @@ class DriveManager: ObservableObject {
         }
         
         return Volume(
-            diskID: diskID,
+            id: volumeUUID,
             deviceIdentifier: deviceIdentifier,
+            diskUUID: diskUUID,
             name: volumeName,
             isMounted: isMounted,
             mountPoint: mountPoint,

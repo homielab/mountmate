@@ -94,12 +94,8 @@ struct SettingsView: View {
                     }
                 } else {
                     List {
-                        ForEach(persistence.ignoredVolumes) { managedVolume in
-                            ManagedVolumeRow(
-                                name: managedVolume.name,
-                                uuid: managedVolume.id,
-                                onDelete: { persistence.unignoreVolume(id: managedVolume.id) }
-                            )
+                        ForEach(persistence.ignoredVolumes) { info in
+                            ManagedVolumeRow(info: info, onDelete: { persistence.unignore(info: info) })
                         }
                     }
                 }
@@ -112,14 +108,8 @@ struct SettingsView: View {
                         Text("No Protected Volumes").fontWeight(.semibold)
                     }
                 } else {
-                    List {
-                        ForEach(persistence.protectedVolumes) { managedVolume in
-                            ManagedVolumeRow(
-                                name: managedVolume.name,
-                                uuid: managedVolume.id,
-                                onDelete: { persistence.unprotectVolume(id: managedVolume.id) }
-                            )
-                        }
+                    ForEach(persistence.protectedVolumes) { info in
+                        ManagedVolumeRow(info: info, onDelete: { persistence.unprotect(info: info) })
                     }
                 }
             }
@@ -139,23 +129,23 @@ struct SettingsView: View {
 }
 
 struct ManagedVolumeRow: View {
-    let name: String
-    let uuid: String
+    let info: ManagedVolumeInfo
     let onDelete: () -> Void
     
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(name).fontWeight(.semibold)
-                Text(uuid)
+                Text(info.name).fontWeight(.semibold)
+                Text("Volume: \(info.volumeUUID)")
                     .font(.system(.caption, design: .monospaced))
                     .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                    .lineLimit(1).truncationMode(.middle)
+                Text("Disk: \(info.diskUUID)")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1).truncationMode(.middle)
             }
-
             Spacer()
-
             Button(role: .destructive) {
                 onDelete()
                 DriveManager.shared.refreshDrives(qos: .userInitiated)
