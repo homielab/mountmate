@@ -257,7 +257,7 @@ struct VolumeRowView: View {
                     Divider()
                     if volume.isProtected {
                         Button {
-                            PersistenceManager.shared.unprotect(volumeUUID: volume.id)
+                            PersistenceManager.shared.unprotectVolume(id: volume.id)
                             DriveManager.shared.refreshDrives(qos: .userInitiated)
                         } label: {
                             Label("Unprotect from 'Unmount All'", systemImage: "lock.open.fill")

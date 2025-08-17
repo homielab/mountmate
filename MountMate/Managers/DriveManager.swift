@@ -110,7 +110,7 @@ class DriveManager: ObservableObject {
     }
 
     private func handleDiskUtilError(_ error: String, volume: Volume?, volumeName: String, operation: DiskOperation) {
-        let err = self.parseDiskUtilError2(error, for: volumeName, operation: operation)
+        let err = self.parseDiskUtilError(error, for: volumeName, operation: operation)
         let title: String
         let message: String
         let kind: AppAlertKind
@@ -421,17 +421,17 @@ class DriveManager: ObservableObject {
 
     private func createVolume(from volumeData: [String: Any]) -> Volume? {
         guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String,
-              let volumeName = volumeData["VolumeName"] as? String,
-              let volumeUUID = volumeData["VolumeUUID"] as? String else {
+              let diskID = volumeData["DiskUUID"] as? String,
+              let volumeName = volumeData["VolumeName"] as? String else {
             // skip if no UUID
             return nil
         }
 
-        if PersistenceManager.shared.isIgnored(volumeUUID: volumeUUID) {
+        if PersistenceManager.shared.isVolumeIgnored(id: diskID) {
             return nil
         }
         
-        let isProtected = PersistenceManager.shared.isProtected(volumeUUID: volumeUUID)
+        let isProtected = PersistenceManager.shared.isVolumeProtected(id: diskID)
 
         let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
         let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
@@ -453,7 +453,7 @@ class DriveManager: ObservableObject {
         }
         
         return Volume(
-            id: volumeUUID,
+            diskID: diskID,
             deviceIdentifier: deviceIdentifier,
             name: volumeName,
             isMounted: isMounted,
@@ -505,7 +505,7 @@ class DriveManager: ObservableObject {
              other
     }
 
-    private func parseDiskUtilError2(_ rawError: String, for name: String, operation: DiskOperation) -> DiskUtilError {
+    private func parseDiskUtilError(_ rawError: String, for name: String, operation: DiskOperation) -> DiskUtilError {
         let lowerCaseError = rawError.lowercased()
 
         if operation == .mount && name.uppercased() == "EFI" {

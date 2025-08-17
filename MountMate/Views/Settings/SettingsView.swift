@@ -98,7 +98,7 @@ struct SettingsView: View {
                             ManagedVolumeRow(
                                 name: managedVolume.name,
                                 uuid: managedVolume.id,
-                                onDelete: { persistence.unignore(volumeUUID: managedVolume.id) }
+                                onDelete: { persistence.unignoreVolume(id: managedVolume.id) }
                             )
                         }
                     }
@@ -117,7 +117,7 @@ struct SettingsView: View {
                             ManagedVolumeRow(
                                 name: managedVolume.name,
                                 uuid: managedVolume.id,
-                                onDelete: { persistence.unprotect(volumeUUID: managedVolume.id) }
+                                onDelete: { persistence.unprotectVolume(id: managedVolume.id) }
                             )
                         }
                     }
