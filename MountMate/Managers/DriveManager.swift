@@ -96,12 +96,7 @@ class DriveManager: ObservableObject {
             let result = runShell("diskutil eject \(disk.id)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    self.handleDiskUtilError(
-                        error,
-                        volume: nil,
-                        volumeName: disk.name ?? disk.id,
-                        operation: .eject,
-                    )
+                    self.handleDiskUtilError(error, for: disk.name ?? disk.id, with: nil, operation: .eject)
                 }
                 self.busyEjectingIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
@@ -109,135 +104,15 @@ class DriveManager: ObservableObject {
         }
     }
 
-    private func handleDiskUtilError(_ error: String, volume: Volume?, volumeName: String, operation: DiskOperation) {
-        let err = self.parseDiskUtilError(error, for: volumeName, operation: operation)
-        let title: String
-        let message: String
-        let kind: AppAlertKind
-
-        switch err {
-            case .mountLockedVolume:
-                // TODO: Localize.
-                title = String(
-                    format: "“%@” is locked",
-                    volumeName
-                )
-
-                message = String(
-                    format: "Enter the password to unlock “%@”",
-                    volumeName
-                )
-
-                kind = .lockedVolume(LockedVolumeAppAlert { passphrase in
-                    guard let volume else {
-                        print("handleDiskUtilError was called for error '\(err)' without volume")
-
-                        return
-                    }
-
-                    self.mountLockedVolume(volume, passphrase: passphrase)
-                })
-            case .mountEFIVolume:
-                title = NSLocalizedString("Mount Failed", comment: "Alert title")
-                message = String(
-                    format: NSLocalizedString(
-                        "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.",
-                        comment: "User-friendly error for a failed EFI mount."
-                    ),
-                    volumeName
-                )
-
-                kind = .basic
-            case .unmountBusyVolume:
-                title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-                message = String(
-                    format: NSLocalizedString(
-                        "Failed to eject “%@” because one of its volumes is busy or in use.",
-                        comment: "User-friendly error for a partial eject failure. %@ is disk name."
-                    ),
-                    volumeName
-                )
-
-                kind = .basic
-            case .mountInUseVolume:
-                title = NSLocalizedString("Mount Failed", comment: "Alert title")
-                message = String(
-                    format: NSLocalizedString(
-                        "Failed to %@ “%@” because it is currently in use by another application.",
-                        comment: "Error message"
-                    ),
-                    NSLocalizedString("mount", comment: "verb"),
-                    volumeName
-                )
-
-                kind = .basic
-            case .unmountInUseVolume:
-                title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-                message = String(
-                    format: NSLocalizedString(
-                        "Failed to %@ “%@” because it is currently in use by another application.",
-                        comment: "Error message"
-                    ),
-                    NSLocalizedString("unmount", comment: "verb"),
-                    volumeName
-                )
-
-                kind = .basic
-            case .ejectInUseVolume:
-                title = NSLocalizedString("Eject Failed", comment: "Alert title")
-                message = String(
-                    format: NSLocalizedString(
-                        "Failed to %@ “%@” because it is currently in use by another application.",
-                        comment: "Error message"
-                    ),
-                    NSLocalizedString("eject", comment: "verb"),
-                    volumeName
-                )
-
-                kind = .basic
-            case .other:
-                let genericFormatString = NSLocalizedString(
-                    "An unknown error occurred while trying to %@ “%@”.",
-                    comment: "Error message"
-                )
-
-                let actionString: String
-
-                switch operation {
-                    case .mount:
-                        title = NSLocalizedString("Mount Failed", comment: "Alert title")
-                        actionString = "mount"
-                    case .unmount:
-                        title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-                        actionString = "unmount"
-                    case .eject:
-                        title = NSLocalizedString("Eject Failed", comment: "Alert title")
-                        actionString = "eject"
-                }
-
-                message = "\(String(format: genericFormatString, actionString, volumeName))\n\nDetails:\n\(error)"
-                kind = .basic
-        }
-
-        self.operationError = AppAlert(title: title, message: message, kind: kind)
-    }
-
     func mount(volume: Volume) {
         let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-        
         DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
-        
         DispatchQueue.global(qos: .userInitiated).async {
             let result = runShell("diskutil mount \(volume.deviceIdentifier)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    self.handleDiskUtilError(
-                        error,
-                        volume: volume,
-                        volumeName: volume.name,
-                        operation: .mount
-                    )
+                    self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
                 }
                 self.busyVolumeIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
@@ -248,21 +123,14 @@ class DriveManager: ObservableObject {
     func mountLockedVolume(_ volume: Volume, passphrase: String) {
         let userInfo = ["deviceIdentifier": volume.id]
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-        DispatchQueue.main.async {
-            self.busyVolumeIdentifier = volume.id
-        }
+        DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
 
         DispatchQueue.global(qos: .userInitiated).async {
+            // Note the use of the 'input' parameter here
             let result = runShell("diskutil apfs unlockVolume \(volume.id) -stdinpassphrase", input: Data(passphrase.utf8))
-
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    self.handleDiskUtilError(
-                        error,
-                        volume: nil,
-                        volumeName: volume.name,
-                        operation: .mount
-                    )
+                    self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
                 }
                 self.busyVolumeIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
@@ -272,17 +140,11 @@ class DriveManager: ObservableObject {
 
     func unmount(volume: Volume) {
         DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
-
         DispatchQueue.global(qos: .userInitiated).async {
             let result = runShell("diskutil unmount \(volume.deviceIdentifier)")
             DispatchQueue.main.async {
                 if let error = result.error, !error.isEmpty {
-                    self.handleDiskUtilError(
-                        error,
-                        volume: nil,
-                        volumeName: volume.name,
-                        operation: .unmount,
-                    )
+                    self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .unmount)
                 }
                 self.busyVolumeIdentifier = nil
                 self.refreshDrives(qos: .userInitiated)
@@ -295,77 +157,58 @@ class DriveManager: ObservableObject {
     private func parseDisks(from plist: [String: Any]) -> [PhysicalDisk] {
         guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else { return [] }
         var newDisks: [PhysicalDisk] = []
-        
         let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
         
         for diskData in allDisksAndPartitions {
+            let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
+            if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
+            if diskData["Content"] as? String == "Apple_APFS_Container" { continue }
+            
             guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
-            
-            let infoPlist = getInfoForDisk(for: physicalIdentifier)
-
-            let isInternal = (infoPlist?["Internal"] as? Bool) ?? false
-            if isInternal && !shouldShowInternalDisks {
-                continue
-            }
-
-            let isContainer = diskData["Content"] as? String == "Apple_APFS_Container"
-            if isContainer {
-                continue
-            }
-            
-            var allVolumes: [Volume] = []
-            var apfsContainer: [String: Any]?
-                    
-            if let partitions = diskData["Partitions"] as? [[String: Any]] {
-                for partitionData in partitions {
-                    if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
-                        let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
-                        apfsContainer = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions)
-                        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
-                            allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
-                        }
-                    } else {
-                        if let volume = createVolume(from: partitionData) { allVolumes.append(volume) }
-                    }
-                }
-            }
-            
-            if let apfsVolumes = diskData["APFSVolumes"] as? [[String: Any]] {
-                 allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
-            }
+            let (allVolumes, apfsContainer) = getVolumes(for: diskData, in: allDisksAndPartitions)
 
             if !allVolumes.isEmpty {
-                let connectionInfo = getConnectionInfo(from: infoPlist, isInternal: isInternal)
+                let connectionInfo = getConnectionInfo(from: infoPlist, isInternal: (infoPlist?["Internal"] as? Bool) ?? false)
                 let diskName = infoPlist?["IORegistryEntryName"] as? String ?? infoPlist?["MediaName"] as? String ?? allVolumes.first(where: { $0.category == .user })?.name
                 let totalBytes = diskData["Size"] as? Int64 ?? 0
-                let (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage) = calculateParentDiskStats(
-                    totalBytes: totalBytes,
-                    volumes: allVolumes,
-                    apfsContainer: apfsContainer
-                )
+                let stats = calculateParentDiskStats(totalBytes: totalBytes, volumes: allVolumes, apfsContainer: apfsContainer)
 
-                let physicalDisk = PhysicalDisk(
-                    id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes,
-                    name: diskName, totalSize: totalSizeStr, freeSpace: freeSpaceStr,
-                    usagePercentage: usagePercentage, type: connectionInfo.diskType, usedSpace: usedSpaceStr
-                )
+                let physicalDisk = PhysicalDisk(id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes,
+                                                name: diskName, totalSize: stats.total, freeSpace: stats.free,
+                                                usagePercentage: stats.percentage, type: connectionInfo.diskType, usedSpace: stats.used)
                 newDisks.append(physicalDisk)
             }
         }
         return newDisks.sorted {
-            // Custom sort order: Internal -> Physical -> Disk Image
-            let order: (PhysicalDiskType) -> Int = { type in
-                switch type {
-                case .internalDisk: return 0
-                case .physical: return 1
-                case .diskImage: return 2
-                }
-            }
-            if order($0.type) != order($1.type) {
-                return order($0.type) < order($1.type)
-            }
+            let order: (PhysicalDiskType) -> Int = { type in type == .internalDisk ? 0 : (type == .physical ? 1 : 2) }
+            if order($0.type) != order($1.type) { return order($0.type) < order($1.type) }
             return ($0.name ?? "") < ($1.name ?? "")
         }
+    }
+    
+    private func getVolumes(for diskData: [String: Any], in allDisks: [[String: Any]]) -> ([Volume], [String: Any]?) {
+        var allVolumes: [Volume] = []
+        var apfsContainer: [String: Any]?
+        
+        if let partitions = diskData["Partitions"] as? [[String: Any]] {
+            for partitionData in partitions {
+                if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
+                    let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
+                    apfsContainer = findAPFSContainer(forStore: storeID, in: allDisks)
+                    if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
+                        allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
+                    }
+                } else {
+                    if let volume = createVolume(from: partitionData) { allVolumes.append(volume) }
+                }
+            }
+        }
+        
+        if let apfsVolumes = diskData["APFSVolumes"] as? [[String: Any]] {
+             allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
+        }
+        
+        return (allVolumes, apfsContainer)
     }
 
     public func getInfoForDisk(for identifier: String) -> [String: Any]? {
@@ -385,36 +228,29 @@ class DriveManager: ObservableObject {
         }
     }
     
-    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume], apfsContainer: [String: Any]?) -> (String?, String?, String?, Double?) {
+    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume], apfsContainer: [String: Any]?) -> (total: String?, free: String?, used: String?, percentage: Double?) {
         guard totalBytes > 0 else { return (nil, nil, nil, nil) }
-
         var usedBytes: Int64 = 0
 
-        if let container = apfsContainer, let capacityInUse = container["CapacityInUse"] as? Int64 {
-            // For APFS, the container gives the single, true 'used' value.
-            usedBytes = capacityInUse
+        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
+            usedBytes = apfsVolumes.reduce(0) { $0 + ($1["CapacityInUse"] as? Int64 ?? 0) }
         } else {
-            // non-APFS disks (like ExFAT, HFS+) ---
             var hasMountedVolume = false
             for volume in volumes {
                 if volume.isMounted, let mountPoint = volume.mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
-                    usedBytes = (attributes.total - attributes.free)
+                    usedBytes += (attributes.total - attributes.free)
                     hasMountedVolume = true
-                    if (apfsContainer != nil) {
-                        break
-                    }
                 }
             }
-            // If no volumes are mounted, we can't calculate used space.
             guard hasMountedVolume else { return (nil, nil, nil, nil) }
         }
         
         let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
         let totalSizeStr = formatter.string(fromByteCount: totalBytes)
         let freeBytes = totalBytes - usedBytes
-        let freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0) // Ensure free space is not negative
+        let freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
         let usedSpaceStr = formatter.string(fromByteCount: usedBytes)
-        let usagePercentage = Double(usedBytes) / Double(totalBytes)
+        let usagePercentage = min(1.0, Double(usedBytes) / Double(totalBytes))
         
         return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage)
     }
@@ -491,18 +327,55 @@ class DriveManager: ObservableObject {
         return (connectionType, diskType)
     }
     
-    // MARK: - Error Parsing
+    // MARK: - Error Handling
     
     private enum DiskOperation { case mount, unmount, eject }
+    private enum DiskUtilError { case mountEFIVolume, unmountBusyVolume, mountInUseVolume, unmountInUseVolume, ejectInUseVolume, mountLockedVolume, other }
 
-    private enum DiskUtilError {
-        case mountEFIVolume,
-             unmountBusyVolume,
-             mountInUseVolume,
-             unmountInUseVolume,
-             ejectInUseVolume,
-             mountLockedVolume,
-             other
+    private func handleDiskUtilError(_ error: String, for name: String, with volume: Volume?, operation: DiskOperation) {
+        let parsedError = self.parseDiskUtilError(error, for: name, operation: operation)
+        let title: String
+        let message: String
+        let kind: AppAlertKind
+
+        switch parsedError {
+            case .mountLockedVolume:
+                title = String(format: NSLocalizedString("“%@” is locked", comment: "Alert title"), name)
+                message = String(format: NSLocalizedString("Enter the password to unlock “%@”", comment: "Alert message"), name)
+                let handler = { (passphrase: String) in
+                    guard let volume = volume else { return }
+                    self.mountLockedVolume(volume, passphrase: passphrase)
+                }
+                let lockedVolumeAlert = LockedVolumeAppAlert(onConfirm: handler)
+                kind = .lockedVolume(lockedVolumeAlert)
+            case .mountEFIVolume:
+                title = NSLocalizedString("Mount Failed", comment: "Alert title")
+                message = NSLocalizedString("The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.", comment: "Error message")
+                kind = .basic
+            case .unmountBusyVolume:
+                title = NSLocalizedString("Eject Failed", comment: "Alert title")
+                message = String(format: NSLocalizedString("Failed to eject “%@” because one of its volumes is busy or in use.", comment: "Error message"), name)
+                kind = .basic
+            case .mountInUseVolume, .unmountInUseVolume, .ejectInUseVolume:
+                let verb: String
+                switch parsedError {
+                case .mountInUseVolume: title = NSLocalizedString("Mount Failed", comment: "Alert title"); verb = NSLocalizedString("mount", comment: "verb")
+                case .unmountInUseVolume: title = NSLocalizedString("Unmount Failed", comment: "Alert title"); verb = NSLocalizedString("unmount", comment: "verb")
+                default: title = NSLocalizedString("Eject Failed", comment: "Alert title"); verb = NSLocalizedString("eject", comment: "verb")
+                }
+                message = String(format: NSLocalizedString("Failed to %@ “%@” because it is currently in use by another application.", comment: "Error message"), verb, name)
+                kind = .basic
+            case .other:
+                let verb: String
+                switch operation {
+                case .mount: title = NSLocalizedString("Mount Failed", comment: "Alert title"); verb = "mount"
+                case .unmount: title = NSLocalizedString("Unmount Failed", comment: "Alert title"); verb = "unmount"
+                case .eject: title = NSLocalizedString("Eject Failed", comment: "Alert title"); verb = "eject"
+                }
+                message = "\(String(format: NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message"), verb, name))\n\nDetails:\n\(error)"
+                kind = .basic
+        }
+        self.operationError = AppAlert(title: title, message: message, kind: kind)
     }
 
     private func parseDiskUtilError(_ rawError: String, for name: String, operation: DiskOperation) -> DiskUtilError {

@@ -60,8 +60,6 @@
 "Check for Updates..." = "检查更新...";
 
 // Management Tab
-//"Ignored Disks" = "已忽略磁盘";
-//"No ignored disks. Right-click a disk in the main list to ignore it." = "暂无已忽略磁盘。右键点击磁盘可选择忽略。";
 "Ignored Volumes" = "Ignored Volumes";
 "No Ignored Volumes" = "No Ignored Volumes";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
@@ -77,6 +75,10 @@
 "Eject Failed" = "弹出失败";
 "Mount Failed" = "挂载失败";
 "Unmount Failed" = "卸载失败";
+"“%@” is locked" = "“%@” is locked";
+"Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
+"Password" = "Password";
+"Unlock" = "Unlock";
 
 // Verbs for error messages
 "unmount" = "卸载";

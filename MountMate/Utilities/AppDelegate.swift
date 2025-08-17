@@ -34,32 +34,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.messageText = appAlert.title
         alert.informativeText = appAlert.message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: NSLocalizedString("OK", comment: "OK button"))
-
-        // TODO: Use Auto Layout
-        let secureTextField = NSSecureTextField(frame: NSRect(origin: .zero, size: CGSize(width: 225, height: 20)))
-        secureTextField.translatesAutoresizingMaskIntoConstraints = false
-        // TODO: Localize.
-        secureTextField.placeholderString = "Password"
-        secureTextField.contentType = .password
         
-        if case .lockedVolume = appAlert.kind {
+        switch appAlert.kind {
+        case .basic:
+            alert.addButton(withTitle: NSLocalizedString("OK", comment: "OK button"))
+            
+        case .lockedVolume(let lockedVolumeAlert):
+            let textField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+            textField.placeholderString = NSLocalizedString("Password", comment: "Password field placeholder")
+            alert.accessoryView = textField
+            
+            alert.addButton(withTitle: NSLocalizedString("Unlock", comment: "Unlock button"))
             alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
-
-            alert.accessoryView = secureTextField
         }
-
+        
         NSApp.activate(ignoringOtherApps: true)
-
         let response = alert.runModal()
+        
+        if response == .alertFirstButtonReturn {
+            if case .lockedVolume(let lockedVolumeAlert) = appAlert.kind {
+                if let textField = alert.accessoryView as? NSSecureTextField {
+                    lockedVolumeAlert.onConfirm(textField.stringValue)
+                }
+            }
+        }
+        
         DriveManager.shared.operationError = nil
-
-        guard response == .alertFirstButtonReturn else {
-            return
-        }
-
-        if case let .lockedVolume(alert) = appAlert.kind {
-            alert.action(secureTextField.stringValue)
-        }
     }
 }

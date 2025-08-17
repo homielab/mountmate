@@ -63,8 +63,6 @@
 "Check for Updates..." = "Kiểm tra cập nhật...";
 
 // Management Tab
-//"Ignored Disks" = "Ổ đĩa bị bỏ qua";
-//"No ignored disks. Right-click a disk in the main list to ignore it." = "Không có ổ đĩa nào bị bỏ qua. Nhấp chuột phải vào một ổ đĩa trong danh sách chính để bỏ qua nó.";
 "Ignored Volumes" = "Phân vùng bị bỏ qua";
 "No Ignored Volumes" = "Không có phân vùng bị bỏ qua";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Nhấp chuột phải vào một phân vùng để bỏ qua. Hữu ích cho các phân vùng hệ thống như 'EFI' mà bạn không cần quản lý.";
@@ -81,6 +79,10 @@
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
+"“%@” is locked" = "“%@” đã bị khoá";
+"Enter the password to unlock “%@”" = "Nhập mật khẩu để mở khoá “%@”";
+"Password" = "Mật khẩu";
+"Unlock" = "Mở khoá";
 
 // Verbs for error messages
 "unmount" = "tháo";

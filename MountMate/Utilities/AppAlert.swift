@@ -3,12 +3,12 @@
 import Foundation
 
 struct LockedVolumeAppAlert {
-    let action: (String) -> Void
+    let onConfirm: (String) -> Void
 }
 
 enum AppAlertKind {
-    case basic,
-         lockedVolume(LockedVolumeAppAlert)
+    case basic
+    case lockedVolume(LockedVolumeAppAlert)
 }
 
 struct AppAlert: Identifiable {

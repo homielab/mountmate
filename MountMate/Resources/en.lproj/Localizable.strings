@@ -63,8 +63,6 @@
 "Check for Updates..." = "Check for Updates...";
 
 // Management Tab
-//"Ignored Disks" = "Ignored Disks";
-//"No ignored disks. Right-click a disk in the main list to ignore it." = "No ignored disks. Right-click a disk in the main list to ignore it.";
 "Ignored Volumes" = "Ignored Volumes";
 "No Ignored Volumes" = "No Ignored Volumes";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
@@ -81,6 +79,10 @@
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";
+"“%@” is locked" = "“%@” is locked";
+"Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
+"Password" = "Password";
+"Unlock" = "Unlock";
 
 // Verbs for error messages
 "unmount" = "unmount";
