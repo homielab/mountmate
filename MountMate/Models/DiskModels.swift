@@ -3,7 +3,10 @@
 import Foundation
 
 struct Volume: Identifiable, Hashable {
-    let id: String // The persistent VolumeUUID
+    /// The ID of the disk.
+    ///
+    /// This differs from ``deviceIdentifier`` in that it persists across restarts.
+    let diskID: String
     let deviceIdentifier: String // e.g., disk4s1
     let name: String
     let isMounted: Bool
@@ -15,6 +18,10 @@ struct Volume: Identifiable, Hashable {
     let category: DriveCategory
     var isProtected: Bool
     let usedSpace: String?
+
+    var id: String {
+        diskID
+    }
 }
 
 enum PhysicalDiskType {

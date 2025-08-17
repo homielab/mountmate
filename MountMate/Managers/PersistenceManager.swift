@@ -27,19 +27,19 @@ class PersistenceManager: ObservableObject {
     }
     
     func protect(volume: Volume) {
-        guard !isProtected(volumeUUID: volume.id) else { return }
+        guard !isVolumeProtected(id: volume.id) else { return }
         let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
         protectedVolumes.append(info)
         saveProtectedVolumes()
     }
     
-    func unprotect(volumeUUID: String) {
-        protectedVolumes.removeAll { $0.id == volumeUUID }
+    func unprotectVolume(id: String) {
+        protectedVolumes.removeAll { $0.id == id }
         saveProtectedVolumes()
     }
     
     func ignore(volume: Volume) {
-        guard !isIgnored(volumeUUID: volume.id) else { return }
+        guard !isVolumeIgnored(id: volume.id) else { return }
         let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
         ignoredVolumes.append(info)
         saveIgnoredVolumes()
@@ -47,7 +47,7 @@ class PersistenceManager: ObservableObject {
     
     func ignore(volumes: [Volume]) {
         for volume in volumes {
-            if !isIgnored(volumeUUID: volume.id) {
+            if !isVolumeIgnored(id: volume.id) {
                 let info = ManagedVolumeInfo(id: volume.id, name: volume.name)
                 ignoredVolumes.append(info)
             }
@@ -55,19 +55,19 @@ class PersistenceManager: ObservableObject {
         saveIgnoredVolumes()
     }
     
-    func unignore(volumeUUID: String) {
-        ignoredVolumes.removeAll { $0.id == volumeUUID }
+    func unignoreVolume(id: String) {
+        ignoredVolumes.removeAll { $0.id == id }
         saveIgnoredVolumes()
     }
     
     // MARK: - Helper Checkers
     
-    func isProtected(volumeUUID: String) -> Bool {
-        protectedVolumes.contains { $0.id == volumeUUID }
+    func isVolumeProtected(id: String) -> Bool {
+        protectedVolumes.contains { $0.id == id }
     }
     
-    func isIgnored(volumeUUID: String) -> Bool {
-        ignoredVolumes.contains { $0.id == volumeUUID }
+    func isVolumeIgnored(id: String) -> Bool {
+        ignoredVolumes.contains { $0.id == id }
     }
     
     // MARK: - Private Save Methods
