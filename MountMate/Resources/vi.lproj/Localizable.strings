@@ -95,6 +95,11 @@
 "Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
 "An unknown error occurred while trying to %@ “%@”." = "Đã xảy ra lỗi không xác định khi đang cố gắng %@ “%@”.";
 
+// New Refresh Error Strings
+"Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
+"Failed to get disk list from `diskutil`. The command may have failed or returned empty." = "Không thể lấy danh sách ổ đĩa từ `diskutil`. Lệnh có thể đã thất bại hoặc trả về kết quả trống.";
+"Data Parsing Error" = "Lỗi phân tích dữ liệu";
+"Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
 
 // MARK: - App Lifecycle
 //=============================================

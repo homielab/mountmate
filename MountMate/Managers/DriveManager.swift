@@ -36,11 +36,19 @@ class DriveManager: ObservableObject {
         DispatchQueue.global(qos: qos).async { [weak self] in
             guard let self = self else { return }
             let allDisksOutput = runShell("diskutil list -plist").output
-            guard let allDisksData = allDisksOutput?.data(using: .utf8) else {
+            guard let allDisksData = allDisksOutput?.data(using: .utf8), !allDisksOutput!.isEmpty else {
+                let errorMessage = "Failed to get disk list from `diskutil`. The command may have failed or returned empty."
+                print("ERROR: \(errorMessage)")
                 DispatchQueue.main.async {
                     self.physicalDisks = []
                     self.isRefreshing = false
                     if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
+                    
+                    self.operationError = AppAlert(
+                        title: NSLocalizedString("Could Not Load Disks", comment: "Alert title for a failed refresh"),
+                        message: NSLocalizedString(errorMessage, comment: "Alert message for a failed refresh"),
+                        kind: .basic
+                    )
                 }
                 return
             }
@@ -59,11 +67,18 @@ class DriveManager: ObservableObject {
                     }
                 }
             } catch {
-                print("Error parsing diskutil list plist: \(error)")
+                let errorMessage = "Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt."
+                print("ERROR: \(errorMessage) - \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     self.physicalDisks = []
                     self.isRefreshing = false
                     if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
+                    
+                    self.operationError = AppAlert(
+                        title: NSLocalizedString("Data Parsing Error", comment: "Alert title for a data parsing error"),
+                        message: "\(NSLocalizedString(errorMessage, comment: "Alert message for a data parsing error"))\n\nDetails: \(error.localizedDescription)",
+                        kind: .basic
+                    )
                 }
             }
         }

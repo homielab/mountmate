@@ -95,6 +95,11 @@
 "Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
 "An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
 
+// New Refresh Error Strings
+"Could Not Load Disks" = "Could Not Load Disks";
+"Failed to get disk list from `diskutil`. The command may have failed or returned empty." = "Failed to get disk list from `diskutil`. The command may have failed or returned empty.";
+"Data Parsing Error" = "Data Parsing Error";
+"Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt.";
 
 // MARK: - App Lifecycle
 //=============================================
