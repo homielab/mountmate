@@ -170,17 +170,49 @@ class DriveManager: ObservableObject {
     // MARK: - Parsing and Data Creation Helpers
 
     private func parseDisks(from plist: [String: Any]) -> [PhysicalDisk] {
-        guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else { return [] }
-        var newDisks: [PhysicalDisk] = []
+        guard let wholeDiskIdentifiers = plist["WholeDisks"] as? [String],
+            let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
+            return []
+        }
+        
         let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
         
-        for diskData in allDisksAndPartitions {
-            let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
-            if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
-            if diskData["Content"] as? String == "Apple_APFS_Container" { continue }
+        let deviceMap: [String: [String: Any]] = Dictionary(uniqueKeysWithValues: allDisksAndPartitions.compactMap {
+            guard let id = $0["DeviceIdentifier"] as? String else { return nil }
+            return (id, $0)
+        })
+
+        var newDisks: [PhysicalDisk] = []
+
+        for physicalIdentifier in wholeDiskIdentifiers {
+            let infoPlist = getInfoForDisk(for: physicalIdentifier)
             
-            guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
-            let (allVolumes, apfsContainer) = getVolumes(for: diskData, in: allDisksAndPartitions)
+            if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks {
+                continue
+            }
+            
+            guard let diskData = deviceMap[physicalIdentifier] else { continue }
+            
+            var allVolumes: [Volume] = []
+            var apfsContainer: [String: Any]?
+            
+            if let partitions = diskData["Partitions"] as? [[String: Any]] {
+                for partitionData in partitions {
+                    if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
+                        let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
+                        apfsContainer = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions)
+                        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
+                            allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
+                        }
+                    } else {
+                        if let volume = createVolume(from: partitionData) { allVolumes.append(volume) }
+                    }
+                }
+            }
+            
+            if let apfsVolumes = diskData["APFSVolumes"] as? [[String: Any]] {
+                allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
+            }
 
             if !allVolumes.isEmpty {
                 let connectionInfo = getConnectionInfo(from: infoPlist, isInternal: (infoPlist?["Internal"] as? Bool) ?? false)
@@ -188,14 +220,19 @@ class DriveManager: ObservableObject {
                 let totalBytes = diskData["Size"] as? Int64 ?? 0
                 let stats = calculateParentDiskStats(totalBytes: totalBytes, volumes: allVolumes, apfsContainer: apfsContainer)
 
-                let physicalDisk = PhysicalDisk(id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes,
-                                                name: diskName, totalSize: stats.total, freeSpace: stats.free,
-                                                usagePercentage: stats.percentage, type: connectionInfo.diskType, usedSpace: stats.used)
+                let physicalDisk = PhysicalDisk(id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes, name: diskName, totalSize: stats.total, freeSpace: stats.free, usagePercentage: stats.percentage, type: connectionInfo.diskType, usedSpace: stats.used)
                 newDisks.append(physicalDisk)
             }
         }
+        
         return newDisks.sorted {
-            let order: (PhysicalDiskType) -> Int = { type in type == .internalDisk ? 0 : (type == .physical ? 1 : 2) }
+            let order: (PhysicalDiskType) -> Int = { type in
+                switch type {
+                case .internalDisk: return 0
+                case .physical: return 1
+                case .diskImage: return 2
+                }
+            }
             if order($0.type) != order($1.type) { return order($0.type) < order($1.type) }
             return ($0.name ?? "") < ($1.name ?? "")
         }
