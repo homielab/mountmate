@@ -29,65 +29,116 @@ class DriveManager: ObservableObject {
     // MARK: - Public Actions
     
     func refreshDrives(qos: DispatchQoS.QoSClass = .background) {
+        guard !isRefreshing else {
+            print("Refresh already in progress. Skipping.")
+            return
+        }
+    
         if isInitialLoadComplete {
             DispatchQueue.main.async { self.isRefreshing = true }
         }
         
         DispatchQueue.global(qos: qos).async { [weak self] in
             guard let self = self else { return }
-            let allDisksOutput = runShell("diskutil list -plist").output
-            guard let allDisksData = allDisksOutput?.data(using: .utf8), !allDisksOutput!.isEmpty else {
-                let errorMessage = "Failed to get disk list from `diskutil`. The command may have failed or returned empty."
-                print("ERROR: \(errorMessage)")
-                DispatchQueue.main.async {
-                    self.physicalDisks = []
-                    self.isRefreshing = false
-                    if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
-                    
-                    self.operationError = AppAlert(
-                        title: NSLocalizedString("Could Not Load Disks", comment: "Alert title for a failed refresh"),
-                        message: NSLocalizedString(errorMessage, comment: "Alert message for a failed refresh"),
-                        kind: .basic
-                    )
-                }
+            
+//            #if DEBUG
+//            let (output, error) = self.loadMockData()
+//            #else
+            let (output, error) = runShell("diskutil list -plist")
+//            #endif
+            
+            if let error = error, !error.isEmpty {
+                let errorMessage = "The 'diskutil' command failed to execute. This can happen due to permission issues."
+                print("SHELL ERROR: \(errorMessage) - Details: \(error)")
+                self.handleRefreshFailure(
+                    title: "Command Execution Failed",
+                    message: "\(errorMessage)\n\nPlease check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access.",
+                    details: error
+                )
+                return
+            }
+            
+            guard let allDisksData = output?.data(using: .utf8), !output!.isEmpty else {
+                let errorMessage = "Failed to get disk list. The 'diskutil' command returned no data."
+                print("DATA ERROR: \(errorMessage)")
+                self.handleRefreshFailure(
+                    title: "Could Not Load Disks",
+                    message: errorMessage,
+                    details: nil
+                )
+
                 return
             }
             
             do {
-                if let plist = try PropertyListSerialization.propertyList(from: allDisksData, options: [], format: nil) as? [String: Any] {
-                    let newPhysicalDisks = self.parseDisks(from: plist)
-                    DispatchQueue.main.async {
-                        self.physicalDisks = newPhysicalDisks
-                        self.isRefreshing = false
-                        if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
-                        
-                        self.busyVolumeIdentifier = nil
-                        self.busyEjectingIdentifier = nil
-                        self.isUnmountingAll = false
-                    }
-                }
-            } catch {
-                let errorMessage = "Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt."
-                print("ERROR: \(errorMessage) - \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self.physicalDisks = []
-                    self.isRefreshing = false
-                    if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
-                    
-                    self.operationError = AppAlert(
-                        title: NSLocalizedString("Data Parsing Error", comment: "Alert title for a data parsing error"),
-                        message: "\(NSLocalizedString(errorMessage, comment: "Alert message for a data parsing error"))\n\nDetails: \(error.localizedDescription)",
-                        kind: .basic
-                    )
-                }
-            }
+               if let plist = try PropertyListSerialization.propertyList(from: allDisksData, options: [], format: nil) as? [String: Any] {
+                   let newPhysicalDisks = self.parseDisks(from: plist)
+                   self.updateState(with: newPhysicalDisks, isComplete: true)
+               }
+           } catch {
+               let errorMessage = "Failed to parse the data returned by `diskutil`."
+               print("PARSING ERROR: \(errorMessage) - \(error.localizedDescription)")
+               self.handleRefreshFailure(
+                   title: "Data Parsing Error",
+                   message: "\(errorMessage) The format may have changed, or the data could be corrupt.",
+                   details: error.localizedDescription
+               )
+           }
         }
     }
+    
+    private func handleRefreshFailure(title: String, message: String, details: String?) {
+        DispatchQueue.main.async {
+            self.physicalDisks = []
+            self.isRefreshing = false
+            if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
+            
+            var fullMessage = NSLocalizedString(message, comment: "")
+            if let details = details {
+                fullMessage += "\n\nDetails:\n\(details)"
+            }
+
+            self.operationError = AppAlert(
+                title: NSLocalizedString(title, comment: "Alert title"),
+                message: fullMessage,
+                kind: .basic
+            )
+        }
+    }
+    
+    private func updateState(with disks: [PhysicalDisk], isComplete: Bool) {
+        DispatchQueue.main.async {
+            self.physicalDisks = disks
+            self.isRefreshing = false
+            if !self.isInitialLoadComplete && isComplete { self.isInitialLoadComplete = true }
+            self.busyVolumeIdentifier = nil
+            self.busyEjectingIdentifier = nil
+            self.isUnmountingAll = false
+        }
+    }
+    
+    private func loadMockData() -> (output: String?, error: String?)  {
+        // Look for the file named "testDisks.plist" in the app's bundle.
+        guard let url = Bundle.main.url(forResource: "testDisks", withExtension: "plist") else {
+            print("⚠️ MOCK DATA ERROR: testDisks.plist not found in the app bundle. Make sure it's added to the target.")
+            return (nil, "testDisks.plist not found")
+        }
+        
+        do {
+            // Read the file's content into a string.
+            let output =  try String(contentsOf: url)
+            return (output, nil)
+        } catch {
+            print("❌ MOCK DATA ERROR: Could not read content from testDisks.plist. Error: \(error)")
+            return (nil, error.localizedDescription)
+        }
+    }
+
     
     func unmountAllDrives() {
         let drivesToUnmount = self.physicalDisks
                 .filter { $0.type == .physical || $0.type == .diskImage }
-                .flatMap { $0.volumes }
+                .flatMap { $0.partitions }
                 .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
         
         guard !drivesToUnmount.isEmpty else { return }
@@ -170,97 +221,93 @@ class DriveManager: ObservableObject {
     // MARK: - Parsing and Data Creation Helpers
 
     private func parseDisks(from plist: [String: Any]) -> [PhysicalDisk] {
-        guard let wholeDiskIdentifiers = plist["WholeDisks"] as? [String],
-            let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
-            return []
-        }
+        guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else { return [] }
         
-        let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
-        
-        let deviceMap: [String: [String: Any]] = Dictionary(uniqueKeysWithValues: allDisksAndPartitions.compactMap {
-            guard let id = $0["DeviceIdentifier"] as? String else { return nil }
-            return (id, $0)
-        })
-
-        var newDisks: [PhysicalDisk] = []
-
-        for physicalIdentifier in wholeDiskIdentifiers {
-            let infoPlist = getInfoForDisk(for: physicalIdentifier)
-            
-            if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks {
-                continue
-            }
-            
-            guard let diskData = deviceMap[physicalIdentifier] else { continue }
-            
-            var allVolumes: [Volume] = []
-            var apfsContainer: [String: Any]?
-            
+        // Step 1: Create a set of all identifiers that are children (partitions) of another disk.
+        var childDeviceIDs = Set<String>()
+        for diskData in allDisksAndPartitions {
             if let partitions = diskData["Partitions"] as? [[String: Any]] {
-                for partitionData in partitions {
-                    if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
-                        let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
-                        apfsContainer = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions)
-                        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
-                            allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
-                        }
-                    } else {
-                        if let volume = createVolume(from: partitionData) { allVolumes.append(volume) }
+                for partition in partitions {
+                    if let id = partition["DeviceIdentifier"] as? String {
+                        childDeviceIDs.insert(id)
                     }
                 }
             }
+        }
+
+        // Step 2: Identify the true root disks. A root disk is any disk whose identifier
+        // is NOT in the set of child identifiers.
+        let rootDisks = allDisksAndPartitions.filter { diskData in
+            guard let id = diskData["DeviceIdentifier"] as? String else { return false }
+            return !childDeviceIDs.contains(id)
+        }
+
+        let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
+        var newDisks: [PhysicalDisk] = []
+
+        // Step 3: Iterate ONLY through the identified root disks. This prevents all duplicates.
+        for diskData in rootDisks {
+            let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
+            if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
             
-            if let apfsVolumes = diskData["APFSVolumes"] as? [[String: Any]] {
-                allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
+            guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
+            
+            var partitions: [Volume] = []
+            var containers: [APFSContainer] = []
+            
+            // Builds the hierarchy downwards from the root disk.
+            if let diskPartitions = diskData["Partitions"] as? [[String: Any]] {
+                for partitionData in diskPartitions {
+                    if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
+                        let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
+                        if let containerData = findAPFSContainer(forStore: storeID, in: allDisksAndPartitions),
+                           let container = createContainer(from: containerData) {
+                            containers.append(container)
+                        }
+                    } else {
+                        if let volume = createVolume(from: partitionData, snapshotsData: nil) {
+                            partitions.append(volume)
+                        }
+                    }
+                }
+            } else if let _ = diskData["APFSVolumes"] as? [[String: Any]] {
+                if let container = createContainer(from: diskData) {
+                    containers.append(container)
+                }
             }
 
-            if !allVolumes.isEmpty {
+            if !partitions.isEmpty || !containers.isEmpty {
                 let connectionInfo = getConnectionInfo(from: infoPlist, isInternal: (infoPlist?["Internal"] as? Bool) ?? false)
-                let diskName = infoPlist?["IORegistryEntryName"] as? String ?? infoPlist?["MediaName"] as? String ?? allVolumes.first(where: { $0.category == .user })?.name
+                let diskName = infoPlist?["IORegistryEntryName"] as? String ?? infoPlist?["MediaName"] as? String ?? (partitions.first ?? containers.first?.volumes.first)?.name
                 let totalBytes = diskData["Size"] as? Int64 ?? 0
-                let stats = calculateParentDiskStats(totalBytes: totalBytes, volumes: allVolumes, apfsContainer: apfsContainer)
+                
+                let allVolumesForStats = partitions + containers.flatMap { $0.volumes }
+                let stats = calculateParentDiskStats(totalBytes: totalBytes, volumes: allVolumesForStats)
 
-                let physicalDisk = PhysicalDisk(id: physicalIdentifier, connectionType: connectionInfo.type, volumes: allVolumes, name: diskName, totalSize: stats.total, freeSpace: stats.free, usagePercentage: stats.percentage, type: connectionInfo.diskType, usedSpace: stats.used)
+                let physicalDisk = PhysicalDisk(id: physicalIdentifier, diskUUID: infoPlist?["DiskUUID"] as? String,
+                                                connectionType: connectionInfo.type, name: diskName,
+                                                totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
+                                                storageError: stats.error, usagePercentage: stats.percentage,
+                                                type: connectionInfo.diskType, partitions: partitions, containers: containers)
                 newDisks.append(physicalDisk)
             }
         }
         
         return newDisks.sorted {
-            let order: (PhysicalDiskType) -> Int = { type in
-                switch type {
-                case .internalDisk: return 0
-                case .physical: return 1
-                case .diskImage: return 2
-                }
-            }
+            let order: (PhysicalDiskType) -> Int = { type in type == .internalDisk ? 0 : (type == .physical ? 1 : 2) }
             if order($0.type) != order($1.type) { return order($0.type) < order($1.type) }
             return ($0.name ?? "") < ($1.name ?? "")
         }
     }
     
-    private func getVolumes(for diskData: [String: Any], in allDisks: [[String: Any]]) -> ([Volume], [String: Any]?) {
-        var allVolumes: [Volume] = []
-        var apfsContainer: [String: Any]?
-        
-        if let partitions = diskData["Partitions"] as? [[String: Any]] {
-            for partitionData in partitions {
-                if let contentType = partitionData["Content"] as? String, contentType == "Apple_APFS" {
-                    let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
-                    apfsContainer = findAPFSContainer(forStore: storeID, in: allDisks)
-                    if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
-                        allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
-                    }
-                } else {
-                    if let volume = createVolume(from: partitionData) { allVolumes.append(volume) }
-                }
-            }
+    private func createContainer(from containerData: [String: Any]) -> APFSContainer? {
+        guard let containerID = containerData["DeviceIdentifier"] as? String,
+              let apfsVolumesData = containerData["APFSVolumes"] as? [[String: Any]] else {
+            return nil
         }
         
-        if let apfsVolumes = diskData["APFSVolumes"] as? [[String: Any]] {
-             allVolumes.append(contentsOf: apfsVolumes.compactMap { createVolume(from: $0) })
-        }
-        
-        return (allVolumes, apfsContainer)
+        let volumes = apfsVolumesData.compactMap { createVolume(from: $0, snapshotsData: $0["MountedSnapshots"] as? [[String: Any]]) }
+        return APFSContainer(id: containerID, volumes: volumes)
     }
 
     public func getInfoForDisk(for identifier: String) -> [String: Any]? {
@@ -280,47 +327,41 @@ class DriveManager: ObservableObject {
         }
     }
     
-    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume], apfsContainer: [String: Any]?) -> (total: String?, free: String?, used: String?, percentage: Double?) {
-        guard totalBytes > 0 else { return (nil, nil, nil, nil) }
-        var usedBytes: Int64 = 0
-
-        if let container = apfsContainer, let apfsVolumes = container["APFSVolumes"] as? [[String: Any]] {
-            usedBytes = apfsVolumes.reduce(0) { $0 + ($1["CapacityInUse"] as? Int64 ?? 0) }
-        } else {
-            var hasMountedVolume = false
-            for volume in volumes {
-                if volume.isMounted, let mountPoint = volume.mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
-                    usedBytes += (attributes.total - attributes.free)
-                    hasMountedVolume = true
-                }
-            }
-            guard hasMountedVolume else { return (nil, nil, nil, nil) }
+    private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume]) -> (total: String?, free: String?, used: String?, percentage: Double?, error: String?) {
+        if volumes.compactMap({ $0.storageError }).first != nil {
+            let errorMessage = NSLocalizedString("Could not calculate total usage because an error occurred on one of its volumes.", comment: "Parent disk error message")
+            return (nil, nil, nil, nil, errorMessage)
         }
+
+        guard totalBytes > 0 else { return (nil, nil, nil, nil, nil) }
+        
+        let usedBytes = volumes.reduce(0) { $0 + ($1.usedBytes ?? 0) }
         
         let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
         let totalSizeStr = formatter.string(fromByteCount: totalBytes)
         let freeBytes = totalBytes - usedBytes
         let freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
         let usedSpaceStr = formatter.string(fromByteCount: usedBytes)
-        let usagePercentage = min(1.0, Double(usedBytes) / Double(totalBytes))
+        let usagePercentage = totalBytes > 0 ? min(1.0, Double(usedBytes) / Double(totalBytes)) : 0
         
-        return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage)
+        return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage, nil)
     }
 
-    private func createVolume(from volumeData: [String: Any]) -> Volume? {
-        guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String,
-              let volumeName = volumeData["VolumeName"] as? String,
-              let volumeUUID = volumeData["VolumeUUID"] as? String,
-              let diskUUID = volumeData["DiskUUID"] as? String else {
-            return nil
-        }
-        
-        if PersistenceManager.shared.isVolumeIgnored(volumeUUID: volumeUUID, diskUUID: diskUUID) {
-            return nil
-        }
-        
-        let isProtected = PersistenceManager.shared.isVolumeProtected(volumeUUID: volumeUUID, diskUUID: diskUUID)
 
+    private func createVolume(from volumeData: [String: Any], snapshotsData: [[String: Any]]?) -> Volume? {
+        guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
+        
+        let volumeUUID = volumeData["VolumeUUID"] as? String ?? deviceIdentifier
+        let diskUUID = volumeData["DiskUUID"] as? String
+        
+        let volumeName = volumeData["VolumeName"] as? String ?? volumeData["Content"] as? String ?? deviceIdentifier
+
+        let tempVolume = Volume(id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName, isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,  usedBytes: nil, usagePercentage: nil, storageError: nil, fileSystemType: nil,  category: .user, isProtected: false, snapshots: [])
+        if PersistenceManager.shared.isVolumeIgnored(tempVolume) { return nil }
+        
+        let isProtected = PersistenceManager.shared.isVolumeProtected(tempVolume)
+        let snapshots = snapshotsData?.compactMap { createSnapshot(from: $0) } ?? []
+        
         let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
         let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
         let contentType = volumeData["Content"] as? String
@@ -331,29 +372,51 @@ class DriveManager: ObservableObject {
         let fileSystemType = contentType ?? (volumeData["FilesystemName"] as? String) ?? "Unknown"
         
         var freeSpaceStr: String?, totalSizeStr: String?, usedSpaceStr: String?, usagePercentage: Double?
-        if isMounted, let mountPoint = mountPoint, let attributes = getFileSystemAttributes(for: mountPoint) {
+        var usedBytes: Int64?
+        var storageError: String?
+        
+        if let totalSize = volumeData["Size"] as? Int64, totalSize > 0 {
             let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
-            freeSpaceStr = formatter.string(fromByteCount: attributes.free)
-            totalSizeStr = formatter.string(fromByteCount: attributes.total)
-            usedSpaceStr = formatter.string(fromByteCount: attributes.total - attributes.free)
-            if attributes.total > 0 { usagePercentage = Double(attributes.total - attributes.free) / Double(attributes.total) }
+            totalSizeStr = formatter.string(fromByteCount: totalSize)
+
+            var calculatedUsedBytes: Int64 = 0
+            if let capacityInUse = volumeData["CapacityInUse"] as? Int64 {
+                calculatedUsedBytes = capacityInUse
+            } else if isMounted, let mountPoint = mountPoint {
+                do {
+                    let attributes = try getFileSystemAttributes(for: mountPoint)
+                    
+                    if let totalSize = volumeData["Size"] as? Int64, totalSize > 0 {
+                        let formatter = ByteCountFormatter(); formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]; formatter.countStyle = .file
+                        totalSizeStr = formatter.string(fromByteCount: totalSize)
+
+                        calculatedUsedBytes = attributes.total - attributes.free
+                    }
+                } catch {
+                    print("Error getting file system attributes for \(volumeName): \(error.localizedDescription)")
+                    storageError = NSLocalizedString("Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security.", comment: "Permission error message")
+                }
+            }
+            
+            usedBytes = calculatedUsedBytes
+            
+            let freeBytes = totalSize - calculatedUsedBytes
+            freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
+            usedSpaceStr = formatter.string(fromByteCount: calculatedUsedBytes)
+            usagePercentage = Double(calculatedUsedBytes) / Double(totalSize)
         }
         
-        return Volume(
-            id: volumeUUID,
-            deviceIdentifier: deviceIdentifier,
-            diskUUID: diskUUID,
-            name: volumeName,
-            isMounted: isMounted,
-            mountPoint: mountPoint,
-            freeSpace: freeSpaceStr,
-            totalSize: totalSizeStr,
-            fileSystemType: fileSystemType,
-            usagePercentage: usagePercentage,
-            category: category,
-            isProtected: isProtected,
-            usedSpace: usedSpaceStr
-        )
+        return Volume(id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName,
+                          isMounted: isMounted, mountPoint: mountPoint, freeSpace: freeSpaceStr,
+                          totalSize: totalSizeStr, usedSpace: usedSpaceStr, usedBytes: usedBytes, usagePercentage: usagePercentage,
+                          storageError: storageError, fileSystemType: fileSystemType,
+                          category: category, isProtected: isProtected, snapshots: snapshots)
+    }
+
+    private func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {
+        guard let name = snapshotData["SnapshotName"] as? String,
+              let uuid = snapshotData["SnapshotUUID"] as? String else { return nil }
+        return APFSSnapshot(id: uuid, name: name)
     }
 
     private func getConnectionInfo(from infoPlist: [String: Any]?, isInternal: Bool) -> (type: String, diskType: PhysicalDiskType) {
@@ -456,17 +519,13 @@ class DriveManager: ObservableObject {
         return .other
     }
 
-    private func getFileSystemAttributes(for path: String) -> (free: Int64, total: Int64)? {
-        do {
-            let attributes = try FileManager.default.attributesOfFileSystem(forPath: path)
-            if let freeSpace = attributes[.systemFreeSize] as? NSNumber,
-               let totalSize = attributes[.systemSize] as? NSNumber {
-                return (free: freeSpace.int64Value, total: totalSize.int64Value)
-            }
-        } catch {
-            print("Error getting file system attributes for \(path): \(error)")
+    private func getFileSystemAttributes(for path: String) throws -> (free: Int64, total: Int64) {
+        let attributes = try FileManager.default.attributesOfFileSystem(forPath: path)
+        if let freeSpace = attributes[.systemFreeSize] as? NSNumber,
+           let totalSize = attributes[.systemSize] as? NSNumber {
+            return (free: freeSpace.int64Value, total: totalSize.int64Value)
         }
-        return nil
+        throw NSError(domain: "com.homielab.mountmate", code: 1, userInfo: [NSLocalizedDescriptionKey: "File system attribute keys are missing."])
     }
 
     // MARK: - Notification Handling
@@ -481,7 +540,7 @@ class DriveManager: ObservableObject {
         refreshDebounceTimer?.invalidate()
         refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
             if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
-                 print("Disk notification received for volume: \(volumeURL.lastPathComponent). Refreshing list.")
+                print("Disk notification received for volume: \(volumeURL.lastPathComponent). Refreshing list.")
             } else {
                 print("Disk notification received. Refreshing list.")
             }

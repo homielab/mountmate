@@ -10,7 +10,7 @@
 "External Disks" = "Ổ đĩa ngoài";
 "Disk Images" = "Ảnh đĩa";
 "Internal Disks" = "Internal Disks";
-
+"Snapshots" = "Bản ghi tức thời";
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
@@ -95,11 +95,18 @@
 "Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
 "An unknown error occurred while trying to %@ “%@”." = "Đã xảy ra lỗi không xác định khi đang cố gắng %@ “%@”.";
 
-// New Refresh Error Strings
+// Refresh Error Strings
+"Command Execution Failed" = "Thực thi lệnh thất bại";
+"The 'diskutil' command failed to execute. This can happen due to permission issues." = "Lệnh 'diskutil' không thể thực thi. Điều này có thể xảy ra do vấn đề về quyền truy cập.";
+"Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access." = "Vui lòng kiểm tra Cài đặt Hệ thống trong mục Quyền riêng tư & Bảo mật > Tệp & Thư mục để đảm bảo MountMate có quyền truy cập.";
+
 "Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
-"Failed to get disk list from `diskutil`. The command may have failed or returned empty." = "Không thể lấy danh sách ổ đĩa từ `diskutil`. Lệnh có thể đã thất bại hoặc trả về kết quả trống.";
+"Failed to get disk list. The 'diskutil' command returned no data." = "Không thể lấy danh sách ổ đĩa. Lệnh 'diskutil' không trả về dữ liệu.";
+
 "Data Parsing Error" = "Lỗi phân tích dữ liệu";
-"Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
+"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
+"Could not calculate total usage because an error occurred on one of its volumes." = "Không thể tính tổng dung lượng sử dụng vì đã xảy ra lỗi trên một trong các phân vùng của nó.";
+"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Không thể đọc chi tiết dung lượng. Vui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' hoặc 'Tệp & Thư mục' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 
 // MARK: - App Lifecycle
 //=============================================

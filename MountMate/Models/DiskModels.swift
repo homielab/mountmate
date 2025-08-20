@@ -1,6 +1,10 @@
 //  Created by homielab.com
-
 import Foundation
+
+struct APFSSnapshot: Identifiable, Hashable {
+    let id: String // UUID of the snapshot
+    let name: String
+}
 
 struct Volume: Identifiable, Hashable {
     let id: String // VolumeUUID
@@ -11,32 +15,42 @@ struct Volume: Identifiable, Hashable {
     let mountPoint: String?
     let freeSpace: String?
     let totalSize: String?
-    let fileSystemType: String?
+    let usedSpace: String?
+    let usedBytes: Int64?
     let usagePercentage: Double?
+    var storageError: String?
+    let fileSystemType: String?
     let category: DriveCategory
     var isProtected: Bool
-    let usedSpace: String?
+
+    var snapshots: [APFSSnapshot]
+    
+    var compositeId: String? {
+        guard let diskUUID = diskUUID else { return nil }
+        return "\(diskUUID)-\(id)"
+    }
 }
 
-enum PhysicalDiskType {
-    case internalDisk
-    case physical
-    case diskImage
+struct APFSContainer: Identifiable, Hashable {
+    let id: String // // e.g., disk1
+    var volumes: [Volume]
 }
 
 struct PhysicalDisk: Identifiable {
     let id: String // e.g., disk4
+    let diskUUID: String?
     let connectionType: String
-    var volumes: [Volume]
     let name: String?
     let totalSize: String?
     let freeSpace: String?
+    let usedSpace: String?
+    var storageError: String?
     let usagePercentage: Double?
     let type: PhysicalDiskType
-    let usedSpace: String?
+    
+    var partitions: [Volume]
+    var containers: [APFSContainer]
 }
 
-enum DriveCategory: String {
-    case user
-    case system
-}
+enum PhysicalDiskType { case internalDisk, physical, diskImage }
+enum DriveCategory { case user, system }

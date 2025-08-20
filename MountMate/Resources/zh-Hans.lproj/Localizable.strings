@@ -10,7 +10,7 @@
 "External Disks" = "外置磁盘";
 "Disk Images" = "磁盘镜像";
 "Internal Disks" = "Internal Disks";
-
+"Snapshots" = "Snapshots";
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
@@ -91,11 +91,18 @@
 "Failed to %@ “%@” because it is currently in use by another application." = "由于“%@”正被其他应用占用，无法 %@。";
 "An unknown error occurred while trying to %@ “%@”." = "尝试 %@ “%@” 时发生未知错误。";
 
-// New Refresh Error Strings
+// Refresh Error Strings
+"Command Execution Failed" = "Command Execution Failed";
+"The 'diskutil' command failed to execute. This can happen due to permission issues." = "The 'diskutil' command failed to execute. This can happen due to permission issues.";
+"Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access." = "Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access.";
+
 "Could Not Load Disks" = "Could Not Load Disks";
-"Failed to get disk list from `diskutil`. The command may have failed or returned empty." = "Failed to get disk list from `diskutil`. The command may have failed or returned empty.";
+"Failed to get disk list. The 'diskutil' command returned no data." = "Failed to get disk list. The 'diskutil' command returned no data.";
+
 "Data Parsing Error" = "Data Parsing Error";
-"Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed or the data could be corrupt.";
+"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt.";
+"Could not calculate total usage because an error occurred on one of its volumes." = "Could not calculate total usage because an error occurred on one of its volumes.";
+"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security.";
 
 // MARK: - App Lifecycle
 //=============================================

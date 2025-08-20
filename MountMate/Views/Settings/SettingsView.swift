@@ -27,7 +27,7 @@ struct SettingsView: View {
         return "Version \(version) (\(build))"
     }
     private var allKnownVolumes: [Volume] {
-        DriveManager.shared.physicalDisks.flatMap { $0.volumes }
+        DriveManager.shared.physicalDisks.flatMap { $0.partitions }
     }
 
     var body: some View {
@@ -35,7 +35,7 @@ struct SettingsView: View {
             generalSettings.tabItem { Label("General", systemImage: "gear") }
             managementSettings.tabItem { Label("Management", systemImage: "slider.horizontal.3") }
         }
-        .frame(width: 450, height: 350)
+        .frame(width: 450, height: 550)
         .alert("Restart Required", isPresented: $showRestartAlert) {
             Button("Restart Now", role: .destructive) {
                 UserDefaults.standard.set([selectedLanguage], forKey: "AppleLanguages")
@@ -137,21 +137,17 @@ struct ManagedVolumeRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(info.name).fontWeight(.semibold)
                 Text("Volume: \(info.volumeUUID)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    .font(.system(.caption, design: .monospaced)).foregroundColor(.secondary)
                     .lineLimit(1).truncationMode(.middle)
                 Text("Disk: \(info.diskUUID)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    .font(.system(.caption, design: .monospaced)).foregroundColor(.secondary)
                     .lineLimit(1).truncationMode(.middle)
             }
             Spacer()
             Button(role: .destructive) {
                 onDelete()
                 DriveManager.shared.refreshDrives(qos: .userInitiated)
-            } label: {
-                Image(systemName: "trash")
-            }.buttonStyle(.borderless)
+            } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
         }
     }
 }

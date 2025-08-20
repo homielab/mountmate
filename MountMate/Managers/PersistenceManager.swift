@@ -6,8 +6,8 @@ import Combine
 class PersistenceManager: ObservableObject {
     static let shared = PersistenceManager()
 
-    private let protectedVolumesKey = "mountmate_protectedVolumes_v3"
-    private let ignoredVolumesKey = "mountmate_ignoredVolumes_v3"
+    private let protectedVolumesKey = "mountmate_protectedVolumes_v4"
+    private let ignoredVolumesKey = "mountmate_ignoredVolumes_v4"
     
     @Published var protectedVolumes: [ManagedVolumeInfo]
     @Published var ignoredVolumes: [ManagedVolumeInfo]
@@ -22,6 +22,7 @@ class PersistenceManager: ObservableObject {
     func protect(volume: Volume) {
         guard let diskUUID = volume.diskUUID else { return }
         let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
+        guard !protectedVolumes.contains(where: { $0.id == info.id }) else { return }
         protectedVolumes.append(info)
         saveProtectedVolumes()
     }
@@ -34,12 +35,16 @@ class PersistenceManager: ObservableObject {
     func ignore(volume: Volume) {
         guard let diskUUID = volume.diskUUID else { return }
         let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
+        guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return }
         ignoredVolumes.append(info)
         saveIgnoredVolumes()
     }
-
+    
     func ignore(disk: PhysicalDisk) {
-        let infos = disk.volumes.compactMap { volume -> ManagedVolumeInfo? in
+        let infos = disk.partitions.compactMap { volume -> ManagedVolumeInfo? in
+            guard let diskUUID = volume.diskUUID else { return nil }
+            return ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
+        } + disk.containers.flatMap { $0.volumes }.compactMap { volume -> ManagedVolumeInfo? in
             guard let diskUUID = volume.diskUUID else { return nil }
             return ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
         }
@@ -59,12 +64,14 @@ class PersistenceManager: ObservableObject {
     
     // MARK: - Helper Checkers
     
-    func isVolumeProtected(volumeUUID: String, diskUUID: String) -> Bool {
-        protectedVolumes.contains(where: { $0.volumeUUID == volumeUUID && $0.diskUUID == diskUUID })
+    func isVolumeProtected(_ volume: Volume) -> Bool {
+        guard let compositeId = volume.compositeId else { return false }
+        return protectedVolumes.contains { $0.id == compositeId }
     }
     
-    func isVolumeIgnored(volumeUUID: String, diskUUID: String) -> Bool {
-        ignoredVolumes.contains(where: { $0.volumeUUID == volumeUUID && $0.diskUUID == diskUUID })
+    func isVolumeIgnored(_ volume: Volume) -> Bool {
+        guard let compositeId = volume.compositeId else { return false }
+        return ignoredVolumes.contains { $0.id == compositeId }
     }
     
     // MARK: - Private Save/Load Helpers
