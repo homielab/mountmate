@@ -12,7 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     setupErrorObserver()
     setupSleepObserver()
-    requestFileAccessPermissionIfNeeded()
+    checkAndRequestFullDiskAccessIfNeeded()
   }
 
   // MARK: - Observers
@@ -47,22 +47,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   // MARK: - Permissions
 
-  private func requestFileAccessPermissionIfNeeded() {
+  private func checkAndRequestFullDiskAccessIfNeeded() {
     guard !SandboxChecker.isSandboxed else {
-      print("App is sandboxed. Skipping manual permission request.")
+      print("App is sandboxed. Skipping Full Disk Access check.")
       return
     }
 
-    print("App is not sandboxed. Checking for /Volumes access permission.")
+    let hasPromptedKey = "hasPromptedForFullDiskAccess"
+    guard !UserDefaults.standard.bool(forKey: hasPromptedKey) else {
+      return
+    }
+
+    print("Checking for Full Disk Access permission...")
 
     DispatchQueue.global(qos: .userInitiated).async {
       do {
-        _ = try FileManager.default.contentsOfDirectory(atPath: "/Volumes")
-        print("Successfully accessed /Volumes or already have permission.")
+        _ = try FileManager.default.contentsOfDirectory(
+          atPath: "/Library/Application Support/com.apple.TCC")
+        print("Full Disk Access is already granted.")
       } catch {
-        print(
-          "Could not access /Volumes. The system should prompt for permission. Error: \(error.localizedDescription)"
-        )
+        print("Full Disk Access not granted. Prompting user.")
+
+        DispatchQueue.main.async {
+          self.showFullDiskAccessAlert()
+          UserDefaults.standard.set(true, forKey: hasPromptedKey)
+        }
+      }
+    }
+  }
+
+  private func showFullDiskAccessAlert() {
+    let alert = NSAlert()
+    alert.messageText = NSLocalizedString("Full Disk Access Recommended", comment: "Alert title")
+    alert.informativeText = NSLocalizedString(
+      "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel.",
+      comment: "Alert message")
+    alert.alertStyle = .informational
+    alert.addButton(withTitle: NSLocalizedString("Open System Settings", comment: "Button title"))
+    alert.addButton(withTitle: NSLocalizedString("Later", comment: "Button title"))
+
+    NSApp.activate(ignoringOtherApps: true)
+    let response = alert.runModal()
+
+    if response == .alertFirstButtonReturn {
+      if let url = URL(
+        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+      {
+        NSWorkspace.shared.open(url)
       }
     }
   }

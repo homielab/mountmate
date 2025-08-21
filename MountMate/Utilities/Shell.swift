@@ -2,7 +2,6 @@
 
 import Foundation
 
-// Now accepts optional input data to be passed to the command
 @discardableResult
 func runShell(_ command: String, input: Data? = nil) -> (output: String?, error: String?) {
   let task = Process()
@@ -22,12 +21,29 @@ func runShell(_ command: String, input: Data? = nil) -> (output: String?, error:
   } else {
     task.standardInput = nil
   }
-  // ----------------------------------------------------
+
+  let group = DispatchGroup()
+  group.enter()
+
+  task.terminationHandler = { _ in
+    group.leave()
+  }
 
   do {
     try task.run()
   } catch {
     return (nil, "Failed to run shell task: \(error)")
+  }
+
+  let timeoutResult = group.wait(timeout: .now() + 6.0)
+
+  if timeoutResult == .timedOut {
+    print(
+      "❌ SHELL TIMEOUT: The command '\(command)' did not complete within 6 seconds. Terminating.")
+    task.terminate()
+    let timeoutError =
+      "The command timed out. This often indicates a permissions issue. Please grant MountMate Full Disk Access in System Settings."
+    return (nil, timeoutError)
   }
 
   let outData = outPipe.fileHandleForReading.readDataToEndOfFile()

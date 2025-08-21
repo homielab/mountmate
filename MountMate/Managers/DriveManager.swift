@@ -41,19 +41,19 @@ class DriveManager: ObservableObject {
     DispatchQueue.global(qos: qos).async { [weak self] in
       guard let self = self else { return }
 
-      //            #if DEBUG
-      //            let (output, error) = self.loadMockData()
-      //            #else
+      // #if DEBUG
+      // let (output, error) = self.loadMockData()
+      // #else
       let (output, error) = runShell("diskutil list -plist")
-      //            #endif
+      // #endif
 
       if let error = error, !error.isEmpty {
         let errorMessage =
           "The 'diskutil' command failed to execute. This can happen due to permission issues."
         print("SHELL ERROR: \(errorMessage) - Details: \(error)")
         self.handleRefreshFailure(
-          title: "Command Execution Failed",
-          message:
+          titleKey: "Command Execution Failed",
+          messageKey:
             "\(errorMessage)\n\nPlease check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access.",
           details: error
         )
@@ -65,8 +65,8 @@ class DriveManager: ObservableObject {
           "Failed to get disk list. The 'diskutil' command returned no data."
         print("DATA ERROR: \(errorMessage)")
         self.handleRefreshFailure(
-          title: "Could Not Load Disks",
-          message: errorMessage,
+          titleKey: "Could Not Load Disks",
+          messageKey: "Failed to get disk list. The 'diskutil' command returned no data.",
           details: nil
         )
 
@@ -84,28 +84,34 @@ class DriveManager: ObservableObject {
         let errorMessage = "Failed to parse the data returned by `diskutil`."
         print("PARSING ERROR: \(errorMessage) - \(error.localizedDescription)")
         self.handleRefreshFailure(
-          title: "Data Parsing Error",
-          message:
-            "\(errorMessage) The format may have changed, or the data could be corrupt.",
+          titleKey: "Data Parsing Error",
+          messageKey: "Failed to parse the data returned by `diskutil`.",
           details: error.localizedDescription
         )
       }
     }
   }
 
-  private func handleRefreshFailure(title: String, message: String, details: String?) {
+  private func handleRefreshFailure(titleKey: String, messageKey: String, details: String?) {
     DispatchQueue.main.async {
       self.physicalDisks = []
       self.isRefreshing = false
       if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
 
-      var fullMessage = NSLocalizedString(message, comment: "")
+      var fullMessage = NSLocalizedString(messageKey, comment: "Alert message")
       if let details = details {
+        if details.lowercased().contains("permission") || details.lowercased().contains("timed out")
+        {
+          let permissionSuggestion = NSLocalizedString(
+            "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security.",
+            comment: "Permission suggestion text")
+          fullMessage += permissionSuggestion
+        }
         fullMessage += "\n\nDetails:\n\(details)"
       }
 
       self.operationError = AppAlert(
-        title: NSLocalizedString(title, comment: "Alert title"),
+        title: NSLocalizedString(titleKey, comment: "Alert title"),
         message: fullMessage,
         kind: .basic
       )

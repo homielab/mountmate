@@ -2,15 +2,16 @@
   Localizable.strings (Vietnamese)
 */
 
-// MARK: - Main View & Actions
+// MARK: - Main View & Sections
 //=============================================
 
 "No Drives Found" = "Không tìm thấy ổ đĩa";
 "Connect a USB drive, SD card, or mount a disk image to see it here." = "Kết nối ổ USB, thẻ SD, hoặc gắn ảnh đĩa để xem tại đây.";
+"Internal Disks" = "Ổ đĩa trong";
 "External Disks" = "Ổ đĩa ngoài";
 "Disk Images" = "Ảnh đĩa";
-"Internal Disks" = "Internal Disks";
 "Snapshots" = "Bản ghi tức thời";
+
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
@@ -25,7 +26,6 @@
 // MARK: - Volume & Disk Details
 //=============================================
 
-"free of" = "trống trong tổng số";
 "Unknown" = "Không rõ";
 "Unmounted" = "Chưa gắn";
 
@@ -50,10 +50,10 @@
 "Management" = "Quản lý";
 
 // General Tab
+"Show Internal Disks" = "Hiển thị ổ đĩa trong";
 "Start MountMate at Login" = "Khởi động cùng máy";
 "Block USB Auto-Mount" = "Chặn tự động gắn USB";
 "Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
-"Show Internal Disks" = "Show Internal Disks";
 "Language" = "Ngôn ngữ";
 
 // About & Updates Section
@@ -67,51 +67,53 @@
 "No Ignored Volumes" = "Không có phân vùng bị bỏ qua";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Nhấp chuột phải vào một phân vùng để bỏ qua. Hữu ích cho các phân vùng hệ thống như 'EFI' mà bạn không cần quản lý.";
 "Protected Volumes" = "Phân vùng được bảo vệ";
-"No protected volumes" = "Không có phân vùng nào được bảo vệ";
-"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả' và khi máy ngủ.";
+"No Protected Volumes" = "Không có phân vùng được bảo vệ";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả' và khi máy ngủ.";
 
 
 // MARK: - Alerts & Errors
 //=============================================
 
-"OK" = "OK";
-"Cancel" = "Bỏ qua";
+// Titles
+"Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
+"Data Parsing Error" = "Lỗi phân tích dữ liệu";
+"Command Execution Failed" = "Thực thi lệnh thất bại";
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
 "“%@” is locked" = "“%@” đã bị khoá";
-"Enter the password to unlock “%@”" = "Nhập mật khẩu để mở khoá “%@”";
-"Password" = "Mật khẩu";
+"Full Disk Access Recommended" = "Nên cấp quyền Truy cập Toàn bộ Đĩa";
+
+// Buttons
+"OK" = "OK";
 "Unlock" = "Mở khoá";
+"Cancel" = "Huỷ";
+"Open System Settings" = "Mở Cài đặt Hệ thống";
+"Later" = "Để sau";
 
 // Verbs for error messages
 "unmount" = "tháo";
 "eject" = "đẩy ra";
 "mount" = "gắn";
 
-// Error message formats
-"Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";
+// Error Messages & Formats
+"Failed to get disk list. The 'diskutil' command returned no data." = "Không thể lấy danh sách ổ đĩa. Lệnh 'diskutil' không trả về dữ liệu.";
+"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
+"The 'diskutil' command failed to execute. This can happen due to permission issues." = "Lệnh 'diskutil' không thể thực thi. Điều này có thể xảy ra do vấn đề về quyền truy cập.";
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nVui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Không thể gắn trực tiếp phân vùng “EFI”. Đây là một phân vùng hệ thống đặc biệt và hành vi này là bình thường.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
 "An unknown error occurred while trying to %@ “%@”." = "Đã xảy ra lỗi không xác định khi đang cố gắng %@ “%@”.";
+"Enter the password to unlock “%@”" = "Nhập mật khẩu để mở khoá “%@”";
+"Password" = "Mật khẩu";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Để đảm bảo MountMate có thể thấy tất cả các loại ổ đĩa và ngăn ngừa lỗi, vui lòng cấp quyền Truy cập Toàn bộ Đĩa.\n\nNhấp vào 'Mở Cài đặt Hệ thống' để được đưa đến bảng điều khiển chính xác.";
 
-// Refresh Error Strings
-"Command Execution Failed" = "Thực thi lệnh thất bại";
-"The 'diskutil' command failed to execute. This can happen due to permission issues." = "Lệnh 'diskutil' không thể thực thi. Điều này có thể xảy ra do vấn đề về quyền truy cập.";
-"Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access." = "Vui lòng kiểm tra Cài đặt Hệ thống trong mục Quyền riêng tư & Bảo mật > Tệp & Thư mục để đảm bảo MountMate có quyền truy cập.";
 
-"Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
-"Failed to get disk list. The 'diskutil' command returned no data." = "Không thể lấy danh sách ổ đĩa. Lệnh 'diskutil' không trả về dữ liệu.";
-
-"Data Parsing Error" = "Lỗi phân tích dữ liệu";
-"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
-"Could not calculate total usage because an error occurred on one of its volumes." = "Không thể tính tổng dung lượng sử dụng vì đã xảy ra lỗi trên một trong các phân vùng của nó.";
-"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Không thể đọc chi tiết dung lượng. Vui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' hoặc 'Tệp & Thư mục' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
-
-// MARK: - App Lifecycle
+// MARK: - App Lifecycle & Loading
 //=============================================
 
+"Loading Disks..." = "Đang tải ổ đĩa...";
 "Restart Required" = "Cần khởi động lại";
 "Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
 "Restart Now" = "Khởi động lại ngay";
-"Later" = "Để sau";

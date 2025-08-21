@@ -1,16 +1,17 @@
-/*
+/* 
   Localizable.strings (English)
 */
 
-// MARK: - Main View & Actions
+// MARK: - Main View & Sections
 //=============================================
 
 "No Drives Found" = "No Drives Found";
 "Connect a USB drive, SD card, or mount a disk image to see it here." = "Connect a USB drive, SD card, or mount a disk image to see it here.";
+"Internal Disks" = "Internal Disks";
 "External Disks" = "External Disks";
 "Disk Images" = "Disk Images";
-"Internal Disks" = "Internal Disks";
 "Snapshots" = "Snapshots";
+
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
@@ -25,7 +26,6 @@
 // MARK: - Volume & Disk Details
 //=============================================
 
-"free of" = "free of";
 "Unknown" = "Unknown";
 "Unmounted" = "Unmounted";
 
@@ -50,10 +50,10 @@
 "Management" = "Management";
 
 // General Tab
+"Show Internal Disks" = "Show Internal Disks";
 "Start MountMate at Login" = "Start MountMate at Login";
 "Block USB Auto-Mount" = "Block USB Auto-Mount";
 "Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
-"Show Internal Disks" = "Show Internal Disks";
 "Language" = "Language";
 
 // About & Updates Section
@@ -67,51 +67,53 @@
 "No Ignored Volumes" = "No Ignored Volumes";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
 "Protected Volumes" = "Protected Volumes";
-"No protected volumes" = "No protected volumes";
-"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "Right-click a volume to protect it from 'Unmount All' and system sleep actions.";
+"No Protected Volumes" = "No Protected Volumes";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Right-click a volume to protect it from 'Unmount All' and sleep actions.";
 
 
 // MARK: - Alerts & Errors
 //=============================================
 
-"OK" = "OK";
-"Cancel" = "Cancel";
+// Titles
+"Could Not Load Disks" = "Could Not Load Disks";
+"Data Parsing Error" = "Data Parsing Error";
+"Command Execution Failed" = "Command Execution Failed";
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";
 "“%@” is locked" = "“%@” is locked";
-"Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
-"Password" = "Password";
+"Full Disk Access Recommended" = "Full Disk Access Recommended";
+
+// Buttons
+"OK" = "OK";
 "Unlock" = "Unlock";
+"Cancel" = "Cancel";
+"Open System Settings" = "Open System Settings";
+"Later" = "Later";
 
 // Verbs for error messages
 "unmount" = "unmount";
 "eject" = "eject";
 "mount" = "mount";
 
-// Error message formats
-"Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
+// Error Messages & Formats
+"Failed to get disk list. The 'diskutil' command returned no data." = "Failed to get disk list. The 'diskutil' command returned no data.";
+"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt.";
+"The 'diskutil' command failed to execute. This can happen due to permission issues." = "The 'diskutil' command failed to execute. This can happen due to permission issues.";
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security.";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
 "An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
+"Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
+"Password" = "Password";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel.";
 
-// Refresh Error Strings
-"Command Execution Failed" = "Command Execution Failed";
-"The 'diskutil' command failed to execute. This can happen due to permission issues." = "The 'diskutil' command failed to execute. This can happen due to permission issues.";
-"Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access." = "Please check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access.";
 
-"Could Not Load Disks" = "Could Not Load Disks";
-"Failed to get disk list. The 'diskutil' command returned no data." = "Failed to get disk list. The 'diskutil' command returned no data.";
-
-"Data Parsing Error" = "Data Parsing Error";
-"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt.";
-"Could not calculate total usage because an error occurred on one of its volumes." = "Could not calculate total usage because an error occurred on one of its volumes.";
-"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security.";
-
-// MARK: - App Lifecycle
+// MARK: - App Lifecycle & Loading
 //=============================================
 
+"Loading Disks..." = "Loading Disks...";
 "Restart Required" = "Restart Required";
 "Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
 "Restart Now" = "Restart Now";
-"Later" = "Later";
