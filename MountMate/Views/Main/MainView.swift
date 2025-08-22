@@ -8,6 +8,20 @@ struct MainView: View {
   @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
     .autoconnect()
 
+  private var internalDisks: [PhysicalDisk] {
+    (driveManager.physicalDisks ?? []).filter { $0.type == .internalDisk && $0.hasVisibleContent }
+  }
+  private var externalDisks: [PhysicalDisk] {
+    (driveManager.physicalDisks ?? []).filter { $0.type == .physical && $0.hasVisibleContent }
+  }
+  private var diskImages: [PhysicalDisk] {
+    (driveManager.physicalDisks ?? []).filter { $0.type == .diskImage && $0.hasVisibleContent }
+  }
+
+  private var hasVisibleDisks: Bool {
+    !internalDisks.isEmpty || !externalDisks.isEmpty || !diskImages.isEmpty
+  }
+
   var body: some View {
     VStack(spacing: 0) {
       HeaderActionsView()
@@ -20,31 +34,48 @@ struct MainView: View {
               self.initialLoadTimer.upstream.connect().cancel()
             }
           }
-      } else if driveManager.physicalDisks!.isEmpty {
+      } else if !hasVisibleDisks {
         noDrivesView
       } else {
-        driveListView
+        DriveListView(
+          internalDisks: internalDisks,
+          externalDisks: externalDisks,
+          diskImages: diskImages
+        )
       }
     }
-    .frame(width: 380)
+    .frame(width: 350)
     .padding(.bottom, 8)
     .onAppear {
       driveManager.refreshDrives()
     }
   }
 
-  private var driveListView: some View {
-    let internalDisks = (driveManager.physicalDisks ?? []).filter {
-      $0.type == .internalDisk && $0.hasVisibleContent
+  private var noDrivesView: some View {
+    VStack(spacing: 8) {
+      Image(systemName: "externaldrive.fill.badge.questionmark").font(.system(size: 40))
+        .foregroundColor(.secondary)
+      Text(NSLocalizedString("No Drives Found", comment: "Empty state title")).font(.headline)
+      Text(
+        NSLocalizedString(
+          "Connect a USB drive, SD card, or mount a disk image to see it here.",
+          comment: "Empty state description")
+      )
+      .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center).padding(
+        .horizontal)
     }
-    let externalDisks = (driveManager.physicalDisks ?? []).filter {
-      $0.type == .physical && $0.hasVisibleContent
-    }
-    let diskImages = (driveManager.physicalDisks ?? []).filter {
-      $0.type == .diskImage && $0.hasVisibleContent
-    }
+    .padding(.vertical, 40)
+  }
 
-    return List {
+}
+
+struct DriveListView: View {
+  let internalDisks: [PhysicalDisk]
+  let externalDisks: [PhysicalDisk]
+  let diskImages: [PhysicalDisk]
+
+  var body: some View {
+    List {
       if !internalDisks.isEmpty {
         Section(header: Text("Internal Disks")) {
           ForEach(internalDisks) { disk in DiskAndVolumesView(disk: disk) }
@@ -62,24 +93,7 @@ struct MainView: View {
       }
     }
     .listStyle(.sidebar)
-    .frame(maxHeight: 450)
     .frame(minHeight: 50)
-  }
-
-  private var noDrivesView: some View {
-    VStack(spacing: 8) {
-      Image(systemName: "externaldrive.fill.badge.questionmark").font(.system(size: 40))
-        .foregroundColor(.secondary)
-      Text(NSLocalizedString("No Drives Found", comment: "Empty state title")).font(.headline)
-      Text(
-        NSLocalizedString(
-          "Connect a USB drive, SD card, or mount a disk image to see it here.",
-          comment: "Empty state description")
-      )
-      .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center).padding(
-        .horizontal)
-    }
-    .frame(height: 150)
   }
 }
 

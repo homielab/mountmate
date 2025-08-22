@@ -26,7 +26,7 @@ struct ErrorView: View {
       }
       .padding(.top, 8)
     }
-    .frame(width: 320)
+    .frame(width: 350)
     .padding(.vertical)
   }
 }

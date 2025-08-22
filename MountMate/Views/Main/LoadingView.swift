@@ -9,6 +9,6 @@ struct LoadingView: View {
       Text(NSLocalizedString("Loading Disks...", comment: "Initial loading text"))
         .foregroundColor(.secondary)
     }
-    .frame(width: 320, height: 200)
+    .frame(width: 350, height: 200)
   }
 }

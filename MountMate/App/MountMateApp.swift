@@ -20,8 +20,10 @@ struct MountMateApp: App {
 
   var body: some Scene {
     MenuBarExtra("MountMate", systemImage: "externaldrive.fill") {
-      MainView()
-        .environmentObject(driveManager)
+      PopoverContent {
+        MainView()
+      }
+      .environmentObject(driveManager)
     }
     .menuBarExtraStyle(.window)
 
