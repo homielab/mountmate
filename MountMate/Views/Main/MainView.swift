@@ -31,11 +31,6 @@ struct MainView: View {
     .onAppear {
       driveManager.refreshDrives()
     }
-    .alert(item: $driveManager.userActionError) { appAlert in
-      Alert(
-        title: Text(appAlert.title), message: Text(appAlert.message),
-        dismissButton: .default(Text("OK")))
-    }
   }
 
   private var driveListView: some View {

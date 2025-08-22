@@ -35,7 +35,7 @@ func runShell(_ command: String, input: Data? = nil) -> (output: String?, error:
     return (nil, "Failed to run shell task: \(error)")
   }
 
-  let timeoutResult = group.wait(timeout: .now() + 6.0)
+  let timeoutResult = group.wait(timeout: .now() + 15.0)
 
   if timeoutResult == .timedOut {
     print(
