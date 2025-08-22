@@ -3,11 +3,25 @@
 import SwiftUI
 
 struct SettingsView: View {
+  var body: some View {
+    TabView {
+      GeneralSettingsView()
+        .tabItem { Label("General", systemImage: "gear") }
+
+      ManagementSettingsView()
+        .tabItem { Label("Management", systemImage: "slider.horizontal.3") }
+    }
+    .frame(
+      minWidth: 420, idealWidth: 420, maxWidth: 450, minHeight: 520, idealHeight: 650,
+      maxHeight: 800)
+  }
+}
+
+struct GeneralSettingsView: View {
   @EnvironmentObject var launchManager: LaunchAtLoginManager
   @EnvironmentObject var diskMounter: DiskMounter
   @EnvironmentObject var updaterViewModel: UpdaterController
 
-  @StateObject private var persistence = PersistenceManager.shared
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
 
@@ -31,34 +45,14 @@ struct SettingsView: View {
     let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
     return "Version \(version) (\(build))"
   }
-  private var allKnownVolumes: [Volume] {
-    DriveManager.shared.physicalDisks.flatMap { $0.partitions }
-  }
 
   var body: some View {
-    TabView {
-      generalSettings.tabItem { Label("General", systemImage: "gear") }
-      managementSettings.tabItem { Label("Management", systemImage: "slider.horizontal.3") }
-    }
-    .frame(width: 450, height: 550)
-    .alert("Restart Required", isPresented: $showRestartAlert) {
-      Button("Restart Now", role: .destructive) {
-        UserDefaults.standard.set([selectedLanguage], forKey: "AppleLanguages")
-        relaunchApp()
-      }
-      Button("Later", role: .cancel) {}
-    } message: {
-      Text("Please restart MountMate for the language change to take effect.")
-    }
-  }
-
-  private var generalSettings: some View {
     Form {
       Section {
+        Toggle("Show Internal Disks", isOn: $showInternalDisks)
         Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
         Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
         Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)
-        Toggle("Show Internal Disks", isOn: $showInternalDisks)
         Picker("Language", selection: $selectedLanguage) {
           Text("English").tag("en")
           Text("Tiếng Việt").tag("vi")
@@ -89,55 +83,18 @@ struct SettingsView: View {
       Text(appVersion).font(.caption).foregroundColor(.secondary).frame(
         maxWidth: .infinity, alignment: .center)
     }
-    .formStyle(.grouped).padding()
-  }
-
-  private var managementSettings: some View {
-    Form {
-      Section(
-        header: Text("Ignored Volumes").bold(),
-        footer: Text(
-          "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage."
-        )
-      ) {
-        if persistence.ignoredVolumes.isEmpty {
-          CenteredContent {
-            Image(systemName: "eye.slash.circle.fill").font(.title).foregroundColor(
-              .secondary)
-            Text("No Ignored Volumes").fontWeight(.semibold)
-          }
-        } else {
-          List {
-            ForEach(persistence.ignoredVolumes) { info in
-              ManagedVolumeRow(
-                info: info, onDelete: { persistence.unignore(info: info) })
-            }
-          }
-        }
-      }
-
-      Section(
-        header: Text("Protected Volumes").bold(),
-        footer: Text(
-          "Right-click a volume to protect it from 'Unmount All' and sleep actions.")
-      ) {
-        if persistence.protectedVolumes.isEmpty {
-          CenteredContent {
-            Image(systemName: "lock.shield").font(.title).foregroundColor(.secondary)
-            Text("No Protected Volumes").fontWeight(.semibold)
-          }
-        } else {
-          ForEach(persistence.protectedVolumes) { info in
-            ManagedVolumeRow(
-              info: info, onDelete: { persistence.unprotect(info: info) })
-          }
-        }
-      }
+    .formStyle(.grouped)
+    .padding()
+    .alert("Restart Required", isPresented: $showRestartAlert) {
+      Button("Restart Now", role: .destructive) { relaunchApp() }
+      Button("Later", role: .cancel) {}
+    } message: {
+      Text("Please restart MountMate for the language change to take effect.")
     }
-    .formStyle(.grouped).padding()
   }
 
   private func relaunchApp() {
+    UserDefaults.standard.set([selectedLanguage], forKey: "AppleLanguages")
     let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
     let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
     let task = Process()
@@ -145,6 +102,90 @@ struct SettingsView: View {
     task.arguments = ["-n", path]
     task.launch()
     NSApplication.shared.terminate(self)
+  }
+}
+
+// MARK: - Management Settings Tab
+struct ManagementSettingsView: View {
+  @ObservedObject private var persistence = PersistenceManager.shared
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 16) {
+        ManagementSectionView(
+          title: "Ignored Volumes",
+          iconName: "eye.slash.fill",
+          items: persistence.ignoredVolumes,
+          emptyStateText: "No Ignored Volumes",
+          footer:
+            "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.",
+          onDelete: { info in persistence.unignore(info: info) }
+        )
+
+        ManagementSectionView(
+          title: "Protected Volumes",
+          iconName: "lock.shield.fill",
+          items: persistence.protectedVolumes,
+          emptyStateText: "No Protected Volumes",
+          footer: "Right-click a volume to protect it from 'Unmount All' and sleep actions.",
+          onDelete: { info in persistence.unprotect(info: info) }
+        )
+
+        Spacer()
+      }
+      .padding()
+    }
+  }
+}
+
+// MARK: - Reusable Management Components
+struct ManagementSectionView: View {
+  let title: LocalizedStringKey
+  let iconName: String
+  let items: [ManagedVolumeInfo]
+  let emptyStateText: LocalizedStringKey
+  let footer: LocalizedStringKey
+  let onDelete: (ManagedVolumeInfo) -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Image(systemName: iconName)
+          .font(.headline)
+          .foregroundColor(.secondary)
+        Text(title)
+          .font(.headline)
+      }
+
+      Divider()
+
+      if items.isEmpty {
+        HStack {
+          Spacer()
+          Text(emptyStateText)
+            .foregroundColor(.secondary)
+          Spacer()
+        }
+        .padding(.vertical)
+      } else {
+        VStack {
+          ForEach(items) { info in
+            ManagedVolumeRow(info: info, onDelete: { onDelete(info) })
+            if info != items.last {
+              Divider()
+            }
+          }
+        }
+      }
+
+      Text(footer)
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+    .padding()
+    .background(Color(nsColor: .windowBackgroundColor))
+    .cornerRadius(10)
+    .shadow(color: .black.opacity(0.1), radius: 3, y: 1)
   }
 }
 
@@ -156,12 +197,11 @@ struct ManagedVolumeRow: View {
     HStack {
       VStack(alignment: .leading, spacing: 2) {
         Text(info.name).fontWeight(.semibold)
-        Text("Volume: \(info.volumeUUID)")
-          .font(.system(.caption, design: .monospaced)).foregroundColor(.secondary)
-          .lineLimit(1).truncationMode(.middle)
-        Text("Disk: \(info.diskUUID)")
-          .font(.system(.caption, design: .monospaced)).foregroundColor(.secondary)
-          .lineLimit(1).truncationMode(.middle)
+        Text("Volume: \(info.volumeUUID)").font(.system(.caption, design: .monospaced))
+          .foregroundColor(.secondary).lineLimit(1).truncationMode(.middle)
+        Text("Disk: \(info.diskUUID)").font(.system(.caption, design: .monospaced)).foregroundColor(
+          .secondary
+        ).lineLimit(1).truncationMode(.middle)
       }
       Spacer()
       Button(role: .destructive) {
@@ -171,27 +211,6 @@ struct ManagedVolumeRow: View {
         Image(systemName: "trash")
       }.buttonStyle(.borderless)
     }
-  }
-}
-
-struct CenteredContent<Content: View>: View {
-  let content: Content
-
-  init(@ViewBuilder content: () -> Content) {
-    self.content = content()
-  }
-
-  var body: some View {
-    VStack {
-      Spacer()
-      HStack {
-        Spacer()
-        VStack(spacing: 8) {
-          content
-        }
-        Spacer()
-      }
-      Spacer()
-    }
+    .padding(.vertical, 4)
   }
 }

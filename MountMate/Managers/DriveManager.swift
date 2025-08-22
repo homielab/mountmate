@@ -6,19 +6,18 @@ import SwiftUI
 class DriveManager: ObservableObject {
   static let shared = DriveManager()
 
-  @Published var physicalDisks: [PhysicalDisk] = []
-  @Published var isInitialLoadComplete = false
+  @Published var physicalDisks: [PhysicalDisk]? = nil
   @Published var isRefreshing = false
+  @Published var userActionError: AppAlert? = nil
   @Published var busyVolumeIdentifier: String? = nil
   @Published var busyEjectingIdentifier: String? = nil
   @Published var isUnmountingAll = false
-  @Published var operationError: AppAlert? = nil
 
   private var refreshDebounceTimer: Timer?
+  private var isFetchInProgress = false
 
   private init() {
     setupDiskChangeObservers()
-    refreshDrives()
   }
 
   deinit {
@@ -29,12 +28,10 @@ class DriveManager: ObservableObject {
   // MARK: - Public Actions
 
   func refreshDrives(qos: DispatchQoS.QoSClass = .background) {
-    guard !isRefreshing else {
-      print("Refresh already in progress. Skipping.")
-      return
-    }
+    guard !isFetchInProgress else { return }
+    isFetchInProgress = true
 
-    if isInitialLoadComplete {
+    if physicalDisks != nil {
       DispatchQueue.main.async { self.isRefreshing = true }
     }
 
@@ -48,28 +45,12 @@ class DriveManager: ObservableObject {
       // #endif
 
       if let error = error, !error.isEmpty {
-        let errorMessage =
-          "The 'diskutil' command failed to execute. This can happen due to permission issues."
-        print("SHELL ERROR: \(errorMessage) - Details: \(error)")
-        self.handleRefreshFailure(
-          titleKey: "Command Execution Failed",
-          messageKey:
-            "\(errorMessage)\n\nPlease check your System Settings under Privacy & Security > Files and Folders to ensure MountMate has access.",
-          details: error
-        )
+        self.handleRefreshFailure(error: error)
         return
       }
 
       guard let allDisksData = output?.data(using: .utf8), !output!.isEmpty else {
-        let errorMessage =
-          "Failed to get disk list. The 'diskutil' command returned no data."
-        print("DATA ERROR: \(errorMessage)")
-        self.handleRefreshFailure(
-          titleKey: "Could Not Load Disks",
-          messageKey: "Failed to get disk list. The 'diskutil' command returned no data.",
-          details: nil
-        )
-
+        self.updateState(with: [])
         return
       }
 
@@ -78,68 +59,47 @@ class DriveManager: ObservableObject {
           from: allDisksData, options: [], format: nil) as? [String: Any]
         {
           let newPhysicalDisks = self.parseDisks(from: plist)
-          self.updateState(with: newPhysicalDisks, isComplete: true)
+          self.updateState(with: newPhysicalDisks)
         }
       } catch {
-        let errorMessage = "Failed to parse the data returned by `diskutil`."
-        print("PARSING ERROR: \(errorMessage) - \(error.localizedDescription)")
-        self.handleRefreshFailure(
-          titleKey: "Data Parsing Error",
-          messageKey: "Failed to parse the data returned by `diskutil`.",
-          details: error.localizedDescription
-        )
+        self.handleRefreshFailure(error: error.localizedDescription)
       }
     }
   }
 
-  private func handleRefreshFailure(titleKey: String, messageKey: String, details: String?) {
-    DispatchQueue.main.async {
-      self.physicalDisks = []
-      self.isRefreshing = false
-      if !self.isInitialLoadComplete { self.isInitialLoadComplete = true }
-
-      var fullMessage = NSLocalizedString(messageKey, comment: "Alert message")
-      if let details = details {
-        if details.lowercased().contains("permission") || details.lowercased().contains("timed out")
-        {
-          let permissionSuggestion = NSLocalizedString(
-            "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security.",
-            comment: "Permission suggestion text")
-          fullMessage += permissionSuggestion
-        }
-        fullMessage += "\n\nDetails:\n\(details)"
-      }
-
-      self.operationError = AppAlert(
-        title: NSLocalizedString(titleKey, comment: "Alert title"),
-        message: fullMessage,
-        kind: .basic
-      )
-    }
-  }
-
-  private func updateState(with disks: [PhysicalDisk], isComplete: Bool) {
+  private func updateState(with disks: [PhysicalDisk]) {
     DispatchQueue.main.async {
       self.physicalDisks = disks
+      self.isFetchInProgress = false
       self.isRefreshing = false
-      if !self.isInitialLoadComplete && isComplete { self.isInitialLoadComplete = true }
       self.busyVolumeIdentifier = nil
       self.busyEjectingIdentifier = nil
       self.isUnmountingAll = false
     }
   }
 
+  private func handleRefreshFailure(error: String) {
+    DispatchQueue.main.async {
+      self.physicalDisks = []
+      self.isFetchInProgress = false
+      self.isRefreshing = false
+      let message =
+        NSLocalizedString(
+          "MountMate could not get disk information from the system. This can happen if a disk is unresponsive or due to a permissions issue.",
+          comment: "Alert message")
+        + "\n\nPlease grant MountMate 'Full Disk Access' in System Settings."
+      self.userActionError = AppAlert(
+        title: NSLocalizedString("Could Not Load Disks", comment: "Alert title"), message: message,
+        kind: .basic)
+    }
+  }
+
   private func loadMockData() -> (output: String?, error: String?) {
-    // Look for the file named "testDisks.plist" in the app's bundle.
     guard let url = Bundle.main.url(forResource: "testDisks", withExtension: "plist") else {
-      print(
-        "⚠️ MOCK DATA ERROR: testDisks.plist not found in the app bundle. Make sure it's added to the target."
-      )
+      print("⚠️ MOCK DATA ERROR: testDisks.plist not found in the app bundle.")
       return (nil, "testDisks.plist not found")
     }
-
     do {
-      // Read the file's content into a string.
       let output = try String(contentsOf: url)
       return (output, nil)
     } catch {
@@ -149,20 +109,18 @@ class DriveManager: ObservableObject {
   }
 
   func unmountAllDrives() {
-    let drivesToUnmount = self.physicalDisks
+    let drivesToUnmount = (self.physicalDisks ?? [])
       .filter { $0.type == .physical || $0.type == .diskImage }
-      .flatMap { $0.partitions }
+      .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
       .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
 
     guard !drivesToUnmount.isEmpty else { return }
-
     DispatchQueue.main.async { self.isUnmountingAll = true }
 
     DispatchQueue.global(qos: .userInitiated).async {
       for drive in drivesToUnmount {
-        _ = runShell("diskutil unmount \(drive.id)")
+        _ = runShell("diskutil unmount \(drive.deviceIdentifier)")
       }
-
       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
         self?.refreshDrives(qos: .userInitiated)
       }
@@ -189,11 +147,17 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      var result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      if let error = result.error, !error.isEmpty, error.lowercased().contains("failed to mount") {
+        print(
+          "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 0.5s..."
+        )
+        Thread.sleep(forTimeInterval: 0.5)
+        result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      }
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
-          self.handleDiskUtilError(
-            error, for: volume.name, with: volume, operation: .mount)
+          self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
         }
         self.busyVolumeIdentifier = nil
         self.refreshDrives(qos: .userInitiated)
@@ -207,7 +171,6 @@ class DriveManager: ObservableObject {
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
 
     DispatchQueue.global(qos: .userInitiated).async {
-      // Note the use of the 'input' parameter here
       let result = runShell(
         "diskutil apfs unlockVolume \(volume.id) -stdinpassphrase",
         input: Data(passphrase.utf8))
@@ -244,29 +207,20 @@ class DriveManager: ObservableObject {
       return []
     }
 
-    // Step 1: Create a set of all identifiers that are children (partitions) of another disk.
     var childDeviceIDs = Set<String>()
     for diskData in allDisksAndPartitions {
       if let partitions = diskData["Partitions"] as? [[String: Any]] {
-        for partition in partitions {
-          if let id = partition["DeviceIdentifier"] as? String {
-            childDeviceIDs.insert(id)
-          }
-        }
+        partitions.forEach { childDeviceIDs.insert($0["DeviceIdentifier"] as? String ?? "") }
       }
     }
 
-    // Step 2: Identify the true root disks. A root disk is any disk whose identifier
-    // is NOT in the set of child identifiers.
-    let rootDisks = allDisksAndPartitions.filter { diskData in
-      guard let id = diskData["DeviceIdentifier"] as? String else { return false }
-      return !childDeviceIDs.contains(id)
+    let rootDisks = allDisksAndPartitions.filter {
+      !childDeviceIDs.contains($0["DeviceIdentifier"] as? String ?? "")
     }
 
     let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
     var newDisks: [PhysicalDisk] = []
 
-    // Step 3: Iterate ONLY through the identified root disks. This prevents all duplicates.
     for diskData in rootDisks {
       let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
       if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
@@ -276,7 +230,6 @@ class DriveManager: ObservableObject {
       var partitions: [Volume] = []
       var containers: [APFSContainer] = []
 
-      // Builds the hierarchy downwards from the root disk.
       if let diskPartitions = diskData["Partitions"] as? [[String: Any]] {
         for partitionData in diskPartitions {
           if let contentType = partitionData["Content"] as? String,
@@ -318,8 +271,8 @@ class DriveManager: ObservableObject {
           id: physicalIdentifier, diskUUID: infoPlist?["DiskUUID"] as? String,
           connectionType: connectionInfo.type, name: diskName,
           totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
-          storageError: stats.error, usagePercentage: stats.percentage,
-          type: connectionInfo.diskType, partitions: partitions, containers: containers)
+          usagePercentage: stats.percentage, type: connectionInfo.diskType,
+          partitions: partitions, containers: containers)
         newDisks.append(physicalDisk)
       }
     }
@@ -375,11 +328,9 @@ class DriveManager: ObservableObject {
   ) {
     if volumes.compactMap({ $0.storageError }).first != nil {
       let errorMessage = NSLocalizedString(
-        "Could not calculate total usage because an error occurred on one of its volumes.",
-        comment: "Parent disk error message")
+        "Could not calculate total usage...", comment: "Parent disk error message")
       return (nil, nil, nil, nil, errorMessage)
     }
-
     guard totalBytes > 0 else { return (nil, nil, nil, nil, nil) }
 
     let usedBytes = volumes.reduce(0) { $0 + ($1.usedBytes ?? 0) }
@@ -409,12 +360,10 @@ class DriveManager: ObservableObject {
       ?? deviceIdentifier
 
     let tempVolume = Volume(
-      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID,
-      name: volumeName,
+      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName,
       isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
-      usedBytes: nil, usagePercentage: nil, storageError: nil, fileSystemType: nil,
-      category: .user,
-      isProtected: false, snapshots: [])
+      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
     if PersistenceManager.shared.isVolumeIgnored(tempVolume) { return nil }
 
     let isProtected = PersistenceManager.shared.isVolumeProtected(tempVolume)
@@ -442,47 +391,40 @@ class DriveManager: ObservableObject {
       formatter.countStyle = .file
       totalSizeStr = formatter.string(fromByteCount: totalSize)
 
-      var calculatedUsedBytes: Int64 = 0
+      var calculatedUsedBytes: Int64?
       if let capacityInUse = volumeData["CapacityInUse"] as? Int64 {
         calculatedUsedBytes = capacityInUse
       } else if isMounted, let mountPoint = mountPoint {
         do {
           let attributes = try getFileSystemAttributes(for: mountPoint)
-
-          if let totalSize = volumeData["Size"] as? Int64, totalSize > 0 {
-            let formatter = ByteCountFormatter()
-            formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
-            formatter.countStyle = .file
-            totalSizeStr = formatter.string(fromByteCount: totalSize)
-
-            calculatedUsedBytes = attributes.total - attributes.free
-          }
+          calculatedUsedBytes = attributes.total - attributes.free
         } catch {
           print(
-            "Error getting file system attributes for \(volumeName): \(error.localizedDescription)"
-          )
+            "Error getting file system attributes for \(volumeName): \(error.localizedDescription)")
           storageError = NSLocalizedString(
             "Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security.",
             comment: "Permission error message")
         }
       }
 
-      usedBytes = calculatedUsedBytes
+      if let finalUsedBytes = calculatedUsedBytes {
+        usedBytes = finalUsedBytes
 
-      let freeBytes = totalSize - calculatedUsedBytes
-      freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
-      usedSpaceStr = formatter.string(fromByteCount: calculatedUsedBytes)
-      usagePercentage = Double(calculatedUsedBytes) / Double(totalSize)
+        let freeBytes = totalSize - finalUsedBytes
+        freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
+        usedSpaceStr = formatter.string(fromByteCount: finalUsedBytes)
+        usagePercentage = Double(finalUsedBytes) / Double(totalSize)
+      }
     }
 
     return Volume(
-      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID,
-      name: volumeName,
+      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName,
       isMounted: isMounted, mountPoint: mountPoint, freeSpace: freeSpaceStr,
       totalSize: totalSizeStr, usedSpace: usedSpaceStr, usedBytes: usedBytes,
-      usagePercentage: usagePercentage,
-      storageError: storageError, fileSystemType: fileSystemType,
-      category: category, isProtected: isProtected, snapshots: snapshots)
+      fileSystemType: fileSystemType,
+      usagePercentage: usagePercentage, category: category, isProtected: isProtected,
+      snapshots: snapshots,
+      storageError: storageError)
   }
 
   private func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {
@@ -596,7 +538,7 @@ class DriveManager: ObservableObject {
         "\(String(format: NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message"), verb, name))\n\nDetails:\n\(error)"
       kind = .basic
     }
-    self.operationError = AppAlert(title: title, message: message, kind: kind)
+    self.userActionError = AppAlert(title: title, message: message, kind: kind)
   }
 
   private func parseDiskUtilError(_ rawError: String, for name: String, operation: DiskOperation)

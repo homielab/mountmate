@@ -3,18 +3,24 @@
 import SwiftUI
 
 struct MainView: View {
-  @StateObject private var driveManager = DriveManager.shared
-  @Environment(\.openWindow) var openWindow
+  @EnvironmentObject var driveManager: DriveManager
+
+  @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
+    .autoconnect()
 
   var body: some View {
     VStack(spacing: 0) {
-      HeaderActionsView(
-        driveManager: driveManager,
-        onShowSettings: openAndFocusSettingsWindow,
-        onRefresh: { driveManager.refreshDrives(qos: .userInitiated) }
-      )
+      HeaderActionsView()
 
-      if driveManager.physicalDisks.isEmpty {
+      if driveManager.physicalDisks == nil {
+        ProgressView()
+          .frame(height: 150)
+          .onReceive(initialLoadTimer) { _ in
+            if driveManager.physicalDisks != nil {
+              self.initialLoadTimer.upstream.connect().cancel()
+            }
+          }
+      } else if driveManager.physicalDisks!.isEmpty {
         noDrivesView
       } else {
         driveListView
@@ -25,54 +31,44 @@ struct MainView: View {
     .onAppear {
       driveManager.refreshDrives()
     }
-  }
-
-  private var hasVisibleDisks: Bool {
-    driveManager.physicalDisks.contains {
-      !$0.partitions.isEmpty || !$0.containers.contains { $0.volumes.isEmpty }
-    }
-  }
-
-  private func openAndFocusSettingsWindow() {
-    let settingsWindowTitle = NSLocalizedString("MountMate Settings", comment: "")
-    if let window = NSApp.windows.first(where: { $0.title == settingsWindowTitle }) {
-      window.makeKeyAndOrderFront(nil)
-      NSApp.activate(ignoringOtherApps: true)
-    } else {
-      openWindow(id: "settings-window")
+    .alert(item: $driveManager.userActionError) { appAlert in
+      Alert(
+        title: Text(appAlert.title), message: Text(appAlert.message),
+        dismissButton: .default(Text("OK")))
     }
   }
 
   private var driveListView: some View {
-    let internalDisks = driveManager.physicalDisks.filter { $0.type == .internalDisk }
-    let externalDisks = driveManager.physicalDisks.filter { $0.type == .physical }
-    let diskImages = driveManager.physicalDisks.filter { $0.type == .diskImage }
+    let internalDisks = (driveManager.physicalDisks ?? []).filter {
+      $0.type == .internalDisk && $0.hasVisibleContent
+    }
+    let externalDisks = (driveManager.physicalDisks ?? []).filter {
+      $0.type == .physical && $0.hasVisibleContent
+    }
+    let diskImages = (driveManager.physicalDisks ?? []).filter {
+      $0.type == .diskImage && $0.hasVisibleContent
+    }
 
     return List {
       if !internalDisks.isEmpty {
         Section(header: Text("Internal Disks")) {
-          ForEach(internalDisks) { disk in
-            DiskAndVolumesView(disk: disk)
-          }
+          ForEach(internalDisks) { disk in DiskAndVolumesView(disk: disk) }
         }
       }
       if !externalDisks.isEmpty {
         Section(header: Text("External Disks")) {
-          ForEach(externalDisks) { disk in
-            DiskAndVolumesView(disk: disk)
-          }
+          ForEach(externalDisks) { disk in DiskAndVolumesView(disk: disk) }
         }
       }
       if !diskImages.isEmpty {
         Section(header: Text("Disk Images")) {
-          ForEach(diskImages) { disk in
-            DiskAndVolumesView(disk: disk)
-          }
+          ForEach(diskImages) { disk in DiskAndVolumesView(disk: disk) }
         }
       }
     }
     .listStyle(.sidebar)
-    .frame(maxHeight: 650)
+    .frame(maxHeight: 450)
+    .frame(minHeight: 50)
   }
 
   private var noDrivesView: some View {
@@ -92,6 +88,7 @@ struct MainView: View {
   }
 }
 
+// MARK: - Hierarchical Helper & Row Views
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
 
@@ -100,19 +97,14 @@ struct DiskAndVolumesView: View {
   }
 
   var body: some View {
-    if !disk.partitions.isEmpty || !visibleContainers.isEmpty {
-      DiskHeaderRow(disk: disk, manager: DriveManager.shared)
-
-      ForEach(disk.partitions) { partition in
-        VolumeRowView(volume: partition, manager: DriveManager.shared).padding(.leading, 24)
-      }
-
-      ForEach(visibleContainers) { container in
-        ContainerRowView(container: container)
-        ForEach(container.volumes) { volume in
-          VolumeRowView(volume: volume, manager: DriveManager.shared).padding(
-            .leading, 48)
-        }
+    DiskHeaderRow(disk: disk)
+    ForEach(disk.partitions) { partition in
+      VolumeRowView(volume: partition).padding(.leading, 24)
+    }
+    ForEach(visibleContainers) { container in
+      ContainerRowView(container: container)
+      ForEach(container.volumes) { volume in
+        VolumeRowView(volume: volume).padding(.leading, 48)
       }
     }
   }
@@ -120,7 +112,7 @@ struct DiskAndVolumesView: View {
 
 struct DiskHeaderRow: View {
   let disk: PhysicalDisk
-  @ObservedObject var manager: DriveManager
+  @EnvironmentObject var manager: DriveManager
   @State private var isHovering = false
 
   var body: some View {
@@ -129,13 +121,10 @@ struct DiskHeaderRow: View {
         ZStack {
           Image(systemName: "internaldrive.fill").font(.title2)
           if let error = disk.storageError {
-            Image(systemName: "exclamationmark.triangle.fill")
-              .foregroundColor(.orange)
-              .help(error)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange).help(error)
           } else if let percentage = disk.usagePercentage {
-            CircularProgressRing(progress: percentage, color: .purple, lineWidth: 3.5)
-              .frame(
-                width: 32, height: 32)
+            CircularProgressRing(progress: percentage, color: .purple, lineWidth: 3.5).frame(
+              width: 32, height: 32)
           }
         }
         .frame(width: 40, height: 40)
@@ -143,17 +132,25 @@ struct DiskHeaderRow: View {
         VStack(alignment: .leading, spacing: 2) {
           Text(disk.name ?? disk.connectionType).font(.headline)
           if let error = disk.storageError {
-            Text(error)
-              .font(.caption).foregroundColor(.orange)
-              .lineLimit(1).truncationMode(.tail)
-          } else if let total = disk.totalSize, let used = disk.usedSpace,
-            let free = disk.freeSpace
+            Text(error).font(.caption).foregroundColor(.orange).lineLimit(1).truncationMode(.tail)
+          } else if let total = disk.totalSize, let used = disk.usedSpace, let free = disk.freeSpace
           {
-            Text("\(used) used / \(total) (\(free) free)")
-              .font(.caption).foregroundColor(.secondary)
+            Text("\(used) used / \(total) (\(free) free)").font(.caption).foregroundColor(
+              .secondary)
           } else {
             Text(disk.connectionType).font(.caption).foregroundColor(.secondary)
           }
+        }
+      }
+      .contentShape(Rectangle())
+      .contextMenu {
+        Button("Ignore This Disk") {
+          let allVolumesToIgnore = disk.partitions + disk.containers.flatMap { $0.volumes }
+          for volume in allVolumesToIgnore { PersistenceManager.shared.ignore(volume: volume) }
+          manager.refreshDrives(qos: .userInitiated)
+        }
+        if disk.type != .internalDisk {
+          Button("Eject") { manager.eject(disk: disk) }
         }
       }
 
@@ -165,31 +162,12 @@ struct DiskHeaderRow: View {
           Image(systemName: "eject.fill").opacity(isEjecting ? 0 : 1)
         }
         .buttonStyle(.bordered).tint(.purple).disabled(isEjecting)
-        .overlay { if isEjecting { ProgressView().controlSize(.small) } }
-        .help("Eject")
+        .overlay { if isEjecting { ProgressView().controlSize(.small) } }.help("Eject")
       }
     }
-    .listRowSeparator(.hidden)
-    .padding(.vertical, 8)
-    .padding(.horizontal, 4)
-    .background(isHovering ? Color.primary.opacity(0.1) : Color.clear)
-    .cornerRadius(6)
-    .onHover { hovering in
-      self.isHovering = hovering
-    }
-    .contextMenu {
-      Button(NSLocalizedString("Ignore This Disk", comment: "Context menu action")) {
-        let allVolumesToIgnore = disk.partitions + disk.containers.flatMap { $0.volumes }
-        for volume in allVolumesToIgnore {
-          PersistenceManager.shared.ignore(volume: volume)
-        }
-
-        DriveManager.shared.refreshDrives(qos: .userInitiated)
-      }
-      if disk.type != .internalDisk {
-        Button("Eject") { manager.eject(disk: disk) }
-      }
-    }
+    .listRowSeparator(.hidden).padding(.vertical, 8).padding(.horizontal, 4)
+    .background(isHovering ? Color.primary.opacity(0.1) : Color.clear).cornerRadius(6)
+    .onHover { hovering in self.isHovering = hovering }
   }
 }
 
@@ -210,10 +188,9 @@ struct ContainerRowView: View {
 
 struct VolumeRowView: View {
   let volume: Volume
-  @ObservedObject var manager: DriveManager
+  @EnvironmentObject var manager: DriveManager
   @StateObject private var persistence = PersistenceManager.shared
   @State private var isHovering = false
-
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
 
   private func usageColor(for percentage: Double) -> Color {
@@ -380,14 +357,13 @@ struct SnapshotRowView: View {
 }
 
 struct HeaderActionsView: View {
-  @ObservedObject var driveManager: DriveManager
-  var onShowSettings: () -> Void
-  var onRefresh: () -> Void
+  @EnvironmentObject var driveManager: DriveManager
 
   private var canUnmountAll: Bool {
-    driveManager.physicalDisks.flatMap { $0.partitions }.contains {
-      $0.isMounted && $0.category == .user
+    (driveManager.physicalDisks ?? []).flatMap {
+      $0.partitions + $0.containers.flatMap { $0.volumes }
     }
+    .contains { $0.isMounted && $0.category == .user && !$0.isProtected }
   }
 
   var body: some View {
@@ -395,19 +371,35 @@ struct HeaderActionsView: View {
       Text("MountMate").font(.headline)
       Spacer()
 
+      // Unmount All Button
       Button(action: { driveManager.unmountAllDrives() }) {
-        Image(systemName: "eject.circle.fill").opacity(driveManager.isUnmountingAll ? 0 : 1)
+        if driveManager.isUnmountingAll {
+          ProgressView().controlSize(.small)
+        } else {
+          Image(systemName: "eject.circle.fill")
+        }
       }
-      .buttonStyle(.plain).help(
-        NSLocalizedString("Unmount All", comment: "Unmount All button tooltip")
-      )
+      .buttonStyle(.plain).help(NSLocalizedString("Unmount All", comment: "Tooltip"))
       .disabled(!canUnmountAll || driveManager.isUnmountingAll)
-      .overlay { if driveManager.isUnmountingAll { ProgressView().controlSize(.small) } }
 
-      Button(action: onShowSettings) { Image(systemName: "gearshape.fill") }
+      // Settings Button
+      if #available(macOS 14.0, *) {
+        SettingsLink {
+          Image(systemName: "gearshape.fill")
+        }
         .buttonStyle(.plain).help("Settings")
+      } else {
+        Button(action: {
+          NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+          NSApp.activate(ignoringOtherApps: true)
+        }) {
+          Image(systemName: "gearshape.fill")
+        }
+        .buttonStyle(.plain).help("Settings")
+      }
 
-      Button(action: onRefresh) {
+      // Refresh Button
+      Button(action: { driveManager.refreshDrives(qos: .userInitiated) }) {
         if driveManager.isRefreshing {
           ProgressView().controlSize(.small)
         } else {
@@ -417,12 +409,13 @@ struct HeaderActionsView: View {
       .buttonStyle(.plain).help("Refresh Drives")
       .disabled(driveManager.isRefreshing)
 
+      // Quit Button
       Button(action: { NSApplication.shared.terminate(nil) }) {
         Image(systemName: "power").foregroundColor(.red)
       }
-      .buttonStyle(.plain).help(
-        NSLocalizedString("Quit MountMate", comment: "Quit button tooltip"))
+      .buttonStyle(.plain).help(NSLocalizedString("Quit MountMate", comment: "Tooltip"))
     }
+    .frame(width: 320)
     .padding()
   }
 }

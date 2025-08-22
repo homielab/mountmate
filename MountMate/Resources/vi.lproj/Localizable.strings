@@ -77,7 +77,6 @@
 // Titles
 "Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
 "Data Parsing Error" = "Lỗi phân tích dữ liệu";
-"Command Execution Failed" = "Thực thi lệnh thất bại";
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
@@ -97,9 +96,6 @@
 "mount" = "gắn";
 
 // Error Messages & Formats
-"Failed to get disk list. The 'diskutil' command returned no data." = "Không thể lấy danh sách ổ đĩa. Lệnh 'diskutil' không trả về dữ liệu.";
-"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Không thể phân tích dữ liệu trả về từ `diskutil`. Định dạng có thể đã thay đổi hoặc dữ liệu có thể bị hỏng.";
-"The 'diskutil' command failed to execute. This can happen due to permission issues." = "Lệnh 'diskutil' không thể thực thi. Điều này có thể xảy ra do vấn đề về quyền truy cập.";
 "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nVui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Không thể gắn trực tiếp phân vùng “EFI”. Đây là một phân vùng hệ thống đặc biệt và hành vi này là bình thường.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";

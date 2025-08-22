@@ -2,14 +2,25 @@
 
 import Foundation
 
+enum PhysicalDiskType {
+  case internalDisk
+  case physical
+  case diskImage
+}
+
+enum DriveCategory {
+  case user
+  case system
+}
+
 struct APFSSnapshot: Identifiable, Hashable {
-  let id: String  // UUID of the snapshot
+  let id: String  // UUID
   let name: String
 }
 
 struct Volume: Identifiable, Hashable {
-  let id: String  // VolumeUUID
-  let deviceIdentifier: String  // e.g., disk4s1
+  let id: String  // UUID
+  let deviceIdentifier: String
   let diskUUID: String?
   let name: String
   let isMounted: Bool
@@ -18,13 +29,13 @@ struct Volume: Identifiable, Hashable {
   let totalSize: String?
   let usedSpace: String?
   let usedBytes: Int64?
-  let usagePercentage: Double?
-  var storageError: String?
   let fileSystemType: String?
+  let usagePercentage: Double?
   let category: DriveCategory
   var isProtected: Bool
-
   var snapshots: [APFSSnapshot]
+
+  var storageError: String?
 
   var compositeId: String? {
     guard let diskUUID = diskUUID else { return nil }
@@ -33,25 +44,27 @@ struct Volume: Identifiable, Hashable {
 }
 
 struct APFSContainer: Identifiable, Hashable {
-  let id: String  // // e.g., disk1
+  let id: String  // deviceIdentifier
   var volumes: [Volume]
 }
 
 struct PhysicalDisk: Identifiable {
-  let id: String  // e.g., disk4
+  let id: String  // deviceIdentifier
   let diskUUID: String?
   let connectionType: String
   let name: String?
   let totalSize: String?
   let freeSpace: String?
   let usedSpace: String?
-  var storageError: String?
   let usagePercentage: Double?
   let type: PhysicalDiskType
 
   var partitions: [Volume]
   var containers: [APFSContainer]
-}
 
-enum PhysicalDiskType { case internalDisk, physical, diskImage }
-enum DriveCategory { case user, system }
+  var storageError: String?
+
+  var hasVisibleContent: Bool {
+    !partitions.isEmpty || containers.contains { !$0.volumes.isEmpty }
+  }
+}

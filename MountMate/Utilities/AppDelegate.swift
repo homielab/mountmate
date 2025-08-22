@@ -18,7 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   // MARK: - Observers
 
   private func setupErrorObserver() {
-    DriveManager.shared.$operationError
+    DriveManager.shared.$userActionError
       .receive(on: DispatchQueue.main)
       .compactMap { $0 }
       .sink { [weak self] appAlert in
@@ -130,6 +130,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
     }
 
-    DriveManager.shared.operationError = nil
+    DriveManager.shared.userActionError = nil
   }
 }

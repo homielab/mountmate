@@ -7,8 +7,7 @@ import SwiftUI
 struct MountMateApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-  @State private var initialLoadCompleted = false
-
+  @StateObject private var driveManager = DriveManager.shared
   @StateObject private var launchManager = LaunchAtLoginManager()
   @StateObject private var diskMounter = DiskMounter()
   @StateObject private var updaterViewModel: UpdaterController
@@ -20,26 +19,17 @@ struct MountMateApp: App {
   }
 
   var body: some Scene {
-    MenuBarExtra("MountMate", systemImage: "externaldrive.fill.badge.plus") {
-      if initialLoadCompleted {
-        MainView()
-      } else {
-        LoadingView()
-          .onReceive(DriveManager.shared.$isInitialLoadComplete) { isComplete in
-            if isComplete {
-              self.initialLoadCompleted = true
-            }
-          }
-      }
+    MenuBarExtra("MountMate", systemImage: "externaldrive.fill") {
+      MainView()
+        .environmentObject(driveManager)
     }
     .menuBarExtraStyle(.window)
 
-    Window(NSLocalizedString("MountMate Settings", comment: ""), id: "settings-window") {
+    Settings {
       SettingsView()
         .environmentObject(launchManager)
         .environmentObject(diskMounter)
         .environmentObject(updaterViewModel)
     }
-    .windowResizability(.contentSize)
   }
 }

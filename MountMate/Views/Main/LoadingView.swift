@@ -4,12 +4,11 @@ import SwiftUI
 
 struct LoadingView: View {
   var body: some View {
-    VStack {
+    VStack(spacing: 8) {
       ProgressView()
       Text(NSLocalizedString("Loading Disks...", comment: "Initial loading text"))
-        .padding(.top, 8)
         .foregroundColor(.secondary)
     }
-    .frame(width: 370, height: 200)
+    .frame(width: 320, height: 200)
   }
 }

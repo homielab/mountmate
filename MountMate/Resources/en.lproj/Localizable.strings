@@ -77,7 +77,6 @@
 // Titles
 "Could Not Load Disks" = "Could Not Load Disks";
 "Data Parsing Error" = "Data Parsing Error";
-"Command Execution Failed" = "Command Execution Failed";
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";
@@ -97,9 +96,6 @@
 "mount" = "mount";
 
 // Error Messages & Formats
-"Failed to get disk list. The 'diskutil' command returned no data." = "Failed to get disk list. The 'diskutil' command returned no data.";
-"Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt." = "Failed to parse the data returned by `diskutil`. The format may have changed, or the data could be corrupt.";
-"The 'diskutil' command failed to execute. This can happen due to permission issues." = "The 'diskutil' command failed to execute. This can happen due to permission issues.";
 "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security.";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
