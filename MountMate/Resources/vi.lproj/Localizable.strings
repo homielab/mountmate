@@ -104,7 +104,7 @@
 "Enter the password to unlock “%@”" = "Nhập mật khẩu để mở khoá “%@”";
 "Password" = "Mật khẩu";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Để đảm bảo MountMate có thể thấy tất cả các loại ổ đĩa và ngăn ngừa lỗi, vui lòng cấp quyền Truy cập Toàn bộ Đĩa.\n\nNhấp vào 'Mở Cài đặt Hệ thống' để được đưa đến bảng điều khiển chính xác.";
-
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate không thể lấy thông tin ổ đĩa. Hệ thống có thể đang bận, một ổ đĩa không phản hồi, hoặc quyền truy cập có thể không chính xác.";
 
 // MARK: - App Lifecycle & Loading
 //=============================================

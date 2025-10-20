@@ -39,7 +39,7 @@ func runShell(_ command: String, input: Data? = nil) -> (output: String?, error:
 
   if timeoutResult == .timedOut {
     print(
-      "❌ SHELL TIMEOUT: The command '\(command)' did not complete within 6 seconds. Terminating.")
+      "❌ SHELL TIMEOUT: The command '\(command)' did not complete within 15 seconds. Terminating.")
     task.terminate()
     let timeoutError =
       "The command timed out. This often indicates a permissions issue. Please grant MountMate Full Disk Access in System Settings."

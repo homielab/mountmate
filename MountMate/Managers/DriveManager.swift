@@ -16,8 +16,12 @@ class DriveManager: ObservableObject {
   private var refreshDebounceTimer: Timer?
   private var isFetchInProgress = false
 
+  private var refreshRetryCount = 0
+  private let maxRefreshRetries = 1
+
   private init() {
     setupDiskChangeObservers()
+    refreshDrives()
   }
 
   deinit {
@@ -69,6 +73,7 @@ class DriveManager: ObservableObject {
 
   private func updateState(with disks: [PhysicalDisk]) {
     DispatchQueue.main.async {
+      self.refreshRetryCount = 0
       self.physicalDisks = disks
       self.isFetchInProgress = false
       self.isRefreshing = false
@@ -80,17 +85,30 @@ class DriveManager: ObservableObject {
 
   private func handleRefreshFailure(error: String) {
     DispatchQueue.main.async {
-      self.physicalDisks = []
       self.isFetchInProgress = false
       self.isRefreshing = false
-      let message =
-        NSLocalizedString(
-          "MountMate could not get disk information from the system. This can happen if a disk is unresponsive or due to a permissions issue.",
-          comment: "Alert message")
-        + "\n\nPlease grant MountMate 'Full Disk Access' in System Settings."
-      self.userActionError = AppAlert(
-        title: NSLocalizedString("Could Not Load Disks", comment: "Alert title"), message: message,
-        kind: .basic)
+
+      if self.refreshRetryCount < self.maxRefreshRetries {
+        self.refreshRetryCount += 1
+        let retryDelay = 5.0
+        print(
+          "❗️ Refresh failed, will retry in \(retryDelay) seconds... (Attempt \(self.refreshRetryCount))"
+        )
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) {
+          self.refreshDrives()
+        }
+      } else {
+        print("❌ Refresh failed after \(self.maxRefreshRetries) retries. Showing error to user.")
+        self.physicalDisks = []
+
+        let message = NSLocalizedString(
+          "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect.",
+          comment: "Final refresh error message")
+        self.userActionError = AppAlert(
+          title: NSLocalizedString("Could Not Load Disks", comment: "Alert title"),
+          message: message, kind: .basic)
+      }
     }
   }
 
@@ -150,9 +168,9 @@ class DriveManager: ObservableObject {
       var result = runShell("diskutil mount \(volume.deviceIdentifier)")
       if let error = result.error, !error.isEmpty, error.lowercased().contains("failed to mount") {
         print(
-          "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 0.5s..."
+          "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s..."
         )
-        Thread.sleep(forTimeInterval: 0.5)
+        Thread.sleep(forTimeInterval: 15)
         result = runShell("diskutil mount \(volume.deviceIdentifier)")
       }
       DispatchQueue.main.async {

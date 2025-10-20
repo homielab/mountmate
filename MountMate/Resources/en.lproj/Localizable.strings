@@ -104,7 +104,7 @@
 "Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
 "Password" = "Password";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel.";
-
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect.";
 
 // MARK: - App Lifecycle & Loading
 //=============================================
