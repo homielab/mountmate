@@ -1,0 +1,115 @@
+/*
+  Localizable.strings (Chinese (Traditional))
+*/
+
+// MARK: - Main View & Sections
+//=============================================
+
+"No Drives Found" = "未找到磁碟";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "連接 USB 裝置、SD 卡或掛載磁碟映像後，將在此顯示。";
+"Internal Disks" = "內建磁碟";
+"External Disks" = "外接磁碟";
+"Disk Images" = "磁碟映像";
+"Snapshots" = "快照";
+
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Unmount All" = "卸載所有磁碟卷";
+"Eject" = "推出";
+"Mount" = "掛載";
+"Unmount" = "卸載";
+"Quit MountMate" = "結束 MountMate";
+
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"Unknown" = "未知";
+"Unmounted" = "已卸載";
+
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "忽略此磁碟";
+"Ignore This Volume" = "忽略此磁碟卷";
+"Protect from 'Unmount All'" = "鎖定，防止「卸載所有」操作";
+"Unprotect from 'Unmount All'" = "解除鎖定，允許「卸載所有」操作";
+"Open in Finder" = "在 Finder 中開啟";
+
+
+// MARK: - Settings View
+//=============================================
+
+"MountMate Settings" = "MountMate 設定";
+
+// Tabs
+"General" = "一般";
+"Management" = "管理";
+
+// General Tab
+"Show Internal Disks" = "顯示內建磁碟";
+"Start MountMate at Login" = "登入時啟動 MountMate";
+"Block USB Auto-Mount" = "阻止 USB 自動掛載";
+"Unmount All Disks on Sleep" = "進入睡眠模式時卸載所有磁碟";
+"Language" = "語言";
+
+// About & Updates Section
+"Homepage" = "首頁";
+"Support Email" = "支援電子郵件";
+"Donate" = "贊助";
+"Check for Updates..." = "檢查更新...";
+
+// Management Tab
+"Ignored Volumes" = "已忽略的磁碟卷";
+"No Ignored Volumes" = "目前沒有被忽略的磁碟卷";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "在磁碟卷上按右鍵可將其忽略。對於无需管理的系統分割區（如「EFI」）很有用。";
+"Protected Volumes" = "受保護的磁碟卷";
+"No protected volumes" = "目前沒有受保護的磁碟卷";
+"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "在磁碟卷上按右鍵可設定保護，以防在「卸載所有」或系統睡眠時被卸載。";
+
+
+// MARK: - Alerts & Errors
+//=============================================
+
+// Titles
+"Could Not Load Disks" = "無法載入磁碟";
+"Data Parsing Error" = "資料解析錯誤";
+"Eject Failed" = "推出失敗";
+"Mount Failed" = "掛載失敗";
+"Unmount Failed" = "卸載失敗";
+"“%@” is locked" = "「%@」已被鎖定";
+"Full Disk Access Recommended" = "建議授予完整磁碟存取權限";
+
+// Buttons
+"OK" = "好";
+"Unlock" = "解鎖";
+"Cancel" = "取消";
+"Open System Settings" = "開啟系統設定";
+"Later" = "稍後";
+
+// Verbs for error messages
+"unmount" = "卸載";
+"eject" = "推出";
+"mount" = "掛載";
+
+// Error message formats
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\n請在「系統設定 > 隱私與安全性」中為 MountMate 授予「完整磁碟存取權限」。";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "「EFI」分割區為系統特殊分割區，無法直接掛載，這是正常現象。";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "由於其中一個磁碟卷正在使用中，無法推出「%@」。";
+"Failed to %@ “%@” because it is currently in use by another application." = "由於「%@」目前正被其他應用程式使用，無法執行 %@ 操作。";
+"An unknown error occurred while trying to %@ “%@”." = "嘗試 %@ 「%@」時發生未知錯誤。";
+"Enter the password to unlock “%@”" = "請輸入密碼以解鎖「%@」";
+"Password" = "密碼";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "為確保 MountMate 能偵測所有磁碟類型並避免錯誤，請授予「完整磁碟存取權限」。\n\n點擊「開啟系統設定」以前往相關頁面。";
+
+
+// MARK: - App Lifecycle
+//=============================================
+
+"Loading Disks..." = "正在載入磁碟...";
+"Restart Required" = "需要重新啟動";
+"Please restart MountMate for the language change to take effect." = "請重新啟動 MountMate 以使語言變更生效。";
+"Restart Now" = "立即重新啟動";

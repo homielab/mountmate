@@ -6,18 +6,18 @@
 //=============================================
 
 "No Drives Found" = "未找到磁盘";
-"Connect a USB drive, SD card, or mount a disk image to see it here." = "连接 USB 设备、SD 卡或挂载磁盘镜像后将在此显示。";
-"Internal Disks" = "Internal Disks";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "连接 USB 设备、SD 卡或挂载磁盘映像后将在此显示。";
+"Internal Disks" = "内置磁盘";
 "External Disks" = "外置磁盘";
-"Disk Images" = "磁盘镜像";
-"Snapshots" = "Snapshots";
+"Disk Images" = "磁盘映像";
+"Snapshots" = "快照";
 
 
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
-"Unmount All" = "卸载所有用户卷";
-"Eject" = "弹出";
+"Unmount All" = "卸载所有卷宗";
+"Eject" = "推出";
 "Mount" = "挂载";
 "Unmount" = "卸载";
 "Quit MountMate" = "退出 MountMate";
@@ -34,9 +34,9 @@
 //=============================================
 
 "Ignore This Disk" = "忽略此磁盘";
-"Ignore This Volume" = "Ignore This Volume";
-"Protect from 'Unmount All'" = "保护，防止“卸载所有”";
-"Unprotect from 'Unmount All'" = "取消保护，允许“卸载所有”";
+"Ignore This Volume" = "忽略此卷宗";
+"Protect from 'Unmount All'" = "锁定，防止“卸载所有”操作";
+"Unprotect from 'Unmount All'" = "解锁，允许“卸载所有”操作";
 "Open in Finder" = "在访达中打开";
 
 
@@ -46,14 +46,14 @@
 "MountMate Settings" = "MountMate 设置";
 
 // Tabs
-"General" = "常规";
+"General" = "通用";
 "Management" = "管理";
 
 // General Tab
-"Show Internal Disks" = "Show Internal Disks";
+"Show Internal Disks" = "显示内置磁盘";
 "Start MountMate at Login" = "登录时启动 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自动挂载";
-"Unmount All Disks on Sleep" = "休眠时卸载所有磁盘";
+"Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
 "Language" = "语言";
 
 // About & Updates Section
@@ -63,53 +63,53 @@
 "Check for Updates..." = "检查更新...";
 
 // Management Tab
-"Ignored Volumes" = "Ignored Volumes";
-"No Ignored Volumes" = "No Ignored Volumes";
-"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage.";
-"Protected Volumes" = "受保护卷";
-"No protected volumes" = "暂无受保护卷";
-"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "右键点击卷可设置保护，防止被“卸载所有”或系统休眠时卸载。";
+"Ignored Volumes" = "已忽略的卷宗";
+"No Ignored Volumes" = "暂无忽略的卷宗";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "右键点击卷宗可将其忽略。对于无需管理的系统分区（如“EFI”）很有用。";
+"Protected Volumes" = "受保护卷宗";
+"No protected volumes" = "暂无受保护卷宗";
+"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "右键点击卷宗可将其设置为保护状态，防止被“卸载所有”或系统睡眠时卸载。";
 
 
 // MARK: - Alerts & Errors
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Could Not Load Disks";
-"Data Parsing Error" = "Data Parsing Error";
-"Eject Failed" = "弹出失败";
+"Could Not Load Disks" = "无法加载磁盘";
+"Data Parsing Error" = "数据解析错误";
+"Eject Failed" = "推出失败";
 "Mount Failed" = "挂载失败";
 "Unmount Failed" = "卸载失败";
-"“%@” is locked" = "“%@” is locked";
-"Full Disk Access Recommended" = "Full Disk Access Recommended";
+"“%@” is locked" = "“%@” 已被锁定";
+"Full Disk Access Recommended" = "建议授予完全磁盘访问权限";
 
 // Buttons
-"OK" = "确定";
-"Unlock" = "Unlock";
-"Cancel" = "Cancel";
-"Open System Settings" = "Open System Settings";
+"OK" = "好";
+"Unlock" = "解锁";
+"Cancel" = "取消";
+"Open System Settings" = "打开系统设置";
 "Later" = "稍后";
 
 // Verbs for error messages
 "unmount" = "卸载";
-"eject" = "弹出";
+"eject" = "推出";
 "mount" = "挂载";
 
 // Error message formats
-"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security.";
-"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "“EFI” 分区为系统特殊分区，无法直接挂载，属正常现象。";
-"Failed to eject “%@” because one of its volumes is busy or in use." = "由于部分卷正在使用，无法弹出“%@”。";
-"Failed to %@ “%@” because it is currently in use by another application." = "由于“%@”正被其他应用占用，无法 %@。";
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\n请在“系统设置 > 隐私与安全性”中为 MountMate 授予“完全磁盘访问权限”。";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "“EFI” 分区是系统的特殊分区，无法直接挂载，这是正常现象。";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "由于其中的某个卷宗正在使用，无法推出“%@”。";
+"Failed to %@ “%@” because it is currently in use by another application." = "由于“%@”正被其他应用使用，无法执行 %@ 操作。";
 "An unknown error occurred while trying to %@ “%@”." = "尝试 %@ “%@” 时发生未知错误。";
-"Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
-"Password" = "Password";
-"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel.";
+"Enter the password to unlock “%@”" = "请输入密码以解锁“%@”";
+"Password" = "密码";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "为确保 MountMate 能检测到所有类型的磁盘并避免错误，请授予“完全磁盘访问权限”。\n\n点击“打开系统设置”前往相关面板。";
 
 
 // MARK: - App Lifecycle
 //=============================================
 
-"Loading Disks..." = "Loading Disks...";
-"Restart Required" = "需要重启";
-"Please restart MountMate for the language change to take effect." = "请重启 MountMate 以应用语言更改。";
-"Restart Now" = "立即重启";
+"Loading Disks..." = "正在加载磁盘...";
+"Restart Required" = "需要重新启动";
+"Please restart MountMate for the language change to take effect." = "请重新启动 MountMate 以使语言更改生效。";
+"Restart Now" = "立即重新启动";

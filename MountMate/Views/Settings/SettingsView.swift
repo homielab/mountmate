@@ -32,7 +32,15 @@ struct GeneralSettingsView: View {
       let firstLanguage = preferredLanguages.first
     else { return "en" }
     if firstLanguage.starts(with: "vi") { return "vi" }
-    if firstLanguage.starts(with: "zh") { return "zh-Hans" }
+    if firstLanguage.starts(with: "zh-Hant")
+      || firstLanguage.starts(with: "zh-TW")
+      || firstLanguage.starts(with: "zh-HK")
+      || firstLanguage.starts(with: "zh-MO") {
+      return "zh-Hant"
+    }
+    if firstLanguage.starts(with: "zh") {
+      return "zh-Hans"
+    }
     return "en"
   }()
 
