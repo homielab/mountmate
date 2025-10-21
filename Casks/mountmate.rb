@@ -1,6 +1,6 @@
 cask "mountmate" do
-  version "4.3"
-  sha256 "1239c651db6cedbcd8043e444381dbedf99d9a232a34fd15bb6dccd444e3f8fd"
+  version "4.4"
+  sha256 "a9b62afc15911bf3e72ac86a1df0ba8f6df5df835cf59a91d1b193476643dd06"
 
   url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
   name "MountMate"
