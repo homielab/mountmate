@@ -70,10 +70,10 @@
 "No protected volumes" = "暂无受保护卷宗";
 "Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "右键点击卷宗可将其设置为保护状态，防止被“卸载所有”或系统睡眠时卸载。";
 
-"Don't Auto-Mount This Volume" = "Don't Auto-Mount This Volume";
-"Blocked from Auto-Mounting" = "Blocked from Auto-Mounting"; // Can be reused or made more specific
-"No Volumes Blocked from Auto-Mounting" = "No Volumes Blocked from Auto-Mounting";
-"Right-click a volume to prevent it from mounting automatically when connected." = "Right-click a volume to prevent it from mounting automatically when connected.";
+"Don't Auto-Mount This Volume" = "禁止自动挂载此卷宗";
+"Blocked from Auto-Mounting" = "已被阻止自动挂载";
+"No Volumes Blocked from Auto-Mounting" = "暂无被阻止自动挂载的卷宗";
+"Right-click a volume to prevent it from mounting automatically when connected." = "右键点击卷宗可禁止其在连接时自动挂载。";
 
 // MARK: - Alerts & Errors
 //=============================================

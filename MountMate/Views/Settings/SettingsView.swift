@@ -65,7 +65,8 @@ struct GeneralSettingsView: View {
         Picker("Language", selection: $selectedLanguage) {
           Text("English").tag("en")
           Text("Tiếng Việt").tag("vi")
-          Text("中文").tag("zh-Hans")
+          Text("中文（简体）").tag("zh-Hans")
+          Text("中文（繁体）").tag("zh-Hant")
         }
         .pickerStyle(.menu)
         .onChange(of: selectedLanguage) { _ in showRestartAlert = true }
