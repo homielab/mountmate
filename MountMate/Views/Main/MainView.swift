@@ -396,7 +396,12 @@ struct HeaderActionsView: View {
         SettingsLink {
           Image(systemName: "gearshape.fill")
         }
-        .buttonStyle(.plain).help("Settings")
+        .buttonStyle(.plain)
+        .help("Settings")
+        .simultaneousGesture(
+          TapGesture().onEnded {
+            focusSettingsWindow()
+          })
       } else {
         Button(action: {
           NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
@@ -404,7 +409,8 @@ struct HeaderActionsView: View {
         }) {
           Image(systemName: "gearshape.fill")
         }
-        .buttonStyle(.plain).help("Settings")
+        .buttonStyle(.plain)
+        .help("Settings")
       }
 
       // Refresh Button
@@ -426,5 +432,17 @@ struct HeaderActionsView: View {
     }
     .frame(width: 320)
     .padding()
+  }
+
+  private func focusSettingsWindow() {
+    let settingsID = "com_apple_SwiftUI_Settings_window"
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      if let settingsWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == settingsID })
+      {
+        settingsWindow.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+      }
+    }
   }
 }
