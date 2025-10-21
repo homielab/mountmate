@@ -8,13 +8,16 @@ class PersistenceManager: ObservableObject {
 
   private let protectedVolumesKey = "mountmate_protectedVolumes_v4"
   private let ignoredVolumesKey = "mountmate_ignoredVolumes_v4"
+  private let blockedVolumesKey = "mountmate_blockedVolumes_v1"
 
   @Published var protectedVolumes: [ManagedVolumeInfo]
   @Published var ignoredVolumes: [ManagedVolumeInfo]
+  @Published var blockedVolumes: [ManagedVolumeInfo]
 
   private init() {
     self.protectedVolumes = Self.load(from: protectedVolumesKey)
     self.ignoredVolumes = Self.load(from: ignoredVolumesKey)
+    self.blockedVolumes = Self.load(from: blockedVolumesKey)
   }
 
   // MARK: - Actions
@@ -66,6 +69,19 @@ class PersistenceManager: ObservableObject {
     saveIgnoredVolumes()
   }
 
+  func block(volume: Volume) {
+    guard let diskUUID = volume.diskUUID else { return }
+    let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
+    guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return }
+    blockedVolumes.append(info)
+    saveBlockedVolumes()
+  }
+
+  func unblock(info: ManagedVolumeInfo) {
+    blockedVolumes.removeAll { $0.id == info.id }
+    saveBlockedVolumes()
+  }
+
   // MARK: - Helper Checkers
 
   func isVolumeProtected(_ volume: Volume) -> Bool {
@@ -76,6 +92,11 @@ class PersistenceManager: ObservableObject {
   func isVolumeIgnored(_ volume: Volume) -> Bool {
     guard let compositeId = volume.compositeId else { return false }
     return ignoredVolumes.contains { $0.id == compositeId }
+  }
+
+  func isVolumeBlocked(_ volume: Volume) -> Bool {
+    guard let compositeId = volume.compositeId else { return false }
+    return blockedVolumes.contains { $0.id == compositeId }
   }
 
   // MARK: - Private Save/Load Helpers
@@ -94,4 +115,6 @@ class PersistenceManager: ObservableObject {
 
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }
   private func saveIgnoredVolumes() { save(ignoredVolumes, to: ignoredVolumesKey) }
+  private func saveBlockedVolumes() { save(blockedVolumes, to: blockedVolumesKey) }
+
 }

@@ -140,6 +140,15 @@ struct ManagementSettingsView: View {
           onDelete: { info in persistence.unprotect(info: info) }
         )
 
+        ManagementSectionView(
+          title: "Blocked from Auto-Mounting",
+          iconName: "hand.raised.fill",
+          items: persistence.blockedVolumes,
+          emptyStateText: "No Volumes Blocked from Auto-Mounting",
+          footer: "Right-click a volume to prevent it from mounting automatically when connected.",
+          onDelete: { info in persistence.unblock(info: info) }
+        )
+
         Spacer()
       }
       .padding()

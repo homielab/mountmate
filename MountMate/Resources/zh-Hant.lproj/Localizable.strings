@@ -70,6 +70,10 @@
 "No protected volumes" = "目前沒有受保護的磁碟卷";
 "Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "在磁碟卷上按右鍵可設定保護，以防在「卸載所有」或系統睡眠時被卸載。";
 
+"Don't Auto-Mount This Volume" = "Don't Auto-Mount This Volume";
+"Blocked from Auto-Mounting" = "Blocked from Auto-Mounting"; // Can be reused or made more specific
+"No Volumes Blocked from Auto-Mounting" = "No Volumes Blocked from Auto-Mounting";
+"Right-click a volume to prevent it from mounting automatically when connected." = "Right-click a volume to prevent it from mounting automatically when connected.";
 
 // MARK: - Alerts & Errors
 //=============================================

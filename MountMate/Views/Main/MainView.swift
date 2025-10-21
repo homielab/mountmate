@@ -326,6 +326,12 @@ struct VolumeRowView: View {
           Divider()
         }
 
+        Button {
+          PersistenceManager.shared.block(volume: volume)
+        } label: {
+          Label("Don't Auto-Mount This Volume", systemImage: "hand.raised")
+        }
+        Divider()
         Button(role: .destructive) {
           PersistenceManager.shared.ignore(volume: volume)
           DriveManager.shared.refreshDrives(qos: .userInitiated)

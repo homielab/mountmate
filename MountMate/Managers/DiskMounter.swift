@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import Combine
 import DiskArbitration
 import Foundation
 
@@ -8,29 +9,39 @@ class DiskMounter: ObservableObject {
   {
     didSet {
       UserDefaults.standard.set(blockUSBAutoMount, forKey: "blockUSBAutoMount")
-      if blockUSBAutoMount {
-        startDiskArbitration()
-      } else {
-        stopDiskArbitration()
-      }
+      updateSessionState()
     }
   }
 
   private var session: DASession?
   private var approvingManualMountFor: String?
   private var clearApprovalWorkItem: DispatchWorkItem?
+  private var cancellables = Set<AnyCancellable>()
 
   init() {
     NotificationCenter.default.addObserver(
       self, selector: #selector(handleWillMount), name: .willManuallyMount, object: nil)
-    if blockUSBAutoMount {
-      startDiskArbitration()
-    }
+
+    PersistenceManager.shared.$blockedVolumes
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.updateSessionState() }
+      .store(in: &cancellables)
+
+    updateSessionState()
   }
 
   deinit {
     NotificationCenter.default.removeObserver(self)
     stopDiskArbitration()
+  }
+
+  private func updateSessionState() {
+    let shouldBeActive = blockUSBAutoMount || !PersistenceManager.shared.blockedVolumes.isEmpty
+    if shouldBeActive && session == nil {
+      startDiskArbitration()
+    } else if !shouldBeActive && session != nil {
+      stopDiskArbitration()
+    }
   }
 
   @objc private func handleWillMount(notification: Notification) {
@@ -47,39 +58,62 @@ class DiskMounter: ObservableObject {
 
   private func startDiskArbitration() {
     guard session == nil else { return }
+    print("✅ Starting Disk Arbitration session...")
     session = DASessionCreate(kCFAllocatorDefault)
     guard let session = session else { return }
 
-    let mountCallback: DADiskMountApprovalCallback = {
-      (disk, context) -> Unmanaged<DADissenter>? in
+    let mountCallback: DADiskMountApprovalCallback = { (disk, context) -> Unmanaged<DADissenter>? in
       guard let context = context else { return nil }
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
+      let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) })
 
-      if let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) }) {
-        if let approvedDisk = this.approvingManualMountFor, approvedDisk == bsdName {
-          return nil
+      // approve manual mounts.
+      if let name = bsdName, let approved = this.approvingManualMountFor, approved == name {
+        return nil
+      }
+
+      guard let desc = DADiskCopyDescription(disk) else { return nil }
+      let description = desc as! [String: Any]
+
+      // approve non-physical media.
+      if let model = description[kDADiskDescriptionDeviceModelKey as String] as? String,
+        model == "Disk Image"
+      {
+        return nil
+      }
+
+      var shouldBlock = false
+
+      // global USB block.
+      if this.blockUSBAutoMount
+        && (description[kDADiskDescriptionDeviceProtocolKey as String] as? String) == "USB"
+      {
+        shouldBlock = true
+      }
+
+      // specific volume is in the blocked list.
+      if let volumeUUID = description[kDADiskDescriptionVolumeUUIDKey as String] as? String,
+        let diskUUID = description[kDADiskDescriptionMediaUUIDKey as String] as? String
+      {
+        let compositeId = "\(diskUUID)-\(volumeUUID)"
+        if PersistenceManager.shared.blockedVolumes.contains(where: { $0.id == compositeId }) {
+          shouldBlock = true
         }
       }
 
-      if let desc = DADiskCopyDescription(disk) {
-        let description = desc as! [String: Any]
-        let protocolName =
-          description[kDADiskDescriptionDeviceProtocolKey as String] as? String
-        if protocolName == "USB" {
-          let dissenter = DADissenterCreate(
-            kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
-          return Unmanaged.passRetained(dissenter)
-        }
+      if shouldBlock {
+        print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
+        let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
+        return Unmanaged.passRetained(dissenter)
       }
+
+      // approved
       return nil
     }
 
-    let matching: [String: Any] = [
-      kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!
-    ]
+    let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]
     let context = Unmanaged.passUnretained(self).toOpaque()
-    DARegisterDiskMountApprovalCallback(
-      session, matching as CFDictionary, mountCallback, context)
+    DARegisterDiskMountApprovalCallback(session, matching as CFDictionary, mountCallback, context)
     DASessionSetDispatchQueue(session, DispatchQueue.main)
   }
 

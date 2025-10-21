@@ -70,6 +70,10 @@
 "No Protected Volumes" = "Không có phân vùng được bảo vệ";
 "Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Nhấp chuột phải vào một phân vùng để bảo vệ nó khỏi 'Tháo tất cả' và khi máy ngủ.";
 
+"Don't Auto-Mount This Volume" = "Không tự động gắn phân vùng này";
+"Blocked from Auto-Mounting" = "Bị chặn tự động gắn";
+"No Volumes Blocked from Auto-Mounting" = "Không có phân vùng nào bị chặn tự động gắn";
+"Right-click a volume to prevent it from mounting automatically when connected." = "Nhấp chuột phải vào một phân vùng để ngăn nó tự động gắn khi kết nối.";
 
 // MARK: - Alerts & Errors
 //=============================================
