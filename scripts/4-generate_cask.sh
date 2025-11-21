@@ -28,17 +28,23 @@ cask "mountmate" do
   version "$VERSION"
   sha256 "$SHA256"
 
-  url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
+  url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg",
+      verified: "github.com/homielab/mountmate/"
   name "MountMate"
-  desc "A menubar app to easily manage external drives"
+  desc "Menubar app to easily manage external drives"
   homepage "https://homielab.com/page/mountmate"
 
+  livecheck do
+    url "https://homielab.github.io/mountmate/appcast.xml"
+    strategy :sparkle, &:title
+  end
+
   auto_updates true
+  depends_on macos: ">= :ventura"
+
   app "MountMate.app"
 
-  zap trash: [
-    "~/Library/Preferences/com.homielab.mountmate.plist",
-  ]
+  zap trash: "~/Library/Preferences/com.homielab.mountmate.plist"
 end
 EOF
 
