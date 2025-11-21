@@ -47,6 +47,7 @@ struct MainView: View {
     .frame(width: 350)
     .padding(.bottom, 8)
     .onAppear {
+      NSApp.activate(ignoringOtherApps: true)
       driveManager.refreshDrives()
     }
   }

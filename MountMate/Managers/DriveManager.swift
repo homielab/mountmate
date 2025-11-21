@@ -155,7 +155,6 @@ class DriveManager: ObservableObject {
             error, for: disk.name ?? disk.id, with: nil, operation: .eject)
         }
         self.busyEjectingIdentifier = nil
-        self.refreshDrives(qos: .userInitiated)
       }
     }
   }
@@ -617,7 +616,7 @@ class DriveManager: ObservableObject {
 
   @objc private func handleDiskNotification(notification: NSNotification) {
     refreshDebounceTimer?.invalidate()
-    refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) {
+    refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) {
       [weak self] _ in
       if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
         print(
