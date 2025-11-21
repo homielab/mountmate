@@ -9,6 +9,7 @@ class DriveManager: ObservableObject {
   @Published var physicalDisks: [PhysicalDisk]? = nil
   @Published var isRefreshing = false
   @Published var userActionError: AppAlert? = nil
+  @Published var refreshError: String? = nil
   @Published var busyVolumeIdentifier: String? = nil
   @Published var busyEjectingIdentifier: String? = nil
   @Published var isUnmountingAll = false
@@ -79,7 +80,9 @@ class DriveManager: ObservableObject {
       self.isRefreshing = false
       self.busyVolumeIdentifier = nil
       self.busyEjectingIdentifier = nil
+      self.busyEjectingIdentifier = nil
       self.isUnmountingAll = false
+      self.refreshError = nil
     }
   }
 
@@ -105,9 +108,7 @@ class DriveManager: ObservableObject {
         let message = NSLocalizedString(
           "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect.",
           comment: "Final refresh error message")
-        self.userActionError = AppAlert(
-          title: NSLocalizedString("Could Not Load Disks", comment: "Alert title"),
-          message: message, kind: .basic)
+        self.refreshError = message
       }
     }
   }

@@ -26,6 +26,10 @@ struct MainView: View {
     VStack(spacing: 0) {
       HeaderActionsView()
 
+      if let error = driveManager.refreshError {
+        ErrorBannerView(message: error)
+      }
+
       if driveManager.physicalDisks == nil {
         ProgressView()
           .frame(height: 150)
