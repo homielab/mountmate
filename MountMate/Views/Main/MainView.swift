@@ -316,8 +316,11 @@ struct VolumeRowView: View {
             }
           } else {
             Button {
-              persistence.protect(volume: volume)
-              DriveManager.shared.refreshDrives(qos: .userInitiated)
+              if !persistence.protect(volume: volume) {
+                showPersistenceError(for: volume)
+              } else {
+                DriveManager.shared.refreshDrives(qos: .userInitiated)
+              }
             } label: {
               Label("Protect from 'Unmount All'", systemImage: "lock.fill")
             }
@@ -332,14 +335,19 @@ struct VolumeRowView: View {
         }
 
         Button {
-          PersistenceManager.shared.block(volume: volume)
+          if !PersistenceManager.shared.block(volume: volume) {
+            showPersistenceError(for: volume)
+          }
         } label: {
           Label("Don't Auto-Mount This Volume", systemImage: "hand.raised")
         }
         Divider()
         Button(role: .destructive) {
-          PersistenceManager.shared.ignore(volume: volume)
-          DriveManager.shared.refreshDrives(qos: .userInitiated)
+          if !PersistenceManager.shared.ignore(volume: volume) {
+            showPersistenceError(for: volume)
+          } else {
+            DriveManager.shared.refreshDrives(qos: .userInitiated)
+          }
         } label: {
           Label("Ignore This Volume", systemImage: "eye.slash")
         }
@@ -358,6 +366,18 @@ struct VolumeRowView: View {
         .padding(.leading, 32)
       }
     }
+  }
+
+  private func showPersistenceError(for volume: Volume) {
+    let message = String(
+      format: NSLocalizedString(
+        "Could not save settings for “%@” because it does not have a unique identifier (UUID).",
+        comment: "Persistence error message"), volume.name)
+    DriveManager.shared.userActionError = AppAlert(
+      title: NSLocalizedString("Action Failed", comment: "Alert title"),
+      message: message,
+      kind: .basic
+    )
   }
 }
 

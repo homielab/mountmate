@@ -22,12 +22,14 @@ class PersistenceManager: ObservableObject {
 
   // MARK: - Actions
 
-  func protect(volume: Volume) {
-    guard let diskUUID = volume.diskUUID else { return }
+  @discardableResult
+  func protect(volume: Volume) -> Bool {
+    guard let diskUUID = volume.diskUUID else { return false }
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
-    guard !protectedVolumes.contains(where: { $0.id == info.id }) else { return }
+    guard !protectedVolumes.contains(where: { $0.id == info.id }) else { return true }
     protectedVolumes.append(info)
     saveProtectedVolumes()
+    return true
   }
 
   func unprotect(info: ManagedVolumeInfo) {
@@ -35,12 +37,14 @@ class PersistenceManager: ObservableObject {
     saveProtectedVolumes()
   }
 
-  func ignore(volume: Volume) {
-    guard let diskUUID = volume.diskUUID else { return }
+  @discardableResult
+  func ignore(volume: Volume) -> Bool {
+    guard let diskUUID = volume.diskUUID else { return false }
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
-    guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return }
+    guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return true }
     ignoredVolumes.append(info)
     saveIgnoredVolumes()
+    return true
   }
 
   func ignore(disk: PhysicalDisk) {
@@ -69,12 +73,14 @@ class PersistenceManager: ObservableObject {
     saveIgnoredVolumes()
   }
 
-  func block(volume: Volume) {
-    guard let diskUUID = volume.diskUUID else { return }
+  @discardableResult
+  func block(volume: Volume) -> Bool {
+    guard let diskUUID = volume.diskUUID else { return false }
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
-    guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return }
+    guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return true }
     blockedVolumes.append(info)
     saveBlockedVolumes()
+    return true
   }
 
   func unblock(info: ManagedVolumeInfo) {

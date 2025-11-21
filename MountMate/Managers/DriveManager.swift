@@ -165,10 +165,12 @@ class DriveManager: ObservableObject {
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runShell("diskutil mount \(volume.deviceIdentifier)")
-      
+
       if let error = result.error, !error.isEmpty, error.lowercased().contains("failed to mount") {
-        print("Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s...")
-        
+        print(
+          "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s..."
+        )
+
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
           let retryResult = runShell("diskutil mount \(volume.deviceIdentifier)")
           self.handleMountResult(retryResult, for: volume)
