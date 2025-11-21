@@ -80,7 +80,6 @@ class DriveManager: ObservableObject {
       self.isRefreshing = false
       self.busyVolumeIdentifier = nil
       self.busyEjectingIdentifier = nil
-      self.busyEjectingIdentifier = nil
       self.isUnmountingAll = false
       self.refreshError = nil
     }
@@ -165,21 +164,28 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      var result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      let result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      
       if let error = result.error, !error.isEmpty, error.lowercased().contains("failed to mount") {
-        print(
-          "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s..."
-        )
-        Thread.sleep(forTimeInterval: 15)
-        result = runShell("diskutil mount \(volume.deviceIdentifier)")
-      }
-      DispatchQueue.main.async {
-        if let error = result.error, !error.isEmpty {
-          self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
+        print("Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s...")
+        
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
+          let retryResult = runShell("diskutil mount \(volume.deviceIdentifier)")
+          self.handleMountResult(retryResult, for: volume)
         }
-        self.busyVolumeIdentifier = nil
-        self.refreshDrives(qos: .userInitiated)
+      } else {
+        self.handleMountResult(result, for: volume)
       }
+    }
+  }
+
+  private func handleMountResult(_ result: (output: String?, error: String?), for volume: Volume) {
+    DispatchQueue.main.async {
+      if let error = result.error, !error.isEmpty {
+        self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
+      }
+      self.busyVolumeIdentifier = nil
+      self.refreshDrives(qos: .userInitiated)
     }
   }
 
