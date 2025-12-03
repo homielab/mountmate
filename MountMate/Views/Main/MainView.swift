@@ -419,7 +419,7 @@ struct NetworkShareMainRow: View {
       HStack(spacing: 0) {
         HStack {
           ZStack {
-            Image(systemName: "server.rack")
+            Image(systemName: "network")
               .font(.body)
               .foregroundColor(isMounted ? .accentColor : .secondary.opacity(0.6))
           }
