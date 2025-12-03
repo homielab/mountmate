@@ -145,3 +145,4 @@
 "Force Eject" = "Force Eject";
 "The disk is in use. Do you want to force eject it?" = "The disk is in use. Do you want to force eject it?";
 "This may result in data loss." = "This may result in data loss.";
+"Remember password in Keychain" = "Remember password in Keychain";

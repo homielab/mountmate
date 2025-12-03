@@ -145,3 +145,4 @@
 "Force Eject" = "Buộc Đẩy ra";
 "The disk is in use. Do you want to force eject it?" = "Ổ đĩa đang được sử dụng. Bạn có muốn buộc đẩy ra không?";
 "This may result in data loss." = "Việc này có thể dẫn đến mất dữ liệu.";
+"Remember password in Keychain" = "Ghi nhớ mật khẩu trong Keychain";

@@ -3,7 +3,7 @@
 import Foundation
 
 struct LockedVolumeAppAlert {
-  let onConfirm: (String) -> Void
+  let onConfirm: (String, Bool) -> Void
 }
 
 enum AppAlertKind {

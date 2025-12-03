@@ -211,19 +211,33 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
 
+    DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
+    
+    // Check if we have a saved password
+    if let savedPassword = KeychainManager.shared.load(account: volume.id) {
+       self.performUnlock(volume: volume, passphrase: savedPassword)
+       return
+    }
+
     DispatchQueue.global(qos: .userInitiated).async {
+      self.performUnlock(volume: volume, passphrase: passphrase)
+    }
+  }
+  
+  private func performUnlock(volume: Volume, passphrase: String) {
       let result = runShell(
         "diskutil apfs unlockVolume \(volume.id) -stdinpassphrase",
         input: Data(passphrase.utf8))
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
+          // If saved password failed, maybe delete it?
+          // But for now let's just show error.
           self.handleDiskUtilError(
             error, for: volume.name, volume: volume, operation: .mount)
         }
         self.busyVolumeIdentifier = nil
         self.refreshDrives(qos: .userInitiated)
       }
-    }
   }
 
   func unmount(volume: Volume) {
@@ -526,8 +540,11 @@ class DriveManager: ObservableObject {
         format: NSLocalizedString(
           "Enter the password to unlock “%@”", comment: "Alert message"),
         name)
-      let handler = { (passphrase: String) in
+      let handler = { (passphrase: String, saveInKeychain: Bool) in
         guard let volume = volume else { return }
+        if saveInKeychain {
+          _ = KeychainManager.shared.save(password: passphrase, for: volume.id)
+        }
         self.mountLockedVolume(volume, passphrase: passphrase)
       }
       let lockedVolumeAlert = LockedVolumeAppAlert(onConfirm: handler)

@@ -145,3 +145,4 @@
 "Force Eject" = "强制推出";
 "The disk is in use. Do you want to force eject it?" = "磁盘正在使用中。您要强制推出吗？";
 "This may result in data loss." = "这可能会导致数据丢失。";
+"Remember password in Keychain" = "在钥匙串中记住密码";

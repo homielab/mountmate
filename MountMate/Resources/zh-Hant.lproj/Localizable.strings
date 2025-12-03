@@ -145,3 +145,4 @@
 "Force Eject" = "強制退出";
 "The disk is in use. Do you want to force eject it?" = "磁碟正在使用中。您要強制退出嗎？";
 "This may result in data loss." = "這可能會導致資料遺失。";
+"Remember password in Keychain" = "在鑰匙圈中記住密碼";
