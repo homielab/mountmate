@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
+  @ObservedObject var persistence = PersistenceManager.shared
 
   @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
     .autoconnect()
@@ -20,6 +21,7 @@ struct MainView: View {
 
   private var hasVisibleDisks: Bool {
     !internalDisks.isEmpty || !externalDisks.isEmpty || !diskImages.isEmpty
+      || !persistence.networkShares.isEmpty
   }
 
   var body: some View {
@@ -44,7 +46,8 @@ struct MainView: View {
         DriveListView(
           internalDisks: internalDisks,
           externalDisks: externalDisks,
-          diskImages: diskImages
+          diskImages: diskImages,
+          networkShares: persistence.networkShares
         )
       }
     }
@@ -78,6 +81,7 @@ struct DriveListView: View {
   let internalDisks: [PhysicalDisk]
   let externalDisks: [PhysicalDisk]
   let diskImages: [PhysicalDisk]
+  let networkShares: [NetworkShare]
 
   var body: some View {
     List {
@@ -94,6 +98,11 @@ struct DriveListView: View {
       if !diskImages.isEmpty {
         Section(header: Text("Disk Images")) {
           ForEach(diskImages) { disk in DiskAndVolumesView(disk: disk) }
+        }
+      }
+      if !networkShares.isEmpty {
+        Section(header: Text("Network Shares")) {
+          ForEach(networkShares) { share in NetworkShareMainRow(share: share) }
         }
       }
     }
@@ -393,6 +402,91 @@ struct SnapshotRowView: View {
         .font(.caption)
       Spacer()
     }
+  }
+}
+
+struct NetworkShareMainRow: View {
+  let share: NetworkShare
+  @State private var isMounted = false
+  @State private var isWorking = false
+  @State private var isHovering = false
+
+  // Timer to periodically check mount status
+  let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(spacing: 0) {
+        HStack {
+          ZStack {
+            Image(systemName: "server.rack")
+              .font(.body)
+              .foregroundColor(isMounted ? .accentColor : .secondary.opacity(0.6))
+          }
+          .frame(width: 24, alignment: .center).padding(.trailing, 8)
+
+          VStack(alignment: .leading, spacing: 2) {
+            Text(share.name).fontWeight(.semibold).foregroundColor(
+              isMounted ? .primary : .secondary)
+            Text(isMounted ? "Mounted" : "Not Mounted")
+              .font(.caption).foregroundColor(.secondary)
+          }
+          Spacer()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+          if isMounted {
+            let path = NetworkMountManager.shared.getMountPoint(for: share)
+            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+          }
+        }
+
+        Button(action: {
+          isWorking = true
+          if isMounted {
+            NetworkMountManager.shared.unmount(share: share) { success, error in
+              isWorking = false
+              checkStatus()
+              if !success, let error = error {
+                DriveManager.shared.userActionError = AppAlert(
+                  title: "Unmount Failed", message: error, kind: .basic)
+              }
+            }
+          } else {
+            NetworkMountManager.shared.mount(share: share) { success, error in
+              isWorking = false
+              checkStatus()
+              if !success, let error = error {
+                DriveManager.shared.userActionError = AppAlert(
+                  title: "Mount Failed", message: error, kind: .basic)
+              }
+            }
+          }
+        }) {
+          Image(
+            systemName: isMounted ? "xmark.circle.fill" : "arrow.up.circle.fill"
+          )
+          .opacity(isWorking ? 0 : 1)
+        }
+        .buttonStyle(.bordered).tint(isMounted ? .red : .blue).disabled(isWorking)
+        .overlay { if isWorking { ProgressView().controlSize(.small) } }
+        .help(isMounted ? "Unmount" : "Mount")
+        .padding(.leading, 8)
+      }
+      .padding(.vertical, 4)
+      .padding(.horizontal, 4)
+      .background(isHovering ? Color.primary.opacity(0.1) : Color.clear)
+      .cornerRadius(5)
+      .onHover { hovering in
+        self.isHovering = hovering
+      }
+    }
+    .onAppear { checkStatus() }
+    .onReceive(timer) { _ in checkStatus() }
+  }
+
+  private func checkStatus() {
+    isMounted = NetworkMountManager.shared.isMounted(share: share)
   }
 }
 

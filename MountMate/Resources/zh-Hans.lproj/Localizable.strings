@@ -117,3 +117,31 @@
 "Restart Required" = "需要重新启动";
 "Please restart MountMate for the language change to take effect." = "请重新启动 MountMate 以使语言更改生效。";
 "Restart Now" = "立即重新启动";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "网络共享";
+"Add Network Share" = "添加网络共享";
+"Edit Network Share" = "编辑网络共享";
+"Server Address" = "服务器地址";
+"Share Name/Path" = "共享名称/路径";
+"Username" = "用户名";
+"Password" = "密码";
+"Custom Mount Point" = "自定义挂载点";
+"Mount at Login" = "登录时挂载";
+"MountMate can automatically mount these SMB shares at login." = "MountMate 可以在登录时自动挂载这些 SMB 共享。";
+"No Network Shares Configured" = "未配置网络共享";
+"Mounted" = "已挂载";
+"Not Mounted" = "未挂载";
+"Display Name" = "显示名称";
+"Connection" = "连接";
+"Credentials" = "凭证";
+"Options" = "选项";
+"Leave empty to use default location" = "留空以使用默认位置";
+"Preview: %@" = "预览: %@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "强制推出";
+"The disk is in use. Do you want to force eject it?" = "磁盘正在使用中。您要强制推出吗？";
+"This may result in data loss." = "这可能会导致数据丢失。";

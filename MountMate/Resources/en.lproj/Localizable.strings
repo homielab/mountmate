@@ -117,3 +117,31 @@
 "Restart Required" = "Restart Required";
 "Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
 "Restart Now" = "Restart Now";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "Network Shares";
+"Add Network Share" = "Add Network Share";
+"Edit Network Share" = "Edit Network Share";
+"Server Address" = "Server Address";
+"Share Name/Path" = "Share Name/Path";
+"Username" = "Username";
+"Password" = "Password";
+"Custom Mount Point" = "Custom Mount Point";
+"Mount at Login" = "Mount at Login";
+"MountMate can automatically mount these SMB shares at login." = "MountMate can automatically mount these SMB shares at login.";
+"No Network Shares Configured" = "No Network Shares Configured";
+"Mounted" = "Mounted";
+"Not Mounted" = "Not Mounted";
+"Display Name" = "Display Name";
+"Connection" = "Connection";
+"Credentials" = "Credentials";
+"Options" = "Options";
+"Leave empty to use default location" = "Leave empty to use default location";
+"Preview: %@" = "Preview: %@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "Force Eject";
+"The disk is in use. Do you want to force eject it?" = "The disk is in use. Do you want to force eject it?";
+"This may result in data loss." = "This may result in data loss.";

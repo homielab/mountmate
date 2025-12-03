@@ -10,6 +10,9 @@ struct SettingsView: View {
 
       ManagementSettingsView()
         .tabItem { Label("Management", systemImage: "slider.horizontal.3") }
+
+      NetworkSharesSettingsView()
+        .tabItem { Label("Network Shares", systemImage: "server.rack") }
     }
     .frame(
       minWidth: 420, idealWidth: 420, maxWidth: 450, minHeight: 520, idealHeight: 650,
@@ -231,5 +234,281 @@ struct ManagedVolumeRow: View {
       }.buttonStyle(.borderless)
     }
     .padding(.vertical, 4)
+  }
+}
+// MARK: - Network Shares Settings Tab
+struct NetworkSharesSettingsView: View {
+  @ObservedObject private var persistence = PersistenceManager.shared
+  @State private var showingAddSheet = false
+  @State private var editingShare: NetworkShare?
+  @State private var errorAlert: AppAlert?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      HStack {
+        Text("Network Shares").font(.headline)
+        Spacer()
+        Button(action: { showingAddSheet = true }) {
+          Label("Add Share", systemImage: "plus")
+        }
+      }
+      .padding(.top)
+
+      if persistence.networkShares.isEmpty {
+        VStack(spacing: 16) {
+          Spacer()
+          Image(systemName: "server.rack").font(.system(size: 40)).foregroundColor(.secondary)
+          Text("No Network Shares Configured").foregroundColor(.secondary)
+          Spacer()
+        }
+        .frame(maxWidth: .infinity)
+      } else {
+        List {
+          ForEach(persistence.networkShares) { share in
+            NetworkShareRow(
+              share: share, onEdit: { editingShare = share },
+              onError: { error in
+                errorAlert = AppAlert(title: "Mount Failed", message: error, kind: .basic)
+              })
+          }
+        }
+        .listStyle(.inset)
+      }
+
+      Text("MountMate can automatically mount these SMB shares at login.")
+        .font(.caption).foregroundColor(.secondary)
+    }
+    .padding()
+    .sheet(isPresented: $showingAddSheet) {
+      EditNetworkShareSheet(isPresented: $showingAddSheet, shareToEdit: nil)
+    }
+    .sheet(item: $editingShare) { share in
+      EditNetworkShareSheet(
+        isPresented: Binding(
+          get: { editingShare != nil },
+          set: { if !$0 { editingShare = nil } }
+        ), shareToEdit: share)
+    }
+    .alert(item: $errorAlert) { alert in
+      Alert(
+        title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
+    }
+  }
+}
+
+struct NetworkShareRow: View {
+  let share: NetworkShare
+  let onEdit: () -> Void
+  let onError: (String) -> Void
+  @State private var isMounting = false
+
+  var body: some View {
+    HStack {
+      VStack(alignment: .leading) {
+        Text(share.name).fontWeight(.semibold)
+        Text("\(share.username)@\(share.server)/\(share.sharePath)")
+          .font(.caption).foregroundColor(.secondary)
+      }
+
+      Spacer()
+
+      if share.mountAtLogin {
+        Image(systemName: "bolt.fill").foregroundColor(.yellow).help("Auto-mounts at login")
+      }
+
+      Button(action: {
+        isMounting = true
+        NetworkMountManager.shared.mount(share: share) { success, error in
+          isMounting = false
+          if !success, let error = error {
+            onError(error)
+          }
+        }
+      }) {
+        Image(systemName: "play.fill")
+      }
+      .disabled(isMounting)
+      .buttonStyle(.borderless)
+      .help("Mount Now")
+
+      Button(action: onEdit) {
+        Image(systemName: "pencil")
+      }
+      .buttonStyle(.borderless)
+      .help("Edit")
+
+      Button(
+        role: .destructive,
+        action: {
+          PersistenceManager.shared.removeNetworkShare(share)
+        }
+      ) {
+        Image(systemName: "trash")
+      }
+      .buttonStyle(.borderless)
+      .help("Delete")
+    }
+    .padding(.vertical, 4)
+  }
+}
+
+struct EditNetworkShareSheet: View {
+  @Binding var isPresented: Bool
+  let shareToEdit: NetworkShare?
+
+  // MARK: - State
+  @State private var name = ""
+  @State private var server = ""
+  @State private var sharePath = ""
+  @State private var username = ""
+  @State private var password = ""
+  @State private var mountAtLogin = true
+  @State private var customMountPoint = ""
+
+  private var isValid: Bool {
+    !name.isEmpty && !server.isEmpty && !sharePath.isEmpty && !username.isEmpty
+  }
+
+  private var connectionStringPreview: String {
+    let srv = server.isEmpty ? "server" : server
+    let path = sharePath.isEmpty ? "share" : sharePath
+    return "smb://\(srv)/\(path)"
+  }
+
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack {
+        Image(systemName: "externaldrive.connected.to.line.below")
+          .font(.title2)
+          .foregroundStyle(.blue)
+        Text(shareToEdit == nil ? "Add Network Share" : "Edit Network Share")
+          .font(.headline)
+      }
+      .padding(.top, 20)
+      .padding(.bottom, 10)
+
+      Divider()
+
+      Form {
+        Section {
+          TextField("Display Name", text: $name, prompt: Text("e.g. My NAS"))
+        } header: {
+          Text("General")
+        }
+
+        Section {
+          HStack {
+            Image(systemName: "server.rack").frame(width: 20)
+            TextField("Server Address", text: $server, prompt: Text("192.168.1.100"))
+          }
+
+          HStack {
+            Image(systemName: "folder").frame(width: 20)
+            TextField("Share Name/Path", text: $sharePath, prompt: Text("public"))
+          }
+        } header: {
+          Text("Connection")
+        } footer: {
+          Text("Preview: \(connectionStringPreview)")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+
+        Section {
+          HStack {
+            Image(systemName: "person").frame(width: 20)
+            TextField("Username", text: $username)
+          }
+
+          HStack {
+            Image(systemName: "key").frame(width: 20)
+            SecureField("Password", text: $password)
+          }
+        } header: {
+          Text("Credentials")
+        }
+
+        Section {
+          Toggle(isOn: $mountAtLogin) {
+            Label("Mount at Login", systemImage: "arrow.right.circle")
+          }
+
+          VStack(alignment: .leading) {
+            TextField(
+              "Custom Mount Point", text: $customMountPoint, prompt: Text("~/mountmate/MyShare"))
+            Text("Leave empty to use default location")
+              .font(.caption2)
+              .foregroundStyle(.secondary)
+          }
+        } header: {
+          Text("Options")
+        }
+      }
+      .formStyle(.grouped)
+      .scrollContentBackground(.hidden)
+
+      Divider()
+      HStack {
+        Button("Cancel") {
+          isPresented = false
+        }
+        .keyboardShortcut(.cancelAction)
+
+        Spacer()
+
+        Button("Save") {
+          saveShare()
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(!isValid)
+        .keyboardShortcut(.defaultAction)
+      }
+      .padding()
+    }
+    .frame(width: 450, height: 500)
+    .onAppear {
+      loadExistingData()
+    }
+  }
+
+  // MARK: - Logic
+
+  private func loadExistingData() {
+    guard let share = shareToEdit else { return }
+
+    name = share.name
+    server = share.server
+    sharePath = share.sharePath
+    username = share.username
+    mountAtLogin = share.mountAtLogin
+    customMountPoint = share.customMountPoint ?? ""
+
+    if let loadedPassword = KeychainManager.shared.load(account: share.id.uuidString) {
+      password = loadedPassword
+    }
+  }
+
+  private func saveShare() {
+    let id = shareToEdit?.id ?? UUID()
+    let share = NetworkShare(
+      id: id,
+      name: name,
+      server: server,
+      sharePath: sharePath,
+      username: username,
+      mountAtLogin: mountAtLogin,
+      customMountPoint: customMountPoint.isEmpty ? nil : customMountPoint
+    )
+
+    if !password.isEmpty {
+      _ = KeychainManager.shared.save(password: password, for: share.id.uuidString)
+    }
+
+    if shareToEdit != nil {
+      PersistenceManager.shared.updateNetworkShare(share)
+    } else {
+      PersistenceManager.shared.addNetworkShare(share)
+    }
+    isPresented = false
   }
 }

@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     setupErrorObserver()
     setupSleepObserver()
     checkAndRequestFullDiskAccessIfNeeded()
+    NetworkMountManager.shared.mountAllAutoShares()
   }
 
   // MARK: - Observers

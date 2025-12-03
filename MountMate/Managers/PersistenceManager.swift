@@ -9,15 +9,18 @@ class PersistenceManager: ObservableObject {
   private let protectedVolumesKey = "mountmate_protectedVolumes_v4"
   private let ignoredVolumesKey = "mountmate_ignoredVolumes_v4"
   private let blockedVolumesKey = "mountmate_blockedVolumes_v1"
+  private let networkSharesKey = "mountmate_networkShares_v1"
 
   @Published var protectedVolumes: [ManagedVolumeInfo]
   @Published var ignoredVolumes: [ManagedVolumeInfo]
   @Published var blockedVolumes: [ManagedVolumeInfo]
+  @Published var networkShares: [NetworkShare]
 
   private init() {
     self.protectedVolumes = Self.load(from: protectedVolumesKey)
     self.ignoredVolumes = Self.load(from: ignoredVolumesKey)
     self.blockedVolumes = Self.load(from: blockedVolumesKey)
+    self.networkShares = Self.load(from: networkSharesKey)
   }
 
   // MARK: - Actions
@@ -88,6 +91,24 @@ class PersistenceManager: ObservableObject {
     saveBlockedVolumes()
   }
 
+  func addNetworkShare(_ share: NetworkShare) {
+    networkShares.append(share)
+    saveNetworkShares()
+  }
+
+  func updateNetworkShare(_ share: NetworkShare) {
+    if let index = networkShares.firstIndex(where: { $0.id == share.id }) {
+      networkShares[index] = share
+      saveNetworkShares()
+    }
+  }
+
+  func removeNetworkShare(_ share: NetworkShare) {
+    networkShares.removeAll { $0.id == share.id }
+    KeychainManager.shared.delete(account: share.id.uuidString)
+    saveNetworkShares()
+  }
+
   // MARK: - Helper Checkers
 
   func isVolumeProtected(_ volume: Volume) -> Bool {
@@ -122,5 +143,6 @@ class PersistenceManager: ObservableObject {
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }
   private func saveIgnoredVolumes() { save(ignoredVolumes, to: ignoredVolumesKey) }
   private func saveBlockedVolumes() { save(blockedVolumes, to: blockedVolumesKey) }
+  private func saveNetworkShares() { save(networkShares, to: networkSharesKey) }
 
 }

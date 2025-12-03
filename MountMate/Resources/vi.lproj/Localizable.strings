@@ -117,3 +117,31 @@
 "Restart Required" = "Cần khởi động lại";
 "Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
 "Restart Now" = "Khởi động lại ngay";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "Chia sẻ Mạng";
+"Add Network Share" = "Thêm Chia sẻ Mạng";
+"Edit Network Share" = "Sửa Chia sẻ Mạng";
+"Server Address" = "Địa chỉ Máy chủ";
+"Share Name/Path" = "Tên/Đường dẫn Chia sẻ";
+"Username" = "Tên đăng nhập";
+"Password" = "Mật khẩu";
+"Custom Mount Point" = "Điểm Gắn Tùy chỉnh";
+"Mount at Login" = "Gắn khi Đăng nhập";
+"MountMate can automatically mount these SMB shares at login." = "MountMate có thể tự động gắn các chia sẻ SMB này khi đăng nhập.";
+"No Network Shares Configured" = "Chưa cấu hình Chia sẻ Mạng";
+"Mounted" = "Đã gắn";
+"Not Mounted" = "Chưa gắn";
+"Display Name" = "Tên Hiển thị";
+"Connection" = "Kết nối";
+"Credentials" = "Thông tin xác thực";
+"Options" = "Tùy chọn";
+"Leave empty to use default location" = "Để trống để dùng vị trí mặc định";
+"Preview: %@" = "Xem trước: %@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "Buộc Đẩy ra";
+"The disk is in use. Do you want to force eject it?" = "Ổ đĩa đang được sử dụng. Bạn có muốn buộc đẩy ra không?";
+"This may result in data loss." = "Việc này có thể dẫn đến mất dữ liệu.";
