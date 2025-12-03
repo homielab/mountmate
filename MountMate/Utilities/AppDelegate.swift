@@ -117,6 +117,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       alert.accessoryView = textField
       alert.addButton(withTitle: NSLocalizedString("Unlock", comment: "Unlock button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+
+    case .forceEject:
+      alert.addButton(withTitle: NSLocalizedString("Force Eject", comment: "Force Eject button"))
+      alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
     }
 
     NSApp.activate(ignoringOtherApps: true)
@@ -127,6 +131,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let textField = alert.accessoryView as? NSSecureTextField
       {
         lockedVolumeAlert.onConfirm(textField.stringValue)
+      } else if case .forceEject(let action) = appAlert.kind {
+        action()
       }
     }
 

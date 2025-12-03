@@ -152,7 +152,22 @@ class DriveManager: ObservableObject {
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
           self.handleDiskUtilError(
-            error, for: disk.name ?? disk.id, with: nil, operation: .eject)
+            error, for: disk.name ?? disk.id, disk: disk, operation: .eject)
+        }
+        self.busyEjectingIdentifier = nil
+      }
+    }
+  }
+
+  func forceEject(disk: PhysicalDisk) {
+    DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
+    DispatchQueue.global(qos: .userInitiated).async {
+      _ = runShell("diskutil unmountDisk force \(disk.id)")
+      let result = runShell("diskutil eject \(disk.id)")
+      DispatchQueue.main.async {
+        if let error = result.error, !error.isEmpty {
+          self.handleDiskUtilError(
+            error, for: disk.name ?? disk.id, disk: disk, operation: .eject)
         }
         self.busyEjectingIdentifier = nil
       }
@@ -184,7 +199,7 @@ class DriveManager: ObservableObject {
   private func handleMountResult(_ result: (output: String?, error: String?), for volume: Volume) {
     DispatchQueue.main.async {
       if let error = result.error, !error.isEmpty {
-        self.handleDiskUtilError(error, for: volume.name, with: volume, operation: .mount)
+        self.handleDiskUtilError(error, for: volume.name, volume: volume, operation: .mount)
       }
       self.busyVolumeIdentifier = nil
       self.refreshDrives(qos: .userInitiated)
@@ -203,7 +218,7 @@ class DriveManager: ObservableObject {
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
           self.handleDiskUtilError(
-            error, for: volume.name, with: volume, operation: .mount)
+            error, for: volume.name, volume: volume, operation: .mount)
         }
         self.busyVolumeIdentifier = nil
         self.refreshDrives(qos: .userInitiated)
@@ -218,7 +233,7 @@ class DriveManager: ObservableObject {
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
           self.handleDiskUtilError(
-            error, for: volume.name, with: volume, operation: .unmount)
+            error, for: volume.name, volume: volume, operation: .unmount)
         }
         self.busyVolumeIdentifier = nil
         self.refreshDrives(qos: .userInitiated)
@@ -495,7 +510,8 @@ class DriveManager: ObservableObject {
   }
 
   private func handleDiskUtilError(
-    _ error: String, for name: String, with volume: Volume?, operation: DiskOperation
+    _ error: String, for name: String, volume: Volume? = nil, disk: PhysicalDisk? = nil,
+    operation: DiskOperation
   ) {
     let parsedError = self.parseDiskUtilError(error, for: name, operation: operation)
     let title: String
@@ -528,7 +544,11 @@ class DriveManager: ObservableObject {
         format: NSLocalizedString(
           "Failed to eject “%@” because one of its volumes is busy or in use.",
           comment: "Error message"), name)
-      kind = .basic
+      if let disk = disk {
+        kind = .forceEject { self.forceEject(disk: disk) }
+      } else {
+        kind = .basic
+      }
     case .mountInUseVolume, .unmountInUseVolume, .ejectInUseVolume:
       let verb: String
       switch parsedError {
@@ -546,7 +566,11 @@ class DriveManager: ObservableObject {
         format: NSLocalizedString(
           "Failed to %@ “%@” because it is currently in use by another application.",
           comment: "Error message"), verb, name)
-      kind = .basic
+      if operation == .eject, let disk = disk {
+        kind = .forceEject { self.forceEject(disk: disk) }
+      } else {
+        kind = .basic
+      }
     case .other:
       let verb: String
       switch operation {

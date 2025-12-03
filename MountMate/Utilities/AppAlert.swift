@@ -9,6 +9,7 @@ struct LockedVolumeAppAlert {
 enum AppAlertKind {
   case basic
   case lockedVolume(LockedVolumeAppAlert)
+  case forceEject(() -> Void)
 }
 
 struct AppAlert: Identifiable {
