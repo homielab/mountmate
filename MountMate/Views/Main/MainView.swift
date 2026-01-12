@@ -275,7 +275,7 @@ struct VolumeRowView: View {
           }
         }) {
           Image(
-            systemName: volume.isMounted ? "xmark.circle.fill" : "arrow.up.circle.fill"
+            systemName: volume.isMounted ? "minus.circle.fill" : "plus.circle.fill"
           )
           .opacity(isLoading ? 0 : 1)
         }
@@ -300,7 +300,7 @@ struct VolumeRowView: View {
           Button {
             manager.unmount(volume: volume)
           } label: {
-            Label("Unmount", systemImage: "xmark.circle")
+            Label("Unmount", systemImage: "minus.circle")
           }
           Button {
             if let path = volume.mountPoint {
@@ -338,7 +338,7 @@ struct VolumeRowView: View {
           Button {
             manager.mount(volume: volume)
           } label: {
-            Label("Mount", systemImage: "arrow.up.circle")
+            Label("Mount", systemImage: "plus.circle")
           }
           Divider()
         }
@@ -464,7 +464,7 @@ struct NetworkShareMainRow: View {
           }
         }) {
           Image(
-            systemName: isMounted ? "xmark.circle.fill" : "arrow.up.circle.fill"
+            systemName: isMounted ? "minus.circle.fill" : "plus.circle.fill"
           )
           .opacity(isWorking ? 0 : 1)
         }
