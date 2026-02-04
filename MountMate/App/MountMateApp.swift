@@ -3,6 +3,40 @@
 import Sparkle
 import SwiftUI
 
+// MARK: - Dynamic Menu Bar Icon
+
+struct MenuBarIconView: View {
+  @ObservedObject var driveManager: DriveManager
+
+  /// Determines the appropriate icon based on current state
+  var currentIcon: String {
+    // Priority 1: Show busy state during operations
+    if driveManager.isUnmountingAll
+        || driveManager.busyVolumeIdentifier != nil
+        || driveManager.busyEjectingIdentifier != nil {
+      return "externaldrive.fill.badge.timemachine"
+    }
+
+    // Priority 2: Show error state if there's an error
+    if driveManager.userActionError != nil {
+      return "externaldrive.fill.trianglebadge.exclamationmark"
+    }
+
+    // Default: normal icon
+    return "externaldrive.fill"
+  }
+
+  var body: some View {
+    let icon = currentIcon
+    #if DEBUG
+    let _ = print("MenuBarIcon: \(icon)")
+    #endif
+    return Image(systemName: icon)
+  }
+}
+
+// MARK: - App Entry Point
+
 @main
 struct MountMateApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -19,11 +53,13 @@ struct MountMateApp: App {
   }
 
   var body: some Scene {
-    MenuBarExtra("MountMate", systemImage: "externaldrive.fill") {
+    MenuBarExtra {
       PopoverContent {
         MainView()
       }
       .environmentObject(driveManager)
+    } label: {
+      MenuBarIconView(driveManager: driveManager)
     }
     .menuBarExtraStyle(.window)
 
