@@ -27,6 +27,7 @@ struct GeneralSettingsView: View {
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
+  @AppStorage("hotkeysEnabled") private var hotkeysEnabled = false
 
   @State private var selectedLanguage: String = {
     guard
@@ -49,6 +50,7 @@ struct GeneralSettingsView: View {
   }()
 
   @State private var showRestartAlert = false
+  @State private var showAccessibilityAlert = false
 
   private var appVersion: String {
     let version =
@@ -65,6 +67,24 @@ struct GeneralSettingsView: View {
         Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
         Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
         Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)
+        Toggle("Enable Keyboard Shortcuts", isOn: $hotkeysEnabled)
+          .onChange(of: hotkeysEnabled) { enabled in
+            if enabled {
+              // Check if accessibility permission is granted
+              if !HotkeyManager.checkAccessibilityPermissions() {
+                showAccessibilityAlert = true
+              }
+            }
+          }
+        if hotkeysEnabled {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("⌘⇧U - Unmount All Volumes")
+            Text("⌘⇧M - Mount All Volumes")
+          }
+          .font(.caption)
+          .foregroundColor(.secondary)
+          .padding(.leading, 4)
+        }
         Picker("Language", selection: $selectedLanguage) {
           Text("English").tag("en")
           Text("Tiếng Việt").tag("vi")
@@ -103,6 +123,16 @@ struct GeneralSettingsView: View {
       Button("Later", role: .cancel) {}
     } message: {
       Text("Please restart MountMate for the language change to take effect.")
+    }
+    .alert("Accessibility Permission Required", isPresented: $showAccessibilityAlert) {
+      Button("Open System Settings") {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+          NSWorkspace.shared.open(url)
+        }
+      }
+      Button("Later", role: .cancel) {}
+    } message: {
+      Text("To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility.")
     }
   }
 

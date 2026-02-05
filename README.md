@@ -58,6 +58,7 @@ So I built **MountMate**.
 - See which ones are **mounted**
 - **Mount/unmount** any drive with a click
 - Check available **free space**
+- **Keyboard Shortcuts**: Quick mount/unmount with `⌘⇧M` and `⌘⇧U`
 - **Network Shares**: Auto-mount SMB shares at login
 - **Force Eject**: Safely force eject drives that are in use
 - Runs quietly in the **menu bar**

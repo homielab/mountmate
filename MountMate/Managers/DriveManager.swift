@@ -145,6 +145,26 @@ class DriveManager: ObservableObject {
     }
   }
 
+  func mountAllVolumes() {
+    let volumesToMount = (self.physicalDisks ?? [])
+      .filter { $0.type == .physical || $0.type == .diskImage }
+      .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
+      .filter { !$0.isMounted && $0.category == .user && !PersistenceManager.shared.isVolumeBlocked(Volume(id: $0.id, deviceIdentifier: $0.deviceIdentifier, diskUUID: $0.diskUUID, name: $0.name, isMounted: $0.isMounted, mountPoint: $0.mountPoint, freeSpace: $0.freeSpace, totalSize: $0.totalSize, usedSpace: $0.usedSpace, usedBytes: $0.usedBytes, fileSystemType: $0.fileSystemType, usagePercentage: $0.usagePercentage, category: $0.category, isProtected: $0.isProtected, snapshots: $0.snapshots, storageError: $0.storageError)) }
+
+    guard !volumesToMount.isEmpty else { return }
+
+    DispatchQueue.global(qos: .userInitiated).async {
+      for volume in volumesToMount {
+        let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
+        NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+        _ = runShell("diskutil mount \(volume.deviceIdentifier)")
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        self?.refreshDrives(qos: .userInitiated)
+      }
+    }
+  }
+
   func eject(disk: PhysicalDisk) {
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {

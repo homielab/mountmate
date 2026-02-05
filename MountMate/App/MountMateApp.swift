@@ -45,6 +45,7 @@ struct MountMateApp: App {
   @StateObject private var launchManager = LaunchAtLoginManager()
   @StateObject private var diskMounter = DiskMounter()
   @StateObject private var updaterViewModel: UpdaterController
+  @StateObject private var hotkeyManager = HotkeyManager.shared
 
   init() {
     let updater = SPUStandardUpdaterController(

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## 5.1
+
+### Added
+
+- **Keyboard Shortcuts**: Quickly mount and unmount volumes using global hotkeys.
+  - `⌘⇧U` - Unmount all user volumes
+  - `⌘⇧M` - Mount all unmounted volumes
+  - Enable/disable in Settings → General → "Enable Keyboard Shortcuts"
+  - Requires Accessibility permission (prompt guides you to System Settings)
+
+### Improved
+
+- **Dynamic Menu Bar Icon**: The menu bar icon now changes to indicate app state:
+  - Shows a clock badge while mounting/unmounting drives
+  - Shows a warning badge if an error occurs
+  - Returns to normal when operations complete
+- **Better Mount/Unmount Icons**: Changed mount/unmount button icons from arrows to plus/minus for clearer meaning.
+
+Thanks @ilyagr for the pull requests!
+
+---
+
 ## 5.0
 
 ### Added
