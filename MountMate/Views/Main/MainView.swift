@@ -114,20 +114,23 @@ struct DriveListView: View {
 // MARK: - Hierarchical Helper & Row Views
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
+  @State private var isExpanded = true
 
   private var visibleContainers: [APFSContainer] {
     disk.containers.filter { !$0.volumes.isEmpty }
   }
 
   var body: some View {
-    DiskHeaderRow(disk: disk)
-    ForEach(disk.partitions) { partition in
-      VolumeRowView(volume: partition).padding(.leading, 24)
-    }
-    ForEach(visibleContainers) { container in
-      ContainerRowView(container: container)
-      ForEach(container.volumes) { volume in
-        VolumeRowView(volume: volume).padding(.leading, 48)
+    DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
+    if isExpanded {
+      ForEach(disk.partitions) { partition in
+        VolumeRowView(volume: partition).padding(.leading, 24)
+      }
+      ForEach(visibleContainers) { container in
+        ContainerRowView(container: container)
+        ForEach(container.volumes) { volume in
+          VolumeRowView(volume: volume).padding(.leading, 48)
+        }
       }
     }
   }
@@ -135,12 +138,21 @@ struct DiskAndVolumesView: View {
 
 struct DiskHeaderRow: View {
   let disk: PhysicalDisk
+  @Binding var isExpanded: Bool
   @EnvironmentObject var manager: DriveManager
   @State private var isHovering = false
 
   var body: some View {
     HStack(spacing: 0) {
-      HStack {
+      // Toggle Chevron & Icon
+      HStack(spacing: 4) {
+        Image(systemName: "chevron.right")
+          .font(.caption2)
+          .foregroundColor(.secondary)
+          .rotationEffect(.degrees(isExpanded ? 90 : 0))
+          .animation(.easeInOut(duration: 0.2), value: isExpanded)
+          .frame(width: 12)
+        
         ZStack {
           Image(systemName: "internaldrive.fill").font(.title2)
           if let error = disk.storageError {
@@ -166,6 +178,11 @@ struct DiskHeaderRow: View {
         }
       }
       .contentShape(Rectangle())
+      .onTapGesture {
+        withAnimation(.easeInOut(duration: 0.2)) {
+          isExpanded.toggle()
+        }
+      }
       .contextMenu {
         Button("Ignore This Disk") {
           let allVolumesToIgnore = disk.partitions + disk.containers.flatMap { $0.volumes }
