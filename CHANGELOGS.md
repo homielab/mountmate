@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## 5.2
+
+### Added
+
+- **Global Expand/Collapse**: Added a quick toggle in the header to collapse or expand all disk sections at once.
+- **Collapsible Layout**: Disk images, external drives, and network shares can now be collapsed to hide nested volumes.
+- **Guest Access**: Username is now optional for network shares, enabling Guest login.
+- **Flexible Names**: Network share display names are optional and default to the share path if omitted.
+
+### Improved
+
+- **SMB Performance**: Optimized network mounts with `noowners` and `nosuid` flags, significantly improving transfer speeds and reducing NAS disk activity.
+
+### Fixed
+
+- **Energy Consumption**: Refactored network share status checking to use event-driven updates instead of polling, significantly reducing CPU usage and battery drain.
+
+---
+
 ## 5.1
 
 ### Added
