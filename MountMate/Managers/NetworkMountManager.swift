@@ -136,7 +136,7 @@ class NetworkMountManager: ObservableObject {
       // Use mount_smbfs
       // mount_smbfs //user:password@server/share /Volumes/mountPoint
 
-      let command = "/sbin/mount_smbfs \"\(url.absoluteString)\" \"\(mountPoint)\""
+      let command = "/sbin/mount_smbfs -o noowners,nosuid \"\(url.absoluteString)\" \"\(mountPoint)\""
       let result = runShell(command)
 
       DispatchQueue.main.async {
