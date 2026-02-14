@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import Combine
 import Foundation
 import SwiftUI
 
@@ -13,6 +14,8 @@ class DriveManager: ObservableObject {
   @Published var busyVolumeIdentifier: String? = nil
   @Published var busyEjectingIdentifier: String? = nil
   @Published var isUnmountingAll = false
+
+  let driveExpansionSubject = PassthroughSubject<Bool, Never>()
 
   private var refreshDebounceTimer: Timer?
   private var isFetchInProgress = false

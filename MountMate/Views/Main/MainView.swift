@@ -115,23 +115,32 @@ struct DriveListView: View {
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
   @State private var isExpanded = true
+  @EnvironmentObject var manager: DriveManager // Make sure manager is available
 
   private var visibleContainers: [APFSContainer] {
     disk.containers.filter { !$0.volumes.isEmpty }
   }
 
   var body: some View {
-    DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
-    if isExpanded {
-      ForEach(disk.partitions) { partition in
-        VolumeRowView(volume: partition).padding(.leading, 24)
-      }
-      ForEach(visibleContainers) { container in
-        ContainerRowView(container: container)
-        ForEach(container.volumes) { volume in
-          VolumeRowView(volume: volume).padding(.leading, 48)
+    Group {
+      DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
+      if isExpanded {
+        ForEach(disk.partitions) { partition in
+          VolumeRowView(volume: partition).padding(.leading, 24)
+        }
+        ForEach(visibleContainers) { container in
+          ContainerRowView(container: container)
+          ForEach(container.volumes) { volume in
+            VolumeRowView(volume: volume).padding(.leading, 48)
+          }
         }
       }
+    }
+    // Listen for global toggle events
+    .onReceive(manager.driveExpansionSubject) { expanded in
+       withAnimation {
+         self.isExpanded = expanded
+       }
     }
   }
 }
@@ -516,6 +525,13 @@ struct HeaderActionsView: View {
     HStack {
       Text("MountMate").font(.headline)
       Spacer()
+      
+      // Global Expand/Collapse Button
+      Button(action: toggleExpansion) {
+        Image(systemName: allCollapsed ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
+      }
+      .buttonStyle(.plain)
+      .help(allCollapsed ? "Expand All" : "Collapse All")
 
       // Unmount All Button
       Button(action: { driveManager.unmountAllDrives() }) {
@@ -567,8 +583,16 @@ struct HeaderActionsView: View {
       }
       .buttonStyle(.plain).help(NSLocalizedString("Quit MountMate", comment: "Tooltip"))
     }
+
     .frame(width: 320)
     .padding()
+  }
+
+  @State private var allCollapsed = false
+
+  private func toggleExpansion() {
+    allCollapsed.toggle()
+    driveManager.driveExpansionSubject.send(!allCollapsed)
   }
 
   private func focusSettingsWindow() {
