@@ -82,6 +82,9 @@ class DriveManager: ObservableObject {
       self.busyEjectingIdentifier = nil
       self.isUnmountingAll = false
       self.refreshError = nil
+      
+      // Also refresh network shares whenever we get a disk event/refresh
+      NetworkMountManager.shared.refreshMountStatus()
     }
   }
 

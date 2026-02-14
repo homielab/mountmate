@@ -2,9 +2,63 @@
 
 import Foundation
 
-class NetworkMountManager {
+class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
-  private init() {}
+  
+  @Published var mountedShareIDs: Set<UUID> = []
+  
+  private init() {
+      // Initial check
+      refreshMountStatus()
+  }
+
+  func refreshMountStatus() {
+    DispatchQueue.global(qos: .background).async { [weak self] in
+        guard let self = self else { return }
+        let result = runShell("mount")
+        guard let output = result.output else { return }
+        
+        let mountedShares = self.parseMountedShares(from: output)
+        
+        DispatchQueue.main.async {
+            self.mountedShareIDs = mountedShares
+        }
+    }
+  }
+
+  private func parseMountedShares(from mountOutput: String) -> Set<UUID> {
+      var mountedUUIDs = Set<UUID>()
+      let shares = PersistenceManager.shared.networkShares
+      
+      // Optimization: Check if we can match existing shares to the mount output
+      // This is slightly complex because we need to match the share configuration to the mount output line.
+      // We can reuse the logic from `findExistingMountPoint` but applied in batch.
+      
+      for share in shares {
+          if self.isShareMounted(share, in: mountOutput) {
+              mountedUUIDs.insert(share.id)
+          }
+      }
+      return mountedUUIDs
+  }
+    
+  private func isShareMounted(_ share: NetworkShare, in mountOutput: String) -> Bool {
+      let lines = mountOutput.components(separatedBy: .newlines)
+      for line in lines {
+        if line.contains("smbfs") {
+          let parts = line.components(separatedBy: " on ")
+          if parts.count >= 2 {
+            let source = parts[0].trimmingCharacters(in: .whitespaces)
+            if source.contains(share.server) && source.contains(share.sharePath) {
+               if source.hasSuffix("/\(share.sharePath)") {
+                 return true
+               }
+            }
+          }
+        }
+      }
+      return false
+  }
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
     let mountPoint: String
@@ -42,12 +96,14 @@ class NetworkMountManager {
     // Check if already mounted (either at our target path or elsewhere)
     if let existingMount = findExistingMountPoint(for: share) {
       print("Share \(share.name) is already mounted at \(existingMount)")
+      self.refreshMountStatus()
       completion(true, nil)
       return
     }
 
     // Also check our specific target path just in case
     if isMounted(at: mountPoint) {
+      self.refreshMountStatus()
       completion(true, nil)
       return
     }
@@ -84,6 +140,7 @@ class NetworkMountManager {
       let result = runShell(command)
 
       DispatchQueue.main.async {
+        self.refreshMountStatus()
         if let error = result.error, !error.isEmpty {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
@@ -128,6 +185,7 @@ class NetworkMountManager {
       let result = runShell("umount \"\(mountPoint)\"")
 
       DispatchQueue.main.async {
+        self.refreshMountStatus()
         if let error = result.error, !error.isEmpty {
           completion(false, error)
         } else {
@@ -138,25 +196,7 @@ class NetworkMountManager {
   }
 
   func isMounted(share: NetworkShare) -> Bool {
-    if findExistingMountPoint(for: share) != nil {
-      return true
-    }
-
-    let mountPoint: String
-    if let customPath = share.customMountPoint, !customPath.isEmpty {
-      let expandedPath = (customPath as NSString).expandingTildeInPath
-      if !expandedPath.hasPrefix("/") {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        mountPoint = "\(homeDir)/\(expandedPath)"
-      } else {
-        mountPoint = expandedPath
-      }
-    } else {
-      let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-      let mountsDir = "\(homeDir)/mountmate"
-      mountPoint = "\(mountsDir)/\(share.name)"
-    }
-    return isMounted(at: mountPoint)
+      return mountedShareIDs.contains(share.id)
   }
 
   func getMountPoint(for share: NetworkShare) -> String {

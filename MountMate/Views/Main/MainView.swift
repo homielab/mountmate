@@ -407,12 +407,13 @@ struct SnapshotRowView: View {
 
 struct NetworkShareMainRow: View {
   let share: NetworkShare
-  @State private var isMounted = false
+  @ObservedObject var networkManager = NetworkMountManager.shared
   @State private var isWorking = false
   @State private var isHovering = false
 
-  // Timer to periodically check mount status
-  let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+  private var isMounted: Bool {
+    networkManager.mountedShareIDs.contains(share.id)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
@@ -446,7 +447,7 @@ struct NetworkShareMainRow: View {
           if isMounted {
             NetworkMountManager.shared.unmount(share: share) { success, error in
               isWorking = false
-              checkStatus()
+              // Status update handled by manager
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
                   title: "Unmount Failed", message: error, kind: .basic)
@@ -455,7 +456,7 @@ struct NetworkShareMainRow: View {
           } else {
             NetworkMountManager.shared.mount(share: share) { success, error in
               isWorking = false
-              checkStatus()
+              // Status update handled by manager
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
                   title: "Mount Failed", message: error, kind: .basic)
@@ -481,12 +482,6 @@ struct NetworkShareMainRow: View {
         self.isHovering = hovering
       }
     }
-    .onAppear { checkStatus() }
-    .onReceive(timer) { _ in checkStatus() }
-  }
-
-  private func checkStatus() {
-    isMounted = NetworkMountManager.shared.isMounted(share: share)
   }
 }
 
