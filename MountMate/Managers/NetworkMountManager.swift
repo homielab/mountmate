@@ -122,8 +122,10 @@ class NetworkMountManager: ObservableObject {
     // Construct the URL string carefully
     var urlComponents = URLComponents()
     urlComponents.scheme = "smb"
-    urlComponents.user = share.username
-    urlComponents.password = password
+    if !share.username.isEmpty {
+      urlComponents.user = share.username
+      urlComponents.password = password
+    }
     urlComponents.host = share.server
     urlComponents.path = "/\(share.sharePath)"
 

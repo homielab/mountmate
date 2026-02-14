@@ -396,7 +396,7 @@ struct EditNetworkShareSheet: View {
   @State private var customMountPoint = ""
 
   private var isValid: Bool {
-    !name.isEmpty && !server.isEmpty && !sharePath.isEmpty && !username.isEmpty
+    !server.isEmpty && !sharePath.isEmpty
   }
 
   private var connectionStringPreview: String {
@@ -421,7 +421,7 @@ struct EditNetworkShareSheet: View {
 
       Form {
         Section {
-          TextField("Display Name", text: $name, prompt: Text("e.g. My NAS"))
+          TextField("Display Name", text: $name, prompt: Text("Optional (Defaults to share name)"))
         } header: {
           Text("General")
         }
@@ -440,14 +440,14 @@ struct EditNetworkShareSheet: View {
           Text("Connection")
         } footer: {
           Text("Preview: \(connectionStringPreview)")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(.subheadline)
+            .foregroundStyle(.primary)
         }
 
         Section {
           HStack {
             Image(systemName: "person").frame(width: 20)
-            TextField("Username", text: $username)
+            TextField("Username", text: $username, prompt: Text("Optional (Guest)"))
           }
 
           HStack {
@@ -520,9 +520,12 @@ struct EditNetworkShareSheet: View {
 
   private func saveShare() {
     let id = shareToEdit?.id ?? UUID()
+    // Default name to sharePath if empty
+    let finalName = name.isEmpty ? sharePath : name
+    
     let share = NetworkShare(
       id: id,
-      name: name,
+      name: finalName,
       server: server,
       sharePath: sharePath,
       username: username,
