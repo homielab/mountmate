@@ -104,6 +104,7 @@
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Розділ «EFI» не можна змонтувати безпосередньо. Це спеціальний системний розділ, і така поведінка є нормальною.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Не вдалося вийняти «%@», оскільки один із його томів зайнятий або використовується.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Не вдалося %@ «%@», оскільки він зараз використовується іншою програмою.";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "Не вдалося %@ «%@», оскільки він зараз використовується «%@».";
 "An unknown error occurred while trying to %@ “%@”." = "Під час спроби %@ «%@» сталася невідома помилка.";
 "Enter the password to unlock “%@”" = "Введіть пароль, щоб розблокувати «%@»";
 "Password" = "Пароль";

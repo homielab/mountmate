@@ -104,6 +104,7 @@
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Failed to eject “%@” because one of its volumes is busy or in use.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Failed to %@ “%@” because it is currently in use by another application.";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "Failed to %@ “%@” because it is currently in use by “%@”.";
 "An unknown error occurred while trying to %@ “%@”." = "An unknown error occurred while trying to %@ “%@”.";
 "Enter the password to unlock “%@”" = "Enter the password to unlock “%@”";
 "Password" = "Password";

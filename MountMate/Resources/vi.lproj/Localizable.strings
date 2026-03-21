@@ -104,6 +104,7 @@
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Không thể gắn trực tiếp phân vùng “EFI”. Đây là một phân vùng hệ thống đặc biệt và hành vi này là bình thường.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "Không thể %@ “%@” vì đang được sử dụng bởi “%@”.";
 "An unknown error occurred while trying to %@ “%@”." = "Đã xảy ra lỗi không xác định khi đang cố gắng %@ “%@”.";
 "Enter the password to unlock “%@”" = "Nhập mật khẩu để mở khoá “%@”";
 "Password" = "Mật khẩu";

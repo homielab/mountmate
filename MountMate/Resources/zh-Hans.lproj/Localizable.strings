@@ -103,7 +103,8 @@
 "\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\n请在“系统设置 > 隐私与安全性”中为 MountMate 授予“完全磁盘访问权限”。";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "“EFI” 分区是系统的特殊分区，无法直接挂载，这是正常现象。";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "由于其中的某个卷宗正在使用，无法推出“%@”。";
-"Failed to %@ “%@” because it is currently in use by another application." = "由于“%@”正被其他应用使用，无法执行 %@ 操作。";
+"Failed to %@ “%@” because it is currently in use by another application." = "由于“%2$@”正被其他应用使用，无法执行 %1$@ 操作。";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "由于“%2$@”正被“%3$@”使用，无法执行 %1$@ 操作。";
 "An unknown error occurred while trying to %@ “%@”." = "尝试 %@ “%@” 时发生未知错误。";
 "Enter the password to unlock “%@”" = "请输入密码以解锁“%@”";
 "Password" = "密码";

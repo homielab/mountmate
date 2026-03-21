@@ -544,8 +544,8 @@ class DriveManager: ObservableObject {
 
   private enum DiskOperation { case mount, unmount, eject }
   private enum DiskUtilError {
-    case mountEFIVolume, unmountBusyVolume, mountInUseVolume, unmountInUseVolume,
-      ejectInUseVolume,
+    case mountEFIVolume, unmountBusyVolume, mountInUseVolume(String?), unmountInUseVolume(String?),
+      ejectInUseVolume(String?),
       mountLockedVolume, other
   }
 
@@ -592,7 +592,7 @@ class DriveManager: ObservableObject {
       } else {
         kind = .basic
       }
-    case .mountInUseVolume, .unmountInUseVolume, .ejectInUseVolume:
+    case .mountInUseVolume(let process), .unmountInUseVolume(let process), .ejectInUseVolume(let process):
       let verb: String
       switch parsedError {
       case .mountInUseVolume:
@@ -605,10 +605,19 @@ class DriveManager: ObservableObject {
         title = NSLocalizedString("Eject Failed", comment: "Alert title")
         verb = NSLocalizedString("eject", comment: "verb")
       }
-      message = String(
-        format: NSLocalizedString(
-          "Failed to %@ “%@” because it is currently in use by another application.",
-          comment: "Error message"), verb, name)
+      
+      if let proc = process {
+        message = String(
+          format: NSLocalizedString(
+            "Failed to %@ “%@” because it is currently in use by “%@”.",
+            comment: "Error message"), verb, name, proc)
+      } else {
+        message = String(
+          format: NSLocalizedString(
+            "Failed to %@ “%@” because it is currently in use by another application.",
+            comment: "Error message"), verb, name)
+      }
+      
       if operation == .eject, let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
       } else {
@@ -647,11 +656,21 @@ class DriveManager: ObservableObject {
       return .unmountBusyVolume
     }
 
-    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use") {
+    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use") || lowerCaseError.contains("dissented by pid") {
+      var processName: String? = nil
+      if let range = rawError.range(of: "(dissented by PID \\d+ )?\\((/[^)]+)\\)", options: [.regularExpression, .caseInsensitive]) {
+        let match = String(rawError[range])
+        if let start = match.firstIndex(of: "("), let end = match.firstIndex(of: ")") {
+            let pathRange = match.index(after: start)..<end
+            let path = String(match[pathRange])
+            processName = URL(fileURLWithPath: path).lastPathComponent
+        }
+      }
+
       return switch operation {
-      case .mount: .mountInUseVolume
-      case .unmount: .unmountInUseVolume
-      case .eject: .ejectInUseVolume
+      case .mount: .mountInUseVolume(processName)
+      case .unmount: .unmountInUseVolume(processName)
+      case .eject: .ejectInUseVolume(processName)
       }
     }
 
