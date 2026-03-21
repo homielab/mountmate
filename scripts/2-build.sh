@@ -60,7 +60,6 @@ echo "📀 Creating DMG..."
 create-dmg \
   --volicon "${ASSETS_DIR}/icon.icns" \
   --volname "${APP_NAME} v${VERSION}" \
-  --background "${ASSETS_DIR}/icon.png" \
   --window-pos 200 120 \
   --window-size 640 480 \
   --icon-size 128 \
