@@ -87,6 +87,7 @@ struct GeneralSettingsView: View {
         }
         Picker("Language", selection: $selectedLanguage) {
           Text("English").tag("en")
+          Text("Українська").tag("uk")
           Text("Tiếng Việt").tag("vi")
           Text("中文（简体）").tag("zh-Hans")
           Text("中文（繁体）").tag("zh-Hant")
