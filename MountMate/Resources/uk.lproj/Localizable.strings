@@ -1,0 +1,148 @@
+/* 
+  Localizable.strings (Ukrainian)
+*/
+
+// MARK: - Main View & Sections
+//=============================================
+
+"No Drives Found" = "Диски не знайдені";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Підключіть USB-накопичувач, SD-карту або змонтуйте образ диска, щоб він з’явився тут.";
+"Internal Disks" = "Внутрішні диски";
+"External Disks" = "Зовнішні диски";
+"Disk Images" = "Образи дисків";
+"Snapshots" = "Знімки";
+
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Unmount All" = "Відмонтувати всі томи";
+"Eject" = "Вийняти";
+"Mount" = "Підключити";
+"Unmount" = "Відмонтувати";
+"Quit MountMate" = "Вийти з MountMate";
+
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"Unknown" = "Невідомо";
+"Unmounted" = "Не змонтовано";
+
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "Ігнорувати цей диск";
+"Ignore This Volume" = "Ігнорувати цей том";
+"Protect from 'Unmount All'" = "Захистити від 'Відмонтувати всі'";
+"Unprotect from 'Unmount All'" = "Прибрати захист від 'Відмонтувати всі'";
+"Open in Finder" = "Відкрити у Finder";
+
+
+// MARK: - Settings View
+//=============================================
+
+"MountMate Settings" = "Налаштування MountMate";
+
+// Tabs
+"General" = "Загальні";
+"Management" = "Керування";
+
+// General Tab
+"Show Internal Disks" = "Показувати внутрішні диски";
+"Start MountMate at Login" = "Запускати MountMate при вході";
+"Block USB Auto-Mount" = "Блокувати автопідключення USB";
+"Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
+"Language" = "Мова";
+
+// About & Updates Section
+"Homepage" = "Домашня сторінка";
+"Support Email" = "Електронна пошта підтримки";
+"Donate" = "Пожертвувати";
+"Check for Updates..." = "Перевірити оновлення...";
+
+// Management Tab
+"Ignored Volumes" = "Ігноровані томи";
+"No Ignored Volumes" = "Немає ігнорованих томів";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Клацніть правою кнопкою на томі, щоб ігнорувати його. Корисно для системних розділів, таких як 'EFI', якими не потрібно керувати.";
+"Protected Volumes" = "Захищені томи";
+"No Protected Volumes" = "Немає захищених томів";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Клацніть правою кнопкою на томі, щоб захистити його від 'Відмонтувати всі' та дій під час сну.";
+
+"Don't Auto-Mount This Volume" = "Не монтувати цей том автоматично";
+"Blocked from Auto-Mounting" = "Заблоковано від автопідключення";
+"No Volumes Blocked from Auto-Mounting" = "Немає томів, заблокованих від автопідключення";
+"Right-click a volume to prevent it from mounting automatically when connected." = "Клацніть правою кнопкою на томі, щоб заборонити його автоматичне монтування під час підключення.";
+
+// MARK: - Alerts & Errors
+//=============================================
+
+// Titles
+"Could Not Load Disks" = "Не вдалося завантажити диски";
+"Data Parsing Error" = "Помилка розбору даних";
+"Eject Failed" = "Не вдалося вийняти";
+"Mount Failed" = "Не вдалося змонтувати";
+"Unmount Failed" = "Не вдалося відмонтувати";
+"“%@” is locked" = "«%@» заблоковано";
+"Full Disk Access Recommended" = "Рекомендується повний доступ до дисків";
+
+// Buttons
+"OK" = "OK";
+"Unlock" = "Розблокувати";
+"Cancel" = "Скасувати";
+"Open System Settings" = "Відкрити системні налаштування";
+"Later" = "Пізніше";
+
+// Verbs for error messages
+"unmount" = "відмонтувати";
+"eject" = "вийняти";
+"mount" = "змонтувати";
+
+// Error Messages & Formats
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nНадайте MountMate повний доступ до дисків у Системних налаштуваннях > Конфіденційність і безпека.";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Розділ «EFI» не можна змонтувати безпосередньо. Це спеціальний системний розділ, і така поведінка є нормальною.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Не вдалося вийняти «%@», оскільки один із його томів зайнятий або використовується.";
+"Failed to %@ “%@” because it is currently in use by another application." = "Не вдалося %@ «%@», оскільки він зараз використовується іншою програмою.";
+"An unknown error occurred while trying to %@ “%@”." = "Під час спроби %@ «%@» сталася невідома помилка.";
+"Enter the password to unlock “%@”" = "Введіть пароль, щоб розблокувати «%@»";
+"Password" = "Пароль";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Щоб переконатися, що MountMate бачить усі типи дисків та уникнути помилок, надайте повний доступ до дисків.\n\nНатисніть «Відкрити системні налаштування», щоб перейти до відповідної панелі.";
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate не зміг отримати інформацію про диски. Система може бути зайнята, диск може не відповідати, або права доступу можуть бути неправильними.";
+
+// MARK: - App Lifecycle & Loading
+//=============================================
+
+"Loading Disks..." = "Завантаження дисків...";
+"Restart Required" = "Потрібно перезапустити";
+"Please restart MountMate for the language change to take effect." = "Будь ласка, перезапустіть MountMate, щоб зміни мови набрали чинності.";
+"Restart Now" = "Перезапустити зараз";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "Мережеві шари";
+"Add Network Share" = "Додати мережевий ресурс";
+"Edit Network Share" = "Редагувати мережевий ресурс";
+"Server Address" = "Адреса сервера";
+"Share Name/Path" = "Назва/шлях ресурсу";
+"Username" = "Ім'я користувача";
+"Password" = "Пароль";
+"Custom Mount Point" = "Користувацька точка підключення";
+"Mount at Login" = "Монтувати при вході";
+"MountMate can automatically mount these SMB shares at login." = "MountMate може автоматично монтувати ці SMB-ресурси під час входу.";
+"No Network Shares Configured" = "Мережеві ресурси не налаштовані";
+"Mounted" = "Змонтовано";
+"Not Mounted" = "Не змонтовано";
+"Display Name" = "Відображуване ім'я";
+"Connection" = "Підключення";
+"Credentials" = "Облікові дані";
+"Options" = "Параметри";
+"Leave empty to use default location" = "Залиште порожнім, щоб використовувати типове місце";
+"Preview: %@" = "Попередній перегляд: %@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "Примусово вийняти";
+"The disk is in use. Do you want to force eject it?" = "Диск використовується. Бажаєте примусово вийняти його?";
+"This may result in data loss." = "Це може призвести до втрати даних.";
+"Remember password in Keychain" = "Запам'ятати пароль у Keychain";
