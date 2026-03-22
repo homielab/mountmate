@@ -289,7 +289,7 @@ struct VolumeRowView: View {
         .contentShape(Rectangle())
         .onTapGesture {
           if volume.isMounted, let mountPoint = volume.mountPoint {
-            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: mountPoint)
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: mountPoint)])
           }
         }
 
@@ -330,7 +330,7 @@ struct VolumeRowView: View {
           }
           Button {
             if let path = volume.mountPoint {
-              NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+              NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
             }
           } label: {
             Label("Open in Finder", systemImage: "folder")
@@ -464,7 +464,7 @@ struct NetworkShareMainRow: View {
         .onTapGesture {
           if isMounted {
             let path = NetworkMountManager.shared.getMountPoint(for: share)
-            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
           }
         }
 
