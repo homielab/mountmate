@@ -92,10 +92,28 @@ class DiskMounter: ObservableObject {
       }
 
       // specific volume is in the blocked list.
-      if let volumeUUID = description[kDADiskDescriptionVolumeUUIDKey as String] as? String,
-        let diskUUID = description[kDADiskDescriptionMediaUUIDKey as String] as? String
-      {
-        let compositeId = "\(diskUUID)-\(volumeUUID)"
+      let rawVolumeUUID = description[kDADiskDescriptionVolumeUUIDKey as String]
+      let rawDiskUUID = description[kDADiskDescriptionMediaUUIDKey as String]
+
+      var volumeUUIDString: String?
+      var diskUUIDString: String?
+
+      if let volCF = rawVolumeUUID as CFTypeRef?, CFGetTypeID(volCF) == CFUUIDGetTypeID() {
+        volumeUUIDString = CFUUIDCreateString(nil, (volCF as! CFUUID)) as String
+      }
+      if let diskCF = rawDiskUUID as CFTypeRef?, CFGetTypeID(diskCF) == CFUUIDGetTypeID() {
+        diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
+      }
+
+      // We only proceed if we at least have a Volume UUID, or if we want to use the same logic as PersistenceManager
+      // which defaults diskUUID to "NONE" but requires VolumeUUID (which for DADisk is VolumeUUID if present).
+      // However, DADisk might not give us a VolumeUUID for all disks.
+      // In DriveManager, we default VolumeUUID to DeviceIdentifier.
+      // For DADisk matching, let's use what we have.
+
+      if let volUUID = volumeUUIDString {
+        let dUUID = diskUUIDString ?? "NONE"
+        let compositeId = "\(dUUID)-\(volUUID)"
         if PersistenceManager.shared.blockedVolumes.contains(where: { $0.id == compositeId }) {
           shouldBlock = true
         }
