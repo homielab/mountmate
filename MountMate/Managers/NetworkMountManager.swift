@@ -87,12 +87,6 @@ class NetworkMountManager: ObservableObject {
 
     let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
 
-    // Construct URL: smb://username:password@server/sharePath
-    // Note: Special characters in password need to be URL encoded if we were passing it in the URL directly,
-    // but mount_smb handles it differently.
-    // However, `mount_smb` is often easier to use with the URL format.
-
-    // A safer way is to use `open` with the URL, but `mount_smb` gives us more control (like creating the directory).
     // Check if already mounted (either at our target path or elsewhere)
     if let existingMount = findExistingMountPoint(for: share) {
       print("Share \(share.name) is already mounted at \(existingMount)")
@@ -115,7 +109,12 @@ class NetworkMountManager: ObservableObject {
           atPath: mountPoint, withIntermediateDirectories: true)
       }
     } catch {
-      completion(false, "Failed to create mount point: \(error.localizedDescription)")
+      let nsError = error as NSError
+      if nsError.domain == NSCocoaErrorDomain && (nsError.code == NSFileWriteNoPermissionError || nsError.code == NSFileNoSuchFileError) {
+        completion(false, "Cannot create mount point at \"\(mountPoint)\".\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location.")
+      } else {
+        completion(false, "Failed to create mount point at \"\(mountPoint)\": \(error.localizedDescription)")
+      }
       return
     }
 
@@ -135,9 +134,6 @@ class NetworkMountManager: ObservableObject {
     }
 
     DispatchQueue.global(qos: .userInitiated).async {
-      // Use mount_smbfs
-      // mount_smbfs //user:password@server/share /Volumes/mountPoint
-
       let command = "/sbin/mount_smbfs -o noowners,nosuid \"\(url.absoluteString)\" \"\(mountPoint)\""
       let result = runShell(command)
 
@@ -146,7 +142,15 @@ class NetworkMountManager: ObservableObject {
         if let error = result.error, !error.isEmpty {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
-          completion(false, self.sanitizeError(error))
+
+          let sanitized = self.sanitizeError(error)
+          // Detect permission-related mount failures
+          let lower = sanitized.lowercased()
+          if lower.contains("permission denied") || lower.contains("operation not permitted") || lower.contains("not owner") {
+            completion(false, "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location.")
+          } else {
+            completion(false, sanitized)
+          }
         } else {
           completion(true, nil)
         }
