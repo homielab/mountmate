@@ -6,7 +6,7 @@ import ServiceManagement
 class LaunchAtLoginManager: ObservableObject {
   @Published var isEnabled: Bool {
     didSet {
-      UserDefaults.standard.set(isEnabled, forKey: "launchAtLoginEnabled")
+      guard isEnabled != oldValue else { return }
       updateLoginItemStatus()
     }
   }
@@ -15,8 +15,11 @@ class LaunchAtLoginManager: ObservableObject {
 
   init() {
     self.service = SMAppService()
-    if UserDefaults.standard.object(forKey: "launchAtLoginEnabled") == nil {
-      self.isEnabled = true
+
+    // Always read the actual system state, not UserDefaults
+    if #available(macOS 13.0, *) {
+      let status = SMAppService().status
+      self.isEnabled = (status == .enabled)
     } else {
       self.isEnabled = UserDefaults.standard.bool(forKey: "launchAtLoginEnabled")
     }
@@ -32,7 +35,11 @@ class LaunchAtLoginManager: ObservableObject {
       }
     } catch {
       print("Failed to update login item status: \(error)")
-      DispatchQueue.main.async { self.isEnabled.toggle() }
+      // Revert to actual system state on failure
+      DispatchQueue.main.async {
+        let actualStatus = self.service.status
+        self.isEnabled = (actualStatus == .enabled)
+      }
     }
   }
 }
