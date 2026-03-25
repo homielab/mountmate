@@ -146,7 +146,7 @@ class NetworkMountManager: ObservableObject {
         if let error = result.error, !error.isEmpty {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
-          completion(false, error)
+          completion(false, self.sanitizeError(error))
         } else {
           completion(true, nil)
         }
@@ -159,6 +159,7 @@ class NetworkMountManager: ObservableObject {
     for share in shares {
       mount(share: share) { success, error in
         if !success {
+          // Error is already sanitized by mount()
           print("Failed to auto-mount \(share.name): \(error ?? "Unknown error")")
         } else {
           print("Successfully auto-mounted \(share.name)")
@@ -281,5 +282,20 @@ class NetworkMountManager: ObservableObject {
 
     // If device IDs differ, it's a mount point
     return fileStat.st_dev != parentStat.st_dev
+  }
+
+  /// Strips credentials from SMB URLs in error strings to prevent password leaks.
+  /// e.g. "smb://user:p%40ss@host/share" → "smb://user:***@host/share"
+  private func sanitizeError(_ error: String) -> String {
+    // Match smb://user:password@host patterns (password may be URL-encoded)
+    let pattern = "(smb://[^:]+:)([^@]+)(@)"
+    guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+      return error
+    }
+    return regex.stringByReplacingMatches(
+      in: error,
+      range: NSRange(error.startIndex..., in: error),
+      withTemplate: "$1***$3"
+    )
   }
 }
