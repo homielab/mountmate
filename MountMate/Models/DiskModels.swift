@@ -38,8 +38,8 @@ struct Volume: Identifiable, Hashable {
   var storageError: String?
 
   var compositeId: String? {
-    guard let diskUUID = diskUUID else { return nil }
-    return "\(diskUUID)-\(id)"
+    let dUUID = diskUUID ?? "NONE"
+    return "\(dUUID)-\(id)"
   }
 }
 
