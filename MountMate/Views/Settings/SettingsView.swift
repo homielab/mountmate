@@ -331,7 +331,12 @@ struct NetworkShareRow: View {
   let share: NetworkShare
   let onEdit: () -> Void
   let onError: (String) -> Void
-  @State private var isMounting = false
+  @ObservedObject private var networkManager = NetworkMountManager.shared
+  @State private var isWorking = false
+
+  private var isMounted: Bool {
+    networkManager.mountedShareIDs.contains(share.id)
+  }
 
   var body: some View {
     HStack {
@@ -347,20 +352,47 @@ struct NetworkShareRow: View {
         Image(systemName: "bolt.fill").foregroundColor(.yellow).help("Auto-mounts at login")
       }
 
+      // Open in file browser (only when mounted)
+      if isMounted {
+        Button(action: {
+          let path = NetworkMountManager.shared.getMountPoint(for: share)
+          NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+        }) {
+          Image(systemName: "folder")
+        }
+        .buttonStyle(.borderless)
+        .help("Open")
+      }
+
+      // Mount / Unmount toggle
       Button(action: {
-        isMounting = true
-        NetworkMountManager.shared.mount(share: share) { success, error in
-          isMounting = false
-          if !success, let error = error {
-            onError(error)
+        isWorking = true
+        if isMounted {
+          NetworkMountManager.shared.unmount(share: share) { success, error in
+            isWorking = false
+            if !success, let error = error {
+              onError(error)
+            }
+          }
+        } else {
+          NetworkMountManager.shared.mount(share: share) { success, error in
+            isWorking = false
+            if !success, let error = error {
+              onError(error)
+            }
           }
         }
       }) {
-        Image(systemName: "play.fill")
+        if isWorking {
+          ProgressView().controlSize(.small)
+        } else {
+          Image(systemName: isMounted ? "stop.fill" : "play.fill")
+            .foregroundColor(isMounted ? .red : .green)
+        }
       }
-      .disabled(isMounting)
+      .disabled(isWorking)
       .buttonStyle(.borderless)
-      .help("Mount Now")
+      .help(isMounted ? "Unmount" : "Mount")
 
       Button(action: onEdit) {
         Image(systemName: "pencil")
