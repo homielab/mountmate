@@ -3,12 +3,12 @@
     <channel>
         <title>MountMate</title>
         <item>
-            <title>5.4</title>
-            <pubDate>Sun, 22 Mar 2026 08:29:31 +0700</pubDate>
-            <sparkle:version>21</sparkle:version>
-            <sparkle:shortVersionString>5.4</sparkle:shortVersionString>
+            <title>5.5</title>
+            <pubDate>Thu, 26 Mar 2026 05:07:03 +0700</pubDate>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>5.5</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/homielab/mountmate/releases/download/v5.4/MountMate_5.4.zip" length="2883716" type="application/octet-stream" sparkle:edSignature="+Zd8XqS6xIgdlEi44JWHiiwRiMm/yVEmDYgzisLpAN67oIrZaFHTG2V2KDfxQbfBoaGXbslvwx+JeOnT5tIOCg=="/>
+            <enclosure url="https://github.com/homielab/mountmate/releases/download/v5.5/MountMate_5.5.zip" length="2900193" type="application/octet-stream" sparkle:edSignature="k4Gpf1piO2YuH2u9tR+Xokb2/ToLhxpnrLL32f/ZlQRTvwwnzgB24aSBuL5NwUCe5K5B7j32n3enozamVIrRDg=="/>
         </item>
     </channel>
 </rss>
