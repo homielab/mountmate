@@ -240,3 +240,15 @@ private final class ClaimOnce: @unchecked Sendable {
     return true
   }
 }
+
+extension String {
+  var shellQuoted: String {
+    "'" + self.replacingOccurrences(of: "'", with: "'\\''") + "'"
+  }
+
+  var appleScriptStringLiteral: String {
+    "\"" + self
+      .replacingOccurrences(of: "\\", with: "\\\\")
+      .replacingOccurrences(of: "\"", with: "\\\"") + "\""
+  }
+}
