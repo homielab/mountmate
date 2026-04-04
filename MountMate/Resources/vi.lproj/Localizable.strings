@@ -140,6 +140,38 @@
 "Options" = "Tùy chọn";
 "Leave empty to use default location" = "Để trống để dùng vị trí mặc định";
 "Preview: %@" = "Xem trước: %@";
+"Custom Mount Point Menu" = "Điểm gắn tùy chỉnh…";
+"Use Custom Mount Point" = "Dùng điểm gắn tùy chỉnh";
+"Folder Path" = "Đường dẫn thư mục";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "Chọn…";
+"Choose" = "Chọn";
+"Reset" = "Đặt lại";
+"Default Path" = "Đường dẫn mặc định";
+"Save" = "Lưu";
+"Create" = "Tạo";
+"Use Folder" = "Dùng thư mục";
+"Custom Mount Point Help" = "Tắt tùy chọn này để dùng vị trí gắn mặc định của macOS.";
+"Custom Mount Point Empty Means Default" = "Để trống để dùng vị trí gắn mặc định của macOS.";
+"Custom Mount Point System Helper" = "Để trống để dùng vị trí gắn mặc định của macOS. Khi lưu, quy tắc gắn hệ thống sẽ được cập nhật và có thể hỏi mật khẩu quản trị một lần.";
+"Custom Mount Point Summary" = "Tùy chỉnh: %@";
+"Create Folder Title" = "Tạo thư mục?";
+"Create Folder Message" = "Thư mục này chưa tồn tại. MountMate có thể tạo nó trước khi lưu.";
+"Folder Not Empty Title" = "Thư mục không trống";
+"Folder Not Empty Message" = "Thư mục đã chọn đang có sẵn tệp. Việc gắn ổ ở đây có thể tạm thời che các tệp đó khi ổ đang được gắn.";
+"Custom Mount Point Empty Path" = "Hãy nhập đường dẫn thư mục.";
+"Custom Mount Point Must Be Absolute" = "Điểm gắn tùy chỉnh phải là đường dẫn tuyệt đối.";
+"Custom Mount Point Cannot Be Root" = "Điểm gắn tùy chỉnh không được là thư mục gốc.";
+"Custom Mount Point In Use" = "Thư mục này đang được dùng bởi phân vùng đã gắn “%@”.";
+"Custom Mount Point Must Be Folder" = "Điểm gắn tùy chỉnh phải là một thư mục.";
+"Custom Mount Point Prepare Fallback" = "MountMate không thể chuẩn bị điểm gắn tùy chỉnh.";
+"Custom Mount Point Prepare Error" = "MountMate không thể chuẩn bị điểm gắn tùy chỉnh.\n\nChi tiết:\n%@";
+"Custom Mount Point Inspect Error" = "MountMate không thể kiểm tra thư mục này.\n\nChi tiết:\n%@";
+"Custom Mount Point Create Error" = "MountMate không thể tạo thư mục này.\n\nChi tiết:\n%@";
+"Custom Mount Point Requires UUID" = "Ổ này không cung cấp UUID ổn định nên MountMate không thể thêm quy tắc gắn hệ thống cho nó.";
+"Custom Mount Point Unsupported File System" = "MountMate không thể xác định đúng kiểu hệ thống tệp cho quy tắc gắn hệ thống của ổ này.";
+"Custom Mount Point System Conflict" = "Ổ này đã có một mục /etc/fstab khác không do MountMate quản lý.";
+"Custom Mount Point System Save Error" = "MountMate không thể cập nhật quy tắc gắn hệ thống.\n\nChi tiết:\n%@";
 
 // MARK: - Force Eject
 //=============================================

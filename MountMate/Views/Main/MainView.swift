@@ -1,6 +1,59 @@
 //  Created by homielab.com
 
+import AppKit
 import SwiftUI
+
+final class CustomMountPointEditorState: ObservableObject {
+  static let shared = CustomMountPointEditorState()
+
+  @Published var expandedVolumeID: String?
+  @Published var mountPointPath = ""
+  @Published var inlineError: String?
+  @Published var pendingSavePath: String?
+  @Published var selectedFolderURL: URL?
+  @Published var showCreateDirectoryAlert = false
+  @Published var showNonEmptyDirectoryAlert = false
+  @Published var isChoosingFolder = false
+  weak var hostWindow: NSWindow?
+
+  func sync(from persistedPath: String?) {
+    mountPointPath = persistedPath ?? ""
+    inlineError = nil
+    pendingSavePath = nil
+    selectedFolderURL = nil
+    showCreateDirectoryAlert = false
+    showNonEmptyDirectoryAlert = false
+    isChoosingFolder = false
+  }
+
+  func collapse() {
+    expandedVolumeID = nil
+    inlineError = nil
+    pendingSavePath = nil
+    selectedFolderURL = nil
+    showCreateDirectoryAlert = false
+    showNonEmptyDirectoryAlert = false
+    isChoosingFolder = false
+  }
+}
+
+struct HostingWindowReader: NSViewRepresentable {
+  let onResolve: (NSWindow?) -> Void
+
+  func makeNSView(context: Context) -> NSView {
+    let view = NSView()
+    DispatchQueue.main.async {
+      onResolve(view.window)
+    }
+    return view
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {
+    DispatchQueue.main.async {
+      onResolve(nsView.window)
+    }
+  }
+}
 
 struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
@@ -8,6 +61,7 @@ struct MainView: View {
 
   @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
     .autoconnect()
+  @ObservedObject private var customMountPointEditor = CustomMountPointEditorState.shared
 
   private var internalDisks: [PhysicalDisk] {
     (driveManager.physicalDisks ?? []).filter { $0.type == .internalDisk && $0.hasVisibleContent }
@@ -47,12 +101,18 @@ struct MainView: View {
           internalDisks: internalDisks,
           externalDisks: externalDisks,
           diskImages: diskImages,
-          networkShares: persistence.networkShares
+          networkShares: persistence.networkShares,
+          customMountPointEditor: customMountPointEditor
         )
       }
     }
     .frame(width: 350)
     .padding(.bottom, 8)
+    .background(
+      HostingWindowReader { window in
+        customMountPointEditor.hostWindow = window
+      }
+    )
     .onAppear {
       NSApp.activate(ignoringOtherApps: true)
       driveManager.refreshDrives()
@@ -82,22 +142,35 @@ struct DriveListView: View {
   let externalDisks: [PhysicalDisk]
   let diskImages: [PhysicalDisk]
   let networkShares: [NetworkShare]
+  @ObservedObject var customMountPointEditor: CustomMountPointEditorState
 
   var body: some View {
     List {
       if !internalDisks.isEmpty {
         Section(header: Text("Internal Disks")) {
-          ForEach(internalDisks) { disk in DiskAndVolumesView(disk: disk) }
+          ForEach(internalDisks) { disk in
+            DiskAndVolumesView(
+              disk: disk,
+              customMountPointEditor: customMountPointEditor)
+          }
         }
       }
       if !externalDisks.isEmpty {
         Section(header: Text("External Disks")) {
-          ForEach(externalDisks) { disk in DiskAndVolumesView(disk: disk) }
+          ForEach(externalDisks) { disk in
+            DiskAndVolumesView(
+              disk: disk,
+              customMountPointEditor: customMountPointEditor)
+          }
         }
       }
       if !diskImages.isEmpty {
         Section(header: Text("Disk Images")) {
-          ForEach(diskImages) { disk in DiskAndVolumesView(disk: disk) }
+          ForEach(diskImages) { disk in
+            DiskAndVolumesView(
+              disk: disk,
+              customMountPointEditor: customMountPointEditor)
+          }
         }
       }
       if !networkShares.isEmpty {
@@ -114,6 +187,7 @@ struct DriveListView: View {
 // MARK: - Hierarchical Helper & Row Views
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
+  @ObservedObject var customMountPointEditor: CustomMountPointEditorState
   @State private var isExpanded = true
   @EnvironmentObject var manager: DriveManager // Make sure manager is available
 
@@ -126,12 +200,18 @@ struct DiskAndVolumesView: View {
       DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
       if isExpanded {
         ForEach(disk.partitions) { partition in
-          VolumeRowView(volume: partition).padding(.leading, 24)
+          VolumeRowView(
+            volume: partition,
+            customMountPointEditor: customMountPointEditor)
+            .padding(.leading, 24)
         }
         ForEach(visibleContainers) { container in
           ContainerRowView(container: container)
           ForEach(container.volumes) { volume in
-            VolumeRowView(volume: volume).padding(.leading, 48)
+            VolumeRowView(
+              volume: volume,
+              customMountPointEditor: customMountPointEditor)
+              .padding(.leading, 48)
           }
         }
       }
@@ -237,10 +317,13 @@ struct ContainerRowView: View {
 
 struct VolumeRowView: View {
   let volume: Volume
+  @ObservedObject var customMountPointEditor: CustomMountPointEditorState
   @EnvironmentObject var manager: DriveManager
   @StateObject private var persistence = PersistenceManager.shared
   @State private var isHovering = false
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
+  private var customMountPoint: String? { persistence.customMountPoint(for: volume)?.mountPoint }
+  private var isCustomMountPointExpanded: Bool { customMountPointEditor.expandedVolumeID == volume.id }
 
   private func usageColor(for percentage: Double) -> Color {
     if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
@@ -250,6 +333,30 @@ struct VolumeRowView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
+        Button(action: {
+          syncEditorStateFromPersistence()
+          withAnimation(.easeInOut(duration: 0.18)) {
+            customMountPointEditor.expandedVolumeID = isCustomMountPointExpanded ? nil : volume.id
+          }
+        }) {
+          Image(systemName: "chevron.right")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.white.opacity(0.9))
+            .rotationEffect(.degrees(isCustomMountPointExpanded ? 90 : 0))
+            .frame(width: 12, height: 12)
+            .padding(8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .frame(width: 28, height: 28, alignment: .center)
+        .contentShape(Rectangle())
+        .disabled(isLoading)
+        .help(
+          NSLocalizedString(
+            "Custom Mount Point Menu",
+            comment: "Volume context menu custom mount point action"))
+        .padding(.trailing, 8)
+
         HStack {
           ZStack {
             Image(systemName: "externaldrive")
@@ -282,6 +389,19 @@ struct VolumeRowView: View {
               }
             } else {
               Text("Unmounted").font(.caption).foregroundColor(.secondary)
+            }
+            if let customMountPoint {
+              Text(
+                String(
+                  format: NSLocalizedString(
+                    "Custom Mount Point Summary",
+                    comment: "Volume row custom mount point summary"),
+                  customMountPoint))
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .help(customMountPoint)
             }
           }
           Spacer()
@@ -320,6 +440,11 @@ struct VolumeRowView: View {
       .cornerRadius(5)
       .onHover { hovering in
         self.isHovering = hovering
+      }
+      .onAppear {
+        if isCustomMountPointExpanded {
+          syncEditorStateFromPersistence()
+        }
       }
       .contextMenu {
         if volume.isMounted {
@@ -376,6 +501,16 @@ struct VolumeRowView: View {
         } label: {
           Label("Don't Auto-Mount This Volume", systemImage: "hand.raised")
         }
+        Button {
+          syncEditorStateFromPersistence()
+          customMountPointEditor.expandedVolumeID = isCustomMountPointExpanded ? nil : volume.id
+        } label: {
+          Label(
+            NSLocalizedString(
+              "Custom Mount Point Menu",
+              comment: "Volume context menu custom mount point action"),
+            systemImage: "folder.badge.gearshape")
+        }
         Divider()
         Button(role: .destructive) {
           if !PersistenceManager.shared.ignore(volume: volume) {
@@ -387,6 +522,16 @@ struct VolumeRowView: View {
           Label("Ignore This Volume", systemImage: "eye.slash")
         }
 
+      }
+
+      if isCustomMountPointExpanded {
+        InlineCustomMountPointEditor(
+          volume: volume,
+          editorState: customMountPointEditor,
+          onClose: {
+            customMountPointEditor.collapse()
+          })
+          .padding(.leading, 32)
       }
 
       if !volume.snapshots.isEmpty {
@@ -413,6 +558,226 @@ struct VolumeRowView: View {
       message: message,
       kind: .basic
     )
+  }
+
+  private func syncEditorStateFromPersistence() {
+    customMountPointEditor.sync(from: customMountPoint)
+  }
+}
+
+struct InlineCustomMountPointEditor: View {
+  let volume: Volume
+  @EnvironmentObject private var driveManager: DriveManager
+  @ObservedObject private var persistence = PersistenceManager.shared
+  @ObservedObject var editorState: CustomMountPointEditorState
+  let onClose: () -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      TextField(
+        NSLocalizedString("Folder Path", comment: "Custom mount point path field"),
+        text: $editorState.mountPointPath,
+        prompt: Text(
+          NSLocalizedString(
+            "Custom Mount Point Path Prompt",
+            comment: "Custom mount point path placeholder")))
+        .textFieldStyle(.roundedBorder)
+        .foregroundStyle(.white)
+
+      HStack(spacing: 8) {
+        Button(NSLocalizedString("Choose Folder", comment: "Choose folder button")) {
+          chooseFolder()
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.white)
+
+        Button(NSLocalizedString("Default Path", comment: "Default path button")) {
+          editorState.mountPointPath = ""
+          editorState.inlineError = nil
+          editorState.pendingSavePath = nil
+          editorState.selectedFolderURL = nil
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.white)
+
+        Spacer()
+      }
+
+      Text(
+        NSLocalizedString(
+          "Custom Mount Point System Helper",
+          comment: "Custom mount point helper text"))
+        .font(.caption)
+        .foregroundStyle(.white.opacity(0.92))
+        .lineLimit(nil)
+        .fixedSize(horizontal: false, vertical: true)
+
+      if let inlineError = editorState.inlineError {
+        Text(inlineError)
+          .font(.caption)
+          .foregroundStyle(.red)
+          .lineLimit(nil)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      HStack {
+        Button(NSLocalizedString("Cancel", comment: "Cancel button")) {
+          onClose()
+        }
+        .foregroundStyle(.white)
+        Spacer()
+        Button(NSLocalizedString("Save", comment: "Save button")) {
+          save()
+        }
+        .buttonStyle(.borderedProminent)
+      }
+    }
+    .padding(10)
+    .background(
+      RoundedRectangle(cornerRadius: 8, style: .continuous)
+        .fill(Color.white.opacity(0.08))
+    )
+    .alert(
+      NSLocalizedString("Create Folder Title", comment: "Create folder alert title"),
+      isPresented: $editorState.showCreateDirectoryAlert)
+    {
+      Button(NSLocalizedString("Create", comment: "Create button")) {
+        createPendingDirectoryAndSave()
+      }
+      Button(NSLocalizedString("Cancel", comment: "Cancel button"), role: .cancel) {}
+    } message: {
+      Text(
+        NSLocalizedString(
+          "Create Folder Message",
+          comment: "Create folder alert message"))
+    }
+    .alert(
+      NSLocalizedString("Folder Not Empty Title", comment: "Non-empty folder alert title"),
+      isPresented: $editorState.showNonEmptyDirectoryAlert)
+    {
+      Button(NSLocalizedString("Use Folder", comment: "Use folder button")) {
+        commitPendingSave()
+      }
+      Button(NSLocalizedString("Cancel", comment: "Cancel button"), role: .cancel) {}
+    } message: {
+      Text(
+        NSLocalizedString(
+          "Folder Not Empty Message",
+          comment: "Non-empty folder alert message"))
+    }
+  }
+
+  private func chooseFolder() {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = false
+    panel.canChooseDirectories = true
+    panel.canCreateDirectories = true
+    panel.allowsMultipleSelection = false
+    panel.prompt = NSLocalizedString("Choose", comment: "Choose button")
+    editorState.isChoosingFolder = true
+
+    let currentPath = driveManager.normalizedMountPointPath(editorState.mountPointPath)
+    if !currentPath.isEmpty {
+      panel.directoryURL = URL(fileURLWithPath: currentPath)
+    }
+
+    panel.begin { response in
+      defer {
+        editorState.isChoosingFolder = false
+        NSApp.activate(ignoringOtherApps: true)
+      }
+      guard response == .OK else { return }
+        editorState.mountPointPath = panel.url?.path ?? editorState.mountPointPath
+        editorState.selectedFolderURL = panel.url
+        editorState.inlineError = nil
+      }
+    }
+
+  private func save() {
+    editorState.inlineError = nil
+
+    let normalizedPath = driveManager.normalizedMountPointPath(editorState.mountPointPath)
+    editorState.mountPointPath = normalizedPath
+
+    guard !normalizedPath.isEmpty else {
+      if let error = persistence.removeCustomMountPoint(for: volume) {
+        editorState.inlineError = error
+        return
+      }
+      if volume.isMounted {
+        driveManager.remount(volume: volume)
+      }
+      onClose()
+      return
+    }
+
+    if let validationError = driveManager.customMountPointValidationError(
+      for: normalizedPath, excluding: volume)
+    {
+      editorState.inlineError = validationError
+      return
+    }
+
+    do {
+      let directoryState = try driveManager.inspectDirectory(at: normalizedPath)
+      editorState.pendingSavePath = normalizedPath
+      if editorState.selectedFolderURL?.path != normalizedPath {
+        editorState.selectedFolderURL = nil
+      }
+
+      if !directoryState.exists {
+        editorState.showCreateDirectoryAlert = true
+        return
+      }
+
+      guard directoryState.isDirectory else {
+        editorState.inlineError = NSLocalizedString(
+          "Custom Mount Point Must Be Folder",
+          comment: "Custom mount point validation")
+        return
+      }
+
+      if !directoryState.isEmpty {
+        editorState.showNonEmptyDirectoryAlert = true
+        return
+      }
+
+      commitPendingSave()
+    } catch {
+      editorState.inlineError = String(
+        format: NSLocalizedString(
+          "Custom Mount Point Inspect Error",
+          comment: "Custom mount point validation"), error.localizedDescription)
+    }
+  }
+
+  private func createPendingDirectoryAndSave() {
+    guard let path = editorState.pendingSavePath else { return }
+
+    do {
+      try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
+      commitPendingSave()
+    } catch {
+      editorState.inlineError = String(
+        format: NSLocalizedString(
+          "Custom Mount Point Create Error",
+          comment: "Custom mount point validation"), error.localizedDescription)
+    }
+  }
+
+  private func commitPendingSave() {
+    guard let path = editorState.pendingSavePath else { return }
+    let selectedFolderURL =
+      editorState.selectedFolderURL?.path == path ? editorState.selectedFolderURL : nil
+    if let error = persistence.applyCustomMountPoint(path, selectedURL: selectedFolderURL, for: volume)
+    {
+      editorState.inlineError = error
+      return
+    }
+    if volume.isMounted {
+      driveManager.remount(volume: volume)
+    }
+    onClose()
   }
 }
 

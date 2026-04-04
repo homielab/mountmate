@@ -140,6 +140,38 @@
 "Options" = "選項";
 "Leave empty to use default location" = "留空以使用預設位置";
 "Preview: %@" = "預覽: %@";
+"Custom Mount Point Menu" = "自訂掛載點…";
+"Use Custom Mount Point" = "使用自訂掛載點";
+"Folder Path" = "資料夾路徑";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "選擇…";
+"Choose" = "選擇";
+"Reset" = "重設";
+"Default Path" = "預設路徑";
+"Save" = "儲存";
+"Create" = "建立";
+"Use Folder" = "使用資料夾";
+"Custom Mount Point Help" = "關閉此選項即可使用 macOS 標準掛載位置。";
+"Custom Mount Point Empty Means Default" = "留空即可使用 macOS 標準掛載位置。";
+"Custom Mount Point System Helper" = "留空即可使用 macOS 標準掛載位置。儲存時會更新系統掛載規則，並且可能會要求您輸入一次管理員密碼。";
+"Custom Mount Point Summary" = "自訂: %@";
+"Create Folder Title" = "建立資料夾？";
+"Create Folder Message" = "此資料夾尚不存在。MountMate 可以在儲存前建立它。";
+"Folder Not Empty Title" = "資料夾不是空的";
+"Folder Not Empty Message" = "所選資料夾已包含檔案。掛載到此處時，這些檔案在磁碟卷已掛載期間可能會被暫時遮住。";
+"Custom Mount Point Empty Path" = "請輸入資料夾路徑。";
+"Custom Mount Point Must Be Absolute" = "自訂掛載點必須是絕對路徑。";
+"Custom Mount Point Cannot Be Root" = "自訂掛載點不能是根目錄。";
+"Custom Mount Point In Use" = "此資料夾已被已掛載的磁碟卷「%@」使用。";
+"Custom Mount Point Must Be Folder" = "自訂掛載點必須是資料夾。";
+"Custom Mount Point Prepare Fallback" = "MountMate 無法準備自訂掛載點。";
+"Custom Mount Point Prepare Error" = "MountMate 無法準備自訂掛載點。\n\n詳細資料：\n%@";
+"Custom Mount Point Inspect Error" = "MountMate 無法檢查此資料夾。\n\n詳細資料：\n%@";
+"Custom Mount Point Create Error" = "MountMate 無法建立此資料夾。\n\n詳細資料：\n%@";
+"Custom Mount Point Requires UUID" = "此磁碟卷沒有穩定的 UUID，因此 MountMate 無法為它新增系統掛載規則。";
+"Custom Mount Point Unsupported File System" = "MountMate 無法判定此磁碟卷系統掛載規則所需的正確檔案系統類型。";
+"Custom Mount Point System Conflict" = "此磁碟卷已經有一個不是由 MountMate 管理的 /etc/fstab 項目。";
+"Custom Mount Point System Save Error" = "MountMate 無法更新系統掛載規則。\n\n詳細資料：\n%@";
 
 // MARK: - Force Eject
 //=============================================

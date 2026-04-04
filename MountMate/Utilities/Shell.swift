@@ -56,3 +56,15 @@ func runShell(_ command: String, input: Data? = nil) -> (output: String?, error:
 
   return (output, error)
 }
+
+extension String {
+  var shellQuoted: String {
+    "'" + self.replacingOccurrences(of: "'", with: "'\\''") + "'"
+  }
+
+  var appleScriptStringLiteral: String {
+    "\"" + self
+      .replacingOccurrences(of: "\\", with: "\\\\")
+      .replacingOccurrences(of: "\"", with: "\\\"") + "\""
+  }
+}
