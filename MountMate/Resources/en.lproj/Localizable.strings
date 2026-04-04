@@ -140,6 +140,38 @@
 "Options" = "Options";
 "Leave empty to use default location" = "Leave empty to use default location";
 "Preview: %@" = "Preview: %@";
+"Custom Mount Point Menu" = "Custom Mount Point…";
+"Use Custom Mount Point" = "Use custom mount point";
+"Folder Path" = "Folder Path";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "Choose…";
+"Choose" = "Choose";
+"Reset" = "Reset";
+"Default Path" = "Default Path";
+"Save" = "Save";
+"Create" = "Create";
+"Use Folder" = "Use Folder";
+"Custom Mount Point Help" = "Leave this off to use the standard macOS mount location.";
+"Custom Mount Point Empty Means Default" = "Leave this empty to use the standard macOS mount location.";
+"Custom Mount Point System Helper" = "Leave this empty to use the standard macOS mount location. Saving updates the system mount rule and may ask for your admin password once.";
+"Custom Mount Point Summary" = "Custom: %@";
+"Create Folder Title" = "Create Folder?";
+"Create Folder Message" = "This folder does not exist yet. MountMate can create it before saving.";
+"Folder Not Empty Title" = "Folder Not Empty";
+"Folder Not Empty Message" = "The selected folder already contains files. Mounting here may temporarily hide them while the volume is mounted.";
+"Custom Mount Point Empty Path" = "Enter a folder path.";
+"Custom Mount Point Must Be Absolute" = "The custom mount point must be an absolute path.";
+"Custom Mount Point Cannot Be Root" = "The custom mount point cannot be the root folder.";
+"Custom Mount Point In Use" = "The folder is already being used by the mounted volume “%@”.";
+"Custom Mount Point Must Be Folder" = "The custom mount point must be a folder.";
+"Custom Mount Point Prepare Fallback" = "MountMate could not prepare the custom mount point.";
+"Custom Mount Point Prepare Error" = "MountMate could not prepare the custom mount point.\n\nDetails:\n%@";
+"Custom Mount Point Inspect Error" = "MountMate could not inspect this folder.\n\nDetails:\n%@";
+"Custom Mount Point Create Error" = "MountMate could not create this folder.\n\nDetails:\n%@";
+"Custom Mount Point Requires UUID" = "This volume does not expose a stable UUID, so MountMate cannot add a system mount rule for it.";
+"Custom Mount Point Unsupported File System" = "MountMate could not determine the correct filesystem type for this volume's system mount rule.";
+"Custom Mount Point System Conflict" = "This volume already has a different /etc/fstab entry that is not managed by MountMate.";
+"Custom Mount Point System Save Error" = "MountMate could not update the system mount rule.\n\nDetails:\n%@";
 
 // MARK: - Force Eject
 //=============================================

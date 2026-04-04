@@ -140,6 +140,38 @@
 "Options" = "Параметри";
 "Leave empty to use default location" = "Залиште порожнім, щоб використовувати типове місце";
 "Preview: %@" = "Попередній перегляд: %@";
+"Custom Mount Point Menu" = "Власна точка монтування…";
+"Use Custom Mount Point" = "Використовувати власну точку монтування";
+"Folder Path" = "Шлях до теки";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "Вибрати…";
+"Choose" = "Вибрати";
+"Reset" = "Скинути";
+"Default Path" = "Типовий шлях";
+"Save" = "Зберегти";
+"Create" = "Створити";
+"Use Folder" = "Використати теку";
+"Custom Mount Point Help" = "Вимкніть це, щоб використовувати стандартне місце монтування macOS.";
+"Custom Mount Point Empty Means Default" = "Залиште поле порожнім, щоб використовувати стандартне місце монтування macOS.";
+"Custom Mount Point System Helper" = "Залиште поле порожнім, щоб використовувати стандартне місце монтування macOS. Збереження оновлює системне правило монтування і може один раз попросити пароль адміністратора.";
+"Custom Mount Point Summary" = "Власна: %@";
+"Create Folder Title" = "Створити теку?";
+"Create Folder Message" = "Ця тека ще не існує. MountMate може створити її перед збереженням.";
+"Folder Not Empty Title" = "Тека не порожня";
+"Folder Not Empty Message" = "Вибрана тека вже містить файли. Монтування тут може тимчасово приховати їх, поки том змонтований.";
+"Custom Mount Point Empty Path" = "Введіть шлях до теки.";
+"Custom Mount Point Must Be Absolute" = "Власна точка монтування повинна бути абсолютним шляхом.";
+"Custom Mount Point Cannot Be Root" = "Власна точка монтування не може бути кореневою текою.";
+"Custom Mount Point In Use" = "Ця тека вже використовується змонтованим томом «%@».";
+"Custom Mount Point Must Be Folder" = "Власна точка монтування повинна бути текою.";
+"Custom Mount Point Prepare Fallback" = "MountMate не зміг підготувати власну точку монтування.";
+"Custom Mount Point Prepare Error" = "MountMate не зміг підготувати власну точку монтування.\n\nДеталі:\n%@";
+"Custom Mount Point Inspect Error" = "MountMate не зміг перевірити цю теку.\n\nДеталі:\n%@";
+"Custom Mount Point Create Error" = "MountMate не зміг створити цю теку.\n\nДеталі:\n%@";
+"Custom Mount Point Requires UUID" = "Цей том не має стабільного UUID, тому MountMate не може додати для нього системне правило монтування.";
+"Custom Mount Point Unsupported File System" = "MountMate не зміг визначити правильний тип файлової системи для системного правила монтування цього тому.";
+"Custom Mount Point System Conflict" = "Для цього тому вже існує інший запис /etc/fstab, яким MountMate не керує.";
+"Custom Mount Point System Save Error" = "MountMate не зміг оновити системне правило монтування.\n\nДеталі:\n%@";
 
 // MARK: - Force Eject
 //=============================================

@@ -11,3 +11,15 @@ struct ManagedVolumeInfo: Codable, Hashable, Identifiable {
     "\(diskUUID)-\(volumeUUID)"
   }
 }
+
+struct VolumeCustomMountPoint: Codable, Hashable, Identifiable {
+  let volumeUUID: String
+  let backingDiskIdentifier: String
+  let name: String
+  var mountPoint: String
+  var bookmarkData: Data?
+
+  var id: String {
+    "\(backingDiskIdentifier)-\(volumeUUID)"
+  }
+}

@@ -6,14 +6,26 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var cancellables = Set<AnyCancellable>()
+  private var statusItem: NSStatusItem?
+  private let popover = NSPopover()
+  private var eventMonitor: Any?
 
   // MARK: - Application Lifecycle
 
   func applicationDidFinishLaunching(_ aNotification: Notification) {
+    NSApp.setActivationPolicy(.accessory)
+    setupStatusItem()
+    setupStatusItemObservers()
     setupErrorObserver()
     setupSleepObserver()
     checkAndRequestFullDiskAccessIfNeeded()
     NetworkMountManager.shared.mountAllAutoShares()
+  }
+
+  func applicationWillTerminate(_ notification: Notification) {
+    if let eventMonitor {
+      NSEvent.removeMonitor(eventMonitor)
+    }
   }
 
   // MARK: - Observers
@@ -35,6 +47,90 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       name: NSWorkspace.willSleepNotification,
       object: nil
     )
+  }
+
+  private func setupStatusItem() {
+    let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    self.statusItem = statusItem
+
+    if let button = statusItem.button {
+      button.target = self
+      button.action = #selector(togglePopover(_:))
+      button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+    }
+
+    popover.behavior = .applicationDefined
+    popover.animates = true
+    popover.contentSize = NSSize(width: 350, height: 520)
+    popover.contentViewController = NSHostingController(
+      rootView: PopoverContent {
+        MainView()
+      }
+      .environmentObject(DriveManager.shared)
+    )
+
+    updateStatusItemIcon()
+    installPopoverEventMonitor()
+  }
+
+  private func setupStatusItemObservers() {
+    DriveManager.shared.objectWillChange
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] in
+        self?.updateStatusItemIcon()
+      }
+      .store(in: &cancellables)
+  }
+
+  private func installPopoverEventMonitor() {
+    eventMonitor = NSEvent.addGlobalMonitorForEvents(
+      matching: [.leftMouseDown, .rightMouseDown]
+    ) { [weak self] _ in
+      guard let self, self.popover.isShown else { return }
+      DispatchQueue.main.async {
+        if !CustomMountPointEditorState.shared.isChoosingFolder, NSApp.modalWindow == nil {
+          self.popover.performClose(nil)
+        }
+      }
+    }
+  }
+
+  private func updateStatusItemIcon() {
+    guard let button = statusItem?.button else { return }
+    let iconName: String
+    if DriveManager.shared.isUnmountingAll
+      || DriveManager.shared.busyVolumeIdentifier != nil
+      || DriveManager.shared.busyEjectingIdentifier != nil
+    {
+      iconName = "externaldrive.fill.badge.timemachine"
+    } else if DriveManager.shared.userActionError != nil {
+      iconName = "externaldrive.fill.trianglebadge.exclamationmark"
+    } else {
+      iconName = "externaldrive.fill"
+    }
+
+    button.image = NSImage(systemSymbolName: iconName, accessibilityDescription: "MountMate")
+  }
+
+  @objc private func togglePopover(_ sender: Any?) {
+    guard let button = statusItem?.button else { return }
+    if popover.isShown {
+      if CustomMountPointEditorState.shared.isChoosingFolder { return }
+      popover.performClose(sender)
+      return
+    }
+
+    NSApp.activate(ignoringOtherApps: true)
+    if let contentView = popover.contentViewController?.view {
+      contentView.layoutSubtreeIfNeeded()
+      let fittingSize = contentView.fittingSize
+      popover.contentSize = NSSize(
+        width: max(360, fittingSize.width),
+        height: min(max(480, fittingSize.height), 720)
+      )
+    }
+    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    popover.contentViewController?.view.window?.makeKey()
   }
 
   // MARK: - Actions

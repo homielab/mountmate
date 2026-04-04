@@ -205,7 +205,9 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runShell("diskutil mount \(volume.deviceIdentifier)")
+      let command = "diskutil mount \(volume.deviceIdentifier.shellQuoted)"
+
+      let result = runShell(command)
 
       if let error = result.error, !error.isEmpty, error.lowercased().contains("failed to mount") {
         print(
@@ -213,7 +215,7 @@ class DriveManager: ObservableObject {
         )
 
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
-          let retryResult = runShell("diskutil mount \(volume.deviceIdentifier)")
+          let retryResult = runShell(command)
           self.handleMountResult(retryResult, for: volume)
         }
       } else {
@@ -279,6 +281,81 @@ class DriveManager: ObservableObject {
         self.refreshDrives(qos: .userInitiated)
       }
     }
+  }
+
+  func remount(volume: Volume) {
+    DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
+    DispatchQueue.global(qos: .userInitiated).async {
+      let result = runShell("diskutil unmount \(volume.deviceIdentifier.shellQuoted)")
+      DispatchQueue.main.async {
+        if let error = result.error, !error.isEmpty {
+          self.handleDiskUtilError(
+            error, for: volume.name, volume: volume, operation: .unmount)
+          self.busyVolumeIdentifier = nil
+          self.refreshDrives(qos: .userInitiated)
+          return
+        }
+
+        self.busyVolumeIdentifier = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          self.mount(volume: volume)
+        }
+      }
+    }
+  }
+
+  func normalizedMountPointPath(_ rawPath: String) -> String {
+    (rawPath.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
+  }
+
+  func customMountPointValidationError(for rawPath: String, excluding volume: Volume? = nil)
+    -> String?
+  {
+    let path = normalizedMountPointPath(rawPath)
+
+    guard !path.isEmpty else {
+      return NSLocalizedString(
+        "Custom Mount Point Empty Path",
+        comment: "Custom mount point validation")
+    }
+    guard path.hasPrefix("/") else {
+      return NSLocalizedString(
+        "Custom Mount Point Must Be Absolute",
+        comment: "Custom mount point validation")
+    }
+    guard path != "/" else {
+      return NSLocalizedString(
+        "Custom Mount Point Cannot Be Root",
+        comment: "Custom mount point validation")
+    }
+    if let mountedVolumeName = mountedVolumeName(at: path, excluding: volume) {
+      return String(
+        format: NSLocalizedString(
+          "Custom Mount Point In Use",
+          comment: "Custom mount point validation"), mountedVolumeName)
+    }
+
+    var isDirectory = ObjCBool(false)
+    if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), !isDirectory.boolValue
+    {
+      return NSLocalizedString(
+        "Custom Mount Point Must Be Folder",
+        comment: "Custom mount point validation")
+    }
+
+    return nil
+  }
+
+  func inspectDirectory(at rawPath: String) throws -> (exists: Bool, isDirectory: Bool, isEmpty: Bool)
+  {
+    let path = normalizedMountPointPath(rawPath)
+    var isDirectory = ObjCBool(false)
+    let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+    guard exists else { return (false, false, true) }
+    guard isDirectory.boolValue else { return (true, false, false) }
+
+    let contents = try FileManager.default.contentsOfDirectory(atPath: path)
+    return (true, true, contents.isEmpty)
   }
 
   // MARK: - Parsing and Data Creation Helpers
@@ -722,5 +799,33 @@ class DriveManager: ObservableObject {
       }
       self?.refreshDrives()
     }
+  }
+
+  private func mountedVolumeName(at rawPath: String, excluding volume: Volume? = nil) -> String? {
+    let targetPath = URL(fileURLWithPath: normalizedMountPointPath(rawPath)).standardizedFileURL.path
+    let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeUUIDStringKey]
+    let mountedURLs =
+      FileManager.default.mountedVolumeURLs(
+        includingResourceValuesForKeys: Array(keys), options: []) ?? []
+
+    for url in mountedURLs {
+      guard url.standardizedFileURL.path == targetPath else { continue }
+
+      if let volume,
+        let currentMountPoint = volume.mountPoint,
+        URL(fileURLWithPath: currentMountPoint).standardizedFileURL.path == targetPath
+      {
+        continue
+      }
+
+      let values = try? url.resourceValues(forKeys: keys)
+      if let volume, values?.volumeUUIDString == volume.id {
+        continue
+      }
+
+      return values?.volumeName ?? url.lastPathComponent
+    }
+
+    return nil
   }
 }
