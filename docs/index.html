@@ -8,134 +8,334 @@
       content="MountMate - A simple macOS menubar app to manage your external drives."
     />
     <title>MountMate – macOS Drive Manager</title>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
-    />
     <style>
       :root {
-        --bg: #f9fafb;
-        --text: #111827;
-        --accent: #3b82f6;
+        --bg-color: #f5f5f7;
+        --text-color: #1d1d1f;
+        --text-secondary: #86868b;
+        --link-color: #0066cc;
+        --button-bg: #0071e3;
+        --button-hover: #0077ed;
+        --section-bg: #ffffff;
+        --footer-bg: #f5f5f7;
       }
+      
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #0f172a;
-          --text: #f1f5f9;
-          --accent: #60a5fa;
+          --bg-color: #000000;
+          --text-color: #f5f5f7;
+          --text-secondary: #86868b;
+          --link-color: #2997ff;
+          --button-bg: #0071e3;
+          --button-hover: #0077ed;
+          --section-bg: #1d1d1f;
+          --footer-bg: #000000;
         }
       }
+
       body {
         margin: 0;
-        font-family: "Inter", sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .nav-brand {
+        font-weight: 600;
+        font-size: 18px;
+        color: var(--text-color);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .nav-brand img {
+        width: 24px;
+        height: 24px;
+      }
+
+      .nav-links a {
+        color: var(--text-color);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 400;
+        margin-left: 24px;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      .nav-links a:hover {
+        opacity: 1;
+      }
+
+      .hero {
+        text-align: center;
+        padding: 80px 20px 40px;
+      }
+
+      .hero h1 {
+        font-size: 64px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        margin: 0 0 16px;
+      }
+
+      .hero p {
+        font-size: 28px;
+        font-weight: 400;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto 40px;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 60px;
+      }
+
+      .btn-primary {
+        background-color: var(--button-bg);
+        color: white;
+        padding: 14px 28px;
+        border-radius: 980px;
+        text-decoration: none;
+        font-size: 17px;
+        font-weight: 600;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--button-hover);
+      }
+      
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      .btn-secondary {
+        color: var(--link-color);
+        text-decoration: none;
+        font-size: 17px;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .btn-secondary:hover {
+        text-decoration: underline;
+      }
+
+      .hero-image-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .hero-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+
+      .light-img { display: block; }
+      .dark-img { display: none; }
+
+      @media (prefers-color-scheme: dark) {
+        .light-img { display: none; }
+        .dark-img { display: block; }
+        .hero-image {
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+      }
+
+      .section {
+        padding: 120px 20px;
+        background-color: var(--section-bg);
+        text-align: center;
+      }
+
+      .section-inner {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .section h2 {
+        font-size: 48px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        margin: 0 0 24px;
+      }
+
+      .section p {
+        font-size: 24px;
+        font-weight: 400;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto 60px;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: center;
+      }
+
+      .feature-text {
+        text-align: left;
+      }
+
+      .feature-text h3 {
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0 0 16px;
+      }
+
+      .feature-text p {
+        font-size: 19px;
+        color: var(--text-secondary);
+        margin: 0;
+        max-width: 100%;
+      }
+
+      .feature-image img {
+        width: 100%;
+        max-width: 350px;
+        border-radius: 20px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .feature-image img {
+          box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+      }
+      
+      .feature-grid.reverse .feature-text {
+        order: 2;
+      }
+      .feature-grid.reverse .feature-image {
+        order: 1;
+      }
+
+      footer {
+        background-color: var(--footer-bg);
+        color: var(--text-secondary);
+        padding: 60px 20px 40px;
+        font-size: 14px;
+        border-top: 1px solid rgba(134, 134, 139, 0.3);
+      }
+
+      .footer-inner {
+        max-width: 1000px;
+        margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 4rem 1rem;
+        gap: 20px;
       }
-      h1 {
-        font-size: 2.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        text-align: center;
-      }
-      p {
-        max-width: 600px;
-        font-size: 1.125rem;
-        text-align: center;
-        margin-bottom: 2rem;
-      }
-      .btn {
-        display: inline-block;
-        background-color: var(--accent);
-        color: white;
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
-        border-radius: 0.5rem;
+
+      footer a {
+        color: var(--text-color);
         text-decoration: none;
-        transition: background 0.3s ease;
       }
-      .btn:hover {
-        background-color: #2563eb;
+      
+      footer a:hover {
+        text-decoration: underline;
       }
-      .screenshot {
-        margin-top: 3rem;
-        max-width: 100%;
-        border-radius: 1rem;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      }
-      .icon {
-        width: 128px;
-        margin-bottom: 1rem;
-      }
-      footer {
-        margin-top: 4rem;
-        font-size: 0.875rem;
-        color: #64748b;
-        text-align: center;
+
+      @media (max-width: 768px) {
+        .hero h1 { font-size: 48px; }
+        .hero p { font-size: 21px; }
+        .section h2 { font-size: 36px; }
+        .section p { font-size: 21px; }
+        .feature-grid { grid-template-columns: 1fr; gap: 60px; }
+        .feature-text { text-align: center; }
+        .feature-grid.reverse .feature-text { order: 1; }
+        .feature-grid.reverse .feature-image { order: 2; }
       }
     </style>
   </head>
   <body>
-    <h1>🚀 MountMate</h1>
-    <p>
-      A lightweight and elegant macOS menubar app to mount and unmount your
-      external drives effortlessly.
-    </p>
+    <nav class="nav">
+      <a href="#" class="nav-brand">
+        <img src="assets/icon.png" alt="MountMate Icon" />
+        MountMate
+      </a>
+      <div class="nav-links">
+        <a href="https://github.com/homielab/mountmate" target="_blank">GitHub</a>
+        <a href="https://ko-fi.com/homielab" target="_blank">Support</a>
+      </div>
+    </nav>
 
-    <img src="assets/icon.png" alt="MountMate Icon" class="icon" />
+    <header class="hero">
+      <h1>Drive management,<br />perfected.</h1>
+      <p>
+        A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly.
+      </p>
+      
+      <div class="cta-buttons">
+        <a href="https://github.com/homielab/mountmate/releases/latest" target="_blank" class="btn-primary">Download</a>
+        <a href="https://github.com/homielab/mountmate" target="_blank" class="btn-secondary">View on GitHub <span>›</span></a>
+      </div>
 
-    <a
-      class="btn"
-      href="https://github.com/homielab/mountmate/releases/latest"
-      target="_blank"
-      >Download MountMate</a
-    >
-    <a
-      class="btn"
-      href="https://github.com/homielab/mountmate"
-      target="_blank"
-      style="margin-top: 1rem"
-      >⭐ Star on GitHub</a
-    >
+      <div class="hero-image-container">
+        <!-- Using full screenshots for the hero -->
+        <img src="screenshots/light-full.png" alt="MountMate Full Desktop" class="hero-image light-img" />
+        <img src="screenshots/dark-full.png" alt="MountMate Full Desktop" class="hero-image dark-img" />
+      </div>
+    </header>
 
-    <a href="https://ko-fi.com/homielab" target="_blank"
-      ><img
-        height="36"
-        style="margin-top: 1rem; border: 0px; height: 36px"
-        src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
-        border="0"
-        alt="Buy Me a Coffee at ko-fi.com"
-    /></a>
-
-    <img
-      src="screenshots/dark.png"
-      alt="MountMate Screenshot"
-      class="screenshot"
-    />
-
-    <img
-      src="screenshots/light.png"
-      alt="MountMate Screenshot"
-      class="screenshot"
-    />
-
-    <img
-      src="screenshots/dark-full.png"
-      alt="MountMate Screenshot"
-      class="screenshot"
-    />
+    <section class="section">
+      <div class="section-inner">
+        <h2>Simplicity at your fingertips.</h2>
+        <p>Everything you need is just a click away in your menubar. No more hunting through Finder to eject your drives safely.</p>
+        
+        <div class="feature-grid">
+          <div class="feature-text">
+            <h3>Designed for macOS.</h3>
+            <p>MountMate feels right at home on your Mac. With full support for Dark Mode and native design paradigms, it's the drive manager macOS should have included.</p>
+          </div>
+          <div class="feature-image">
+            <!-- Using the cropped menubar screenshots for features -->
+            <img src="screenshots/light.png" alt="MountMate Menubar UI" class="light-img" />
+            <img src="screenshots/dark.png" alt="MountMate Menubar UI" class="dark-img" />
+          </div>
+        </div>
+      </div>
+    </section>
 
     <footer>
-      &copy; 2025 MountMate. Built with ❤️ by
-      <a
-        href="https://homielab.com"
-        target="_blank"
-        style="color: var(--accent); text-decoration: none"
-        >@homielab</a
-      >
+      <div class="footer-inner">
+        <div>
+          <a href="https://ko-fi.com/homielab" target="_blank">
+            <img height="36" style="border:0px;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" />
+          </a>
+        </div>
+        <div>
+          &copy; 2026 MountMate. Built with ❤️ by <a href="https://homielab.com" target="_blank">homielab</a>.
+        </div>
+      </div>
     </footer>
   </body>
 </html>
