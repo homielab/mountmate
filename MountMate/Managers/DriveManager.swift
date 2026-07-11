@@ -443,6 +443,11 @@ class DriveManager: ObservableObject {
   {
     guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
 
+    let contentType = volumeData["Content"] as? String
+    if contentType == "Apple_RAID" || contentType == "Apple_RAID_Offline" {
+      return nil
+    }
+
     let volumeUUID = volumeData["VolumeUUID"] as? String ?? deviceIdentifier
     let diskUUID = volumeData["DiskUUID"] as? String
 
@@ -531,17 +536,22 @@ class DriveManager: ObservableObject {
     let defaultType = NSLocalizedString("Unknown", comment: "Unknown connection type")
     guard let info = infoPlist else { return (defaultType, .physical) }
 
+    let isRAIDMaster = info["RAIDMaster"] as? Bool ?? false
+    let isVirtual = info["VirtualOrPhysical"] as? String == "Virtual"
+
     let diskType: PhysicalDiskType
     if isInternal {
       diskType = .internalDisk
-    } else if info["VirtualOrPhysical"] as? String == "Virtual" {
+    } else if isVirtual && !isRAIDMaster {
       diskType = .diskImage
     } else {
       diskType = .physical
     }
 
     let connectionType: String
-    if diskType == .diskImage {
+    if isRAIDMaster {
+      connectionType = NSLocalizedString("Apple RAID", comment: "Apple RAID")
+    } else if diskType == .diskImage {
       connectionType = NSLocalizedString("Disk Image", comment: "Disk Image")
     } else {
       connectionType = info["BusProtocol"] as? String ?? defaultType
