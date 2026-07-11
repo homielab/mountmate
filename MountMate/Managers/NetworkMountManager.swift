@@ -45,12 +45,18 @@ class NetworkMountManager: ObservableObject {
           let source = parts[0].trimmingCharacters(in: .whitespaces)
           let rest = parts[1]
           let mountPoint = rest.components(separatedBy: " (").first ?? ""
+          
           let decodedSource = source.removingPercentEncoding ?? source
+          let cleanSource = decodedSource.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
           
           var matched = false
           for share in shares {
-            if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
-              if decodedSource.hasSuffix("/\(share.sharePath)") {
+            let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
+            let cleanSharePath = decodedSharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+            let cleanServer = share.server.lowercased()
+            
+            if cleanSource.contains(cleanServer) && cleanSource.contains(cleanSharePath) {
+              if cleanSource.hasSuffix("/\(cleanSharePath)") {
                 mountedUUIDs.insert(share.id)
                 matched = true
                 break
@@ -107,25 +113,6 @@ class NetworkMountManager: ObservableObject {
     return (mountedUUIDs, manualShares)
   }
 
-  private func isShareMounted(_ share: NetworkShare, in mountOutput: String) -> Bool {
-    // Kept for backward compatibility or internal checks if needed
-    let lines = mountOutput.components(separatedBy: .newlines)
-    for line in lines {
-      if line.contains("smbfs") {
-        let parts = line.components(separatedBy: " on ")
-        if parts.count >= 2 {
-          let source = parts[0].trimmingCharacters(in: .whitespaces)
-          let decodedSource = source.removingPercentEncoding ?? source
-          if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
-            if decodedSource.hasSuffix("/\(share.sharePath)") {
-              return true
-            }
-          }
-        }
-      }
-    }
-    return false
-  }
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
     let mountPoint: String
@@ -328,21 +315,17 @@ class NetworkMountManager: ObservableObject {
         if parts.count >= 2 {
           let source = parts[0].trimmingCharacters(in: .whitespaces)
           let rest = parts[1]
-
-          // Extract mount point from 'rest' (everything before " (")
           let mountPoint = rest.components(separatedBy: " (").first ?? ""
-
-          // Check if source matches our share
-          // Source format: //user@host/path
-
+          
           let decodedSource = source.removingPercentEncoding ?? source
-          if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
-            // Basic check: contains server and share path.
-            // This might be too loose if you have shares with similar names, but it's a good start.
-            // Let's be a bit stricter.
+          let cleanSource = decodedSource.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+          
+          let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
+          let cleanSharePath = decodedSharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+          let cleanServer = share.server.lowercased()
 
-            // Check if it ends with /sharePath
-            if decodedSource.hasSuffix("/\(share.sharePath)") {
+          if cleanSource.contains(cleanServer) && cleanSource.contains(cleanSharePath) {
+            if cleanSource.hasSuffix("/\(cleanSharePath)") {
               return mountPoint
             }
           }
