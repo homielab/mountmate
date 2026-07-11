@@ -12,8 +12,9 @@ struct MenuBarIconView: View {
   var currentIcon: String {
     // Priority 1: Show busy state during operations
     if driveManager.isUnmountingAll
-        || driveManager.busyVolumeIdentifier != nil
-        || driveManager.busyEjectingIdentifier != nil {
+      || driveManager.busyVolumeIdentifier != nil
+      || driveManager.busyEjectingIdentifier != nil
+    {
       return "externaldrive.fill.badge.timemachine"
     }
 
@@ -29,7 +30,7 @@ struct MenuBarIconView: View {
   var body: some View {
     let icon = currentIcon
     #if DEBUG
-    let _ = print("MenuBarIcon: \(icon)")
+      let _ = print("MenuBarIcon: \(icon)")
     #endif
     return Image(systemName: icon)
   }

@@ -127,13 +127,17 @@ struct GeneralSettingsView: View {
     }
     .alert("Accessibility Permission Required", isPresented: $showAccessibilityAlert) {
       Button("Open System Settings") {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+        if let url = URL(
+          string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        {
           NSWorkspace.shared.open(url)
         }
       }
       Button("Later", role: .cancel) {}
     } message: {
-      Text("To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility.")
+      Text(
+        "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility."
+      )
     }
   }
 
@@ -555,7 +559,7 @@ struct EditNetworkShareSheet: View {
     let id = shareToEdit?.id ?? UUID()
     // Default name to sharePath if empty
     let finalName = name.isEmpty ? sharePath : name
-    
+
     let share = NetworkShare(
       id: id,
       name: finalName,

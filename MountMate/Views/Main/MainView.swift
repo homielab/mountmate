@@ -115,7 +115,7 @@ struct DriveListView: View {
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
   @State private var isExpanded = true
-  @EnvironmentObject var manager: DriveManager // Make sure manager is available
+  @EnvironmentObject var manager: DriveManager  // Make sure manager is available
 
   private var visibleContainers: [APFSContainer] {
     disk.containers.filter { !$0.volumes.isEmpty }
@@ -138,9 +138,9 @@ struct DiskAndVolumesView: View {
     }
     // Listen for global toggle events
     .onReceive(manager.driveExpansionSubject) { expanded in
-       withAnimation {
-         self.isExpanded = expanded
-       }
+      withAnimation {
+        self.isExpanded = expanded
+      }
     }
   }
 }
@@ -161,7 +161,7 @@ struct DiskHeaderRow: View {
           .rotationEffect(.degrees(isExpanded ? 90 : 0))
           .animation(.easeInOut(duration: 0.2), value: isExpanded)
           .frame(width: 12)
-        
+
         ZStack {
           Image(systemName: "internaldrive.fill").font(.title2)
           if let error = disk.storageError {
@@ -525,10 +525,12 @@ struct HeaderActionsView: View {
     HStack {
       Text("MountMate").font(.headline)
       Spacer()
-      
+
       // Global Expand/Collapse Button
       Button(action: toggleExpansion) {
-        Image(systemName: allCollapsed ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
+        Image(
+          systemName: allCollapsed
+            ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
       }
       .buttonStyle(.plain)
       .help(allCollapsed ? "Expand All" : "Collapse All")

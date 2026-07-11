@@ -85,7 +85,7 @@ class DriveManager: ObservableObject {
       self.busyEjectingIdentifier = nil
       self.isUnmountingAll = false
       self.refreshError = nil
-      
+
       // Also refresh network shares whenever we get a disk event/refresh
       NetworkMountManager.shared.refreshMountStatus()
     }
@@ -155,7 +155,17 @@ class DriveManager: ObservableObject {
     let volumesToMount = (self.physicalDisks ?? [])
       .filter { $0.type == .physical || $0.type == .diskImage }
       .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
-      .filter { !$0.isMounted && $0.category == .user && !PersistenceManager.shared.isVolumeBlocked(Volume(id: $0.id, deviceIdentifier: $0.deviceIdentifier, diskUUID: $0.diskUUID, name: $0.name, isMounted: $0.isMounted, mountPoint: $0.mountPoint, freeSpace: $0.freeSpace, totalSize: $0.totalSize, usedSpace: $0.usedSpace, usedBytes: $0.usedBytes, fileSystemType: $0.fileSystemType, usagePercentage: $0.usagePercentage, category: $0.category, isProtected: $0.isProtected, snapshots: $0.snapshots, storageError: $0.storageError)) }
+      .filter {
+        !$0.isMounted && $0.category == .user
+          && !PersistenceManager.shared.isVolumeBlocked(
+            Volume(
+              id: $0.id, deviceIdentifier: $0.deviceIdentifier, diskUUID: $0.diskUUID,
+              name: $0.name, isMounted: $0.isMounted, mountPoint: $0.mountPoint,
+              freeSpace: $0.freeSpace, totalSize: $0.totalSize, usedSpace: $0.usedSpace,
+              usedBytes: $0.usedBytes, fileSystemType: $0.fileSystemType,
+              usagePercentage: $0.usagePercentage, category: $0.category,
+              isProtected: $0.isProtected, snapshots: $0.snapshots, storageError: $0.storageError))
+      }
 
     guard !volumesToMount.isEmpty else { return }
 
@@ -238,32 +248,32 @@ class DriveManager: ObservableObject {
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
 
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
-    
+
     // Check if we have a saved password
     if let savedPassword = KeychainManager.shared.load(account: volume.id) {
-       self.performUnlock(volume: volume, passphrase: savedPassword)
-       return
+      self.performUnlock(volume: volume, passphrase: savedPassword)
+      return
     }
 
     DispatchQueue.global(qos: .userInitiated).async {
       self.performUnlock(volume: volume, passphrase: passphrase)
     }
   }
-  
+
   private func performUnlock(volume: Volume, passphrase: String) {
-      let result = runShell(
-        "diskutil apfs unlockVolume \(volume.id) -stdinpassphrase",
-        input: Data(passphrase.utf8))
-      DispatchQueue.main.async {
-        if let error = result.error, !error.isEmpty {
-          // If saved password failed, maybe delete it?
-          // But for now let's just show error.
-          self.handleDiskUtilError(
-            error, for: volume.name, volume: volume, operation: .mount)
-        }
-        self.busyVolumeIdentifier = nil
-        self.refreshDrives(qos: .userInitiated)
+    let result = runShell(
+      "diskutil apfs unlockVolume \(volume.id) -stdinpassphrase",
+      input: Data(passphrase.utf8))
+    DispatchQueue.main.async {
+      if let error = result.error, !error.isEmpty {
+        // If saved password failed, maybe delete it?
+        // But for now let's just show error.
+        self.handleDiskUtilError(
+          error, for: volume.name, volume: volume, operation: .mount)
       }
+      self.busyVolumeIdentifier = nil
+      self.refreshDrives(qos: .userInitiated)
+    }
   }
 
   func unmount(volume: Volume) {
@@ -544,8 +554,12 @@ class DriveManager: ObservableObject {
 
   private enum DiskOperation { case mount, unmount, eject }
   private enum DiskUtilError {
-    case mountEFIVolume, unmountBusyVolume, mountInUseVolume(String?), unmountInUseVolume(String?),
-      ejectInUseVolume(String?),
+    case mountEFIVolume, unmountBusyVolume
+    case mountInUseVolume(String?)
+    case unmountInUseVolume(String?)
+    case
+      ejectInUseVolume(String?)
+    case
       mountLockedVolume, other
   }
 
@@ -592,7 +606,8 @@ class DriveManager: ObservableObject {
       } else {
         kind = .basic
       }
-    case .mountInUseVolume(let process), .unmountInUseVolume(let process), .ejectInUseVolume(let process):
+    case .mountInUseVolume(let process), .unmountInUseVolume(let process),
+      .ejectInUseVolume(let process):
       let verb: String
       switch parsedError {
       case .mountInUseVolume:
@@ -605,7 +620,7 @@ class DriveManager: ObservableObject {
         title = NSLocalizedString("Eject Failed", comment: "Alert title")
         verb = NSLocalizedString("eject", comment: "verb")
       }
-      
+
       if let proc = process {
         message = String(
           format: NSLocalizedString(
@@ -617,7 +632,7 @@ class DriveManager: ObservableObject {
             "Failed to %@ “%@” because it is currently in use by another application.",
             comment: "Error message"), verb, name)
       }
-      
+
       if operation == .eject, let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
       } else {
@@ -656,14 +671,19 @@ class DriveManager: ObservableObject {
       return .unmountBusyVolume
     }
 
-    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use") || lowerCaseError.contains("dissented by pid") {
+    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use")
+      || lowerCaseError.contains("dissented by pid")
+    {
       var processName: String? = nil
-      if let range = rawError.range(of: "(dissented by PID \\d+ )?\\((/[^)]+)\\)", options: [.regularExpression, .caseInsensitive]) {
+      if let range = rawError.range(
+        of: "(dissented by PID \\d+ )?\\((/[^)]+)\\)",
+        options: [.regularExpression, .caseInsensitive])
+      {
         let match = String(rawError[range])
         if let start = match.firstIndex(of: "("), let end = match.firstIndex(of: ")") {
-            let pathRange = match.index(after: start)..<end
-            let path = String(match[pathRange])
-            processName = URL(fileURLWithPath: path).lastPathComponent
+          let pathRange = match.index(after: start)..<end
+          let path = String(match[pathRange])
+          processName = URL(fileURLWithPath: path).lastPathComponent
         }
       }
 

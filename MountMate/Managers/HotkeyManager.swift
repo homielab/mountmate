@@ -50,7 +50,8 @@ class HotkeyManager: ObservableObject {
 
   /// Check if the app has accessibility permissions
   static func checkAccessibilityPermissions() -> Bool {
-    let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+    let options =
+      [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
     return AXIsProcessTrustedWithOptions(options)
   }
 
@@ -61,7 +62,7 @@ class HotkeyManager: ObservableObject {
 
     // Check accessibility permissions and prompt if needed
     let trusted = HotkeyManager.checkAccessibilityPermissions()
-    
+
     #if DEBUG
       print("HotkeyManager: Accessibility permissions granted: \(trusted)")
     #endif
@@ -90,7 +91,7 @@ class HotkeyManager: ObservableObject {
       NSEvent.removeMonitor(monitor)
       globalMonitor = nil
     }
-    
+
     if let monitor = localMonitor {
       NSEvent.removeMonitor(monitor)
       localMonitor = nil
@@ -109,10 +110,10 @@ class HotkeyManager: ObservableObject {
     // Check for Cmd+Shift modifier (and exclude other modifiers like Ctrl, Option)
     let requiredFlags: NSEvent.ModifierFlags = [.command, .shift]
     let excludedFlags: NSEvent.ModifierFlags = [.control, .option]
-    
+
     // Must have command and shift
     guard event.modifierFlags.contains(requiredFlags) else { return false }
-    
+
     // Must not have control or option
     guard event.modifierFlags.intersection(excludedFlags).isEmpty else { return false }
 

@@ -4,61 +4,61 @@ import Foundation
 
 class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
-  
+
   @Published var mountedShareIDs: Set<UUID> = []
-  
+
   private init() {
-      // Initial check
-      refreshMountStatus()
+    // Initial check
+    refreshMountStatus()
   }
 
   func refreshMountStatus() {
     DispatchQueue.global(qos: .background).async { [weak self] in
-        guard let self = self else { return }
-        let result = runShell("mount")
-        guard let output = result.output else { return }
-        
-        let mountedShares = self.parseMountedShares(from: output)
-        
-        DispatchQueue.main.async {
-            self.mountedShareIDs = mountedShares
-        }
+      guard let self = self else { return }
+      let result = runShell("mount")
+      guard let output = result.output else { return }
+
+      let mountedShares = self.parseMountedShares(from: output)
+
+      DispatchQueue.main.async {
+        self.mountedShareIDs = mountedShares
+      }
     }
   }
 
   private func parseMountedShares(from mountOutput: String) -> Set<UUID> {
-      var mountedUUIDs = Set<UUID>()
-      let shares = PersistenceManager.shared.networkShares
-      
-      // Optimization: Check if we can match existing shares to the mount output
-      // This is slightly complex because we need to match the share configuration to the mount output line.
-      // We can reuse the logic from `findExistingMountPoint` but applied in batch.
-      
-      for share in shares {
-          if self.isShareMounted(share, in: mountOutput) {
-              mountedUUIDs.insert(share.id)
-          }
+    var mountedUUIDs = Set<UUID>()
+    let shares = PersistenceManager.shared.networkShares
+
+    // Optimization: Check if we can match existing shares to the mount output
+    // This is slightly complex because we need to match the share configuration to the mount output line.
+    // We can reuse the logic from `findExistingMountPoint` but applied in batch.
+
+    for share in shares {
+      if self.isShareMounted(share, in: mountOutput) {
+        mountedUUIDs.insert(share.id)
       }
-      return mountedUUIDs
+    }
+    return mountedUUIDs
   }
-    
+
   private func isShareMounted(_ share: NetworkShare, in mountOutput: String) -> Bool {
-      let lines = mountOutput.components(separatedBy: .newlines)
-      for line in lines {
-        if line.contains("smbfs") {
-          let parts = line.components(separatedBy: " on ")
-          if parts.count >= 2 {
-            let source = parts[0].trimmingCharacters(in: .whitespaces)
-            let decodedSource = source.removingPercentEncoding ?? source
-            if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
-              if decodedSource.hasSuffix("/\(share.sharePath)") {
-                return true
-              }
+    let lines = mountOutput.components(separatedBy: .newlines)
+    for line in lines {
+      if line.contains("smbfs") {
+        let parts = line.components(separatedBy: " on ")
+        if parts.count >= 2 {
+          let source = parts[0].trimmingCharacters(in: .whitespaces)
+          let decodedSource = source.removingPercentEncoding ?? source
+          if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
+            if decodedSource.hasSuffix("/\(share.sharePath)") {
+              return true
             }
           }
         }
       }
-      return false
+    }
+    return false
   }
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
@@ -111,10 +111,16 @@ class NetworkMountManager: ObservableObject {
       }
     } catch {
       let nsError = error as NSError
-      if nsError.domain == NSCocoaErrorDomain && (nsError.code == NSFileWriteNoPermissionError || nsError.code == NSFileNoSuchFileError) {
-        completion(false, "Cannot create mount point at \"\(mountPoint)\".\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location.")
+      if nsError.domain == NSCocoaErrorDomain
+        && (nsError.code == NSFileWriteNoPermissionError || nsError.code == NSFileNoSuchFileError)
+      {
+        completion(
+          false,
+          "Cannot create mount point at \"\(mountPoint)\".\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
+        )
       } else {
-        completion(false, "Failed to create mount point at \"\(mountPoint)\": \(error.localizedDescription)")
+        completion(
+          false, "Failed to create mount point at \"\(mountPoint)\": \(error.localizedDescription)")
       }
       return
     }
@@ -135,7 +141,8 @@ class NetworkMountManager: ObservableObject {
     }
 
     DispatchQueue.global(qos: .userInitiated).async {
-      let command = "/sbin/mount_smbfs -o noowners,nosuid \"\(url.absoluteString)\" \"\(mountPoint)\""
+      let command =
+        "/sbin/mount_smbfs -o noowners,nosuid \"\(url.absoluteString)\" \"\(mountPoint)\""
       let result = runShell(command)
 
       DispatchQueue.main.async {
@@ -147,8 +154,13 @@ class NetworkMountManager: ObservableObject {
           let sanitized = self.sanitizeError(error)
           // Detect permission-related mount failures
           let lower = sanitized.lowercased()
-          if lower.contains("permission denied") || lower.contains("operation not permitted") || lower.contains("not owner") {
-            completion(false, "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location.")
+          if lower.contains("permission denied") || lower.contains("operation not permitted")
+            || lower.contains("not owner")
+          {
+            completion(
+              false,
+              "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
+            )
           } else {
             completion(false, sanitized)
           }
@@ -204,7 +216,7 @@ class NetworkMountManager: ObservableObject {
   }
 
   func isMounted(share: NetworkShare) -> Bool {
-      return mountedShareIDs.contains(share.id)
+    return mountedShareIDs.contains(share.id)
   }
 
   func getMountPoint(for share: NetworkShare) -> String {

@@ -116,16 +116,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       textField.placeholderString = NSLocalizedString(
         "Password", comment: "Password placeholder")
 
-      
-      let checkbox = NSButton(checkboxWithTitle: NSLocalizedString("Remember password in Keychain", comment: "Checkbox"), target: nil, action: nil)
+      let checkbox = NSButton(
+        checkboxWithTitle: NSLocalizedString("Remember password in Keychain", comment: "Checkbox"),
+        target: nil, action: nil)
       checkbox.frame = NSRect(x: 0, y: 0, width: 200, height: 24)
-      
+
       let stackView = NSStackView(views: [textField, checkbox])
       stackView.orientation = .vertical
       stackView.alignment = .leading
       stackView.spacing = 8
       stackView.frame = NSRect(x: 0, y: 0, width: 250, height: 56)
-      
+
       alert.accessoryView = stackView
       alert.addButton(withTitle: NSLocalizedString("Unlock", comment: "Unlock button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
@@ -141,7 +142,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     if response == .alertFirstButtonReturn {
       if case .lockedVolume(let lockedVolumeAlert) = appAlert.kind,
         let stackView = alert.accessoryView as? NSStackView,
-        let textField = stackView.views.first(where: { $0 is NSSecureTextField }) as? NSSecureTextField,
+        let textField = stackView.views.first(where: { $0 is NSSecureTextField })
+          as? NSSecureTextField,
         let checkbox = stackView.views.first(where: { $0 is NSButton }) as? NSButton
       {
         lockedVolumeAlert.onConfirm(textField.stringValue, checkbox.state == .on)
