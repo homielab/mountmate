@@ -5,6 +5,7 @@ import SwiftUI
 struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
   @ObservedObject var persistence = PersistenceManager.shared
+  @ObservedObject var networkManager = NetworkMountManager.shared
 
   @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
     .autoconnect()
@@ -21,7 +22,7 @@ struct MainView: View {
 
   private var hasVisibleDisks: Bool {
     !internalDisks.isEmpty || !externalDisks.isEmpty || !diskImages.isEmpty
-      || !persistence.networkShares.isEmpty
+      || !persistence.networkShares.isEmpty || !networkManager.manuallyConnectedShares.isEmpty
   }
 
   var body: some View {
@@ -47,7 +48,8 @@ struct MainView: View {
           internalDisks: internalDisks,
           externalDisks: externalDisks,
           diskImages: diskImages,
-          networkShares: persistence.networkShares
+          networkShares: persistence.networkShares,
+          manualShares: networkManager.manuallyConnectedShares
         )
       }
     }
@@ -82,6 +84,7 @@ struct DriveListView: View {
   let externalDisks: [PhysicalDisk]
   let diskImages: [PhysicalDisk]
   let networkShares: [NetworkShare]
+  let manualShares: [NetworkShare]
 
   var body: some View {
     List {
@@ -101,8 +104,13 @@ struct DriveListView: View {
         }
       }
       if !networkShares.isEmpty {
-        Section(header: Text("Network Shares")) {
+        Section(header: Text("Saved Network Shares")) {
           ForEach(networkShares) { share in NetworkShareMainRow(share: share) }
+        }
+      }
+      if !manualShares.isEmpty {
+        Section(header: Text("Manually Connected Shares")) {
+          ForEach(manualShares) { share in NetworkShareMainRow(share: share, isManual: true) }
         }
       }
     }
@@ -433,12 +441,13 @@ struct SnapshotRowView: View {
 
 struct NetworkShareMainRow: View {
   let share: NetworkShare
+  var isManual: Bool = false
   @ObservedObject var networkManager = NetworkMountManager.shared
   @State private var isWorking = false
   @State private var isHovering = false
 
   private var isMounted: Bool {
-    networkManager.mountedShareIDs.contains(share.id)
+    isManual || networkManager.mountedShareIDs.contains(share.id)
   }
 
   var body: some View {

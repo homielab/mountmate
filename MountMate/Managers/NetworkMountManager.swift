@@ -6,6 +6,9 @@ class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
 
   @Published var mountedShareIDs: Set<UUID> = []
+  @Published var manuallyConnectedShares: [NetworkShare] = []
+  
+  private var manualSharesDictionary: [String: NetworkShare] = [:]
 
   private init() {
     // Initial check
@@ -18,31 +21,94 @@ class NetworkMountManager: ObservableObject {
       let result = runShell("mount")
       guard let output = result.output else { return }
 
-      let mountedShares = self.parseMountedShares(from: output)
+      let parsedData = self.parseMountedShares(from: output)
 
       DispatchQueue.main.async {
-        self.mountedShareIDs = mountedShares
+        self.mountedShareIDs = parsedData.mountedUUIDs
+        self.manuallyConnectedShares = parsedData.manualShares
       }
     }
   }
 
-  private func parseMountedShares(from mountOutput: String) -> Set<UUID> {
+  private func parseMountedShares(from mountOutput: String) -> (mountedUUIDs: Set<UUID>, manualShares: [NetworkShare]) {
     var mountedUUIDs = Set<UUID>()
+    var currentManualShareMountPoints = Set<String>()
+    var manualShares = [NetworkShare]()
+    
     let shares = PersistenceManager.shared.networkShares
-
-    // Optimization: Check if we can match existing shares to the mount output
-    // This is slightly complex because we need to match the share configuration to the mount output line.
-    // We can reuse the logic from `findExistingMountPoint` but applied in batch.
-
-    for share in shares {
-      if self.isShareMounted(share, in: mountOutput) {
-        mountedUUIDs.insert(share.id)
+    let lines = mountOutput.components(separatedBy: .newlines)
+    
+    for line in lines {
+      if line.contains("smbfs") {
+        let parts = line.components(separatedBy: " on ")
+        if parts.count >= 2 {
+          let source = parts[0].trimmingCharacters(in: .whitespaces)
+          let rest = parts[1]
+          let mountPoint = rest.components(separatedBy: " (").first ?? ""
+          let decodedSource = source.removingPercentEncoding ?? source
+          
+          var matched = false
+          for share in shares {
+            if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
+              if decodedSource.hasSuffix("/\(share.sharePath)") {
+                mountedUUIDs.insert(share.id)
+                matched = true
+                break
+              }
+            }
+          }
+          
+          if !matched {
+            // It's a manually connected share
+            currentManualShareMountPoints.insert(mountPoint)
+            
+            if let existing = manualSharesDictionary[mountPoint] {
+              manualShares.append(existing)
+            } else {
+              // Parse the source
+              var username = ""
+              var server = ""
+              var sharePath = ""
+              
+              let urlString = source.replacingOccurrences(of: "//", with: "smb://")
+              if let url = URL(string: urlString) {
+                username = url.user ?? ""
+                server = url.host ?? ""
+                sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+              } else {
+                server = "Unknown"
+                sharePath = "Share"
+              }
+              
+              if sharePath.isEmpty {
+                sharePath = mountPoint.components(separatedBy: "/").last ?? "Share"
+              }
+              
+              let newShare = NetworkShare(
+                id: UUID(),
+                name: sharePath,
+                server: server,
+                sharePath: sharePath,
+                username: username,
+                mountAtLogin: false,
+                customMountPoint: mountPoint
+              )
+              manualSharesDictionary[mountPoint] = newShare
+              manualShares.append(newShare)
+            }
+          }
+        }
       }
     }
-    return mountedUUIDs
+    
+    // Clean up old manual shares that are no longer mounted
+    manualSharesDictionary = manualSharesDictionary.filter { currentManualShareMountPoints.contains($0.key) }
+    
+    return (mountedUUIDs, manualShares)
   }
 
   private func isShareMounted(_ share: NetworkShare, in mountOutput: String) -> Bool {
+    // Kept for backward compatibility or internal checks if needed
     let lines = mountOutput.components(separatedBy: .newlines)
     for line in lines {
       if line.contains("smbfs") {

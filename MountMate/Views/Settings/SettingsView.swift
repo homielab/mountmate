@@ -28,6 +28,7 @@ struct GeneralSettingsView: View {
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
   @AppStorage("hotkeysEnabled") private var hotkeysEnabled = false
+  @AppStorage("showCountInMenuBar") private var showCountInMenuBar = false
 
   @State private var selectedLanguage: String = {
     guard
@@ -63,6 +64,7 @@ struct GeneralSettingsView: View {
   var body: some View {
     Form {
       Section {
+        Toggle("Show Count in Menu Bar", isOn: $showCountInMenuBar)
         Toggle("Show Internal Disks", isOn: $showInternalDisks)
         Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
         Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
