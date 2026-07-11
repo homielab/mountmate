@@ -134,8 +134,8 @@ class DriveManager: ObservableObject {
 
   func unmountAllDrives() {
     let drivesToUnmount = (self.physicalDisks ?? [])
-      .filter { $0.type == .physical || $0.type == .diskImage }
-      .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
+      .filter(\.isRemovable)
+      .flatMap(\.allVolumes)
       .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
 
     guard !drivesToUnmount.isEmpty else { return }
@@ -153,18 +153,11 @@ class DriveManager: ObservableObject {
 
   func mountAllVolumes() {
     let volumesToMount = (self.physicalDisks ?? [])
-      .filter { $0.type == .physical || $0.type == .diskImage }
-      .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
+      .filter(\.isRemovable)
+      .flatMap(\.allVolumes)
       .filter {
         !$0.isMounted && $0.category == .user
-          && !PersistenceManager.shared.isVolumeBlocked(
-            Volume(
-              id: $0.id, deviceIdentifier: $0.deviceIdentifier, diskUUID: $0.diskUUID,
-              name: $0.name, isMounted: $0.isMounted, mountPoint: $0.mountPoint,
-              freeSpace: $0.freeSpace, totalSize: $0.totalSize, usedSpace: $0.usedSpace,
-              usedBytes: $0.usedBytes, fileSystemType: $0.fileSystemType,
-              usagePercentage: $0.usagePercentage, category: $0.category,
-              isProtected: $0.isProtected, snapshots: $0.snapshots, storageError: $0.storageError))
+          && !PersistenceManager.shared.isVolumeBlocked($0)
       }
 
     guard !volumesToMount.isEmpty else { return }
@@ -245,8 +238,6 @@ class DriveManager: ObservableObject {
   func mountLockedVolume(_ volume: Volume, passphrase: String) {
     let userInfo = ["deviceIdentifier": volume.id]
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-    DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
-
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
 
     // Check if we have a saved password
@@ -363,7 +354,7 @@ class DriveManager: ObservableObject {
           connectionType: connectionInfo.type, name: diskName,
           totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
           usagePercentage: stats.percentage, type: connectionInfo.diskType,
-          partitions: partitions, containers: containers)
+          partitions: partitions, containers: containers, storageError: stats.error)
         newDisks.append(physicalDisk)
       }
     }
@@ -417,9 +408,7 @@ class DriveManager: ObservableObject {
   private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume]) -> (
     total: String?, free: String?, used: String?, percentage: Double?, error: String?
   ) {
-    if volumes.compactMap({ $0.storageError }).first != nil {
-      let errorMessage = NSLocalizedString(
-        "Could not calculate total usage...", comment: "Parent disk error message")
+    if let errorMessage = volumes.compactMap(\.storageError).first {
       return (nil, nil, nil, nil, errorMessage)
     }
     guard totalBytes > 0 else { return (nil, nil, nil, nil, nil) }
@@ -467,7 +456,6 @@ class DriveManager: ObservableObject {
 
     let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
     let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
-    let contentType = volumeData["Content"] as? String
     let category: DriveCategory = (contentType == "EFI" && isParentVirtual) ? .system : .user
 
     let isMounted = volumeData["MountPoint"] != nil

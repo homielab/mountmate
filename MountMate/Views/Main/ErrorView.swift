@@ -10,14 +10,14 @@ struct ErrorView: View {
     VStack(spacing: 12) {
       Image(systemName: "exclamationmark.triangle.fill")
         .font(.system(size: 40))
-        .foregroundColor(.red)
+        .foregroundStyle(.red)
 
       Text(alertInfo.title)
         .font(.headline)
 
       Text(alertInfo.message)
         .font(.body)
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
         .padding(.horizontal)
 

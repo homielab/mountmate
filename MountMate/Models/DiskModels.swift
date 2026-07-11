@@ -2,13 +2,13 @@
 
 import Foundation
 
-enum PhysicalDiskType {
+enum PhysicalDiskType: Equatable {
   case internalDisk
   case physical
   case diskImage
 }
 
-enum DriveCategory {
+enum DriveCategory: Equatable {
   case user
   case system
 }
@@ -66,5 +66,13 @@ struct PhysicalDisk: Identifiable {
 
   var hasVisibleContent: Bool {
     !partitions.isEmpty || containers.contains { !$0.volumes.isEmpty }
+  }
+
+  var allVolumes: [Volume] {
+    partitions + containers.flatMap(\.volumes)
+  }
+
+  var isRemovable: Bool {
+    type == .physical || type == .diskImage
   }
 }

@@ -7,7 +7,7 @@ struct LoadingView: View {
     VStack(spacing: 8) {
       ProgressView()
       Text(NSLocalizedString("Loading Disks...", comment: "Initial loading text"))
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
     }
     .frame(width: 350, height: 200)
   }

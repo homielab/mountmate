@@ -7,9 +7,6 @@ struct MainView: View {
   @ObservedObject var persistence = PersistenceManager.shared
   @ObservedObject var networkManager = NetworkMountManager.shared
 
-  @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
-    .autoconnect()
-
   private var internalDisks: [PhysicalDisk] {
     (driveManager.physicalDisks ?? []).filter { $0.type == .internalDisk && $0.hasVisibleContent }
   }
@@ -34,13 +31,7 @@ struct MainView: View {
       }
 
       if driveManager.physicalDisks == nil {
-        ProgressView()
-          .frame(height: 150)
-          .onReceive(initialLoadTimer) { _ in
-            if driveManager.physicalDisks != nil {
-              self.initialLoadTimer.upstream.connect().cancel()
-            }
-          }
+        LoadingView()
       } else if !hasVisibleDisks {
         noDrivesView
       } else {
@@ -202,8 +193,7 @@ struct DiskHeaderRow: View {
       }
       .contextMenu {
         Button("Ignore This Disk") {
-          let allVolumesToIgnore = disk.partitions + disk.containers.flatMap { $0.volumes }
-          for volume in allVolumesToIgnore { PersistenceManager.shared.ignore(volume: volume) }
+          for volume in disk.allVolumes { PersistenceManager.shared.ignore(volume: volume) }
           manager.refreshDrives(qos: .userInitiated)
         }
         if disk.type != .internalDisk {
@@ -246,7 +236,7 @@ struct ContainerRowView: View {
 struct VolumeRowView: View {
   let volume: Volume
   @EnvironmentObject var manager: DriveManager
-  @StateObject private var persistence = PersistenceManager.shared
+  @ObservedObject private var persistence = PersistenceManager.shared
   @State private var isHovering = false
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
 
@@ -524,9 +514,7 @@ struct HeaderActionsView: View {
   @EnvironmentObject var driveManager: DriveManager
 
   private var canUnmountAll: Bool {
-    (driveManager.physicalDisks ?? []).flatMap {
-      $0.partitions + $0.containers.flatMap { $0.volumes }
-    }
+    (driveManager.physicalDisks ?? []).flatMap(\.allVolumes)
     .contains { $0.isMounted && $0.category == .user && !$0.isProtected }
   }
 

@@ -115,29 +115,7 @@ class NetworkMountManager: ObservableObject {
 
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
-    let mountPoint: String
-    if let customPath = share.customMountPoint, !customPath.isEmpty {
-      // Expand tilde if present
-      let expandedPath = (customPath as NSString).expandingTildeInPath
-
-      // If path is not absolute, assume relative to home directory
-      if !expandedPath.hasPrefix("/") {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        mountPoint = "\(homeDir)/\(expandedPath)"
-      } else {
-        mountPoint = expandedPath
-      }
-    } else {
-      let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-      let mountsDir = "\(homeDir)/mountmate"
-      mountPoint = "\(mountsDir)/\(share.name)"
-
-      // Ensure ~/mountmate exists
-      if !FileManager.default.fileExists(atPath: mountsDir) {
-        try? FileManager.default.createDirectory(
-          atPath: mountsDir, withIntermediateDirectories: true)
-      }
-    }
+    let mountPoint = configuredMountPoint(for: share)
 
     let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
 
@@ -239,20 +217,7 @@ class NetworkMountManager: ObservableObject {
   }
 
   func unmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
-    let mountPoint: String
-    if let customPath = share.customMountPoint, !customPath.isEmpty {
-      let expandedPath = (customPath as NSString).expandingTildeInPath
-      if !expandedPath.hasPrefix("/") {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        mountPoint = "\(homeDir)/\(expandedPath)"
-      } else {
-        mountPoint = expandedPath
-      }
-    } else {
-      let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-      let mountsDir = "\(homeDir)/mountmate"
-      mountPoint = "\(mountsDir)/\(share.name)"
-    }
+    let mountPoint = configuredMountPoint(for: share)
 
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runShell("umount \"\(mountPoint)\"")
@@ -278,7 +243,10 @@ class NetworkMountManager: ObservableObject {
       return existingPath
     }
 
-    // Otherwise return the configured path
+    return configuredMountPoint(for: share)
+  }
+
+  private func configuredMountPoint(for share: NetworkShare) -> String {
     if let customPath = share.customMountPoint, !customPath.isEmpty {
       let expandedPath = (customPath as NSString).expandingTildeInPath
       if !expandedPath.hasPrefix("/") {

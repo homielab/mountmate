@@ -27,7 +27,7 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func protect(volume: Volume) -> Bool {
-    guard let compositeId = volume.compositeId else { return false }
+    guard volume.compositeId != nil else { return false }
     let diskUUID = volume.diskUUID ?? "NONE"
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
     guard !protectedVolumes.contains(where: { $0.id == info.id }) else { return true }
@@ -43,7 +43,7 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func ignore(volume: Volume) -> Bool {
-    guard let compositeId = volume.compositeId else { return false }
+    guard volume.compositeId != nil else { return false }
     let diskUUID = volume.diskUUID ?? "NONE"
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
     guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return true }
@@ -80,7 +80,7 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func block(volume: Volume) -> Bool {
-    guard let compositeId = volume.compositeId else { return false }
+    guard volume.compositeId != nil else { return false }
     let diskUUID = volume.diskUUID ?? "NONE"
     let info = ManagedVolumeInfo(volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
     guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return true }
