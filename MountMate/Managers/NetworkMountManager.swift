@@ -49,10 +49,11 @@ class NetworkMountManager: ObservableObject {
           let parts = line.components(separatedBy: " on ")
           if parts.count >= 2 {
             let source = parts[0].trimmingCharacters(in: .whitespaces)
-            if source.contains(share.server) && source.contains(share.sharePath) {
-               if source.hasSuffix("/\(share.sharePath)") {
-                 return true
-               }
+            let decodedSource = source.removingPercentEncoding ?? source
+            if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
+              if decodedSource.hasSuffix("/\(share.sharePath)") {
+                return true
+              }
             }
           }
         }
@@ -256,13 +257,14 @@ class NetworkMountManager: ObservableObject {
           // Check if source matches our share
           // Source format: //user@host/path
 
-          if source.contains(share.server) && source.contains(share.sharePath) {
+          let decodedSource = source.removingPercentEncoding ?? source
+          if decodedSource.contains(share.server) && decodedSource.contains(share.sharePath) {
             // Basic check: contains server and share path.
             // This might be too loose if you have shares with similar names, but it's a good start.
             // Let's be a bit stricter.
 
             // Check if it ends with /sharePath
-            if source.hasSuffix("/\(share.sharePath)") {
+            if decodedSource.hasSuffix("/\(share.sharePath)") {
               return mountPoint
             }
           }
