@@ -7,6 +7,7 @@ class NetworkMountManager: ObservableObject {
 
   @Published var mountedShareIDs: Set<UUID> = []
   @Published var manuallyConnectedShares: [NetworkShare] = []
+  @Published var isUnmountingManualShares = false
   
   private var manualSharesDictionary: [String: NetworkShare] = [:]
 
@@ -229,6 +230,29 @@ class NetworkMountManager: ObservableObject {
         } else {
           completion(true, nil)
         }
+      }
+    }
+  }
+
+  func unmountAllManuallyConnectedShares(completion: @escaping ([String]) -> Void) {
+    let shares = manuallyConnectedShares
+    guard !shares.isEmpty else {
+      completion([])
+      return
+    }
+
+    isUnmountingManualShares = true
+    DispatchQueue.global(qos: .userInitiated).async {
+      let failures = shares.compactMap { share -> String? in
+        let mountPoint = self.configuredMountPoint(for: share)
+        let result = runShell("umount \"\(mountPoint)\"")
+        return result.error?.isEmpty == false ? share.name : nil
+      }
+
+      DispatchQueue.main.async {
+        self.isUnmountingManualShares = false
+        self.refreshMountStatus()
+        completion(failures)
       }
     }
   }

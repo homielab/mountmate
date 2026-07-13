@@ -100,7 +100,7 @@ struct DriveListView: View {
         }
       }
       if !manualShares.isEmpty {
-        Section(header: Text("Manually Connected Shares")) {
+        Section(header: ManualSharesSectionHeader()) {
           ForEach(manualShares) { share in NetworkShareMainRow(share: share, isManual: true) }
         }
       }
@@ -490,13 +490,13 @@ struct NetworkShareMainRow: View {
           }
         }) {
           Image(
-            systemName: isMounted ? "minus.circle.fill" : "plus.circle.fill"
+            systemName: isMounted ? "eject.circle.fill" : "plus.circle.fill"
           )
           .opacity(isWorking ? 0 : 1)
         }
         .buttonStyle(.bordered).tint(isMounted ? .red : .blue).disabled(isWorking)
         .overlay { if isWorking { ProgressView().controlSize(.small) } }
-        .help(isMounted ? "Unmount" : "Mount")
+        .help(isMounted ? "Eject" : "Mount")
         .padding(.leading, 8)
       }
       .padding(.vertical, 4)
@@ -506,6 +506,37 @@ struct NetworkShareMainRow: View {
       .onHover { hovering in
         self.isHovering = hovering
       }
+    }
+  }
+}
+
+struct ManualSharesSectionHeader: View {
+  @ObservedObject private var networkManager = NetworkMountManager.shared
+
+  var body: some View {
+    HStack {
+      Text("Manually Connected Shares")
+      Spacer()
+      Button(action: ejectAllManualShares) {
+        if networkManager.isUnmountingManualShares {
+          ProgressView().controlSize(.small)
+        } else {
+          Image(systemName: "eject.circle.fill")
+        }
+      }
+      .buttonStyle(.plain)
+      .disabled(networkManager.isUnmountingManualShares)
+      .help("Eject All Manually Connected Shares")
+    }
+  }
+
+  private func ejectAllManualShares() {
+    networkManager.unmountAllManuallyConnectedShares { failures in
+      guard !failures.isEmpty else { return }
+      DriveManager.shared.userActionError = AppAlert(
+        title: "Eject Failed",
+        message: "Could not eject: \(failures.joined(separator: ", "))",
+        kind: .basic)
     }
   }
 }
