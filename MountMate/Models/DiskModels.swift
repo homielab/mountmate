@@ -13,6 +13,37 @@ enum DriveCategory: Equatable {
   case system
 }
 
+enum DiskTopology {
+  static func isRAIDMaster(_ info: [String: Any]?) -> Bool {
+    guard let info else { return false }
+    if let value = info["RAIDMaster"] as? Bool { return value }
+    if let value = info["RAIDMaster"] as? String {
+      return ["yes", "true"].contains(value.lowercased())
+    }
+    return false
+  }
+
+  static func isRAIDMember(_ info: [String: Any]?) -> Bool {
+    guard let info, !isRAIDMaster(info) else { return false }
+    if let value = info["RAIDMember"] as? Bool { return value }
+    if let value = info["RAIDMember"] as? String {
+      return ["yes", "true"].contains(value.lowercased())
+    }
+    // On some macOS releases a member identifies its master by BSD name.
+    if let master = info["RAIDMaster"] as? String, master.hasPrefix("disk") { return true }
+    return false
+  }
+
+  static func isTimeMachineVolume(_ volume: [String: Any]) -> Bool {
+    if let role = volume["APFSVolumeRole"] as? String,
+      role.localizedCaseInsensitiveContains("backup")
+    {
+      return true
+    }
+    return (volume["VolumeName"] as? String) == "Backups.backupdb"
+  }
+}
+
 struct APFSSnapshot: Identifiable, Hashable {
   let id: String  // UUID
   let name: String
@@ -67,6 +98,7 @@ struct PhysicalDisk: Identifiable {
   let usedSpace: String?
   let usagePercentage: Double?
   let type: PhysicalDiskType
+  let isRAIDSet: Bool
 
   var partitions: [Volume]
   var containers: [APFSContainer]

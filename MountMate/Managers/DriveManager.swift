@@ -177,7 +177,11 @@ class DriveManager: ObservableObject {
   func eject(disk: PhysicalDisk) {
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runShell("diskutil eject \(disk.id)")
+      // A RAID master is a virtual logical disk. `eject` is only valid for a
+      // physical device, while unmountDisk safely unmounts every volume in the
+      // set and produces the same Finder-visible result.
+      let command = disk.isRAIDSet ? "diskutil unmountDisk \(disk.id)" : "diskutil eject \(disk.id)"
+      let result = runShell(command)
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
           self.handleDiskUtilError(
@@ -191,8 +195,8 @@ class DriveManager: ObservableObject {
   func forceEject(disk: PhysicalDisk) {
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      _ = runShell("diskutil unmountDisk force \(disk.id)")
-      let result = runShell("diskutil eject \(disk.id)")
+      let unmountResult = runShell("diskutil unmountDisk force \(disk.id)")
+      let result = disk.isRAIDSet ? unmountResult : runShell("diskutil eject \(disk.id)")
       DispatchQueue.main.async {
         if let error = result.error, !error.isEmpty {
           self.handleDiskUtilError(
@@ -300,14 +304,22 @@ class DriveManager: ObservableObject {
       !childDeviceIDs.contains($0["DeviceIdentifier"] as? String ?? "")
     }
 
+    // diskutil reports RAID members alongside the virtual RAID master. Only
+    // the master represents the Finder-visible logical volume and can be
+    // safely acted on as a set.
+    let rootInfo = Dictionary(uniqueKeysWithValues: rootDisks.compactMap { disk -> (String, [String: Any])? in
+      guard let identifier = disk["DeviceIdentifier"] as? String else { return nil }
+      return (identifier, getInfoForDisk(for: identifier) ?? [:])
+    })
+
     let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
     var newDisks: [PhysicalDisk] = []
 
     for diskData in rootDisks {
-      let infoPlist = getInfoForDisk(for: diskData["DeviceIdentifier"] as? String ?? "")
-      if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
-
       guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
+      let infoPlist = rootInfo[physicalIdentifier]
+      if DiskTopology.isRAIDMember(infoPlist) { continue }
+      if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
 
       var partitions: [Volume] = []
       var containers: [APFSContainer] = []
@@ -354,6 +366,7 @@ class DriveManager: ObservableObject {
           connectionType: connectionInfo.type, name: diskName,
           totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
           usagePercentage: stats.percentage, type: connectionInfo.diskType,
+          isRAIDSet: DiskTopology.isRAIDMaster(infoPlist),
           partitions: partitions, containers: containers, storageError: stats.error)
         newDisks.append(physicalDisk)
       }
@@ -524,7 +537,7 @@ class DriveManager: ObservableObject {
     let defaultType = NSLocalizedString("Unknown", comment: "Unknown connection type")
     guard let info = infoPlist else { return (defaultType, .physical) }
 
-    let isRAIDMaster = info["RAIDMaster"] as? Bool ?? false
+    let isRAIDMaster = DiskTopology.isRAIDMaster(info)
     let isVirtual = info["VirtualOrPhysical"] as? String == "Virtual"
 
     let diskType: PhysicalDiskType
@@ -598,7 +611,7 @@ class DriveManager: ObservableObject {
       message = String(
         format: NSLocalizedString(
           "Failed to eject “%@” because one of its volumes is busy or in use.",
-          comment: "Error message"), name)
+          comment: "Error message"), name) + "\n\nDetails:\n\(error)"
       if let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
       } else {
@@ -623,12 +636,12 @@ class DriveManager: ObservableObject {
         message = String(
           format: NSLocalizedString(
             "Failed to %@ “%@” because it is currently in use by “%@”.",
-            comment: "Error message"), verb, name, proc)
+            comment: "Error message"), verb, name, proc) + "\n\nDetails:\n\(error)"
       } else {
         message = String(
           format: NSLocalizedString(
             "Failed to %@ “%@” because it is currently in use by another application.",
-            comment: "Error message"), verb, name)
+            comment: "Error message"), verb, name) + "\n\nDetails:\n\(error)"
       }
 
       if operation == .eject, let disk = disk {
