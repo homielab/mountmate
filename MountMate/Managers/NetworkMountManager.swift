@@ -11,6 +11,37 @@ class NetworkMountManager: ObservableObject {
   
   private var manualSharesDictionary: [String: NetworkShare] = [:]
 
+  private struct MountedSMBShare {
+    let source: String
+    let mountPoint: String
+
+    init?(mountOutputLine: String) {
+      guard mountOutputLine.contains("smbfs") else { return nil }
+
+      let parts = mountOutputLine.components(separatedBy: " on ")
+      guard parts.count >= 2 else { return nil }
+
+      source = parts[0].trimmingCharacters(in: .whitespaces)
+      mountPoint = parts[1].components(separatedBy: " (").first ?? ""
+    }
+
+    func matches(_ share: NetworkShare) -> Bool {
+      let decodedSource = source.removingPercentEncoding ?? source
+      let cleanSource = decodedSource
+        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        .lowercased()
+      let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
+      let cleanSharePath = decodedSharePath
+        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        .lowercased()
+      let cleanServer = share.server.lowercased()
+
+      return cleanSource.contains(cleanServer)
+        && cleanSource.contains(cleanSharePath)
+        && cleanSource.hasSuffix("/\(cleanSharePath)")
+    }
+  }
+
   private init() {
     // Initial check
     refreshMountStatus()
@@ -37,73 +68,50 @@ class NetworkMountManager: ObservableObject {
     var manualShares = [NetworkShare]()
     
     let shares = PersistenceManager.shared.networkShares
-    let lines = mountOutput.components(separatedBy: .newlines)
-    
-    for line in lines {
-      if line.contains("smbfs") {
-        let parts = line.components(separatedBy: " on ")
-        if parts.count >= 2 {
-          let source = parts[0].trimmingCharacters(in: .whitespaces)
-          let rest = parts[1]
-          let mountPoint = rest.components(separatedBy: " (").first ?? ""
-          
-          let decodedSource = source.removingPercentEncoding ?? source
-          let cleanSource = decodedSource.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-          
-          var matched = false
-          for share in shares {
-            let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
-            let cleanSharePath = decodedSharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-            let cleanServer = share.server.lowercased()
-            
-            if cleanSource.contains(cleanServer) && cleanSource.contains(cleanSharePath) {
-              if cleanSource.hasSuffix("/\(cleanSharePath)") {
-                mountedUUIDs.insert(share.id)
-                matched = true
-                break
-              }
-            }
+    let mountedShares = mountOutput.components(separatedBy: .newlines).compactMap {
+      MountedSMBShare(mountOutputLine: $0)
+    }
+
+    for mountedShare in mountedShares {
+      if let savedShare = shares.first(where: { mountedShare.matches($0) }) {
+        mountedUUIDs.insert(savedShare.id)
+      } else {
+        // It's a manually connected share
+        currentManualShareMountPoints.insert(mountedShare.mountPoint)
+
+        if let existing = manualSharesDictionary[mountedShare.mountPoint] {
+          manualShares.append(existing)
+        } else {
+          // Parse the source
+          var username = ""
+          var server = ""
+          var sharePath = ""
+
+          let urlString = mountedShare.source.replacingOccurrences(of: "//", with: "smb://")
+          if let url = URL(string: urlString) {
+            username = url.user ?? ""
+            server = url.host ?? ""
+            sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+          } else {
+            server = "Unknown"
+            sharePath = "Share"
           }
-          
-          if !matched {
-            // It's a manually connected share
-            currentManualShareMountPoints.insert(mountPoint)
-            
-            if let existing = manualSharesDictionary[mountPoint] {
-              manualShares.append(existing)
-            } else {
-              // Parse the source
-              var username = ""
-              var server = ""
-              var sharePath = ""
-              
-              let urlString = source.replacingOccurrences(of: "//", with: "smb://")
-              if let url = URL(string: urlString) {
-                username = url.user ?? ""
-                server = url.host ?? ""
-                sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-              } else {
-                server = "Unknown"
-                sharePath = "Share"
-              }
-              
-              if sharePath.isEmpty {
-                sharePath = mountPoint.components(separatedBy: "/").last ?? "Share"
-              }
-              
-              let newShare = NetworkShare(
-                id: UUID(),
-                name: sharePath,
-                server: server,
-                sharePath: sharePath,
-                username: username,
-                mountAtLogin: false,
-                customMountPoint: mountPoint
-              )
-              manualSharesDictionary[mountPoint] = newShare
-              manualShares.append(newShare)
-            }
+
+          if sharePath.isEmpty {
+            sharePath = mountedShare.mountPoint.components(separatedBy: "/").last ?? "Share"
           }
+
+          let newShare = NetworkShare(
+            id: UUID(),
+            name: sharePath,
+            server: server,
+            sharePath: sharePath,
+            username: username,
+            mountAtLogin: false,
+            customMountPoint: mountedShare.mountPoint
+          )
+          manualSharesDictionary[mountedShare.mountPoint] = newShare
+          manualShares.append(newShare)
         }
       }
     }
@@ -291,40 +299,11 @@ class NetworkMountManager: ObservableObject {
     let result = runShell("mount")
     guard let output = result.output else { return nil }
 
-    // Expected format: //username@server/share on /path (smbfs, ...)
-    // Or: //server/share on /path (smbfs, ...)
-
-    // We construct search patterns.
-    // Note: mount output usually has the server and path in lowercase? Not necessarily.
-    // Let's try to match case-insensitive for the server/share part.
-
-    let lines = output.components(separatedBy: .newlines)
-    for line in lines {
-      if line.contains("smbfs") {
-        // Parse the line
-        // Example: //meo@192.168.1.100/public on /Volumes/public (smbfs, ...)
-        let parts = line.components(separatedBy: " on ")
-        if parts.count >= 2 {
-          let source = parts[0].trimmingCharacters(in: .whitespaces)
-          let rest = parts[1]
-          let mountPoint = rest.components(separatedBy: " (").first ?? ""
-          
-          let decodedSource = source.removingPercentEncoding ?? source
-          let cleanSource = decodedSource.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-          
-          let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
-          let cleanSharePath = decodedSharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-          let cleanServer = share.server.lowercased()
-
-          if cleanSource.contains(cleanServer) && cleanSource.contains(cleanSharePath) {
-            if cleanSource.hasSuffix("/\(cleanSharePath)") {
-              return mountPoint
-            }
-          }
-        }
-      }
-    }
-    return nil
+    return output
+      .components(separatedBy: .newlines)
+      .compactMap { MountedSMBShare(mountOutputLine: $0) }
+      .first(where: { $0.matches(share) })?
+      .mountPoint
   }
 
   private func isMounted(at path: String) -> Bool {

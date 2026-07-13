@@ -41,6 +41,15 @@ struct Volume: Identifiable, Hashable {
     let dUUID = diskUUID ?? "NONE"
     return "\(dUUID)-\(id)"
   }
+
+  var managedVolumeInfo: ManagedVolumeInfo? {
+    guard compositeId != nil else { return nil }
+    return ManagedVolumeInfo(
+      volumeUUID: id,
+      diskUUID: diskUUID ?? "NONE",
+      name: name
+    )
+  }
 }
 
 struct APFSContainer: Identifiable, Hashable {
