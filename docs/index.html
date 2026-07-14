@@ -1,33 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Primary Meta Tags -->
     <title>MountMate – macOS Drive Manager</title>
     <meta name="title" content="MountMate – macOS Drive Manager" />
-    <meta name="description" content="MountMate - A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly." />
-    <meta name="keywords" content="macOS, menubar app, drive manager, mount, unmount, external drives, usb" />
+    <meta
+      name="description"
+      content="MountMate - A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+    />
+    <meta
+      name="keywords"
+      content="macOS, menubar app, drive manager, mount, unmount, external drives, usb"
+    />
     <meta name="author" content="homielab" />
-    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="theme-color"
+      content="#f5f5f7"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#000000"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mountmate.homielab.com/" />
-    <meta property="og:title" content="MountMate – Drive management, perfected." />
-    <meta property="og:description" content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly." />
-    <meta property="og:image" content="https://mountmate.homielab.com/assets/og-image.png" />
+    <meta
+      property="og:title"
+      content="MountMate – Drive management, perfected."
+    />
+    <meta
+      property="og:description"
+      content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+    />
+    <meta
+      property="og:image"
+      content="https://mountmate.homielab.com/assets/og-image.png"
+    />
     <meta property="og:image:width" content="1731" />
     <meta property="og:image:height" content="909" />
-    <meta property="og:image:alt" content="MountMate – Drive management, perfected." />
+    <meta
+      property="og:image:alt"
+      content="MountMate – Drive management, perfected."
+    />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://mountmate.homielab.com/" />
-    <meta property="twitter:title" content="MountMate – Drive management, perfected." />
-    <meta property="twitter:description" content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly." />
-    <meta property="twitter:image" content="https://mountmate.homielab.com/assets/og-image.png" />
+    <meta
+      property="twitter:title"
+      content="MountMate – Drive management, perfected."
+    />
+    <meta
+      property="twitter:description"
+      content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+    />
+    <meta
+      property="twitter:image"
+      content="https://mountmate.homielab.com/assets/og-image.png"
+    />
     <style>
       :root {
         --bg-color: #f5f5f7;
@@ -38,10 +86,12 @@
         --button-hover: #0077ed;
         --section-bg: #ffffff;
         --footer-bg: #f5f5f7;
+        --border-color: rgba(0, 0, 0, 0.08);
+        --nav-bg: rgba(245, 245, 247, 0.8);
       }
-      
+
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not([data-theme="light"]) {
           --bg-color: #000000;
           --text-color: #f5f5f7;
           --text-secondary: #86868b;
@@ -50,49 +100,96 @@
           --button-hover: #0077ed;
           --section-bg: #1d1d1f;
           --footer-bg: #000000;
+          --border-color: rgba(255, 255, 255, 0.08);
+          --nav-bg: rgba(22, 22, 23, 0.8);
         }
+      }
+
+      :root[data-theme="dark"] {
+        --bg-color: #000000;
+        --text-color: #f5f5f7;
+        --text-secondary: #86868b;
+        --link-color: #2997ff;
+        --button-bg: #0071e3;
+        --button-hover: #0077ed;
+        --section-bg: #1d1d1f;
+        --footer-bg: #000000;
+        --border-color: rgba(255, 255, 255, 0.08);
+        --nav-bg: rgba(22, 22, 23, 0.8);
       }
 
       body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+          Roboto, Helvetica, Arial, sans-serif;
         background-color: var(--bg-color);
         color: var(--text-color);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         overflow-x: hidden;
+        transition:
+          background-color 0.3s,
+          color 0.3s;
+      }
+
+      .nav-container {
+        position: sticky;
+        top: 0;
+        z-index: 9999;
+        width: 100%;
+        background-color: var(--nav-bg);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border-bottom: 1px solid var(--border-color);
+        transition:
+          background-color 0.3s,
+          border-bottom-color 0.3s;
       }
 
       .nav {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px 24px;
-        max-width: 1000px;
+        height: 48px;
+        max-width: 1024px;
         margin: 0 auto;
+        padding: 0 22px;
+        box-sizing: border-box;
       }
 
       .nav-brand {
-        font-weight: 600;
-        font-size: 18px;
+        font-weight: 500;
+        font-size: 14px;
         color: var(--text-color);
         text-decoration: none;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        opacity: 0.9;
+        transition: opacity 0.2s;
       }
-      
+
+      .nav-brand:hover {
+        opacity: 1;
+      }
+
       .nav-brand img {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
       }
 
       .nav-links a {
         color: var(--text-color);
         text-decoration: none;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 400;
-        margin-left: 24px;
         opacity: 0.8;
         transition: opacity 0.2s;
       }
@@ -100,6 +197,100 @@
       .nav-links a:hover {
         opacity: 1;
       }
+
+      .theme-toggle {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.8;
+        transition:
+          opacity 0.2s,
+          transform 0.2s,
+          background-color 0.2s;
+        border-radius: 50%;
+      }
+
+      .theme-toggle:hover {
+        opacity: 1;
+        background-color: rgba(134, 134, 139, 0.15);
+      }
+
+      .theme-toggle:active {
+        transform: scale(0.95);
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .menu-toggle {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 6px;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.8;
+        transition:
+          opacity 0.2s,
+          transform 0.2s,
+          background-color 0.2s;
+        border-radius: 50%;
+      }
+
+      .menu-toggle:hover {
+        opacity: 1;
+        background-color: rgba(134, 134, 139, 0.15);
+      }
+
+      .menu-toggle:active {
+        transform: scale(0.95);
+      }
+
+      .menu-close-icon {
+        display: none;
+      }
+
+      .sun-icon {
+        display: none;
+      }
+      .moon-icon {
+        display: block;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .sun-icon {
+          display: block;
+        }
+        :root:not([data-theme="light"]) .moon-icon {
+          display: none;
+        }
+      }
+
+      :root[data-theme="dark"] .sun-icon {
+        display: block;
+      }
+      :root[data-theme="dark"] .moon-icon {
+        display: none;
+      }
+
+      :root[data-theme="light"] .sun-icon {
+        display: none;
+      }
+      :root[data-theme="light"] .moon-icon {
+        display: block;
+      }
+
+
 
       .hero {
         text-align: center;
@@ -137,13 +328,15 @@
         text-decoration: none;
         font-size: 17px;
         font-weight: 600;
-        transition: background-color 0.2s, transform 0.1s;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
       }
 
       .btn-primary:hover {
         background-color: var(--button-hover);
       }
-      
+
       .btn-primary:active {
         transform: scale(0.98);
       }
@@ -174,18 +367,36 @@
         max-width: 100%;
         height: auto;
         border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
       }
 
-      .light-img { display: block; }
-      .dark-img { display: none; }
+      .light-img {
+        display: block;
+      }
+      .dark-img {
+        display: none;
+      }
 
       @media (prefers-color-scheme: dark) {
-        .light-img { display: none; }
-        .dark-img { display: block; }
-        .hero-image {
-          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        :root:not([data-theme="light"]) .light-img {
+          display: none;
         }
+        :root:not([data-theme="light"]) .dark-img {
+          display: block;
+        }
+        :root:not([data-theme="light"]) .hero-image {
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      :root[data-theme="dark"] .light-img {
+        display: none;
+      }
+      :root[data-theme="dark"] .dark-img {
+        display: block;
+      }
+      :root[data-theme="dark"] .hero-image {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       }
 
       .section {
@@ -242,15 +453,19 @@
         width: 100%;
         max-width: 350px;
         border-radius: 20px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
       }
 
       @media (prefers-color-scheme: dark) {
-        .feature-image img {
-          box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        :root:not([data-theme="light"]) .feature-image img {
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
         }
       }
-      
+
+      :root[data-theme="dark"] .feature-image img {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      }
+
       .feature-grid.reverse .feature-text {
         order: 2;
       }
@@ -261,85 +476,347 @@
       footer {
         background-color: var(--footer-bg);
         color: var(--text-secondary);
-        padding: 60px 20px 40px;
-        font-size: 14px;
-        border-top: 1px solid rgba(134, 134, 139, 0.3);
+        padding: 50px 20px 30px;
+        font-size: 12px;
+        line-height: 1.6;
+        border-top: 1px solid rgba(134, 134, 139, 0.2);
       }
 
       .footer-inner {
-        max-width: 1000px;
+        max-width: 1024px;
         margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
+        padding: 0 22px;
       }
 
-      footer a {
+      .footer-directory {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid rgba(134, 134, 139, 0.2);
+        padding-bottom: 30px;
+      }
+
+      .footer-directory-column h3 {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 10px 0;
+      }
+
+      .footer-directory-column ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .footer-directory-column ul li {
+        margin-bottom: 8px;
+      }
+
+      .footer-directory-column a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .footer-directory-column a:hover {
         color: var(--text-color);
         text-decoration: none;
       }
-      
-      footer a:hover {
-        text-decoration: underline;
+
+      .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        color: var(--text-secondary);
+        padding-top: 10px;
+      }
+
+      .footer-bottom-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .footer-bottom a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .footer-bottom a:hover {
+        color: var(--text-color);
+        text-decoration: none;
       }
 
       @media (max-width: 768px) {
-        .hero h1 { font-size: 48px; }
-        .hero p { font-size: 21px; }
-        .section h2 { font-size: 36px; }
-        .section p { font-size: 21px; }
-        .feature-grid { grid-template-columns: 1fr; gap: 60px; }
-        .feature-text { text-align: center; }
-        .feature-grid.reverse .feature-text { order: 1; }
-        .feature-grid.reverse .feature-image { order: 2; }
+        .nav {
+          padding: 0 16px;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+
+        .nav-links {
+          position: absolute;
+          top: 48px;
+          left: 0;
+          width: 100%;
+          height: calc(100vh - 48px);
+          background-color: var(--bg-color);
+          padding: 32px 24px;
+          box-sizing: border-box;
+          flex-direction: column;
+          gap: 24px;
+          align-items: flex-start;
+          z-index: 9998;
+          overflow-y: auto;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(-10px);
+          transition:
+            opacity 0.25s ease,
+            transform 0.25s ease;
+        }
+
+        .menu-active .nav-links {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0);
+        }
+
+        body.menu-open {
+          overflow: hidden;
+        }
+
+        .nav-links a {
+          font-size: 18px;
+          font-weight: 500;
+          width: 100%;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 12px;
+          margin-left: 0;
+        }
+
+        .menu-active .menu-open-icon {
+          display: none;
+        }
+
+        .menu-active .menu-close-icon {
+          display: block;
+        }
+
+        .hero h1 {
+          font-size: 48px;
+        }
+        .hero p {
+          font-size: 21px;
+        }
+        .section h2 {
+          font-size: 36px;
+        }
+        .section p {
+          font-size: 21px;
+        }
+        .feature-grid {
+          grid-template-columns: 1fr;
+          gap: 60px;
+        }
+        .feature-text {
+          text-align: center;
+        }
+        .feature-grid.reverse .feature-text {
+          order: 1;
+        }
+        .feature-grid.reverse .feature-image {
+          order: 2;
+        }
+        .footer-directory {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        }
+        .footer-bottom {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
       }
     </style>
   </head>
   <body>
-    <nav class="nav">
-      <a href="#" class="nav-brand">
-        <img src="assets/icon.png" alt="MountMate Icon" />
-        MountMate
-      </a>
-      <div class="nav-links">
-        <a href="https://github.com/homielab/mountmate" target="_blank">GitHub</a>
-        <a href="https://ko-fi.com/homielab" target="_blank">Support</a>
+    <nav class="nav-container">
+      <div class="nav">
+        <a href="#" class="nav-brand">
+          <img src="assets/icon.png" alt="MountMate Icon" />
+          MountMate
+        </a>
+        <div class="nav-links">
+          <a
+            href="https://github.com/homielab/mountmate/releases/latest"
+            target="_blank"
+            >Download</a
+          >
+          <a href="https://github.com/homielab/mountmate" target="_blank"
+            >GitHub</a
+          >
+          <a href="https://www.reddit.com/r/homielab/" target="_blank"
+            >Community</a
+          >
+          <a href="https://ko-fi.com/homielab" target="_blank">Donate</a>
+          <a href="mailto:mountmate@homielab.com">Contact</a>
+          <a href="https://homielab.com" target="_blank">Homielab</a>
+        </div>
+        <div class="nav-actions">
+          <button
+            id="theme-toggle"
+            class="theme-toggle"
+            aria-label="Toggle theme"
+          >
+            <!-- Sun Icon (visible in dark mode) -->
+            <svg
+              class="sun-icon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon Icon (visible in light mode) -->
+            <svg
+              class="moon-icon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <button id="menu-toggle" class="menu-toggle" aria-label="Toggle menu">
+            <!-- Menu Hamburger Open Icon -->
+            <svg
+              class="menu-open-icon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+              stroke-linecap="round"
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <!-- Menu Close Icon -->
+            <svg
+              class="menu-close-icon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+              stroke-linecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
     </nav>
 
     <header class="hero">
       <h1>Drive management,<br />perfected.</h1>
       <p>
-        A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly.
+        A lightweight and elegant macOS menubar app to mount and unmount your
+        external drives effortlessly.
       </p>
-      
+
       <div class="cta-buttons">
-        <a href="https://github.com/homielab/mountmate/releases/latest" target="_blank" class="btn-primary">Download</a>
-        <a href="https://github.com/homielab/mountmate" target="_blank" class="btn-secondary">View on GitHub <span>›</span></a>
+        <a
+          href="https://github.com/homielab/mountmate/releases/latest"
+          target="_blank"
+          class="btn-primary"
+          >Download</a
+        >
+        <a
+          href="https://github.com/homielab/mountmate"
+          target="_blank"
+          class="btn-secondary"
+          >View on GitHub <span>›</span></a
+        >
       </div>
 
       <div class="hero-image-container">
         <!-- Using full screenshots for the hero -->
-        <img src="screenshots/light-full.png" alt="MountMate Full Desktop" class="hero-image light-img" />
-        <img src="screenshots/dark-full.png" alt="MountMate Full Desktop" class="hero-image dark-img" />
+        <img
+          src="screenshots/light-full.png"
+          alt="MountMate Full Desktop"
+          class="hero-image light-img"
+        />
+        <img
+          src="screenshots/dark-full.png"
+          alt="MountMate Full Desktop"
+          class="hero-image dark-img"
+        />
       </div>
     </header>
 
     <section class="section">
       <div class="section-inner">
         <h2>Simplicity at your fingertips.</h2>
-        <p>Everything you need is just a click away in your menubar. No more hunting through Finder to eject your drives safely.</p>
-        
+        <p>
+          Everything you need is just a click away in your menubar. No more
+          hunting through Finder to eject your drives safely.
+        </p>
+
         <div class="feature-grid">
           <div class="feature-text">
             <h3>Designed for macOS.</h3>
-            <p>MountMate feels right at home on your Mac. With full support for Dark Mode and native design paradigms, it's the drive manager macOS should have included.</p>
+            <p>
+              MountMate feels right at home on your Mac. With full support for
+              Dark Mode and native design paradigms, it's the drive manager
+              macOS should have included.
+            </p>
           </div>
           <div class="feature-image">
             <!-- Using the cropped menubar screenshots for features -->
-            <img src="screenshots/light.png" alt="MountMate Menubar UI" class="light-img" />
-            <img src="screenshots/dark.png" alt="MountMate Menubar UI" class="dark-img" />
+            <img
+              src="screenshots/light.png"
+              alt="MountMate Menubar UI"
+              class="light-img"
+            />
+            <img
+              src="screenshots/dark.png"
+              alt="MountMate Menubar UI"
+              class="dark-img"
+            />
           </div>
         </div>
       </div>
@@ -347,15 +824,118 @@
 
     <footer>
       <div class="footer-inner">
-        <div>
-          <a href="https://ko-fi.com/homielab" target="_blank">
-            <img height="36" style="border:0px;height:36px;" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" />
-          </a>
+        <div class="footer-directory">
+          <div class="footer-directory-column">
+            <h3>Product</h3>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/homielab/mountmate/releases/latest"
+                  target="_blank"
+                  >Download</a
+                >
+              </li>
+              <li>
+                <a href="https://github.com/homielab/mountmate" target="_blank"
+                  >GitHub Repository</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://github.com/homielab/mountmate/releases"
+                  target="_blank"
+                  >All Releases</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="footer-directory-column">
+            <h3>Community</h3>
+            <ul>
+              <li>
+                <a href="https://www.reddit.com/r/homielab/" target="_blank"
+                  >Reddit Community</a
+                >
+              </li>
+              <li>
+                <a href="https://ko-fi.com/homielab" target="_blank"
+                  >Support on Ko-fi</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="footer-directory-column">
+            <h3>Developer</h3>
+            <ul>
+              <li>
+                <a href="https://homielab.com" target="_blank">Homielab</a>
+              </li>
+              <li>
+                <a href="mailto:mountmate@homielab.com">Contact Support</a>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div>
-          &copy; 2026 MountMate. Built with ❤️ by <a href="https://homielab.com" target="_blank">homielab</a>.
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-left">
+            <span
+              >&copy; 2026 MountMate. Built with ❤️ by
+              <a href="https://homielab.com" target="_blank">homielab</a>.</span
+            >
+          </div>
+          <div>
+            <a href="https://ko-fi.com/homielab" target="_blank">
+              <img
+                height="28"
+                style="border: 0px; height: 28px; vertical-align: middle"
+                src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
+                border="0"
+                alt="Buy Me a Coffee at ko-fi.com"
+              />
+            </a>
+          </div>
         </div>
       </div>
     </footer>
+    <script>
+      const themeToggle = document.getElementById("theme-toggle");
+      const menuToggle = document.getElementById("menu-toggle");
+      const navContainer = document.querySelector(".nav-container");
+
+      const applyTheme = (theme) => {
+        if (theme === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      };
+
+      themeToggle.addEventListener("click", () => {
+        const currentTheme =
+          document.documentElement.getAttribute("data-theme") ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light");
+
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        localStorage.setItem("theme", newTheme);
+        applyTheme(newTheme);
+      });
+
+      menuToggle.addEventListener("click", () => {
+        navContainer.classList.toggle("menu-active");
+        document.body.classList.toggle("menu-open");
+      });
+
+      // Close menu when clicking on any link
+      const navLinks = document.querySelectorAll(".nav-links a");
+      navLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          navContainer.classList.remove("menu-active");
+          document.body.classList.remove("menu-open");
+        });
+      });
+    </script>
   </body>
 </html>
