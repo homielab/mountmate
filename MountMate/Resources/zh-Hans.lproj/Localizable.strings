@@ -16,7 +16,11 @@
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
+"Expand All" = "展开全部";
+"Collapse All" = "折叠全部";
 "Unmount All" = "卸载所有卷宗";
+"Settings" = "设置";
+"Refresh Drives" = "刷新磁盘";
 "Eject" = "推出";
 "Mount" = "挂载";
 "Unmount" = "卸载";

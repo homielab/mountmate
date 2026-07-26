@@ -16,7 +16,11 @@
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
+"Expand All" = "Mở rộng tất cả";
+"Collapse All" = "Thu gọn tất cả";
 "Unmount All" = "Tháo tất cả phân vùng người dùng";
+"Settings" = "Cài đặt";
+"Refresh Drives" = "Làm mới ổ đĩa";
 "Eject" = "Đẩy ra an toàn";
 "Mount" = "Gắn";
 "Unmount" = "Tháo";

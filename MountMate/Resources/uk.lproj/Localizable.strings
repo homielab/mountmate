@@ -16,7 +16,11 @@
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
+"Expand All" = "Розгорнути всі";
+"Collapse All" = "Згорнути всі";
 "Unmount All" = "Відмонтувати всі томи";
+"Settings" = "Налаштування";
+"Refresh Drives" = "Оновити диски";
 "Eject" = "Вийняти";
 "Mount" = "Підключити";
 "Unmount" = "Відмонтувати";

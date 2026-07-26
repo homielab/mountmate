@@ -16,7 +16,11 @@
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
-"Unmount All" = "Unmount All User Volumes";
+"Expand All" = "Expand All";
+"Collapse All" = "Collapse All";
+"Unmount All" = "Unmount All";
+"Settings" = "Settings";
+"Refresh Drives" = "Refresh Drives";
 "Eject" = "Eject";
 "Mount" = "Mount";
 "Unmount" = "Unmount";
