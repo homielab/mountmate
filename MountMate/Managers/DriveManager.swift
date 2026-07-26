@@ -318,7 +318,8 @@ class DriveManager: ObservableObject {
     for diskData in rootDisks {
       guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
       let infoPlist = rootInfo[physicalIdentifier]
-      if DiskTopology.isRAIDMember(infoPlist) { continue }
+      let diskPartitions = diskData["Partitions"] as? [[String: Any]]
+      if DiskTopology.isRAIDMember(infoPlist, partitions: diskPartitions) { continue }
       if (infoPlist?["Internal"] as? Bool) ?? false && !shouldShowInternalDisks { continue }
 
       var partitions: [Volume] = []
