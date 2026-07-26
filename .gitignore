@@ -12,3 +12,5 @@ xcuserdata/
 
 .env.local
 Dist/
+.agents/
+.build/
