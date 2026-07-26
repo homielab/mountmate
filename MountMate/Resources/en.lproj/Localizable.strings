@@ -54,6 +54,8 @@
 "Management" = "Management";
 
 // General Tab
+"Enable Keyboard Shortcuts" = "Enable Keyboard Shortcuts";
+"Show Count in Menu Bar" = "Show Count in Menu Bar";
 "Show Internal Disks" = "Show Internal Disks";
 "Start MountMate at Login" = "Start MountMate at Login";
 "Block USB Auto-Mount" = "Block USB Auto-Mount";
@@ -61,6 +63,7 @@
 "Language" = "Language";
 
 // About & Updates Section
+"About & Updates" = "About & Updates";
 "Homepage" = "Homepage";
 "Support Email" = "Support Email";
 "Donate" = "Donate";
@@ -126,6 +129,7 @@
 // MARK: - Network Shares
 //=============================================
 "Network Shares" = "Network Shares";
+"Add Share" = "Add Share";
 "Add Network Share" = "Add Network Share";
 "Edit Network Share" = "Edit Network Share";
 "Server Address" = "Server Address";

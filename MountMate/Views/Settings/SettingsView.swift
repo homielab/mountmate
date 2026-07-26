@@ -37,6 +37,7 @@ struct GeneralSettingsView: View {
       let firstLanguage = preferredLanguages.first
     else { return "en" }
     if firstLanguage.starts(with: "vi") { return "vi" }
+    if firstLanguage.starts(with: "ru") { return "ru" }
     if firstLanguage.starts(with: "zh-Hant")
       || firstLanguage.starts(with: "zh-TW")
       || firstLanguage.starts(with: "zh-HK")
@@ -90,6 +91,7 @@ struct GeneralSettingsView: View {
         Picker("Language", selection: $selectedLanguage) {
           Text("English").tag("en")
           Text("Українська").tag("uk")
+          Text("Русский").tag("ru")
           Text("Tiếng Việt").tag("vi")
           Text("中文（简体）").tag("zh-Hans")
           Text("中文（繁体）").tag("zh-Hant")

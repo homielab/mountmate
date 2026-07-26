@@ -54,6 +54,8 @@
 "Management" = "Quản lý";
 
 // General Tab
+"Enable Keyboard Shortcuts" = "Bật phím tắt";
+"Show Count in Menu Bar" = "Hiển thị số lượng trên thanh menu";
 "Show Internal Disks" = "Hiển thị ổ đĩa trong";
 "Start MountMate at Login" = "Khởi động cùng máy";
 "Block USB Auto-Mount" = "Chặn tự động gắn USB";
@@ -61,6 +63,7 @@
 "Language" = "Ngôn ngữ";
 
 // About & Updates Section
+"About & Updates" = "Giới thiệu & Cập nhật";
 "Homepage" = "Trang chủ";
 "Support Email" = "Email hỗ trợ";
 "Donate" = "Ủng hộ";
@@ -126,6 +129,7 @@
 // MARK: - Network Shares
 //=============================================
 "Network Shares" = "Chia sẻ Mạng";
+"Add Share" = "Thêm Chia sẻ";
 "Add Network Share" = "Thêm Chia sẻ Mạng";
 "Edit Network Share" = "Sửa Chia sẻ Mạng";
 "Server Address" = "Địa chỉ Máy chủ";

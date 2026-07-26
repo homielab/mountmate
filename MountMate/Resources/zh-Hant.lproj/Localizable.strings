@@ -54,6 +54,8 @@
 "Management" = "管理";
 
 // General Tab
+"Enable Keyboard Shortcuts" = "啟用鍵盤快捷鍵";
+"Show Count in Menu Bar" = "在選單列顯示數量";
 "Show Internal Disks" = "顯示內建磁碟";
 "Start MountMate at Login" = "登入時啟動 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自動掛載";
@@ -61,6 +63,7 @@
 "Language" = "語言";
 
 // About & Updates Section
+"About & Updates" = "關於與更新";
 "Homepage" = "首頁";
 "Support Email" = "支援電子郵件";
 "Donate" = "贊助";
@@ -126,6 +129,7 @@
 // MARK: - Network Shares
 //=============================================
 "Network Shares" = "網路共享";
+"Add Share" = "新增共享";
 "Add Network Share" = "新增網路共享";
 "Edit Network Share" = "編輯網路共享";
 "Server Address" = "伺服器位址";

@@ -1,0 +1,157 @@
+/* 
+  Localizable.strings (Russian)
+*/
+
+// MARK: - Main View & Sections
+//=============================================
+
+"No Drives Found" = "Диски не найдены";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Подключите USB-накопитель, SD-карту или смонтируйте образ диска, чтобы он появился здесь.";
+"Internal Disks" = "Внутренние диски";
+"External Disks" = "Внешние диски";
+"Disk Images" = "Образы дисков";
+"Snapshots" = "Снимки";
+
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Expand All" = "Развернуть все";
+"Collapse All" = "Свернуть все";
+"Unmount All" = "Отмонтировать все";
+"Settings" = "Настройки";
+"Refresh Drives" = "Обновить диски";
+"Eject" = "Извлечь";
+"Mount" = "Смонтировать";
+"Unmount" = "Отмонтировать";
+"Quit MountMate" = "Выйти из MountMate";
+
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"Unknown" = "Неизвестно";
+"Unmounted" = "Не смонтировано";
+
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "Игнорировать этот диск";
+"Ignore This Volume" = "Игнорировать этот том";
+"Protect from 'Unmount All'" = "Защитить от 'Отмонтировать все'";
+"Unprotect from 'Unmount All'" = "Снять защиту от 'Отмонтировать все'";
+"Open in Finder" = "Открыть в Finder";
+
+
+// MARK: - Settings View
+//=============================================
+
+"MountMate Settings" = "Настройки MountMate";
+
+// Tabs
+"General" = "Основные";
+"Management" = "Управление";
+
+// General Tab
+"Enable Keyboard Shortcuts" = "Включить сочетания клавиш";
+"Show Count in Menu Bar" = "Показывать количество в строке меню";
+"Show Internal Disks" = "Показывать внутренние диски";
+"Start MountMate at Login" = "Запускать MountMate при входе";
+"Block USB Auto-Mount" = "Блокировать автоподключение USB";
+"Unmount All Disks on Sleep" = "Отмонтировать все диски во время сна";
+"Language" = "Язык";
+
+// About & Updates Section
+"About & Updates" = "О приложении и обновления";
+"Homepage" = "Домашняя страница";
+"Support Email" = "Электронная почта поддержки";
+"Donate" = "Пожертвовать";
+"Check for Updates..." = "Проверить обновления...";
+
+// Management Tab
+"Ignored Volumes" = "Игнорируемые тома";
+"No Ignored Volumes" = "Нет игнорируемых томов";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Щёлкните правой кнопкой на томе, чтобы игнорировать его. Полезно для системных разделов, таких как 'EFI', которыми не нужно управлять.";
+"Protected Volumes" = "Защищённые тома";
+"No Protected Volumes" = "Нет защищённых томов";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Щёлкните правой кнопкой на томе, чтобы защитить его от 'Отмонтировать все' и действий во время сна.";
+
+"Don't Auto-Mount This Volume" = "Не монтировать этот том автоматически";
+"Blocked from Auto-Mounting" = "Заблокировано от автоподключения";
+"No Volumes Blocked from Auto-Mounting" = "Нет томов, заблокированных от автоподключения";
+"Right-click a volume to prevent it from mounting automatically when connected." = "Щёлкните правой кнопкой на томе, чтобы запретить его автоматическое монтирование при подключении.";
+
+// MARK: - Alerts & Errors
+//=============================================
+
+// Titles
+"Could Not Load Disks" = "Не удалось загрузить диски";
+"Data Parsing Error" = "Ошибка разбора данных";
+"Eject Failed" = "Не удалось извлечь";
+"Mount Failed" = "Не удалось смонтировать";
+"Unmount Failed" = "Не удалось отмонтировать";
+"\"%@\" is locked" = "«%@» заблокирован";
+"Full Disk Access Recommended" = "Рекомендуется полный доступ к дискам";
+
+// Buttons
+"OK" = "OK";
+"Unlock" = "Разблокировать";
+"Cancel" = "Отмена";
+"Open System Settings" = "Открыть системные настройки";
+"Later" = "Позже";
+
+// Verbs for error messages
+"unmount" = "отмонтировать";
+"eject" = "извлечь";
+"mount" = "смонтировать";
+
+// Error Messages & Formats
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nПредоставьте MountMate полный доступ к дискам в Системных настройках > Конфиденциальность и безопасность.";
+"The \"EFI\" partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Раздел «EFI» нельзя смонтировать напрямую. Это специальный системный раздел, и такое поведение является нормальным.";
+"Failed to eject \"%@\" because one of its volumes is busy or in use." = "Не удалось извлечь «%@», поскольку один из его томов занят или используется.";
+"Failed to %@ \"%@\" because it is currently in use by another application." = "Не удалось %@ «%@», поскольку он сейчас используется другой программой.";
+"Failed to %@ \"%@\" because it is currently in use by \"%@\"." = "Не удалось %@ «%@», поскольку он сейчас используется «%@».";
+"An unknown error occurred while trying to %@ \"%@\"." = "Во время попытки %@ «%@» произошла неизвестная ошибка.";
+"Enter the password to unlock \"%@\"" = "Введите пароль, чтобы разблокировать «%@»";
+"Password" = "Пароль";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Чтобы убедиться, что MountMate видит все типы дисков и предотвращает ошибки, предоставьте полный доступ к дискам.\n\nНажмите «Открыть системные настройки», чтобы перейти к соответствующей панели.";
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate не смог получить информацию о дисках. Система может быть занята, диск может не отвечать, или права доступа могут быть неправильными.";
+
+// MARK: - App Lifecycle & Loading
+//=============================================
+
+"Loading Disks..." = "Загрузка дисков...";
+"Restart Required" = "Требуется перезапуск";
+"Please restart MountMate for the language change to take effect." = "Пожалуйста, перезапустите MountMate, чтобы изменения языка вступили в силу.";
+"Restart Now" = "Перезапустить сейчас";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "Сетевые ресурсы";
+"Add Share" = "Добавить ресурс";
+"Add Network Share" = "Добавить сетевой ресурс";
+"Edit Network Share" = "Редактировать сетевой ресурс";
+"Server Address" = "Адрес сервера";
+"Share Name/Path" = "Название/путь ресурса";
+"Username" = "Имя пользователя";
+"Password" = "Пароль";
+"Custom Mount Point" = "Пользовательская точка подключения";
+"Mount at Login" = "Монтировать при входе";
+"MountMate can automatically mount these SMB shares at login." = "MountMate может автоматически монтировать эти SMB-ресурсы при входе.";
+"No Network Shares Configured" = "Сетевые ресурсы не настроены";
+"Mounted" = "Смонтировано";
+"Not Mounted" = "Не смонтировано";
+"Display Name" = "Отображаемое имя";
+"Connection" = "Подключение";
+"Credentials" = "Учётные данные";
+"Options" = "Параметры";
+"Leave empty to use default location" = "Оставьте пустым, чтобы использовать место по умолчанию";
+"Preview: %@" = "Предварительный просмотр: %@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "Принудительно извлечь";
+"The disk is in use. Do you want to force eject it?" = "Диск используется. Желаете принудительно извлечь его?";
+"This may result in data loss." = "Это может привести к потере данных.";
+"Remember password in Keychain" = "Запомнить пароль в Keychain";
