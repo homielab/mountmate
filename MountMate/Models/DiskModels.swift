@@ -23,7 +23,14 @@ enum DiskTopology {
     return false
   }
 
-  static func isRAIDMember(_ info: [String: Any]?) -> Bool {
+  static func isRAIDMember(_ info: [String: Any]?, partitions: [[String: Any]]? = nil) -> Bool {
+    if let partitions {
+      for p in partitions {
+        if let content = p["Content"] as? String, content == "Apple_RAID" || content == "Apple_RAID_Offline" {
+          return true
+        }
+      }
+    }
     guard let info, !isRAIDMaster(info) else { return false }
     if let value = info["RAIDMember"] as? Bool { return value }
     if let value = info["RAIDMember"] as? String {
