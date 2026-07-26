@@ -66,7 +66,8 @@ create-dmg \
   --icon "${APP_NAME}.app" 160 240 \
   --hide-extension "${APP_NAME}.app" \
   --app-drop-link 480 240 \
-  "${DMG_NAME}" "${SOURCE_FOLDER}"
+  --disk-image-size 50 \
+  "${DMG_NAME}" "${APP_PATH}"
 
 echo "🔏 Signing and notarizing DMG..."
 codesign --force --sign "${CERTIFICATE_NAME}" "${DMG_NAME}"
