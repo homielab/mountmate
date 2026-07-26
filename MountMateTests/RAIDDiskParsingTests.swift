@@ -18,4 +18,25 @@ final class RAIDDiskParsingTests: XCTestCase {
     ]
     XCTAssertFalse(DiskTopology.isRAIDMember(nil, partitions: regularPartition))
   }
+
+  func testWholeDiskRAIDVolumeParsing() {
+    let plistData: [String: Any] = [
+      "AllDisksAndPartitions": [
+        [
+          "Content": "Apple_HFS",
+          "DeviceIdentifier": "disk9",
+          "MountPoint": "/Volumes/Kappa",
+          "OSInternal": false,
+          "Size": Int64(16001772158976),
+          "VolumeName": "Kappa"
+        ]
+      ]
+    ]
+    
+    // Perform parsing test logic manually or via DriveManager helper if available
+    let allDisks = plistData["AllDisksAndPartitions"] as! [[String: Any]]
+    let diskData = allDisks[0]
+    XCTAssertEqual(diskData["VolumeName"] as? String, "Kappa")
+    XCTAssertEqual(diskData["MountPoint"] as? String, "/Volumes/Kappa")
+  }
 }

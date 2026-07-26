@@ -349,6 +349,12 @@ class DriveManager: ObservableObject {
         }
       }
 
+      if partitions.isEmpty && containers.isEmpty {
+        if let volume = createVolume(from: diskData, snapshotsData: nil) {
+          partitions.append(volume)
+        }
+      }
+
       if !partitions.isEmpty || !containers.isEmpty {
         let connectionInfo = getConnectionInfo(
           from: infoPlist, isInternal: (infoPlist?["Internal"] as? Bool) ?? false)
