@@ -67,11 +67,6 @@ class DiskMounter: ObservableObject {
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
       let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) })
 
-      // approve manual mounts.
-      if let name = bsdName, let approved = this.approvingManualMountFor, approved == name {
-        return nil
-      }
-
       guard let desc = DADiskCopyDescription(disk) else { return nil }
       let description = desc as! [String: Any]
 
@@ -80,15 +75,6 @@ class DiskMounter: ObservableObject {
         model == "Disk Image"
       {
         return nil
-      }
-
-      var shouldBlock = false
-
-      // global USB block.
-      if this.blockUSBAutoMount
-        && (description[kDADiskDescriptionDeviceProtocolKey as String] as? String) == "USB"
-      {
-        shouldBlock = true
       }
 
       // specific volume is in the blocked list.
@@ -105,11 +91,30 @@ class DiskMounter: ObservableObject {
         diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
       }
 
-      // We only proceed if we at least have a Volume UUID, or if we want to use the same logic as PersistenceManager
-      // which defaults diskUUID to "NONE" but requires VolumeUUID (which for DADisk is VolumeUUID if present).
-      // However, DADisk might not give us a VolumeUUID for all disks.
-      // In DriveManager, we default VolumeUUID to DeviceIdentifier.
-      // For DADisk matching, let's use what we have.
+      // approve manual mounts (checking BSD name or Volume UUID / Disk UUID).
+      if let approved = this.approvingManualMountFor {
+        if approved == "*" {
+          return nil
+        }
+        if let name = bsdName, approved.lowercased() == name.lowercased() {
+          return nil
+        }
+        if let volUUID = volumeUUIDString, approved.lowercased() == volUUID.lowercased() {
+          return nil
+        }
+        if let diskUUID = diskUUIDString, approved.lowercased() == diskUUID.lowercased() {
+          return nil
+        }
+      }
+
+      var shouldBlock = false
+
+      // global USB block.
+      if this.blockUSBAutoMount
+        && (description[kDADiskDescriptionDeviceProtocolKey as String] as? String) == "USB"
+      {
+        shouldBlock = true
+      }
 
       if let volUUID = volumeUUIDString {
         let dUUID = diskUUIDString ?? "NONE"
