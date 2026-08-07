@@ -50,8 +50,9 @@ class NetworkMountManager: ObservableObject {
   func refreshMountStatus() {
     DispatchQueue.global(qos: .background).async { [weak self] in
       guard let self = self else { return }
-      let result = runShell("mount")
-      guard let output = result.output else { return }
+      let result = runProcess(executable: "/sbin/mount", arguments: [])
+      guard result.succeeded, !result.stdout.isEmpty else { return }
+      let output = result.stdout
 
       let parsedData = self.parseMountedShares(from: output)
 
@@ -181,17 +182,20 @@ class NetworkMountManager: ObservableObject {
     }
 
     DispatchQueue.global(qos: .userInitiated).async {
-      let command =
-        "/sbin/mount_smbfs -o noowners,nosuid \"\(url.absoluteString)\" \"\(mountPoint)\""
-      let result = runShell(command)
+      let result = runProcess(
+        executable: "/sbin/mount_smbfs",
+        arguments: ["-o", "noowners,nosuid", url.absoluteString, mountPoint])
 
       DispatchQueue.main.async {
         self.refreshMountStatus()
-        if let error = result.error, !error.isEmpty {
+        if !result.succeeded {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
 
-          let sanitized = self.sanitizeError(error)
+          let rawError = result.stderr.isEmpty
+            ? "mount_smbfs exited with code \(result.exitCode ?? -1)."
+            : result.stderr
+          let sanitized = self.sanitizeError(rawError)
           // Detect permission-related mount failures
           let lower = sanitized.lowercased()
           if lower.contains("permission denied") || lower.contains("operation not permitted")
@@ -229,12 +233,15 @@ class NetworkMountManager: ObservableObject {
     let mountPoint = configuredMountPoint(for: share)
 
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runShell("umount \"\(mountPoint)\"")
+      let result = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
 
       DispatchQueue.main.async {
         self.refreshMountStatus()
-        if let error = result.error, !error.isEmpty {
-          completion(false, error)
+        if !result.succeeded {
+          let errMsg = result.stderr.isEmpty
+            ? "umount exited with code \(result.exitCode ?? -1)."
+            : result.stderr
+          completion(false, errMsg)
         } else {
           completion(true, nil)
         }
@@ -253,8 +260,8 @@ class NetworkMountManager: ObservableObject {
     DispatchQueue.global(qos: .userInitiated).async {
       let failures = shares.compactMap { share -> String? in
         let mountPoint = self.configuredMountPoint(for: share)
-        let result = runShell("umount \"\(mountPoint)\"")
-        return result.error?.isEmpty == false ? share.name : nil
+        let result = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+        return !result.succeeded ? share.name : nil
       }
 
       DispatchQueue.main.async {
@@ -296,8 +303,9 @@ class NetworkMountManager: ObservableObject {
 
   private func findExistingMountPoint(for share: NetworkShare) -> String? {
     // Run mount command to get list of mounts
-    let result = runShell("mount")
-    guard let output = result.output else { return nil }
+    let result = runProcess(executable: "/sbin/mount", arguments: [])
+    guard result.succeeded, !result.stdout.isEmpty else { return nil }
+    let output = result.stdout
 
     return output
       .components(separatedBy: .newlines)
