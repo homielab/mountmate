@@ -18,6 +18,17 @@ class DiskMounter: ObservableObject {
   private var clearApprovalWorkItem: DispatchWorkItem?
   private var cancellables = Set<AnyCancellable>()
 
+  /// BSD names of volumes whose first auto-mount we have already dissented.
+  ///
+  /// The OS-triggered auto-mount fires within milliseconds of the drive being
+  /// connected. We block it and record the BSD name here. Any subsequent mount
+  /// request for the same BSD name (Terminal `diskutil mount`, Finder, another
+  /// app) is considered a deliberate user action and is allowed through.
+  ///
+  /// The record is cleared in `diskDisappearedCallback` so that re-plugging the
+  /// same drive causes the auto-mount to be blocked again.
+  private var dissentedAutoMounts: Set<String> = []
+
   init() {
     NotificationCenter.default.addObserver(
       self, selector: #selector(handleWillMount), name: .willManuallyMount, object: nil)
@@ -62,6 +73,19 @@ class DiskMounter: ObservableObject {
     session = DASessionCreate(kCFAllocatorDefault)
     guard let session = session else { return }
 
+    let context = Unmanaged.passUnretained(self).toOpaque()
+
+    // Remove a volume from the dissented-auto-mounts set when it leaves the
+    // system, so that re-plugging the same drive is correctly blocked again.
+    let disappearedCallback: DADiskDisappearedCallback = { (disk, context) in
+      guard let context = context else { return }
+      let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
+      if let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) }) {
+        this.dissentedAutoMounts.remove(bsdName)
+      }
+    }
+    DARegisterDiskDisappearedCallback(session, nil, disappearedCallback, context)
+
     let mountCallback: DADiskMountApprovalCallback = { (disk, context) -> Unmanaged<DADissenter>? in
       guard let context = context else { return nil }
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
@@ -91,7 +115,7 @@ class DiskMounter: ObservableObject {
         diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
       }
 
-      // Approve manual mounts (checking BSD name or Volume UUID / Disk UUID).
+      // Approve explicit manual mounts triggered by the MountMate app itself.
       if let approved = this.approvingManualMountFor {
         if approved == "*" {
           return nil
@@ -105,6 +129,13 @@ class DiskMounter: ObservableObject {
         if let diskUUID = diskUUIDString, approved.lowercased() == diskUUID.lowercased() {
           return nil
         }
+      }
+
+      // If we already blocked this volume's auto-mount once, any subsequent
+      // mount request is a deliberate user action (Terminal, Finder, another
+      // app) — allow it through without applying any blocking rules.
+      if let name = bsdName, this.dissentedAutoMounts.contains(name) {
+        return nil
       }
 
       var shouldBlock = false
@@ -146,6 +177,12 @@ class DiskMounter: ObservableObject {
       }
 
       if shouldBlock {
+        // Record that we've blocked the auto-mount for this BSD name.
+        // The next mount request for this volume will be allowed through
+        // as a manual user action.
+        if let name = bsdName {
+          this.dissentedAutoMounts.insert(name)
+        }
         print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
         return Unmanaged.passRetained(dissenter)
@@ -156,7 +193,6 @@ class DiskMounter: ObservableObject {
     }
 
     let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]
-    let context = Unmanaged.passUnretained(self).toOpaque()
     DARegisterDiskMountApprovalCallback(session, matching as CFDictionary, mountCallback, context)
     DASessionSetDispatchQueue(session, DispatchQueue.main)
   }
@@ -164,6 +200,8 @@ class DiskMounter: ObservableObject {
   private func stopDiskArbitration() {
     guard let session = session else { return }
     DASessionSetDispatchQueue(session, nil)
+    dissentedAutoMounts.removeAll()
     self.session = nil
   }
 }
+
