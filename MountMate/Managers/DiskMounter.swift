@@ -70,14 +70,14 @@ class DiskMounter: ObservableObject {
       guard let desc = DADiskCopyDescription(disk) else { return nil }
       let description = desc as! [String: Any]
 
-      // approve non-physical media.
+      // Approve non-physical media (disk images).
       if let model = description[kDADiskDescriptionDeviceModelKey as String] as? String,
         model == "Disk Image"
       {
         return nil
       }
 
-      // specific volume is in the blocked list.
+      // Specific volume is in the blocked list.
       let rawVolumeUUID = description[kDADiskDescriptionVolumeUUIDKey as String]
       let rawDiskUUID = description[kDADiskDescriptionMediaUUIDKey as String]
 
@@ -91,7 +91,7 @@ class DiskMounter: ObservableObject {
         diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
       }
 
-      // approve manual mounts (checking BSD name or Volume UUID / Disk UUID).
+      // Approve manual mounts (checking BSD name or Volume UUID / Disk UUID).
       if let approved = this.approvingManualMountFor {
         if approved == "*" {
           return nil
@@ -109,11 +109,32 @@ class DiskMounter: ObservableObject {
 
       var shouldBlock = false
 
-      // global USB block.
-      if this.blockUSBAutoMount
-        && (description[kDADiskDescriptionDeviceProtocolKey as String] as? String) == "USB"
-      {
-        shouldBlock = true
+      // Global USB block.
+      // kDADiskDescriptionDeviceProtocolKey ("DADeviceProtocol") is rarely
+      // populated at the volume level. The reliable key is "BusProtocol",
+      // which lives in the whole-disk description. Walk up to the whole disk
+      // and read its description when the volume-level one lacks bus info.
+      if this.blockUSBAutoMount {
+        // Try the volume-level description first.
+        var busProtocol = description["BusProtocol"] as? String
+
+        // Fall back to the whole-disk (parent) description if not present.
+        if busProtocol == nil, let wholeDisk = DADiskCopyWholeDisk(disk) {
+          if let parentDesc = DADiskCopyDescription(wholeDisk) {
+            let parentDict = parentDesc as! [String: Any]
+            busProtocol = parentDict["BusProtocol"] as? String
+          }
+        }
+
+        // Block USB drives and SD cards. "BusProtocol" values observed on
+        // macOS include "USB", "SD", "Bluetooth", "Thunderbolt", etc.
+        // The feature is named "Block USB Auto-Mount" so scope to USB/SD.
+        if let proto = busProtocol,
+          proto.caseInsensitiveCompare("USB") == .orderedSame
+            || proto.caseInsensitiveCompare("SD") == .orderedSame
+        {
+          shouldBlock = true
+        }
       }
 
       if let volUUID = volumeUUIDString {
@@ -130,7 +151,7 @@ class DiskMounter: ObservableObject {
         return Unmanaged.passRetained(dissenter)
       }
 
-      // approved
+      // Approved.
       return nil
     }
 
