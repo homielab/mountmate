@@ -71,16 +71,6 @@ struct MountMateApp: App {
   }
 
   var body: some Scene {
-    MenuBarExtra {
-      PopoverContent {
-        MainView()
-      }
-      .environmentObject(driveManager)
-    } label: {
-      MenuBarIconView(driveManager: driveManager)
-    }
-    .menuBarExtraStyle(.window)
-
     Settings {
       SettingsView()
         .environmentObject(launchManager)

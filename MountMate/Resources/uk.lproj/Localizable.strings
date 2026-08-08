@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings (Ukrainian)
 */
 
@@ -63,11 +63,11 @@
 "Language" = "Мова";
 
 // About & Updates Section
-"About & Updates" = "Про програму та оновлення";
 "Homepage" = "Домашня сторінка";
 "Support Email" = "Електронна пошта підтримки";
 "Donate" = "Пожертвувати";
 "Check for Updates..." = "Перевірити оновлення...";
+"About & Updates" = "Про програму та оновлення";
 
 // Management Tab
 "Ignored Volumes" = "Ігноровані томи";
@@ -149,9 +149,90 @@
 "Leave empty to use default location" = "Залиште порожнім, щоб використовувати типове місце";
 "Preview: %@" = "Попередній перегляд: %@";
 
+
+// MARK: - Custom Mount Point
+//=============================================
+"Custom Mount Point Menu" = "Власна точка монтування…";
+"Use Custom Mount Point" = "Використовувати власну точку монтування";
+"Folder Path" = "Шлях до теки";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "Вибрати…";
+"Choose" = "Вибрати";
+"Reset" = "Скинути";
+"Default Path" = "Типовий шлях";
+"Save" = "Зберегти";
+"Create" = "Створити";
+"Use Folder" = "Використати теку";
+"Custom Mount Point Help" = "Вимкніть це, щоб використовувати стандартне місце монтування macOS.";
+"Custom Mount Point Empty Means Default" = "Залиште поле порожнім, щоб використовувати стандартне місце монтування macOS.";
+"Custom Mount Point System Helper" = "Залиште поле порожнім, щоб використовувати стандартне місце монтування macOS. Збереження оновлює системне правило монтування і може один раз попросити пароль адміністратора.";
+"Custom Mount Point Summary" = "Власна: %@";
+"Create Folder Title" = "Створити теку?";
+"Create Folder Message" = "Ця тека ще не існує. MountMate може створити її перед збереженням.";
+"Folder Not Empty Title" = "Тека не порожня";
+"Folder Not Empty Message" = "Вибрана тека вже містить файли. Монтування тут може тимчасово приховати їх, поки том змонтований.";
+"Custom Mount Point Empty Path" = "Введіть шлях до теки.";
+"Custom Mount Point Must Be Absolute" = "Власна точка монтування повинна бути абсолютним шляхом.";
+"Custom Mount Point Cannot Be Root" = "Власна точка монтування не може бути кореневою текою.";
+"Custom Mount Point In Use" = "Ця тека вже використовується змонтованим томом «%@».";
+"Custom Mount Point Must Be Folder" = "Власна точка монтування повинна бути текою.";
+"Custom Mount Point Prepare Fallback" = "MountMate не зміг підготувати власну точку монтування.";
+"Custom Mount Point Prepare Error" = "MountMate не зміг підготувати власну точку монтування.\n\nДеталі:\n%@";
+"Custom Mount Point Inspect Error" = "MountMate не зміг перевірити цю теку.\n\nДеталі:\n%@";
+"Custom Mount Point Create Error" = "MountMate не зміг створити цю теку.\n\nДеталі:\n%@";
+"Custom Mount Point Requires UUID" = "Цей том не має стабільного UUID, тому MountMate не може додати для нього системне правило монтування.";
+"Custom Mount Point Unsupported File System" = "MountMate не зміг визначити правильний тип файлової системи для системного правила монтування цього тому.";
+"Custom Mount Point System Conflict" = "Для цього тому вже існує інший запис /etc/fstab, яким MountMate не керує.";
+"Custom Mount Point System Error" = "MountMate не зміг оновити системне правило монтування.";
+"Custom Mount Point System Save Error" = "MountMate не зміг оновити системне правило монтування.\n\nДеталі:\n%@";
+
 // MARK: - Force Eject
 //=============================================
 "Force Eject" = "Примусово вийняти";
 "The disk is in use. Do you want to force eject it?" = "Диск використовується. Бажаєте примусово вийняти його?";
 "This may result in data loss." = "Це може призвести до втрати даних.";
 "Remember password in Keychain" = "Запам'ятати пароль у Keychain";
+
+// Додаткові рядки, знайдені у SwiftUI
+"⌘⇧U - Unmount All Volumes" = "⌘⇧U - Відмонтувати всі томи";
+"⌘⇧M - Mount All Volumes" = "⌘⇧M - Підключити всі томи";
+
+"English" = "English";
+"Français" = "Français";
+"Українська" = "Українська";
+"Tiếng Việt" = "Tiếng Việt";
+"中文（简体）" = "中文（简体）";
+"中文（繁体）" = "中文（繁体）";
+
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Щоб використовувати ярлики клавіатури, надайте MountMate доступ Accessibility у Системних налаштуваннях → Конфіденційність і безпека → Доступність.";
+
+"Volume: %@" = "Том: %@";
+"Disk: %@" = "Диск: %@";
+"APFS Container • %@" = "Контейнер APFS • %@";
+
+"Settings" = "Налаштування";
+"Refresh Drives" = "Оновити диски";
+"Retry" = "Повторити";
+"Auto-mounts at login" = "Автоматично монтується при вході";
+"Mount Now" = "Підключити зараз";
+"Edit" = "Редагувати";
+"Delete" = "Видалити";
+
+"Accessibility Permission Required" = "Потрібен дозвіл доступності";
+
+"Add Share" = "Додати мережевий ресурс";
+
+"Optional (Defaults to share name)" = "Необов'язково (За замовчуванням - ім'я ресурсу)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Необов'язково (Гість)";
+
+// Решта рядків
+"MountMate" = "MountMate";
+"Expand All" = "Розгорнути все";
+"Collapse All" = "Згорнути все";
+"Try Again" = "Спробувати знову";
+"Action Failed" = "Операція не вдалася";
+
+// Disk usage format
+"DiskUsageUsedFree" = "%@ використано / %@ (%@ вільно)";

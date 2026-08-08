@@ -1,0 +1,231 @@
+/*
+  Localizable.strings (Français)
+*/
+
+// MARK: - Main View & Sections
+//=============================================
+
+"No Drives Found" = "Aucun disque trouvé";
+"Connect a USB drive, SD card, or mount a disk image to see it here." = "Connectez un disque USB, une carte SD ou montez une image disque pour l'afficher ici.";
+"Internal Disks" = "Disques internes";
+"External Disks" = "Disques externes";
+"Disk Images" = "Images disque";
+"Snapshots" = "Instantanés";
+
+
+// MARK: - Action Buttons & Tooltips
+//=============================================
+
+"Unmount All" = "Tout démonter";
+"Eject" = "Éjecter";
+"Mount" = "Monter";
+"Unmount" = "Démonter";
+"Quit MountMate" = "Quitter MountMate";
+
+
+// MARK: - Volume & Disk Details
+//=============================================
+
+"Unknown" = "Inconnu";
+"Unmounted" = "Non monté";
+
+
+// MARK: - Context Menus
+//=============================================
+
+"Ignore This Disk" = "Ignorer ce disque";
+"Ignore This Volume" = "Ignorer ce volume";
+"Protect from 'Unmount All'" = "Protéger de « Tout démonter »";
+"Unprotect from 'Unmount All'" = "Ne plus protéger de « Tout démonter »";
+"Open in Finder" = "Ouvrir dans le Finder";
+
+
+// MARK: - Settings View
+//=============================================
+
+"MountMate Settings" = "Réglages de MountMate";
+
+// Tabs
+"General" = "Général";
+"Management" = "Gestion";
+
+// General Tab
+"Show Internal Disks" = "Afficher les disques internes";
+"Start MountMate at Login" = "Lancer MountMate à l'ouverture de session";
+"Block USB Auto-Mount" = "Bloquer le montage automatique des périphériques USB";
+"Unmount All Disks on Sleep" = "Démonter tous les disques à la mise en veille";
+"Language" = "Langue";
+"Enable Keyboard Shortcuts" = "Activer les raccourcis clavier";
+
+// About & Updates Section
+"Homepage" = "Page d'accueil";
+"Support Email" = "E-mail du support";
+"Donate" = "Faire un don";
+"Check for Updates..." = "Rechercher des mises à jour...";
+"About & Updates" = "À propos & Mises à jour";
+
+// Management Tab
+"Ignored Volumes" = "Volumes ignorés";
+"No Ignored Volumes" = "Aucun volume ignoré";
+"Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "Faites un clic droit sur un volume pour l'ignorer. Utile pour les partitions système comme « EFI » que vous n'avez pas besoin de gérer.";
+"Protected Volumes" = "Volumes protégés";
+"No Protected Volumes" = "Aucun volume protégé";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Faites un clic droit sur un volume pour le protéger de « Tout démonter » et des actions liées à la mise en veille.";
+
+"Don't Auto-Mount This Volume" = "Ne pas monter automatiquement ce volume";
+"Blocked from Auto-Mounting" = "Montage automatique bloqué";
+"No Volumes Blocked from Auto-Mounting" = "Aucun volume avec montage automatique bloqué";
+"Right-click a volume to prevent it from mounting automatically when connected." = "Faites un clic droit sur un volume pour empêcher son montage automatique lors de la connexion.";
+
+// MARK: - Alerts & Errors
+//=============================================
+
+// Titles
+"Could Not Load Disks" = "Impossible de charger les disques";
+"Data Parsing Error" = "Erreur d'analyse des données";
+"Eject Failed" = "Échec de l'éjection";
+"Mount Failed" = "Échec du montage";
+"Unmount Failed" = "Échec du démontage";
+"“%@” is locked" = "« %@ » est verrouillé";
+"Full Disk Access Recommended" = "Accès complet au disque recommandé";
+
+// Buttons
+"OK" = "OK";
+"Unlock" = "Déverrouiller";
+"Cancel" = "Annuler";
+"Open System Settings" = "Ouvrir les Réglages Système...";
+"Later" = "Plus tard";
+
+// Verbs for error messages
+"unmount" = "démonter";
+"eject" = "éjecter";
+"mount" = "monter";
+
+// Error Messages & Formats
+"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nVeuillez accorder à MountMate l'accès complet au disque dans Réglages Système > Confidentialité et sécurité.";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "La partition « EFI » ne peut pas être montée directement. Il s'agit d'une partition système spéciale, et ce comportement est normal.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Impossible d'éjecter « %@ » car l'un de ses volumes est occupé ou en cours d'utilisation.";
+"Failed to %@ “%@” because it is currently in use by another application." = "Impossible de %@ « %@ » car il est actuellement utilisé par une autre application.";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "Impossible de %@ « %@ » car il est actuellement utilisé par « %@ ».";
+"An unknown error occurred while trying to %@ “%@”." = "Une erreur inconnue s'est produite lors de la tentative de %@ « %@ ».";
+"Enter the password to unlock “%@”" = "Saisissez le mot de passe pour déverrouiller « %@ »";
+"Password" = "Mot de passe";
+"To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Pour permettre à MountMate de voir tous les types de disques et d'éviter les erreurs, veuillez accorder l'accès complet au disque.\n\nCliquez sur « Ouvrir les Réglages Système » pour accéder directement au bon panneau.";
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate n'a pas pu récupérer les informations sur les disques. Le système est peut-être occupé, un disque ne répond peut-être pas ou les autorisations sont incorrectes.";
+
+// MARK: - App Lifecycle & Loading
+//=============================================
+
+"Loading Disks..." = "Chargement des disques...";
+"Restart Required" = "Redémarrage requis";
+"Please restart MountMate for the language change to take effect." = "Veuillez redémarrer MountMate pour que le changement de langue prenne effet.";
+"Restart Now" = "Redémarrer maintenant";
+
+// MARK: - Network Shares
+//=============================================
+"Network Shares" = "Partages réseau";
+"Add Network Share" = "Ajouter un partage réseau";
+"Edit Network Share" = "Modifier un partage réseau";
+"Server Address" = "Adresse du serveur";
+"Share Name/Path" = "Nom/chemin du partage";
+"Username" = "Nom d'utilisateur";
+"Password" = "Mot de passe";
+"Custom Mount Point" = "Point de montage personnalisé";
+"Mount at Login" = "Monter à l'ouverture de session";
+"MountMate can automatically mount these SMB shares at login." = "MountMate peut monter automatiquement ces partages SMB à l'ouverture de session.";
+"No Network Shares Configured" = "Aucun partage réseau configuré";
+"Mounted" = "Monté";
+"Not Mounted" = "Non monté";
+"Display Name" = "Nom d'affichage";
+"Connection" = "Connexion";
+"Credentials" = "Identifiants";
+"Options" = "Options";
+"Leave empty to use default location" = "Laissez vide pour utiliser l'emplacement par défaut";
+"Preview: %@" = "Aperçu : %@";
+
+
+// MARK: - Custom Mount Point
+//=============================================
+"Custom Mount Point Menu" = "Point de montage personnalisé…";
+"Use Custom Mount Point" = "Utiliser un point de montage personnalisé";
+"Folder Path" = "Chemin du dossier";
+"Custom Mount Point Path Prompt" = "/Volumes/MonDisque";
+"Choose Folder" = "Choisir un dossier…";
+"Choose" = "Choisir";
+"Reset" = "Réinitialiser";
+"Default Path" = "Chemin par défaut";
+"Save" = "Enregistrer";
+"Create" = "Créer";
+"Use Folder" = "Utiliser ce dossier";
+"Custom Mount Point Empty Means Default" = "Laissez vide pour utiliser l'emplacement par défaut.";
+"Custom Mount Point System Helper" = "Laissez vide pour utiliser l'emplacement par défaut. L'enregistrement mettra à jour les règles système et pourra demander votre mot de passe administrateur une fois.";
+"Custom Mount Point Summary" = "Personnalisé : %@";
+"Create Folder Title" = "Créer un dossier ?";
+"Create Folder Message" = "Ce dossier n'existe pas encore. MountMate peut le créer avant de l'enregistrer.";
+"Folder Not Empty Title" = "Dossier non vide";
+"Folder Not Empty Message" = "Le dossier sélectionné contient déjà des fichiers. Le montage à cet emplacement peut temporairement les masquer tant que le volume est monté.";
+"Custom Mount Point Empty Path" = "Saisissez un chemin de dossier.";
+"Custom Mount Point Must Be Absolute" = "Le point de montage personnalisé doit être un chemin absolu.";
+"Custom Mount Point Cannot Be Root" = "Le point de montage personnalisé ne peut pas être le dossier racine.";
+"Custom Mount Point In Use" = "Ce dossier est déjà utilisé par le volume monté « %@ ».";
+"Custom Mount Point Must Be Folder" = "Le point de montage personnalisé doit être un dossier.";
+"Custom Mount Point Prepare Fallback" = "MountMate n'a pas pu préparer le point de montage personnalisé.";
+"Custom Mount Point Prepare Error" = "MountMate n'a pas pu préparer le point de montage personnalisé.\n\nDétails :\n%@";
+"Custom Mount Point Inspect Error" = "MountMate n'a pas pu inspecter ce dossier.\n\nDétails :\n%@";
+"Custom Mount Point Create Error" = "MountMate n'a pas pu créer ce dossier.\n\nDétails :\n%@";
+"Custom Mount Point Requires UUID" = "Ce volume n'expose pas d'UUID stable, donc MountMate ne peut pas ajouter de règle de montage système pour celui-ci.";
+"Custom Mount Point Unsupported File System" = "MountMate n'a pas pu déterminer le type de système de fichiers correct pour la règle de montage système de ce volume.";
+"Custom Mount Point System Conflict" = "Ce volume possède déjà une entrée /etc/fstab différente qui n'est pas gérée par MountMate.";
+"Custom Mount Point System Error" = "MountMate n'a pas pu mettre à jour la règle de montage système.";
+"Custom Mount Point System Save Error" = "MountMate n'a pas pu mettre à jour la règle de montage système.\n\nDétails :\n%@";
+
+// MARK: - Force Eject
+//=============================================
+"Force Eject" = "Forcer l'éjection";
+"The disk is in use. Do you want to force eject it?" = "Le disque est en cours d'utilisation. Voulez-vous forcer son éjection ?";
+"This may result in data loss." = "Cela peut entraîner une perte de données.";
+"Remember password in Keychain" = "Mémoriser le mot de passe dans le Trousseau";
+
+// Chaînes supplémentaires découvertes dans les vues SwiftUI
+"⌘⇧U - Unmount All Volumes" = "⌘⇧U - Tout démonter";
+"⌘⇧M - Mount All Volumes" = "⌘⇧M - Tout monter";
+
+"English" = "English";
+"Français" = "Français";
+"Українська" = "Українська";
+"Tiếng Việt" = "Tiếng Việt";
+"中文（简体）" = "中文（简体）";
+"中文（繁体）" = "中文（繁体）";
+
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Pour utiliser les raccourcis clavier, accordez à MountMate l'accès Accessibilité dans Réglages Système → Confidentialité & Sécurité → Accessibilité.";
+
+"Volume: %@" = "Volume : %@";
+"Disk: %@" = "Disque : %@";
+"APFS Container • %@" = "Conteneur APFS • %@";
+
+"Settings" = "Paramètres";
+"Refresh Drives" = "Actualiser les disques";
+"Retry" = "Réessayer";
+"Auto-mounts at login" = "Monte automatiquement à l'ouverture de session";
+"Mount Now" = "Monter maintenant";
+"Edit" = "Modifier";
+"Delete" = "Supprimer";
+
+"Accessibility Permission Required" = "Permission Accessibilité requise";
+
+"Add Share" = "Ajouter un partage";
+
+"Optional (Defaults to share name)" = "Optionnel (Par défaut : nom du partage)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Optionnel (Invité)";
+
+// Chaînes restantes
+"MountMate" = "MountMate";
+"Expand All" = "Tout développer";
+"Collapse All" = "Tout réduire";
+"Try Again" = "Réessayer";
+"Action Failed" = "Action échouée";
+
+// Disk usage format
+"DiskUsageUsedFree" = "%@ utilisé / %@ (%@ libres)";
