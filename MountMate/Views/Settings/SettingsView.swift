@@ -27,6 +27,7 @@ struct GeneralSettingsView: View {
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
+  @AppStorage("showOnlyVolumes") private var showOnlyVolumes = false
   @AppStorage("hotkeysEnabled") private var hotkeysEnabled = false
   @AppStorage("showCountInMenuBar") private var showCountInMenuBar = false
 
@@ -66,6 +67,7 @@ struct GeneralSettingsView: View {
       Section {
         Toggle("Show Count in Menu Bar", isOn: $showCountInMenuBar)
         Toggle("Show Internal Disks", isOn: $showInternalDisks)
+        Toggle("Show Only Volumes", isOn: $showOnlyVolumes)
         Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
         Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
         Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)

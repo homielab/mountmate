@@ -115,6 +115,7 @@ struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
   @State private var isExpanded = true
   @EnvironmentObject var manager: DriveManager  // Make sure manager is available
+  @AppStorage("showOnlyVolumes") private var showOnlyVolumes = false
 
   private var visibleContainers: [APFSContainer] {
     disk.containers.filter { !$0.volumes.isEmpty }
@@ -122,15 +123,19 @@ struct DiskAndVolumesView: View {
 
   var body: some View {
     Group {
-      DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
-      if isExpanded {
+      if !showOnlyVolumes {
+        DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
+      }
+      if isExpanded || showOnlyVolumes {
         ForEach(disk.partitions) { partition in
-          VolumeRowView(volume: partition).padding(.leading, 24)
+          VolumeRowView(volume: partition).padding(.leading, showOnlyVolumes ? 0 : 24)
         }
         ForEach(visibleContainers) { container in
-          ContainerRowView(container: container)
+          if !showOnlyVolumes {
+            ContainerRowView(container: container)
+          }
           ForEach(container.volumes) { volume in
-            VolumeRowView(volume: volume).padding(.leading, 48)
+            VolumeRowView(volume: volume).padding(.leading, showOnlyVolumes ? 0 : 48)
           }
         }
       }
