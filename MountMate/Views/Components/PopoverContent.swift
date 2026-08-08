@@ -9,5 +9,6 @@ struct PopoverContent<Content: View>: View {
     VStack(spacing: 0) {
       content()
     }
+    .fixedSize(horizontal: false, vertical: true)
   }
 }

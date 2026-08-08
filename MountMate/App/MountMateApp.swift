@@ -28,12 +28,12 @@ struct MenuBarIconView: View {
     // Default: normal icon
     return "externaldrive.fill"
   }
-  
+
   var mountedCount: Int {
     let physicalCount = (driveManager.physicalDisks ?? [])
       .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
       .filter { $0.isMounted && $0.category == .user && !$0.isProtected }.count
-    
+
     let networkCount = networkManager.mountedShareIDs.count
     let manualNetworkCount = networkManager.manuallyConnectedShares.count
     return physicalCount + networkCount + manualNetworkCount
@@ -71,6 +71,16 @@ struct MountMateApp: App {
   }
 
   var body: some Scene {
+    MenuBarExtra {
+      PopoverContent {
+        MainView()
+      }
+      .environmentObject(driveManager)
+    } label: {
+      MenuBarIconView(driveManager: driveManager)
+    }
+    .menuBarExtraStyle(.window)
+
     Settings {
       SettingsView()
         .environmentObject(launchManager)
