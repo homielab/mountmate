@@ -155,3 +155,4 @@
 "The disk is in use. Do you want to force eject it?" = "Диск используется. Желаете принудительно извлечь его?";
 "This may result in data loss." = "Это может привести к потере данных.";
 "Remember password in Keychain" = "Запомнить пароль в Keychain";
+"Custom Mount Point System Error" = "MountMate не удалось обновить системное правило монтирования.";

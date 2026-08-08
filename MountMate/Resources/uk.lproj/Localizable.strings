@@ -61,10 +61,8 @@
 "Block USB Auto-Mount" = "Блокувати автопідключення USB";
 "Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
 "Language" = "Мова";
-"Enable Keyboard Shortcuts" = "Увімкнути комбінації клавіш";
 
 // About & Updates Section
-"About & Updates" = "Про програму та оновлення";
 "Homepage" = "Домашня сторінка";
 "Support Email" = "Електронна пошта підтримки";
 "Donate" = "Пожертвувати";
@@ -185,6 +183,7 @@
 "Custom Mount Point Requires UUID" = "Цей том не має стабільного UUID, тому MountMate не може додати для нього системне правило монтування.";
 "Custom Mount Point Unsupported File System" = "MountMate не зміг визначити правильний тип файлової системи для системного правила монтування цього тому.";
 "Custom Mount Point System Conflict" = "Для цього тому вже існує інший запис /etc/fstab, яким MountMate не керує.";
+"Custom Mount Point System Error" = "MountMate не зміг оновити системне правило монтування.";
 "Custom Mount Point System Save Error" = "MountMate не зміг оновити системне правило монтування.\n\nДеталі:\n%@";
 
 // MARK: - Force Eject

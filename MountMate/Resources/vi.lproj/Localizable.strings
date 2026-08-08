@@ -54,7 +54,6 @@
 "Management" = "Quản lý";
 
 // General Tab
-"Enable Keyboard Shortcuts" = "Bật phím tắt";
 "Show Count in Menu Bar" = "Hiển thị số lượng trên thanh menu";
 "Show Internal Disks" = "Hiển thị ổ đĩa trong";
 "Start MountMate at Login" = "Khởi động cùng máy";
@@ -64,7 +63,6 @@
 "Enable Keyboard Shortcuts" = "Bật phím tắt";
 
 // About & Updates Section
-"About & Updates" = "Giới thiệu & Cập nhật";
 "Homepage" = "Trang chủ";
 "Support Email" = "Email hỗ trợ";
 "Donate" = "Ủng hộ";
@@ -185,6 +183,7 @@
 "Custom Mount Point Requires UUID" = "Ổ này không cung cấp UUID ổn định nên MountMate không thể thêm quy tắc gắn hệ thống cho nó.";
 "Custom Mount Point Unsupported File System" = "MountMate không thể xác định đúng kiểu hệ thống tệp cho quy tắc gắn hệ thống của ổ này.";
 "Custom Mount Point System Conflict" = "Ổ này đã có một mục /etc/fstab khác không do MountMate quản lý.";
+"Custom Mount Point System Error" = "MountMate không thể cập nhật quy tắc gắn hệ thống.";
 "Custom Mount Point System Save Error" = "MountMate không thể cập nhật quy tắc gắn hệ thống.\n\nChi tiết:\n%@";
 
 // MARK: - Force Eject

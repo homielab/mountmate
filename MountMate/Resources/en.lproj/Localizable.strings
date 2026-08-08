@@ -182,6 +182,7 @@
 "Custom Mount Point Requires UUID" = "This volume does not expose a stable UUID, so MountMate cannot add a system mount rule for it.";
 "Custom Mount Point Unsupported File System" = "MountMate could not determine the correct filesystem type for this volume's system mount rule.";
 "Custom Mount Point System Conflict" = "This volume already has a different /etc/fstab entry that is not managed by MountMate.";
+"Custom Mount Point System Error" = "MountMate could not update the system mount rule.";
 "Custom Mount Point System Save Error" = "MountMate could not update the system mount rule.\n\nDetails:\n%@";
 
 // MARK: - Force Eject
@@ -224,10 +225,6 @@
 "192.168.1.100" = "192.168.1.100";
 "public" = "public";
 "Optional (Guest)" = "Optional (Guest)";
-
-// Missing keys discovered: Settings labels
-"Enable Keyboard Shortcuts" = "Enable Keyboard Shortcuts";
-"About & Updates" = "About & Updates";
 
 // Remaining UI strings
 "MountMate" = "MountMate";

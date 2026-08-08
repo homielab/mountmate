@@ -59,8 +59,6 @@ struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
   @ObservedObject var persistence = PersistenceManager.shared
   @ObservedObject var networkManager = NetworkMountManager.shared
-  @State private var initialLoadTimer = Timer.publish(every: 0.25, on: .main, in: .common)
-    .autoconnect()
   @ObservedObject private var customMountPointEditor = CustomMountPointEditorState.shared
 
   private var internalDisks: [PhysicalDisk] {

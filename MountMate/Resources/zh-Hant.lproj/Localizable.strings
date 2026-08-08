@@ -61,7 +61,6 @@
 "Block USB Auto-Mount" = "阻止 USB 自動掛載";
 "Unmount All Disks on Sleep" = "進入睡眠模式時卸載所有磁碟";
 "Language" = "語言";
-"Enable Keyboard Shortcuts" = "啟用鍵盤快速鍵";
 
 // About & Updates Section
 "About & Updates" = "關於與更新";
@@ -184,6 +183,7 @@
 "Custom Mount Point Requires UUID" = "此磁碟卷沒有穩定的 UUID，因此 MountMate 無法為它新增系統掛載規則。";
 "Custom Mount Point Unsupported File System" = "MountMate 無法判定此磁碟卷系統掛載規則所需的正確檔案系統類型。";
 "Custom Mount Point System Conflict" = "此磁碟卷已經有一個不是由 MountMate 管理的 /etc/fstab 項目。";
+"Custom Mount Point System Error" = "MountMate 無法更新系統掛載規則。";
 "Custom Mount Point System Save Error" = "MountMate 無法更新系統掛載規則。\n\n詳細資料：\n%@";
 
 // MARK: - Force Eject

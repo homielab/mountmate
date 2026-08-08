@@ -176,6 +176,7 @@
 "Custom Mount Point Requires UUID" = "Ce volume n'expose pas d'UUID stable, donc MountMate ne peut pas ajouter de règle de montage système pour celui-ci.";
 "Custom Mount Point Unsupported File System" = "MountMate n'a pas pu déterminer le type de système de fichiers correct pour la règle de montage système de ce volume.";
 "Custom Mount Point System Conflict" = "Ce volume possède déjà une entrée /etc/fstab différente qui n'est pas gérée par MountMate.";
+"Custom Mount Point System Error" = "MountMate n'a pas pu mettre à jour la règle de montage système.";
 "Custom Mount Point System Save Error" = "MountMate n'a pas pu mettre à jour la règle de montage système.\n\nDétails :\n%@";
 
 // MARK: - Force Eject

@@ -54,7 +54,6 @@
 "Management" = "管理";
 
 // General Tab
-"Enable Keyboard Shortcuts" = "启用键盘快捷键";
 "Show Count in Menu Bar" = "在菜单栏显示数量";
 "Show Internal Disks" = "显示内置磁盘";
 "Start MountMate at Login" = "登录时启动 MountMate";
@@ -184,6 +183,7 @@
 "Custom Mount Point Requires UUID" = "此卷没有稳定的 UUID，因此 MountMate 无法为其添加系统挂载规则。";
 "Custom Mount Point Unsupported File System" = "MountMate 无法确定此卷系统挂载规则所需的正确文件系统类型。";
 "Custom Mount Point System Conflict" = "此卷已经有一个不受 MountMate 管理的 /etc/fstab 条目。";
+"Custom Mount Point System Error" = "MountMate 无法更新系统挂载规则。";
 "Custom Mount Point System Save Error" = "MountMate 无法更新系统挂载规则。\n\n详细信息：\n%@";
 
 // MARK: - Force Eject
