@@ -319,8 +319,10 @@ class DriveManager: ObservableObject {
       }
     }
 
-    let rootDisks = allDisksAndPartitions.filter {
-      !childDeviceIDs.contains($0["DeviceIdentifier"] as? String ?? "")
+    let rootDisks = allDisksAndPartitions.filter { diskData in
+      let deviceID = diskData["DeviceIdentifier"] as? String ?? ""
+      let isSynthesizedAPFS = diskData["APFSPhysicalStores"] != nil
+      return !childDeviceIDs.contains(deviceID) && !isSynthesizedAPFS
     }
 
     // diskutil reports RAID members alongside the virtual RAID master. Only
