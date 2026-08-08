@@ -7,6 +7,9 @@ _A simple macOS menu bar app to manage your external drives._
 </p>
 
 <p align="center">
+  <a href="https://github.com/homielab/mountmate/actions/workflows/release.yml">
+    <img src="https://github.com/homielab/mountmate/actions/workflows/release.yml/badge.svg" />
+  </a>
   <a href="https://github.com/homielab/mountmate/releases">
     <img src="https://img.shields.io/github/v/release/homielab/mountmate?label=release&style=flat-square" />
   </a>

@@ -1,4 +1,4 @@
-name: Release
+name: release
 
 on:
   release:
@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew install create-dmg
-          
+
           # Download Sparkle tools to get generate_appcast
           wget https://github.com/sparkle-project/Sparkle/releases/download/2.9.5/Sparkle-2.9.5.tar.xz
           mkdir -p sparkle-tools
@@ -42,7 +42,7 @@ jobs:
 
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
-          
+
           # Add to search list
           security list-keychains -d user -s $KEYCHAIN_PATH
 
@@ -64,7 +64,7 @@ jobs:
           echo 'CERTIFICATE_NAME="Developer ID Application"' >> .env.local
           echo 'NOTARY_PROFILE="MountMateProfile"' >> .env.local
           echo "SPARKLE_PRIVATE_KEY=\"$RUNNER_TEMP/sparkle_private_key.pem\"" >> .env.local
-          
+
           echo "$SPARKLE_KEY" > $RUNNER_TEMP/sparkle_private_key.pem
 
       - name: Create App
