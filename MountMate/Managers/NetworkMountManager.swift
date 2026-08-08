@@ -49,11 +49,17 @@ class NetworkMountManager: ObservableObject {
     refreshMountStatus()
   }
 
-  func refreshMountStatus() {
-    DispatchQueue.global(qos: .background).async { [weak self] in
-      guard let self = self else { return }
+  func refreshMountStatus(completion: (() -> Void)? = nil) {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self = self else {
+        DispatchQueue.main.async { completion?() }
+        return
+      }
       let result = runProcess(executable: "/sbin/mount", arguments: [])
-      guard result.succeeded, !result.stdout.isEmpty else { return }
+      guard result.succeeded, !result.stdout.isEmpty else {
+        DispatchQueue.main.async { completion?() }
+        return
+      }
       let output = result.stdout
 
       let parsedData = self.parseMountedShares(from: output)
@@ -61,6 +67,7 @@ class NetworkMountManager: ObservableObject {
       DispatchQueue.main.async {
         self.mountedShareIDs = parsedData.mountedUUIDs
         self.manuallyConnectedShares = parsedData.manualShares
+        completion?()
       }
     }
   }
@@ -192,7 +199,6 @@ class NetworkMountManager: ObservableObject {
         arguments: ["-o", "noowners,nosuid", url.absoluteString, mountPoint])
 
       DispatchQueue.main.async {
-        self.refreshMountStatus()
         if !result.succeeded {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
@@ -207,15 +213,21 @@ class NetworkMountManager: ObservableObject {
           if lower.contains("permission denied") || lower.contains("operation not permitted")
             || lower.contains("not owner")
           {
-            completion(
-              false,
-              "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
-            )
+            self.refreshMountStatus {
+              completion(
+                false,
+                "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
+              )
+            }
           } else {
-            completion(false, sanitized)
+            self.refreshMountStatus {
+              completion(false, sanitized)
+            }
           }
         } else {
-          completion(true, nil)
+          self.refreshMountStatus {
+            completion(true, nil)
+          }
         }
       }
     }
@@ -242,15 +254,18 @@ class NetworkMountManager: ObservableObject {
       let result = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
 
       DispatchQueue.main.async {
-        self.refreshMountStatus()
         if !result.succeeded {
           let errMsg =
             result.stderr.isEmpty
             ? "umount exited with code \(result.exitCode ?? -1)."
             : result.stderr
-          completion(false, errMsg)
+          self.refreshMountStatus {
+            completion(false, errMsg)
+          }
         } else {
-          completion(true, nil)
+          self.refreshMountStatus {
+            completion(true, nil)
+          }
         }
       }
     }

@@ -70,12 +70,16 @@ struct NetworkShareMainRow: View {
             }
           }
         }) {
-          Image(
-            systemName: isMounted ? "eject.circle.fill" : "plus.circle.fill"
+          Label(
+            isMounted ? "Eject" : "Mount",
+            systemImage: isMounted ? "eject.fill" : "play.fill"
           )
+          .font(.caption)
+          .bold()
           .opacity(isWorking ? 0 : 1)
         }
         .buttonStyle(.bordered)
+        .controlSize(.small)
         .tint(isMounted ? .red : .blue)
         .disabled(isWorking)
         .overlay {

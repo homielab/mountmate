@@ -19,6 +19,7 @@ class DriveManager: ObservableObject {
 
   private var refreshDebounceTimer: Timer?
   private var isFetchInProgress = false
+  private var needsFollowupRefresh = false
 
   private var refreshRetryCount = 0
   private let maxRefreshRetries = 1
@@ -36,7 +37,10 @@ class DriveManager: ObservableObject {
   // MARK: - Public Actions
 
   func refreshDrives(qos: DispatchQoS.QoSClass = .background) {
-    guard !isFetchInProgress else { return }
+    if isFetchInProgress {
+      needsFollowupRefresh = true
+      return
+    }
     isFetchInProgress = true
 
     if physicalDisks != nil {
@@ -83,10 +87,16 @@ class DriveManager: ObservableObject {
       self.physicalDisks = disks
       self.isFetchInProgress = false
       self.isRefreshing = false
-      self.busyVolumeIdentifier = nil
-      self.busyEjectingIdentifier = nil
-      self.isUnmountingAll = false
       self.refreshError = nil
+
+      if self.needsFollowupRefresh {
+        self.needsFollowupRefresh = false
+        self.refreshDrives(qos: .userInitiated)
+      } else {
+        self.busyVolumeIdentifier = nil
+        self.busyEjectingIdentifier = nil
+        self.isUnmountingAll = false
+      }
 
       // Also refresh network shares whenever we get a disk event/refresh
       NetworkMountManager.shared.refreshMountStatus()
@@ -195,8 +205,9 @@ class DriveManager: ObservableObject {
               ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: disk.name ?? disk.id, disk: disk, operation: .eject)
+          self.busyEjectingIdentifier = nil
         }
-        self.busyEjectingIdentifier = nil
+        self.refreshDrives(qos: .userInitiated)
       }
     }
   }
@@ -219,8 +230,9 @@ class DriveManager: ObservableObject {
               ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: disk.name ?? disk.id, disk: disk, operation: .eject)
+          self.busyEjectingIdentifier = nil
         }
-        self.busyEjectingIdentifier = nil
+        self.refreshDrives(qos: .userInitiated)
       }
     }
   }
@@ -239,8 +251,9 @@ class DriveManager: ObservableObject {
               ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: volume.name, volume: volume, operation: .unmount)
+          self.busyVolumeIdentifier = nil
         }
-        self.busyVolumeIdentifier = nil
+        self.refreshDrives(qos: .userInitiated)
       }
     }
   }
@@ -280,8 +293,8 @@ class DriveManager: ObservableObject {
           : (result.stderr.isEmpty
             ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
         self.handleDiskUtilError(errMsg, for: volume.name, volume: volume, operation: .mount)
+        self.busyVolumeIdentifier = nil
       }
-      self.busyVolumeIdentifier = nil
       self.refreshDrives(qos: .userInitiated)
     }
   }
@@ -318,8 +331,8 @@ class DriveManager: ObservableObject {
             ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
         self.handleDiskUtilError(
           errMsg, for: volume.name, volume: volume, operation: .mount)
+        self.busyVolumeIdentifier = nil
       }
-      self.busyVolumeIdentifier = nil
       self.refreshDrives(qos: .userInitiated)
     }
   }
@@ -339,8 +352,8 @@ class DriveManager: ObservableObject {
               ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: volume.name, volume: volume, operation: .unmount)
+          self.busyVolumeIdentifier = nil
         }
-        self.busyVolumeIdentifier = nil
         self.refreshDrives(qos: .userInitiated)
       }
     }
@@ -451,14 +464,24 @@ class DriveManager: ObservableObject {
       return !childDeviceIDs.contains(deviceID) && !isSynthesizedAPFS
     }
 
-    // diskutil reports RAID members alongside the virtual RAID master. Only
-    // the master represents the Finder-visible logical volume and can be
-    // safely acted on as a set.
-    let rootInfo = Dictionary(
-      uniqueKeysWithValues: rootDisks.compactMap { disk -> (String, [String: Any])? in
-        guard let identifier = disk["DeviceIdentifier"] as? String else { return nil }
-        return (identifier, getInfoForDisk(for: identifier) ?? [:])
-      })
+    // Fetch info for all root disks in parallel to drastically reduce refresh latency
+    let group = DispatchGroup()
+    let lock = NSLock()
+    var rootInfoMap = [String: [String: Any]]()
+
+    for disk in rootDisks {
+      guard let identifier = disk["DeviceIdentifier"] as? String else { continue }
+      group.enter()
+      DispatchQueue.global(qos: .userInitiated).async {
+        let info = self.getInfoForDisk(for: identifier) ?? [:]
+        lock.withLock {
+          rootInfoMap[identifier] = info
+        }
+        group.leave()
+      }
+    }
+    group.wait()
+    let rootInfo = rootInfoMap
 
     let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
     var newDisks: [PhysicalDisk] = []
@@ -481,24 +504,24 @@ class DriveManager: ObservableObject {
             let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
             if let containerData = findAPFSContainer(
               forStore: storeID, in: allDisksAndPartitions),
-              let container = createContainer(from: containerData)
+              let container = createContainer(from: containerData, parentInfo: infoPlist)
             {
               containers.append(container)
             }
           } else {
-            if let volume = createVolume(from: partitionData, snapshotsData: nil) {
+            if let volume = createVolume(from: partitionData, snapshotsData: nil, parentInfo: infoPlist) {
               partitions.append(volume)
             }
           }
         }
       } else if diskData["APFSVolumes"] as? [[String: Any]] != nil {
-        if let container = createContainer(from: diskData) {
+        if let container = createContainer(from: diskData, parentInfo: infoPlist) {
           containers.append(container)
         }
       }
 
       if partitions.isEmpty && containers.isEmpty {
-        if let volume = createVolume(from: diskData, snapshotsData: nil) {
+        if let volume = createVolume(from: diskData, snapshotsData: nil, parentInfo: infoPlist) {
           partitions.append(volume)
         }
       }
@@ -536,7 +559,10 @@ class DriveManager: ObservableObject {
     }
   }
 
-  private func createContainer(from containerData: [String: Any]) -> APFSContainer? {
+  private func createContainer(
+    from containerData: [String: Any],
+    parentInfo: [String: Any]? = nil
+  ) -> APFSContainer? {
     guard let containerID = containerData["DeviceIdentifier"] as? String,
       let apfsVolumesData = containerData["APFSVolumes"] as? [[String: Any]]
     else {
@@ -544,7 +570,7 @@ class DriveManager: ObservableObject {
     }
 
     let volumes = apfsVolumesData.compactMap {
-      createVolume(from: $0, snapshotsData: $0["MountedSnapshots"] as? [[String: Any]])
+      createVolume(from: $0, snapshotsData: $0["MountedSnapshots"] as? [[String: Any]], parentInfo: parentInfo)
     }
     return APFSContainer(id: containerID, volumes: volumes)
   }
@@ -595,9 +621,11 @@ class DriveManager: ObservableObject {
     return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage, nil)
   }
 
-  private func createVolume(from volumeData: [String: Any], snapshotsData: [[String: Any]]?)
-    -> Volume?
-  {
+  private func createVolume(
+    from volumeData: [String: Any],
+    snapshotsData: [[String: Any]]?,
+    parentInfo: [String: Any]? = nil
+  ) -> Volume? {
     guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
 
     let contentType = volumeData["Content"] as? String
@@ -622,7 +650,6 @@ class DriveManager: ObservableObject {
     let isProtected = PersistenceManager.shared.isVolumeProtected(tempVolume)
     let snapshots = snapshotsData?.compactMap { createSnapshot(from: $0) } ?? []
 
-    let parentInfo = getInfoForDisk(for: (volumeData["ParentWholeDisk"] as? String) ?? "")
     let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
     let category: DriveCategory = (contentType == "EFI" && isParentVirtual) ? .system : .user
 

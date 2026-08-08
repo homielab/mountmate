@@ -8,10 +8,14 @@ struct VolumeRowView: View {
   @EnvironmentObject var manager: DriveManager
   @ObservedObject private var persistence = PersistenceManager.shared
   @State private var isHovering = false
+  private var currentVolume: Volume {
+    (manager.physicalDisks ?? []).flatMap(\.allVolumes).first(where: { $0.id == volume.id }) ?? volume
+  }
+
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
-  private var customMountPoint: String? { persistence.customMountPoint(for: volume)?.mountPoint }
+  private var customMountPoint: String? { persistence.customMountPoint(for: currentVolume)?.mountPoint }
   private var isCustomMountPointExpanded: Bool {
-    customMountPointEditor.expandedVolumeID == volume.id
+    customMountPointEditor.expandedVolumeID == currentVolume.id
   }
 
   private func usageColor(for percentage: Double) -> Color {
@@ -27,14 +31,14 @@ struct VolumeRowView: View {
           ZStack {
             Image(systemName: "externaldrive")
               .font(.body)
-              .foregroundStyle(volume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
+              .foregroundStyle(currentVolume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
 
-            if let error = volume.storageError {
+            if let error = currentVolume.storageError {
               Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption)
                 .foregroundStyle(.orange)
                 .help(error)
-            } else if volume.isMounted, let percentage = volume.usagePercentage {
+            } else if currentVolume.isMounted, let percentage = currentVolume.usagePercentage {
               CircularProgressRing(
                 progress: percentage, color: usageColor(for: percentage),
                 lineWidth: 3.0
@@ -45,17 +49,17 @@ struct VolumeRowView: View {
           .padding(.trailing, 8)
 
           VStack(alignment: .leading, spacing: 2) {
-            Text(volume.name)
+            Text(currentVolume.name)
               .font(.body)
               .bold()
-              .foregroundStyle(volume.isMounted ? .primary : .secondary)
+              .foregroundStyle(currentVolume.isMounted ? .primary : .secondary)
 
-            if volume.isMounted {
-              if let total = volume.totalSize, let used = volume.usedSpace {
+            if currentVolume.isMounted {
+              if let total = currentVolume.totalSize, let used = currentVolume.usedSpace {
                 Text(String(format: "%@ / %@", used, total))
                   .font(.caption)
                   .foregroundStyle(.secondary)
-              } else if let fsType = volume.fileSystemType {
+              } else if let fsType = currentVolume.fileSystemType {
                 Text(fsType)
                   .font(.caption)
                   .foregroundStyle(.secondary)
@@ -94,25 +98,31 @@ struct VolumeRowView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-          if volume.isMounted, let mountPoint = volume.mountPoint {
+          if currentVolume.isMounted, let mountPoint = currentVolume.mountPoint {
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: mountPoint)])
           }
         }
 
         Button(action: {
-          if volume.isMounted {
-            manager.unmount(volume: volume)
+          if currentVolume.isMounted {
+            manager.unmount(volume: currentVolume)
           } else {
-            manager.mount(volume: volume)
+            manager.mount(volume: currentVolume)
           }
         }) {
-          Image(
-            systemName: volume.isMounted ? "minus.circle.fill" : "plus.circle.fill"
+          Label(
+            currentVolume.isMounted
+              ? NSLocalizedString("Unmount", comment: "Unmount volume action")
+              : NSLocalizedString("Mount", comment: "Mount volume action"),
+            systemImage: currentVolume.isMounted ? "eject.fill" : "play.fill"
           )
+          .font(.caption)
+          .bold()
           .opacity(isLoading ? 0 : 1)
         }
         .buttonStyle(.bordered)
-        .tint(volume.isMounted ? .red : .blue)
+        .controlSize(.small)
+        .tint(currentVolume.isMounted ? .red : .blue)
         .disabled(isLoading)
         .overlay {
           if isLoading {
@@ -120,9 +130,9 @@ struct VolumeRowView: View {
           }
         }
         .help(
-          volume.isMounted
-            ? NSLocalizedString("Unmount", comment: "...")
-            : NSLocalizedString("Mount", comment: "...")
+          currentVolume.isMounted
+            ? NSLocalizedString("Unmount", comment: "Unmount volume tooltip")
+            : NSLocalizedString("Mount", comment: "Mount volume tooltip")
         )
         .padding(.leading, 8)
       }
