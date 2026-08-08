@@ -9,7 +9,7 @@ cask "mountmate" do
   homepage "https://homielab.com/en/page/mountmate"
 
   livecheck do
-    url "https://raw.githubusercontent.com/homielab/mountmate/main/docs/appcast.xml"
+    url "https://mountmate.homielab.com/appcast.xml"
     strategy :sparkle, &:title
   end
 
