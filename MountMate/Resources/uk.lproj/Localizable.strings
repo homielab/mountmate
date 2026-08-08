@@ -54,6 +54,8 @@
 "Management" = "Керування";
 
 // General Tab
+"Enable Keyboard Shortcuts" = "Увімкнути клавіатурні скорочення";
+"Show Count in Menu Bar" = "Показувати кількість у рядку меню";
 "Show Internal Disks" = "Показувати внутрішні диски";
 "Start MountMate at Login" = "Запускати MountMate при вході";
 "Block USB Auto-Mount" = "Блокувати автопідключення USB";
@@ -61,6 +63,7 @@
 "Language" = "Мова";
 
 // About & Updates Section
+"About & Updates" = "Про програму та оновлення";
 "Homepage" = "Домашня сторінка";
 "Support Email" = "Електронна пошта підтримки";
 "Donate" = "Пожертвувати";
@@ -126,6 +129,7 @@
 // MARK: - Network Shares
 //=============================================
 "Network Shares" = "Мережеві шари";
+"Add Share" = "Додати ресурс";
 "Add Network Share" = "Додати мережевий ресурс";
 "Edit Network Share" = "Редагувати мережевий ресурс";
 "Server Address" = "Адреса сервера";
