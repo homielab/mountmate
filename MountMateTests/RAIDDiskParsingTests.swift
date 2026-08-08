@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import MountMate
 
 final class RAIDDiskParsingTests: XCTestCase {
@@ -6,7 +7,7 @@ final class RAIDDiskParsingTests: XCTestCase {
     let raidMemberPartition: [[String: Any]] = [
       ["Content": "EFI", "DeviceIdentifier": "disk5s1"],
       ["Content": "Apple_RAID", "DeviceIdentifier": "disk5s2"],
-      ["Content": "Apple_Boot", "DeviceIdentifier": "disk5s3"]
+      ["Content": "Apple_Boot", "DeviceIdentifier": "disk5s3"],
     ]
     XCTAssertTrue(DiskTopology.isRAIDMember(nil, partitions: raidMemberPartition))
   }
@@ -14,7 +15,7 @@ final class RAIDDiskParsingTests: XCTestCase {
   func testNonRAIDPartitionDetection() {
     let regularPartition: [[String: Any]] = [
       ["Content": "EFI", "DeviceIdentifier": "disk0s1"],
-      ["Content": "Apple_APFS", "DeviceIdentifier": "disk0s2"]
+      ["Content": "Apple_APFS", "DeviceIdentifier": "disk0s2"],
     ]
     XCTAssertFalse(DiskTopology.isRAIDMember(nil, partitions: regularPartition))
   }
@@ -27,12 +28,12 @@ final class RAIDDiskParsingTests: XCTestCase {
           "DeviceIdentifier": "disk9",
           "MountPoint": "/Volumes/Kappa",
           "OSInternal": false,
-          "Size": Int64(16001772158976),
-          "VolumeName": "Kappa"
+          "Size": Int64(16_001_772_158_976),
+          "VolumeName": "Kappa",
         ]
       ]
     ]
-    
+
     // Perform parsing test logic manually or via DriveManager helper if available
     let allDisks = plistData["AllDisksAndPartitions"] as! [[String: Any]]
     let diskData = allDisks[0]

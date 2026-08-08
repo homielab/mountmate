@@ -192,7 +192,8 @@ class PersistenceManager: ObservableObject {
   }
 
   @discardableResult
-  func withAccessToCustomMountPoint<T>(for volume: Volume, _ body: (URL) throws -> T) rethrows -> T? {
+  func withAccessToCustomMountPoint<T>(for volume: Volume, _ body: (URL) throws -> T) rethrows -> T?
+  {
     guard let url = resolveCustomMountPointURL(for: volume) else { return nil }
     let scoped = url.startAccessingSecurityScopedResource()
     defer {
@@ -408,7 +409,8 @@ class PersistenceManager: ObservableObject {
       arguments: ["-e", script],
       timeout: 300)
     if !result.succeeded {
-      let error = result.stderr.isEmpty
+      let error =
+        result.stderr.isEmpty
         ? NSLocalizedString(
           "Custom Mount Point System Error",
           comment: "Fallback custom mount point system configuration error")
@@ -452,8 +454,6 @@ class PersistenceManager: ObservableObject {
   }
 
   // MARK: - Private Save/Load Helpers
-
-
 
   private func save<T: Codable>(_ items: [T], to key: String) {
     if let data = try? JSONEncoder().encode(items) {

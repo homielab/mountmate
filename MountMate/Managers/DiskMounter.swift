@@ -204,4 +204,3 @@ class DiskMounter: ObservableObject {
     self.session = nil
   }
 }
-

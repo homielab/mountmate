@@ -204,8 +204,9 @@ struct DiskAndVolumesView: View {
         ForEach(disk.partitions) { partition in
           VolumeRowView(
             volume: partition,
-            customMountPointEditor: customMountPointEditor)
-            .padding(.leading, showOnlyVolumes ? 0 : 24)
+            customMountPointEditor: customMountPointEditor
+          )
+          .padding(.leading, showOnlyVolumes ? 0 : 24)
         }
         ForEach(visibleContainers) { container in
           if !showOnlyVolumes {
@@ -214,8 +215,9 @@ struct DiskAndVolumesView: View {
           ForEach(container.volumes) { volume in
             VolumeRowView(
               volume: volume,
-              customMountPointEditor: customMountPointEditor)
-              .padding(.leading, showOnlyVolumes ? 0 : 48)
+              customMountPointEditor: customMountPointEditor
+            )
+            .padding(.leading, showOnlyVolumes ? 0 : 48)
           }
         }
       }
@@ -263,9 +265,12 @@ struct DiskHeaderRow: View {
             Text(error).font(.caption).foregroundColor(.orange).lineLimit(1).truncationMode(.tail)
           } else if let total = disk.totalSize, let used = disk.usedSpace, let free = disk.freeSpace
           {
-            Text(String(
-              format: NSLocalizedString("DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
-              used, total, free))
+            Text(
+              String(
+                format: NSLocalizedString(
+                  "DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
+                used, total, free)
+            )
             .font(.caption).foregroundColor(.secondary)
           } else {
             Text(disk.connectionType).font(.caption).foregroundColor(.secondary)
@@ -328,7 +333,9 @@ struct VolumeRowView: View {
   @State private var isHovering = false
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
   private var customMountPoint: String? { persistence.customMountPoint(for: volume)?.mountPoint }
-  private var isCustomMountPointExpanded: Bool { customMountPointEditor.expandedVolumeID == volume.id }
+  private var isCustomMountPointExpanded: Bool {
+    customMountPointEditor.expandedVolumeID == volume.id
+  }
 
   private func usageColor(for percentage: Double) -> Color {
     if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
@@ -359,7 +366,8 @@ struct VolumeRowView: View {
         .help(
           NSLocalizedString(
             "Custom Mount Point Menu",
-            comment: "Volume context menu custom mount point action"))
+            comment: "Volume context menu custom mount point action")
+        )
         .padding(.trailing, 8)
 
         HStack {
@@ -388,7 +396,8 @@ struct VolumeRowView: View {
             if volume.isMounted {
               if let total = volume.totalSize, let used = volume.usedSpace {
                 // Keep simple used/total; localize only if desired separately
-                Text(String(format: "%@ / %@", used, total)).font(.caption).foregroundColor(.secondary)
+                Text(String(format: "%@ / %@", used, total)).font(.caption).foregroundColor(
+                  .secondary)
               } else if let fsType = volume.fileSystemType {
                 Text(fsType).font(.caption).foregroundColor(.secondary)
               }
@@ -401,12 +410,13 @@ struct VolumeRowView: View {
                   format: NSLocalizedString(
                     "Custom Mount Point Summary",
                     comment: "Volume row custom mount point summary"),
-                  customMountPoint))
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
-                .help(customMountPoint)
+                  customMountPoint)
+              )
+              .font(.caption2)
+              .foregroundColor(.secondary)
+              .lineLimit(nil)
+              .fixedSize(horizontal: false, vertical: true)
+              .help(customMountPoint)
             }
           }
           Spacer()
@@ -535,8 +545,9 @@ struct VolumeRowView: View {
           editorState: customMountPointEditor,
           onClose: {
             customMountPointEditor.collapse()
-          })
-          .padding(.leading, 32)
+          }
+        )
+        .padding(.leading, 32)
       }
 
       if !volume.snapshots.isEmpty {
@@ -585,9 +596,10 @@ struct InlineCustomMountPointEditor: View {
         prompt: Text(
           NSLocalizedString(
             "Custom Mount Point Path Prompt",
-            comment: "Custom mount point path placeholder")))
-        .textFieldStyle(.roundedBorder)
-        .foregroundStyle(.white)
+            comment: "Custom mount point path placeholder"))
+      )
+      .textFieldStyle(.roundedBorder)
+      .foregroundStyle(.white)
 
       HStack(spacing: 8) {
         Button(NSLocalizedString("Choose Folder", comment: "Choose folder button")) {
@@ -611,11 +623,12 @@ struct InlineCustomMountPointEditor: View {
       Text(
         NSLocalizedString(
           "Custom Mount Point System Helper",
-          comment: "Custom mount point helper text"))
-        .font(.caption)
-        .foregroundStyle(.white.opacity(0.92))
-        .lineLimit(nil)
-        .fixedSize(horizontal: false, vertical: true)
+          comment: "Custom mount point helper text")
+      )
+      .font(.caption)
+      .foregroundStyle(.white.opacity(0.92))
+      .lineLimit(nil)
+      .fixedSize(horizontal: false, vertical: true)
 
       if let inlineError = editorState.inlineError {
         Text(inlineError)
@@ -644,8 +657,8 @@ struct InlineCustomMountPointEditor: View {
     )
     .alert(
       NSLocalizedString("Create Folder Title", comment: "Create folder alert title"),
-      isPresented: $editorState.showCreateDirectoryAlert)
-    {
+      isPresented: $editorState.showCreateDirectoryAlert
+    ) {
       Button(NSLocalizedString("Create", comment: "Create button")) {
         createPendingDirectoryAndSave()
       }
@@ -658,8 +671,8 @@ struct InlineCustomMountPointEditor: View {
     }
     .alert(
       NSLocalizedString("Folder Not Empty Title", comment: "Non-empty folder alert title"),
-      isPresented: $editorState.showNonEmptyDirectoryAlert)
-    {
+      isPresented: $editorState.showNonEmptyDirectoryAlert
+    ) {
       Button(NSLocalizedString("Use Folder", comment: "Use folder button")) {
         commitPendingSave()
       }
@@ -780,7 +793,8 @@ struct InlineCustomMountPointEditor: View {
     guard let path = editorState.pendingSavePath else { return }
     let selectedFolderURL =
       editorState.selectedFolderURL?.path == path ? editorState.selectedFolderURL : nil
-    if let error = persistence.applyCustomMountPoint(path, selectedURL: selectedFolderURL, for: volume)
+    if let error = persistence.applyCustomMountPoint(
+      path, selectedURL: selectedFolderURL, for: volume)
     {
       editorState.inlineError = error
       return
@@ -924,7 +938,7 @@ struct HeaderActionsView: View {
 
   private var canUnmountAll: Bool {
     (driveManager.physicalDisks ?? []).flatMap(\.allVolumes)
-    .contains { $0.isMounted && $0.category == .user && !$0.isProtected }
+      .contains { $0.isMounted && $0.category == .user && !$0.isProtected }
   }
 
   var body: some View {
@@ -939,8 +953,15 @@ struct HeaderActionsView: View {
             ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
       }
       .buttonStyle(.plain)
-      .help(allCollapsed ? NSLocalizedString("Expand All", comment: "Tooltip") : NSLocalizedString("Collapse All", comment: "Tooltip"))
-      .accessibilityLabel(allCollapsed ? NSLocalizedString("Expand All", comment: "Accessibility label") : NSLocalizedString("Collapse All", comment: "Accessibility label"))
+      .help(
+        allCollapsed
+          ? NSLocalizedString("Expand All", comment: "Tooltip")
+          : NSLocalizedString("Collapse All", comment: "Tooltip")
+      )
+      .accessibilityLabel(
+        allCollapsed
+          ? NSLocalizedString("Expand All", comment: "Accessibility label")
+          : NSLocalizedString("Collapse All", comment: "Accessibility label"))
 
       // Unmount All Button
       Button(action: { driveManager.unmountAllDrives() }) {

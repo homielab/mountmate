@@ -130,9 +130,9 @@ func runProcess(
   DispatchQueue.global(qos: .utility).async {
     task.waitUntilExit()
     processExited.value = true
-    processExitSem.signal()   // fires as soon as process exits
+    processExitSem.signal()  // fires as soon as process exits
     ioGroup.wait()
-    completionSem.signal()    // fires when I/O drain is also done
+    completionSem.signal()  // fires when I/O drain is also done
   }
 
   guard completionSem.wait(timeout: .now() + timeout) != .timedOut else {
@@ -234,7 +234,8 @@ private final class ClaimOnce: @unchecked Sendable {
 
   @discardableResult
   func claim() -> Bool {
-    lock.lock(); defer { lock.unlock() }
+    lock.lock()
+    defer { lock.unlock() }
     guard !_claimed else { return false }
     _claimed = true
     return true
@@ -247,7 +248,8 @@ extension String {
   }
 
   var appleScriptStringLiteral: String {
-    "\"" + self
+    "\""
+      + self
       .replacingOccurrences(of: "\\", with: "\\\\")
       .replacingOccurrences(of: "\"", with: "\\\"") + "\""
   }

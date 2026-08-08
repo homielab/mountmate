@@ -8,7 +8,7 @@ class NetworkMountManager: ObservableObject {
   @Published var mountedShareIDs: Set<UUID> = []
   @Published var manuallyConnectedShares: [NetworkShare] = []
   @Published var isUnmountingManualShares = false
-  
+
   private var manualSharesDictionary: [String: NetworkShare] = [:]
 
   private struct MountedSMBShare {
@@ -27,11 +27,13 @@ class NetworkMountManager: ObservableObject {
 
     func matches(_ share: NetworkShare) -> Bool {
       let decodedSource = source.removingPercentEncoding ?? source
-      let cleanSource = decodedSource
+      let cleanSource =
+        decodedSource
         .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         .lowercased()
       let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
-      let cleanSharePath = decodedSharePath
+      let cleanSharePath =
+        decodedSharePath
         .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         .lowercased()
       let cleanServer = share.server.lowercased()
@@ -63,11 +65,13 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
-  private func parseMountedShares(from mountOutput: String) -> (mountedUUIDs: Set<UUID>, manualShares: [NetworkShare]) {
+  private func parseMountedShares(from mountOutput: String) -> (
+    mountedUUIDs: Set<UUID>, manualShares: [NetworkShare]
+  ) {
     var mountedUUIDs = Set<UUID>()
     var currentManualShareMountPoints = Set<String>()
     var manualShares = [NetworkShare]()
-    
+
     let shares = PersistenceManager.shared.networkShares
     let mountedShares = mountOutput.components(separatedBy: .newlines).compactMap {
       MountedSMBShare(mountOutputLine: $0)
@@ -116,13 +120,14 @@ class NetworkMountManager: ObservableObject {
         }
       }
     }
-    
+
     // Clean up old manual shares that are no longer mounted
-    manualSharesDictionary = manualSharesDictionary.filter { currentManualShareMountPoints.contains($0.key) }
-    
+    manualSharesDictionary = manualSharesDictionary.filter {
+      currentManualShareMountPoints.contains($0.key)
+    }
+
     return (mountedUUIDs, manualShares)
   }
-
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
     let mountPoint = configuredMountPoint(for: share)
@@ -192,7 +197,8 @@ class NetworkMountManager: ObservableObject {
           // Cleanup mount point if empty
           try? FileManager.default.removeItem(atPath: mountPoint)
 
-          let rawError = result.stderr.isEmpty
+          let rawError =
+            result.stderr.isEmpty
             ? "mount_smbfs exited with code \(result.exitCode ?? -1)."
             : result.stderr
           let sanitized = self.sanitizeError(rawError)
@@ -238,7 +244,8 @@ class NetworkMountManager: ObservableObject {
       DispatchQueue.main.async {
         self.refreshMountStatus()
         if !result.succeeded {
-          let errMsg = result.stderr.isEmpty
+          let errMsg =
+            result.stderr.isEmpty
             ? "umount exited with code \(result.exitCode ?? -1)."
             : result.stderr
           completion(false, errMsg)
@@ -307,7 +314,8 @@ class NetworkMountManager: ObservableObject {
     guard result.succeeded, !result.stdout.isEmpty else { return nil }
     let output = result.stdout
 
-    return output
+    return
+      output
       .components(separatedBy: .newlines)
       .compactMap { MountedSMBShare(mountOutputLine: $0) }
       .first(where: { $0.matches(share) })?

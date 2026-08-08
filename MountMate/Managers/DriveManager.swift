@@ -58,7 +58,8 @@ class DriveManager: ObservableObject {
         return
       }
 
-      guard let allDisksData = listResult.stdout.data(using: .utf8), !listResult.stdout.isEmpty else {
+      guard let allDisksData = listResult.stdout.data(using: .utf8), !listResult.stdout.isEmpty
+      else {
         self.updateState(with: [])
         return
       }
@@ -144,7 +145,8 @@ class DriveManager: ObservableObject {
 
     DispatchQueue.global(qos: .userInitiated).async {
       for drive in drivesToUnmount {
-        _ = runProcess(executable: "/usr/sbin/diskutil", arguments: ["unmount", drive.deviceIdentifier])
+        _ = runProcess(
+          executable: "/usr/sbin/diskutil", arguments: ["unmount", drive.deviceIdentifier])
       }
       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
         self?.refreshDrives(qos: .userInitiated)
@@ -167,7 +169,8 @@ class DriveManager: ObservableObject {
       for volume in volumesToMount {
         let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-        _ = runProcess(executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+        _ = runProcess(
+          executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
       }
       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
         self?.refreshDrives(qos: .userInitiated)
@@ -185,9 +188,11 @@ class DriveManager: ObservableObject {
       let result = runProcess(executable: "/usr/sbin/diskutil", arguments: ejectArgs)
       DispatchQueue.main.async {
         if !result.succeeded {
-          let errMsg = result.timedOut
+          let errMsg =
+            result.timedOut
             ? "The operation timed out after 15 seconds."
-            : (result.stderr.isEmpty ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: disk.name ?? disk.id, disk: disk, operation: .eject)
         }
@@ -199,13 +204,19 @@ class DriveManager: ObservableObject {
   func forceEject(disk: PhysicalDisk) {
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let forceUnmountResult = runProcess(executable: "/usr/sbin/diskutil", arguments: ["unmountDisk", "force", disk.id])
-      let result = disk.isRAIDSet ? forceUnmountResult : runProcess(executable: "/usr/sbin/diskutil", arguments: ["eject", disk.id])
+      let forceUnmountResult = runProcess(
+        executable: "/usr/sbin/diskutil", arguments: ["unmountDisk", "force", disk.id])
+      let result =
+        disk.isRAIDSet
+        ? forceUnmountResult
+        : runProcess(executable: "/usr/sbin/diskutil", arguments: ["eject", disk.id])
       DispatchQueue.main.async {
         if !result.succeeded {
-          let errMsg = result.timedOut
+          let errMsg =
+            result.timedOut
             ? "The operation timed out after 15 seconds."
-            : (result.stderr.isEmpty ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: disk.name ?? disk.id, disk: disk, operation: .eject)
         }
@@ -219,15 +230,19 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runProcess(executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+      let result = runProcess(
+        executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
 
-      if !result.timedOut, !result.stderr.isEmpty, result.stderr.lowercased().contains("failed to mount") {
+      if !result.timedOut, !result.stderr.isEmpty,
+        result.stderr.lowercased().contains("failed to mount")
+      {
         print(
           "Initial mount failed for \(volume.deviceIdentifier), possibly due to a race condition. Retrying in 15s..."
         )
 
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
-          let retryResult = runProcess(executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+          let retryResult = runProcess(
+            executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
           self.handleMountResult(retryResult, for: volume)
         }
       } else {
@@ -239,9 +254,11 @@ class DriveManager: ObservableObject {
   private func handleMountResult(_ result: ProcessResult, for volume: Volume) {
     DispatchQueue.main.async {
       if !result.succeeded {
-        let errMsg = result.timedOut
+        let errMsg =
+          result.timedOut
           ? "The operation timed out after 15 seconds."
-          : (result.stderr.isEmpty ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+          : (result.stderr.isEmpty
+            ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
         self.handleDiskUtilError(errMsg, for: volume.name, volume: volume, operation: .mount)
       }
       self.busyVolumeIdentifier = nil
@@ -274,9 +291,11 @@ class DriveManager: ObservableObject {
       if !result.succeeded {
         // If saved password failed, maybe delete it?
         // But for now let's just show error.
-        let errMsg = result.timedOut
+        let errMsg =
+          result.timedOut
           ? "The operation timed out after 15 seconds."
-          : (result.stderr.isEmpty ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+          : (result.stderr.isEmpty
+            ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
         self.handleDiskUtilError(
           errMsg, for: volume.name, volume: volume, operation: .mount)
       }
@@ -293,9 +312,11 @@ class DriveManager: ObservableObject {
         arguments: ["unmount", volume.deviceIdentifier])
       DispatchQueue.main.async {
         if !result.succeeded {
-          let errMsg = result.timedOut
+          let errMsg =
+            result.timedOut
             ? "The operation timed out after 15 seconds."
-            : (result.stderr.isEmpty ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
             errMsg, for: volume.name, volume: volume, operation: .unmount)
         }
@@ -313,7 +334,8 @@ class DriveManager: ObservableObject {
         arguments: ["unmount", volume.deviceIdentifier])
       DispatchQueue.main.async {
         if !result.succeeded {
-          let error = result.timedOut
+          let error =
+            result.timedOut
             ? "The operation timed out after 15 seconds."
             : (result.stderr.isEmpty
               ? "diskutil exited with code \(result.exitCode ?? -1)."
@@ -365,7 +387,8 @@ class DriveManager: ObservableObject {
     }
 
     var isDirectory = ObjCBool(false)
-    if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), !isDirectory.boolValue
+    if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+      !isDirectory.boolValue
     {
       return NSLocalizedString(
         "Custom Mount Point Must Be Folder",
@@ -375,8 +398,9 @@ class DriveManager: ObservableObject {
     return nil
   }
 
-  func inspectDirectory(at rawPath: String) throws -> (exists: Bool, isDirectory: Bool, isEmpty: Bool)
-  {
+  func inspectDirectory(at rawPath: String) throws -> (
+    exists: Bool, isDirectory: Bool, isEmpty: Bool
+  ) {
     let path = normalizedMountPointPath(rawPath)
     var isDirectory = ObjCBool(false)
     let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
@@ -410,10 +434,11 @@ class DriveManager: ObservableObject {
     // diskutil reports RAID members alongside the virtual RAID master. Only
     // the master represents the Finder-visible logical volume and can be
     // safely acted on as a set.
-    let rootInfo = Dictionary(uniqueKeysWithValues: rootDisks.compactMap { disk -> (String, [String: Any])? in
-      guard let identifier = disk["DeviceIdentifier"] as? String else { return nil }
-      return (identifier, getInfoForDisk(for: identifier) ?? [:])
-    })
+    let rootInfo = Dictionary(
+      uniqueKeysWithValues: rootDisks.compactMap { disk -> (String, [String: Any])? in
+        guard let identifier = disk["DeviceIdentifier"] as? String else { return nil }
+        return (identifier, getInfoForDisk(for: identifier) ?? [:])
+      })
 
     let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
     var newDisks: [PhysicalDisk] = []
@@ -506,7 +531,8 @@ class DriveManager: ObservableObject {
 
   public func getInfoForDisk(for identifier: String) -> [String: Any]? {
     guard !identifier.isEmpty else { return nil }
-    let result = runProcess(executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
+    let result = runProcess(
+      executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
     return result.stdout.data(using: .utf8).flatMap {
       try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil)
         as? [String: Any]
@@ -717,10 +743,11 @@ class DriveManager: ObservableObject {
       kind = .basic
     case .unmountBusyVolume:
       title = NSLocalizedString("Eject Failed", comment: "Alert title")
-      message = String(
-        format: NSLocalizedString(
-          "Failed to eject “%@” because one of its volumes is busy or in use.",
-          comment: "Error message"), name) + "\n\nDetails:\n\(error)"
+      message =
+        String(
+          format: NSLocalizedString(
+            "Failed to eject “%@” because one of its volumes is busy or in use.",
+            comment: "Error message"), name) + "\n\nDetails:\n\(error)"
       if let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
       } else {
@@ -742,15 +769,17 @@ class DriveManager: ObservableObject {
       }
 
       if let proc = process {
-        message = String(
-          format: NSLocalizedString(
-            "Failed to %@ “%@” because it is currently in use by “%@”.",
-            comment: "Error message"), verb, name, proc) + "\n\nDetails:\n\(error)"
+        message =
+          String(
+            format: NSLocalizedString(
+              "Failed to %@ “%@” because it is currently in use by “%@”.",
+              comment: "Error message"), verb, name, proc) + "\n\nDetails:\n\(error)"
       } else {
-        message = String(
-          format: NSLocalizedString(
-            "Failed to %@ “%@” because it is currently in use by another application.",
-            comment: "Error message"), verb, name) + "\n\nDetails:\n\(error)"
+        message =
+          String(
+            format: NSLocalizedString(
+              "Failed to %@ “%@” because it is currently in use by another application.",
+              comment: "Error message"), verb, name) + "\n\nDetails:\n\(error)"
       }
 
       if operation == .eject, let disk = disk {
@@ -865,7 +894,8 @@ class DriveManager: ObservableObject {
   }
 
   private func mountedVolumeName(at rawPath: String, excluding volume: Volume? = nil) -> String? {
-    let targetPath = URL(fileURLWithPath: normalizedMountPointPath(rawPath)).standardizedFileURL.path
+    let targetPath = URL(fileURLWithPath: normalizedMountPointPath(rawPath)).standardizedFileURL
+      .path
     let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeUUIDStringKey]
     let mountedURLs =
       FileManager.default.mountedVolumeURLs(
