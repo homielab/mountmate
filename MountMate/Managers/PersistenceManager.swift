@@ -27,7 +27,11 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func protect(volume: Volume) -> Bool {
-    add(volume: volume, to: &protectedVolumes, save: saveProtectedVolumes)
+    guard let info = volume.managedVolumeInfo else { return false }
+    guard !protectedVolumes.contains(where: { $0.id == info.id }) else { return true }
+    protectedVolumes.append(info)
+    saveProtectedVolumes()
+    return true
   }
 
   func unprotect(info: ManagedVolumeInfo) {
@@ -37,7 +41,11 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func ignore(volume: Volume) -> Bool {
-    add(volume: volume, to: &ignoredVolumes, save: saveIgnoredVolumes)
+    guard let info = volume.managedVolumeInfo else { return false }
+    guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return true }
+    ignoredVolumes.append(info)
+    saveIgnoredVolumes()
+    return true
   }
 
   func ignore(disk: PhysicalDisk) {
@@ -68,7 +76,11 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func block(volume: Volume) -> Bool {
-    add(volume: volume, to: &blockedVolumes, save: saveBlockedVolumes)
+    guard let info = volume.managedVolumeInfo else { return false }
+    guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return true }
+    blockedVolumes.append(info)
+    saveBlockedVolumes()
+    return true
   }
 
   func unblock(info: ManagedVolumeInfo) {
@@ -113,17 +125,7 @@ class PersistenceManager: ObservableObject {
 
   // MARK: - Private Save/Load Helpers
 
-  private func add(
-    volume: Volume,
-    to items: inout [ManagedVolumeInfo],
-    save: () -> Void
-  ) -> Bool {
-    guard let info = volume.managedVolumeInfo else { return false }
-    guard !items.contains(where: { $0.id == info.id }) else { return true }
-    items.append(info)
-    save()
-    return true
-  }
+
 
   private func save<T: Codable>(_ items: [T], to key: String) {
     if let data = try? JSONEncoder().encode(items) {
