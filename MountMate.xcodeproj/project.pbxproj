@@ -74,8 +74,6 @@
 		};
 		B4AADB502DFE3E1600EDAAC2 /* MountMateTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MountMateTests;
 			sourceTree = "<group>";
 		};
@@ -113,7 +111,6 @@
 				8A83E88FFEB04FB9A24AC157 /* Main */,
 				9FA3366F5C0A9E418397BFBE /* Settings */,
 			);
-			name = Views;
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -122,7 +119,6 @@
 			children = (
 				C4C09178F2601C4430AF3BB5 /* HostingWindowReader.swift */,
 			);
-			name = Utilities;
 			path = Utilities;
 			sourceTree = "<group>";
 		};
@@ -140,7 +136,6 @@
 				2A93BC053980940FFE7C1601 /* NetworkShareMainRow.swift */,
 				1A4B1A5AD797B8648BF0C4FD /* ManualSharesSectionHeader.swift */,
 			);
-			name = Main;
 			path = Main;
 			sourceTree = "<group>";
 		};
@@ -154,7 +149,6 @@
 				D8834FAC18ADA054B19E89CF /* NetworkShareRow.swift */,
 				AADDB733E435E7AFD552E1B8 /* EditNetworkShareSheet.swift */,
 			);
-			name = Settings;
 			path = Settings;
 			sourceTree = "<group>";
 		};
@@ -163,7 +157,6 @@
 			children = (
 				34DFBC0C05F8981180A98111 /* MenuBarIconView.swift */,
 			);
-			name = App;
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -206,7 +199,6 @@
 				11EDB34C77D88736907F31F1 /* Utilities */,
 				00554093D3BA14136DB6D769 /* Views */,
 			);
-			name = MountMate;
 			path = MountMate;
 			sourceTree = "<group>";
 		};
@@ -215,7 +207,6 @@
 			children = (
 				B1801F5CC0D8783587B2474A /* CustomMountPointEditorState.swift */,
 			);
-			name = Models;
 			path = Models;
 			sourceTree = "<group>";
 		};
@@ -530,7 +521,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 79LQ4MHVMG;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -546,7 +537,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 5.14;
+				MARKETING_VERSION = 5.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -566,7 +557,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 32;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 79LQ4MHVMG;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -582,7 +573,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 5.14;
+				MARKETING_VERSION = 5.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.mountmate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
