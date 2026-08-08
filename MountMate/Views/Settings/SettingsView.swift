@@ -39,6 +39,7 @@ struct GeneralSettingsView: View {
     else { return "en" }
     if firstLanguage.starts(with: "vi") { return "vi" }
     if firstLanguage.starts(with: "ru") { return "ru" }
+    if firstLanguage.starts(with: "uk") { return "uk" }
     if firstLanguage.starts(with: "zh-Hant")
       || firstLanguage.starts(with: "zh-TW")
       || firstLanguage.starts(with: "zh-HK")
