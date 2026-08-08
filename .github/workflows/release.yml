@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -21,9 +21,9 @@ jobs:
           brew install create-dmg
           
           # Download Sparkle tools to get generate_appcast
-          wget https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz
+          wget https://github.com/sparkle-project/Sparkle/releases/download/2.9.5/Sparkle-2.9.5.tar.xz
           mkdir -p sparkle-tools
-          tar -xf Sparkle-2.6.4.tar.xz -C sparkle-tools
+          tar -xf Sparkle-2.9.5.tar.xz -C sparkle-tools
           echo "$PWD/sparkle-tools/bin" >> $GITHUB_PATH
 
       - name: Setup Code Signing
@@ -58,12 +58,14 @@ jobs:
             --password "$NOTARY_PASSWORD"
 
       - name: Setup Environment Variables
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           echo 'CERTIFICATE_NAME="Developer ID Application"' >> .env.local
           echo 'NOTARY_PROFILE="MountMateProfile"' >> .env.local
           echo "SPARKLE_PRIVATE_KEY=\"$RUNNER_TEMP/sparkle_private_key.pem\"" >> .env.local
           
-          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > $RUNNER_TEMP/sparkle_private_key.pem
+          echo "$SPARKLE_KEY" > $RUNNER_TEMP/sparkle_private_key.pem
 
       - name: Create App
         run: ./scripts/1-create-app.sh
