@@ -1,25 +1,22 @@
 {
   "fill-specializations" : [
     {
-      "value" : "system-light"
+      "value" : {
+        "solid" : "extended-gray:1.00000,1.00000"
+      }
     },
     {
       "appearance" : "dark",
-      "value" : "system-dark"
+      "value" : {
+        "solid" : "extended-gray:0.00000,1.00000"
+      }
     }
   ],
   "groups" : [
     {
-      "blend-mode-specializations" : [
-        {
-          "appearance" : "dark",
-          "value" : "hard-light"
-        }
-      ],
-      "blur-material" : 0.5,
+      "blur-material" : null,
       "layers" : [
         {
-          "blend-mode" : "normal",
           "fill-specializations" : [
             {
               "value" : {
@@ -59,20 +56,28 @@
               }
             },
             {
-              "appearance" : "dark",
-              "value" : "none"
-            },
-            {
               "appearance" : "tinted",
               "value" : {
-                "automatic-gradient" : "extended-gray:0.00000,1.00000"
+                "linear-gradient" : [
+                  "extended-gray:0.25000,1.00000",
+                  "extended-gray:0.00000,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 1
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.3
+                  }
+                }
               }
             }
           ],
-          "glass" : true,
+          "glass" : false,
           "image-name" : "on-off.svg",
           "name" : "on-off",
-          "opacity" : 1,
           "position" : {
             "scale" : 0.4,
             "translation-in-points" : [
@@ -84,23 +89,63 @@
         {
           "fill-specializations" : [
             {
-              "value" : "automatic"
+              "value" : {
+                "linear-gradient" : [
+                  "extended-gray:0.25000,1.00000",
+                  "extended-gray:0.00000,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.7
+                  }
+                }
+              }
             },
             {
               "appearance" : "dark",
               "value" : {
-                "solid" : "display-p3:0.93671,0.93671,0.93671,1.00000"
+                "linear-gradient" : [
+                  "extended-gray:0.75000,1.00000",
+                  "extended-gray:1.00000,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.7
+                  }
+                }
               }
             },
             {
               "appearance" : "tinted",
               "value" : {
-                "automatic-gradient" : "extended-gray:1.00000,0.70323"
+                "linear-gradient" : [
+                  "extended-gray:0.75000,1.00000",
+                  "extended-gray:1.00000,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.7
+                  }
+                }
               }
             }
           ],
-          "glass" : true,
-          "hidden" : false,
+          "glass" : false,
           "image-name" : "hard-disk.svg",
           "name" : "hard-disk",
           "position" : {
@@ -112,9 +157,8 @@
           }
         }
       ],
-      "lighting" : "individual",
       "shadow" : {
-        "kind" : "layer-color",
+        "kind" : "neutral",
         "opacity" : 0.5
       },
       "specular" : false,
