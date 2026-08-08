@@ -225,6 +225,26 @@ class DriveManager: ObservableObject {
     }
   }
 
+  func forceUnmount(volume: Volume) {
+    DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
+    DispatchQueue.global(qos: .userInitiated).async {
+      let result = runProcess(
+        executable: "/usr/sbin/diskutil", arguments: ["unmount", "force", volume.deviceIdentifier])
+      DispatchQueue.main.async {
+        if !result.succeeded {
+          let errMsg =
+            result.timedOut
+            ? "The operation timed out after 15 seconds."
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+          self.handleDiskUtilError(
+            errMsg, for: volume.name, volume: volume, operation: .unmount)
+        }
+        self.busyVolumeIdentifier = nil
+      }
+    }
+  }
+
   func mount(volume: Volume) {
     let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
@@ -784,6 +804,8 @@ class DriveManager: ObservableObject {
 
       if operation == .eject, let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
+      } else if operation == .unmount, let volume = volume {
+        kind = .forceUnmount { self.forceUnmount(volume: volume) }
       } else {
         kind = .basic
       }

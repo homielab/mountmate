@@ -134,6 +134,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     case .forceEject:
       alert.addButton(withTitle: NSLocalizedString("Force Eject", comment: "Force Eject button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+
+    case .forceUnmount:
+      alert.addButton(withTitle: NSLocalizedString("Force Unmount", comment: "Force Unmount button"))
+      alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
     }
 
     NSApp.activate(ignoringOtherApps: true)
@@ -148,6 +152,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       {
         lockedVolumeAlert.onConfirm(textField.stringValue, checkbox.state == .on)
       } else if case .forceEject(let action) = appAlert.kind {
+        action()
+      } else if case .forceUnmount(let action) = appAlert.kind {
         action()
       }
     }
