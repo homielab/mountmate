@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings (English)
 */
 
@@ -148,6 +148,10 @@
 "Options" = "Options";
 "Leave empty to use default location" = "Leave empty to use default location";
 "Preview: %@" = "Preview: %@";
+
+
+// MARK: - Custom Mount Point
+//=============================================
 "Custom Mount Point Menu" = "Custom Mount Point…";
 "Use Custom Mount Point" = "Use custom mount point";
 "Folder Path" = "Folder Path";
@@ -159,7 +163,6 @@
 "Save" = "Save";
 "Create" = "Create";
 "Use Folder" = "Use Folder";
-"Custom Mount Point Help" = "Leave this off to use the standard macOS mount location.";
 "Custom Mount Point Empty Means Default" = "Leave this empty to use the standard macOS mount location.";
 "Custom Mount Point System Helper" = "Leave this empty to use the standard macOS mount location. Saving updates the system mount rule and may ask for your admin password once.";
 "Custom Mount Point Summary" = "Custom: %@";
@@ -187,3 +190,51 @@
 "The disk is in use. Do you want to force eject it?" = "The disk is in use. Do you want to force eject it?";
 "This may result in data loss." = "This may result in data loss.";
 "Remember password in Keychain" = "Remember password in Keychain";
+
+// Additional strings discovered in SwiftUI views
+"⌘⇧U - Unmount All Volumes" = "⌘⇧U - Unmount All Volumes";
+"⌘⇧M - Mount All Volumes" = "⌘⇧M - Mount All Volumes";
+
+"English" = "English";
+"Français" = "Français";
+"Українська" = "Українська";
+"Tiếng Việt" = "Tiếng Việt";
+"中文（简体）" = "中文（简体）";
+"中文（繁体）" = "中文（繁体）";
+
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility.";
+
+"Volume: %@" = "Volume: %@";
+"Disk: %@" = "Disk: %@";
+"APFS Container • %@" = "APFS Container • %@";
+
+"Settings" = "Settings";
+"Refresh Drives" = "Refresh Drives";
+"Retry" = "Retry";
+"Auto-mounts at login" = "Auto-mounts at login";
+"Mount Now" = "Mount Now";
+"Edit" = "Edit";
+"Delete" = "Delete";
+
+"Accessibility Permission Required" = "Accessibility Permission Required";
+
+"Add Share" = "Add Share";
+
+"Optional (Defaults to share name)" = "Optional (Defaults to share name)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Optional (Guest)";
+
+// Missing keys discovered: Settings labels
+"Enable Keyboard Shortcuts" = "Enable Keyboard Shortcuts";
+"About & Updates" = "About & Updates";
+
+// Remaining UI strings
+"MountMate" = "MountMate";
+"Expand All" = "Expand All";
+"Collapse All" = "Collapse All";
+"Try Again" = "Try Again";
+"Action Failed" = "Action Failed";
+
+// Disk usage format
+"DiskUsageUsedFree" = "%@ used / %@ (%@ free)";

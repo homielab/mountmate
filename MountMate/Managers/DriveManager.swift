@@ -308,9 +308,16 @@ class DriveManager: ObservableObject {
   func remount(volume: Volume) {
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runShell("diskutil unmount \(volume.deviceIdentifier.shellQuoted)")
+      let result = runProcess(
+        executable: "/usr/sbin/diskutil",
+        arguments: ["unmount", volume.deviceIdentifier])
       DispatchQueue.main.async {
-        if let error = result.error, !error.isEmpty {
+        if !result.succeeded {
+          let error = result.timedOut
+            ? "The operation timed out after 15 seconds."
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)."
+              : result.stderr)
           self.handleDiskUtilError(
             error, for: volume.name, volume: volume, operation: .unmount)
           self.busyVolumeIdentifier = nil

@@ -297,8 +297,10 @@ class PersistenceManager: ObservableObject {
 
   private func diskInfo(for deviceIdentifier: String) -> [String: Any]? {
     guard !deviceIdentifier.isEmpty else { return nil }
-    let output = runShell("diskutil info -plist \(deviceIdentifier.shellQuoted)").output
-    guard let data = output?.data(using: .utf8) else { return nil }
+    let result = runProcess(
+      executable: "/usr/sbin/diskutil",
+      arguments: ["info", "-plist", deviceIdentifier])
+    guard result.succeeded, let data = result.stdout.data(using: .utf8) else { return nil }
     return try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
       as? [String: Any]
   }
@@ -364,7 +366,7 @@ class PersistenceManager: ObservableObject {
     var index = 0
 
     while index < lines.count {
-      if lines[index] == comment {
+      if lines[index].trimmingCharacters(in: .whitespaces) == comment {
         index += 1
         if index < lines.count {
           index += 1
@@ -401,8 +403,16 @@ class PersistenceManager: ObservableObject {
     }
 
     let script = "do shell script \(command.appleScriptStringLiteral) with administrator privileges"
-    let result = runShell("/usr/bin/osascript -e \(script.shellQuoted)")
-    if let error = result.error, !error.isEmpty {
+    let result = runProcess(
+      executable: "/usr/bin/osascript",
+      arguments: ["-e", script],
+      timeout: 300)
+    if !result.succeeded {
+      let error = result.stderr.isEmpty
+        ? NSLocalizedString(
+          "Custom Mount Point System Error",
+          comment: "Fallback custom mount point system configuration error")
+        : result.stderr
       throw NSError(
         domain: "MountMate",
         code: 2,
@@ -417,7 +427,10 @@ class PersistenceManager: ObservableObject {
   private func isConflictingFstabEntry(_ line: String, volumeUUID: String) -> Bool {
     let trimmed = line.trimmingCharacters(in: .whitespaces)
     guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return false }
-    return trimmed.hasPrefix("UUID=\(volumeUUID) ")
+    let uuidPrefix = "UUID=\(volumeUUID)"
+    guard trimmed.hasPrefix(uuidPrefix), trimmed.count > uuidPrefix.count else { return false }
+    let separatorIndex = trimmed.index(trimmed.startIndex, offsetBy: uuidPrefix.count)
+    return trimmed[separatorIndex].isWhitespace
   }
 
   private func fstabEscapedField(_ value: String) -> String {

@@ -265,8 +265,10 @@ struct DiskHeaderRow: View {
             Text(error).font(.caption).foregroundColor(.orange).lineLimit(1).truncationMode(.tail)
           } else if let total = disk.totalSize, let used = disk.usedSpace, let free = disk.freeSpace
           {
-            Text("\(used) used / \(total) (\(free) free)").font(.caption).foregroundColor(
-              .secondary)
+            Text(String(
+              format: NSLocalizedString("DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
+              used, total, free))
+            .font(.caption).foregroundColor(.secondary)
           } else {
             Text(disk.connectionType).font(.caption).foregroundColor(.secondary)
           }
@@ -387,8 +389,8 @@ struct VolumeRowView: View {
               volume.isMounted ? .primary : .secondary)
             if volume.isMounted {
               if let total = volume.totalSize, let used = volume.usedSpace {
-                Text("\(used) / \(total)").font(.caption).foregroundColor(
-                  .secondary)
+                // Keep simple used/total; localize only if desired separately
+                Text(String(format: "%@ / %@", used, total)).font(.caption).foregroundColor(.secondary)
               } else if let fsType = volume.fileSystemType {
                 Text(fsType).font(.caption).foregroundColor(.secondary)
               }
@@ -686,17 +688,23 @@ struct InlineCustomMountPointEditor: View {
       panel.directoryURL = URL(fileURLWithPath: currentPath)
     }
 
-    panel.begin { response in
+    let completion: (NSApplication.ModalResponse) -> Void = { response in
       defer {
         editorState.isChoosingFolder = false
         NSApp.activate(ignoringOtherApps: true)
       }
       guard response == .OK else { return }
-        editorState.mountPointPath = panel.url?.path ?? editorState.mountPointPath
-        editorState.selectedFolderURL = panel.url
-        editorState.inlineError = nil
-      }
+      editorState.mountPointPath = panel.url?.path ?? editorState.mountPointPath
+      editorState.selectedFolderURL = panel.url
+      editorState.inlineError = nil
     }
+
+    if let hostWindow = editorState.hostWindow {
+      panel.beginSheetModal(for: hostWindow, completionHandler: completion)
+    } else {
+      panel.begin(completionHandler: completion)
+    }
+  }
 
   private func save() {
     editorState.inlineError = nil

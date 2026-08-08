@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings (Ukrainian)
 */
 
@@ -61,6 +61,7 @@
 "Block USB Auto-Mount" = "Блокувати автопідключення USB";
 "Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
 "Language" = "Мова";
+"Enable Keyboard Shortcuts" = "Увімкнути комбінації клавіш";
 
 // About & Updates Section
 "About & Updates" = "Про програму та оновлення";
@@ -68,6 +69,7 @@
 "Support Email" = "Електронна пошта підтримки";
 "Donate" = "Пожертвувати";
 "Check for Updates..." = "Перевірити оновлення...";
+"About & Updates" = "Про програму та оновлення";
 
 // Management Tab
 "Ignored Volumes" = "Ігноровані томи";
@@ -148,6 +150,10 @@
 "Options" = "Параметри";
 "Leave empty to use default location" = "Залиште порожнім, щоб використовувати типове місце";
 "Preview: %@" = "Попередній перегляд: %@";
+
+
+// MARK: - Custom Mount Point
+//=============================================
 "Custom Mount Point Menu" = "Власна точка монтування…";
 "Use Custom Mount Point" = "Використовувати власну точку монтування";
 "Folder Path" = "Шлях до теки";
@@ -187,3 +193,47 @@
 "The disk is in use. Do you want to force eject it?" = "Диск використовується. Бажаєте примусово вийняти його?";
 "This may result in data loss." = "Це може призвести до втрати даних.";
 "Remember password in Keychain" = "Запам'ятати пароль у Keychain";
+
+// Додаткові рядки, знайдені у SwiftUI
+"⌘⇧U - Unmount All Volumes" = "⌘⇧U - Відмонтувати всі томи";
+"⌘⇧M - Mount All Volumes" = "⌘⇧M - Підключити всі томи";
+
+"English" = "English";
+"Français" = "Français";
+"Українська" = "Українська";
+"Tiếng Việt" = "Tiếng Việt";
+"中文（简体）" = "中文（简体）";
+"中文（繁体）" = "中文（繁体）";
+
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Щоб використовувати ярлики клавіатури, надайте MountMate доступ Accessibility у Системних налаштуваннях → Конфіденційність і безпека → Доступність.";
+
+"Volume: %@" = "Том: %@";
+"Disk: %@" = "Диск: %@";
+"APFS Container • %@" = "Контейнер APFS • %@";
+
+"Settings" = "Налаштування";
+"Refresh Drives" = "Оновити диски";
+"Retry" = "Повторити";
+"Auto-mounts at login" = "Автоматично монтується при вході";
+"Mount Now" = "Підключити зараз";
+"Edit" = "Редагувати";
+"Delete" = "Видалити";
+
+"Accessibility Permission Required" = "Потрібен дозвіл доступності";
+
+"Add Share" = "Додати мережевий ресурс";
+
+"Optional (Defaults to share name)" = "Необов'язково (За замовчуванням - ім'я ресурсу)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Необов'язково (Гість)";
+
+// Решта рядків
+"MountMate" = "MountMate";
+"Expand All" = "Розгорнути все";
+"Collapse All" = "Згорнути все";
+"Try Again" = "Спробувати знову";
+"Action Failed" = "Операція не вдалася";
+
+// Disk usage format
+"DiskUsageUsedFree" = "%@ використано / %@ (%@ вільно)";
