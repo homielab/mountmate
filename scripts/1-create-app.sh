@@ -33,6 +33,7 @@ xcodebuild \
   -configuration "$CONFIGURATION" \
   -derivedDataPath "$BUILD_DIR" \
   "ONLY_ACTIVE_ARCH=NO" \
+  CODE_SIGN_IDENTITY="-" \
   -destination "generic/platform=macOS" \
   clean build
 
