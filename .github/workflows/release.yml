@@ -59,9 +59,9 @@ jobs:
 
       - name: Setup Environment Variables
         run: |
-          echo "CERTIFICATE_NAME=Developer ID Application" >> .env.local
-          echo "NOTARY_PROFILE=MountMateProfile" >> .env.local
-          echo "SPARKLE_PRIVATE_KEY=$RUNNER_TEMP/sparkle_private_key.pem" >> .env.local
+          echo 'CERTIFICATE_NAME="Developer ID Application"' >> .env.local
+          echo 'NOTARY_PROFILE="MountMateProfile"' >> .env.local
+          echo "SPARKLE_PRIVATE_KEY=\"$RUNNER_TEMP/sparkle_private_key.pem\"" >> .env.local
           
           echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > $RUNNER_TEMP/sparkle_private_key.pem
 
