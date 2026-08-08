@@ -32,10 +32,10 @@ cask "mountmate" do
       verified: "github.com/homielab/mountmate/"
   name "MountMate"
   desc "Menubar app to easily manage external drives"
-  homepage "https://mountmate.homielab.com/"
+  homepage "https://homielab.com/en/page/mountmate"
 
   livecheck do
-    url "https://mountmate.homielab.com/appcast.xml"
+    url "https://raw.githubusercontent.com/homielab/mountmate/main/docs/appcast.xml"
     strategy :sparkle, &:title
   end
 
