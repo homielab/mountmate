@@ -15,7 +15,7 @@ struct SettingsView: View {
         .tabItem { Label("Network Shares", systemImage: "server.rack") }
     }
     .frame(
-      minWidth: 420, idealWidth: 420, maxWidth: 450, minHeight: 520, idealHeight: 650,
+      minWidth: 460, idealWidth: 480, maxWidth: 520, minHeight: 540, idealHeight: 640,
       maxHeight: 800)
   }
 }

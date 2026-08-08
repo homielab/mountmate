@@ -23,7 +23,6 @@ struct VolumeRowView: View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
 
-
         HStack {
           ZStack {
             Image(systemName: "externaldrive")

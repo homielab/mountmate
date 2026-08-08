@@ -27,15 +27,15 @@ struct EditNetworkShareSheet: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HStack {
+      HStack(spacing: 10) {
         Image(systemName: "externaldrive.connected.to.line.below")
           .font(.title2)
           .foregroundStyle(.blue)
         Text(shareToEdit == nil ? "Add Network Share" : "Edit Network Share")
           .font(.headline)
       }
-      .padding(.top, 20)
-      .padding(.bottom, 10)
+      .padding(.top, 18)
+      .padding(.bottom, 12)
 
       Divider()
 
@@ -43,7 +43,7 @@ struct EditNetworkShareSheet: View {
         Section {
           TextField("Display Name", text: $name, prompt: Text("Optional (Defaults to share name)"))
         } header: {
-          Text("General")
+          Label("General", systemImage: "pencil")
         }
 
         Section {
@@ -57,11 +57,17 @@ struct EditNetworkShareSheet: View {
             TextField("Share Name/Path", text: $sharePath, prompt: Text("public"))
           }
         } header: {
-          Text("Connection")
+          Label("Connection", systemImage: "network")
         } footer: {
-          Text("Preview: \(connectionStringPreview)")
-            .font(.subheadline)
-            .foregroundStyle(.primary)
+          HStack(spacing: 6) {
+            Image(systemName: "link")
+              .font(.caption)
+              .foregroundStyle(.blue)
+            Text("Preview: \(connectionStringPreview)")
+              .font(.system(.caption, design: .monospaced))
+              .foregroundStyle(.secondary)
+          }
+          .padding(.top, 2)
         }
 
         Section {
@@ -75,7 +81,7 @@ struct EditNetworkShareSheet: View {
             SecureField("Password", text: $password)
           }
         } header: {
-          Text("Credentials")
+          Label("Credentials", systemImage: "lock")
         }
 
         Section {
@@ -83,15 +89,28 @@ struct EditNetworkShareSheet: View {
             Label("Mount at Login", systemImage: "arrow.right.circle")
           }
 
-          VStack(alignment: .leading) {
-            TextField(
-              "Custom Mount Point", text: $customMountPoint, prompt: Text("~/mountmate/MyShare"))
+          VStack(alignment: .leading, spacing: 6) {
+            Text("Custom Mount Point")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+
+            HStack {
+              TextField(
+                "Custom Mount Point", text: $customMountPoint, prompt: Text("~/mountmate/MyShare"))
+
+              Button("Choose...") {
+                selectCustomMountFolder()
+              }
+              .buttonStyle(.bordered)
+              .controlSize(.small)
+            }
+
             Text("Leave empty to use default location")
               .font(.caption2)
               .foregroundStyle(.secondary)
           }
         } header: {
-          Text("Options")
+          Label("Options", systemImage: "slider.horizontal.3")
         }
       }
       .formStyle(.grouped)
@@ -115,13 +134,25 @@ struct EditNetworkShareSheet: View {
       }
       .padding()
     }
-    .frame(width: 450, height: 500)
+    .frame(width: 460, height: 520)
     .onAppear {
       loadExistingData()
     }
   }
 
   // MARK: - Logic
+
+  private func selectCustomMountFolder() {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = false
+    panel.canChooseDirectories = true
+    panel.allowsMultipleSelection = false
+    panel.prompt = "Choose"
+    panel.message = "Select custom mount directory"
+    if panel.runModal() == .OK, let url = panel.url {
+      customMountPoint = url.path
+    }
+  }
 
   private func loadExistingData() {
     guard let share = shareToEdit else { return }
@@ -140,7 +171,6 @@ struct EditNetworkShareSheet: View {
 
   private func saveShare() {
     let id = shareToEdit?.id ?? UUID()
-    // Default name to sharePath if empty
     let finalName = name.isEmpty ? sharePath : name
 
     let share = NetworkShare(

@@ -14,77 +14,110 @@ struct NetworkShareRow: View {
   }
 
   var body: some View {
-    HStack {
-      VStack(alignment: .leading) {
-        Text(share.name).fontWeight(.semibold)
-        Text("\(share.username)@\(share.server)/\(share.sharePath)")
-          .font(.caption).foregroundColor(.secondary)
+    HStack(spacing: 12) {
+      ZStack(alignment: .bottomTrailing) {
+        Image(systemName: "server.rack")
+          .font(.title2)
+          .foregroundStyle(.blue)
+
+        Circle()
+          .fill(isMounted ? Color.green : Color.secondary.opacity(0.4))
+          .frame(width: 8, height: 8)
+          .offset(x: 2, y: 2)
+      }
+
+      VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 6) {
+          Text(share.name)
+            .font(.body)
+            .bold()
+
+          if share.mountAtLogin {
+            Label("Auto-mount", systemImage: "bolt.fill")
+              .font(.caption2)
+              .bold()
+              .foregroundStyle(.orange)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.orange.opacity(0.12))
+              .clipShape(.rect(cornerRadius: 4))
+              .help("Auto-mounts at login")
+          }
+        }
+
+        Text(
+          "smb://\(share.username.isEmpty ? "" : "\(share.username)@")\(share.server)/\(share.sharePath)"
+        )
+        .font(.system(.caption, design: .monospaced))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .truncationMode(.middle)
       }
 
       Spacer()
 
-      if share.mountAtLogin {
-        Image(systemName: "bolt.fill").foregroundColor(.yellow).help("Auto-mounts at login")
-      }
+      HStack(spacing: 8) {
+        // Open in Finder (when mounted)
+        if isMounted {
+          Button(action: {
+            let path = NetworkMountManager.shared.getMountPoint(for: share)
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+          }) {
+            Image(systemName: "folder")
+          }
+          .buttonStyle(.borderless)
+          .help("Open in Finder")
+        }
 
-      // Open in file browser (only when mounted)
-      if isMounted {
+        // Mount / Unmount action button
         Button(action: {
-          let path = NetworkMountManager.shared.getMountPoint(for: share)
-          NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+          isWorking = true
+          if isMounted {
+            NetworkMountManager.shared.unmount(share: share) { success, error in
+              isWorking = false
+              if !success, let error = error {
+                onError(error)
+              }
+            }
+          } else {
+            NetworkMountManager.shared.mount(share: share) { success, error in
+              isWorking = false
+              if !success, let error = error {
+                onError(error)
+              }
+            }
+          }
         }) {
-          Image(systemName: "folder")
+          if isWorking {
+            ProgressView()
+              .controlSize(.small)
+          } else {
+            Image(systemName: isMounted ? "eject.fill" : "play.fill")
+              .foregroundStyle(isMounted ? .orange : .green)
+          }
+        }
+        .disabled(isWorking)
+        .buttonStyle(.borderless)
+        .help(isMounted ? "Unmount Share" : "Mount Share")
+
+        Button(action: onEdit) {
+          Image(systemName: "pencil")
         }
         .buttonStyle(.borderless)
-        .help("Open")
-      }
+        .help("Edit Share")
 
-      // Mount / Unmount toggle
-      Button(action: {
-        isWorking = true
-        if isMounted {
-          NetworkMountManager.shared.unmount(share: share) { success, error in
-            isWorking = false
-            if !success, let error = error {
-              onError(error)
-            }
+        Button(
+          role: .destructive,
+          action: {
+            PersistenceManager.shared.removeNetworkShare(share)
           }
-        } else {
-          NetworkMountManager.shared.mount(share: share) { success, error in
-            isWorking = false
-            if !success, let error = error {
-              onError(error)
-            }
-          }
+        ) {
+          Image(systemName: "trash")
+            .foregroundStyle(.red.opacity(0.8))
         }
-      }) {
-        if isWorking {
-          ProgressView().controlSize(.small)
-        } else {
-          Image(systemName: isMounted ? "stop.fill" : "play.fill")
-            .foregroundColor(isMounted ? .red : .green)
-        }
+        .buttonStyle(.borderless)
+        .help("Delete Share")
       }
-      .disabled(isWorking)
-      .buttonStyle(.borderless)
-      .help(isMounted ? "Unmount" : "Mount")
-
-      Button(action: onEdit) {
-        Image(systemName: "pencil")
-      }
-      .buttonStyle(.borderless)
-      .help("Edit")
-
-      Button(
-        role: .destructive,
-        action: {
-          PersistenceManager.shared.removeNetworkShare(share)
-        }
-      ) {
-        Image(systemName: "trash")
-      }
-      .buttonStyle(.borderless)
-      .help("Delete")
     }
     .padding(.vertical, 4)
   }

@@ -9,24 +9,20 @@ struct NetworkSharesSettingsView: View {
   @State private var errorAlert: AppAlert?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
+    VStack(alignment: .leading, spacing: 14) {
       HStack {
-        Text("Network Shares").font(.headline)
+        Label("Network Shares", systemImage: "server.rack")
+          .font(.headline)
         Spacer()
         Button(action: { showingAddSheet = true }) {
           Label("Add Share", systemImage: "plus")
         }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
       }
-      .padding(.top)
 
       if persistence.networkShares.isEmpty {
-        VStack(spacing: 16) {
-          Spacer()
-          Image(systemName: "server.rack").font(.system(size: 40)).foregroundColor(.secondary)
-          Text("No Network Shares Configured").foregroundColor(.secondary)
-          Spacer()
-        }
-        .frame(maxWidth: .infinity)
+        emptyStateView
       } else {
         List {
           ForEach(persistence.networkShares) { share in
@@ -38,10 +34,16 @@ struct NetworkSharesSettingsView: View {
           }
         }
         .listStyle(.inset)
+        .clipShape(.rect(cornerRadius: 10))
+        .overlay(
+          RoundedRectangle(cornerRadius: 10)
+            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
       }
 
       Text("MountMate can automatically mount these SMB shares at login.")
-        .font(.caption).foregroundColor(.secondary)
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
     .padding()
     .sheet(isPresented: $showingAddSheet) {
@@ -58,5 +60,48 @@ struct NetworkSharesSettingsView: View {
       Alert(
         title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
     }
+  }
+
+  private var emptyStateView: some View {
+    VStack(spacing: 16) {
+      Spacer()
+
+      ZStack {
+        Circle()
+          .fill(Color.blue.opacity(0.1))
+          .frame(width: 72, height: 72)
+
+        Image(systemName: "server.rack")
+          .font(.system(size: 32))
+          .foregroundStyle(.blue)
+      }
+
+      VStack(spacing: 4) {
+        Text("No Network Shares Configured")
+          .font(.headline)
+
+        Text("Add your SMB or NAS network shares here to mount them automatically or on demand.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+          .frame(maxWidth: 320)
+      }
+
+      Button(action: { showingAddSheet = true }) {
+        Label("Add Network Share", systemImage: "plus")
+      }
+      .buttonStyle(.bordered)
+      .controlSize(.regular)
+
+      Spacer()
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .padding()
+    .background(Color(nsColor: .controlBackgroundColor))
+    .clipShape(.rect(cornerRadius: 10))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10)
+        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+    )
   }
 }

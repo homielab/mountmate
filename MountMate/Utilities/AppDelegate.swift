@@ -136,7 +136,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
 
     case .forceUnmount:
-      alert.addButton(withTitle: NSLocalizedString("Force Unmount", comment: "Force Unmount button"))
+      alert.addButton(
+        withTitle: NSLocalizedString("Force Unmount", comment: "Force Unmount button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
     }
 

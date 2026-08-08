@@ -7,26 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0063A5D6E899F4F86ED88817 /* HeaderActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 390666D7B4099FEF1431644D /* HeaderActionsView.swift */; };
-		0BDAA9E8221546D30AA72FA1 /* DiskAndVolumesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E4F5E75EBE2990924319D3 /* DiskAndVolumesView.swift */; };
-		11E77ABC02E9768EDB0BD9B1 /* ManagementSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2215E8C0B700CBC84B4C204 /* ManagementSettingsView.swift */; };
-		202C0C37F9A6AD05A8D11D31 /* VolumeRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B12FC64B56B0B191BBC5DED /* VolumeRowView.swift */; };
-		2AF2DBD8EE5E614E9C430CE2 /* NetworkSharesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA65886EC5EFEC9C5F9762CE /* NetworkSharesSettingsView.swift */; };
-		3FB38BFF9F8266A0848CE964 /* InlineCustomMountPointEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66A39EF0A9FEF088F90B3B2 /* InlineCustomMountPointEditor.swift */; };
-		5478EBF57FFBFDBE6620265B /* ManagementSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948D2AF1DF5FA3F6A031D578 /* ManagementSectionView.swift */; };
-		6336B107DA901033DD043770 /* DriveListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5717A27074D7601FA1843885 /* DriveListView.swift */; };
-		6FC8D106766FF90A744A99BA /* MenuBarIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34DFBC0C05F8981180A98111 /* MenuBarIconView.swift */; };
-		733FE70433FBB912E4C7FF57 /* EditNetworkShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADDB733E435E7AFD552E1B8 /* EditNetworkShareSheet.swift */; };
-		74B68F92C85A09B8C6451778 /* DiskHeaderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AEB7205AA6EDFB9921422B /* DiskHeaderRow.swift */; };
-		88F063D310E64A9C13CE5979 /* HostingWindowReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C09178F2601C4430AF3BB5 /* HostingWindowReader.swift */; };
-		9C88E2618FEC31AEC4C6DA82 /* ManualSharesSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4B1A5AD797B8648BF0C4FD /* ManualSharesSectionHeader.swift */; };
-		A2DE3BBDE89DA101E6D4EE94 /* NetworkShareRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8834FAC18ADA054B19E89CF /* NetworkShareRow.swift */; };
 		B4B37DEB2DFE68A600A60D0D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = B4B37DEA2DFE68A600A60D0D /* Sparkle */; };
-		B612BDBCD00F8B8679D0E85C /* NetworkShareMainRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A93BC053980940FFE7C1601 /* NetworkShareMainRow.swift */; };
-		C223324136D0DEA4CD269B0D /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 553B22645A97249F53D77AB2 /* GeneralSettingsView.swift */; };
-		D241E3F038E266E497565DF8 /* ContainerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD6C1AF6279D8DB4C5239393 /* ContainerRowView.swift */; };
-		E9524CFBC970452B71FAECC5 /* SnapshotRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD2E5F58B5A592457DC57A85 /* SnapshotRowView.swift */; };
-		FFA2745E9C2AD75BC3C0CFC1 /* CustomMountPointEditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1801F5CC0D8783587B2474A /* CustomMountPointEditorState.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -385,25 +366,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6FC8D106766FF90A744A99BA /* MenuBarIconView.swift in Sources */,
-				FFA2745E9C2AD75BC3C0CFC1 /* CustomMountPointEditorState.swift in Sources */,
-				88F063D310E64A9C13CE5979 /* HostingWindowReader.swift in Sources */,
-				6336B107DA901033DD043770 /* DriveListView.swift in Sources */,
-				0063A5D6E899F4F86ED88817 /* HeaderActionsView.swift in Sources */,
-				0BDAA9E8221546D30AA72FA1 /* DiskAndVolumesView.swift in Sources */,
-				74B68F92C85A09B8C6451778 /* DiskHeaderRow.swift in Sources */,
-				D241E3F038E266E497565DF8 /* ContainerRowView.swift in Sources */,
-				202C0C37F9A6AD05A8D11D31 /* VolumeRowView.swift in Sources */,
-				3FB38BFF9F8266A0848CE964 /* InlineCustomMountPointEditor.swift in Sources */,
-				E9524CFBC970452B71FAECC5 /* SnapshotRowView.swift in Sources */,
-				B612BDBCD00F8B8679D0E85C /* NetworkShareMainRow.swift in Sources */,
-				9C88E2618FEC31AEC4C6DA82 /* ManualSharesSectionHeader.swift in Sources */,
-				C223324136D0DEA4CD269B0D /* GeneralSettingsView.swift in Sources */,
-				11E77ABC02E9768EDB0BD9B1 /* ManagementSettingsView.swift in Sources */,
-				5478EBF57FFBFDBE6620265B /* ManagementSectionView.swift in Sources */,
-				2AF2DBD8EE5E614E9C430CE2 /* NetworkSharesSettingsView.swift in Sources */,
-				A2DE3BBDE89DA101E6D4EE94 /* NetworkShareRow.swift in Sources */,
-				733FE70433FBB912E4C7FF57 /* EditNetworkShareSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

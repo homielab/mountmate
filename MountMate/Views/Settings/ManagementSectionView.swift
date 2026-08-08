@@ -11,11 +11,11 @@ struct ManagementSectionView: View {
   let onDelete: (ManagedVolumeInfo) -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
         Image(systemName: iconName)
           .font(.headline)
-          .foregroundColor(.secondary)
+          .foregroundStyle(.blue)
         Text(title)
           .font(.headline)
       }
@@ -23,15 +23,18 @@ struct ManagementSectionView: View {
       Divider()
 
       if items.isEmpty {
-        HStack {
-          Spacer()
+        HStack(spacing: 12) {
+          Image(systemName: "checkmark.circle")
+            .font(.title3)
+            .foregroundStyle(.secondary.opacity(0.6))
           Text(emptyStateText)
-            .foregroundColor(.secondary)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
           Spacer()
         }
-        .padding(.vertical)
+        .padding(.vertical, 8)
       } else {
-        VStack {
+        VStack(spacing: 8) {
           ForEach(items) { info in
             ManagedVolumeRow(info: info, onDelete: { onDelete(info) })
             if info != items.last {
@@ -43,12 +46,15 @@ struct ManagementSectionView: View {
 
       Text(footer)
         .font(.caption)
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
     }
-    .padding()
-    .background(Color(nsColor: .windowBackgroundColor))
-    .cornerRadius(10)
-    .shadow(color: .black.opacity(0.1), radius: 3, y: 1)
+    .padding(14)
+    .background(Color(nsColor: .controlBackgroundColor))
+    .clipShape(.rect(cornerRadius: 10))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10)
+        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+    )
   }
 }
 
@@ -57,22 +63,42 @@ struct ManagedVolumeRow: View {
   let onDelete: () -> Void
 
   var body: some View {
-    HStack {
+    HStack(spacing: 12) {
+      Image(systemName: "internaldrive")
+        .font(.title2)
+        .foregroundStyle(.secondary)
+
       VStack(alignment: .leading, spacing: 2) {
-        Text(info.name).fontWeight(.semibold)
-        Text("Volume: \(info.volumeUUID)").font(.system(.caption, design: .monospaced))
-          .foregroundColor(.secondary).lineLimit(1).truncationMode(.middle)
-        Text("Disk: \(info.diskUUID)").font(.system(.caption, design: .monospaced)).foregroundColor(
-          .secondary
-        ).lineLimit(1).truncationMode(.middle)
+        Text(info.name)
+          .font(.body)
+          .bold()
+
+        HStack(spacing: 8) {
+          Text("Vol: \(info.volumeUUID)")
+            .font(.system(.caption2, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+
+          Text("Disk: \(info.diskUUID)")
+            .font(.system(.caption2, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+        }
       }
+
       Spacer()
+
       Button(role: .destructive) {
         onDelete()
         DriveManager.shared.refreshDrives(qos: .userInitiated)
       } label: {
         Image(systemName: "trash")
-      }.buttonStyle(.borderless)
+          .foregroundStyle(.red.opacity(0.8))
+      }
+      .buttonStyle(.borderless)
+      .help("Remove")
     }
     .padding(.vertical, 4)
   }

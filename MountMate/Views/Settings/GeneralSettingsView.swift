@@ -54,31 +54,54 @@ struct GeneralSettingsView: View {
   var body: some View {
     Form {
       Section {
-        Toggle("Show Count in Menu Bar", isOn: $showCountInMenuBar)
-        Toggle("Show Internal Disks", isOn: $showInternalDisks)
-        Toggle("Show Only Volumes", isOn: $showOnlyVolumes)
-        Toggle("Start MountMate at Login", isOn: $launchManager.isEnabled)
-        Toggle("Block USB Auto-Mount", isOn: $diskMounter.blockUSBAutoMount)
-        Toggle("Unmount All Disks on Sleep", isOn: $ejectOnSleepEnabled)
-        Toggle("Enable Keyboard Shortcuts", isOn: $hotkeysEnabled)
-          .onChange(of: hotkeysEnabled) { enabled in
-            if enabled {
-              // Check if accessibility permission is granted
-              if !HotkeyManager.checkAccessibilityPermissions() {
-                showAccessibilityAlert = true
-              }
+        Toggle(isOn: $showCountInMenuBar) {
+          Label("Show Count in Menu Bar", systemImage: "number.square")
+        }
+        Toggle(isOn: $showInternalDisks) {
+          Label("Show Internal Disks", systemImage: "internaldrive")
+        }
+        Toggle(isOn: $showOnlyVolumes) {
+          Label("Show Only Volumes", systemImage: "externaldrive")
+        }
+      } header: {
+        Label("Display", systemImage: "macwindow")
+      }
+
+      Section {
+        Toggle(isOn: $launchManager.isEnabled) {
+          Label("Start MountMate at Login", systemImage: "arrow.right.circle")
+        }
+        Toggle(isOn: $diskMounter.blockUSBAutoMount) {
+          Label("Block USB Auto-Mount", systemImage: "hand.raised.slash")
+        }
+        Toggle(isOn: $ejectOnSleepEnabled) {
+          Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
+        }
+      } header: {
+        Label("Behavior", systemImage: "gearshape")
+      }
+
+      Section {
+        Toggle(isOn: $hotkeysEnabled) {
+          Label("Enable Keyboard Shortcuts", systemImage: "keyboard")
+        }
+        .onChange(of: hotkeysEnabled) { enabled in
+          if enabled {
+            if !HotkeyManager.checkAccessibilityPermissions() {
+              showAccessibilityAlert = true
             }
           }
-        if hotkeysEnabled {
-          VStack(alignment: .leading, spacing: 4) {
-            Text("⌘⇧U - Unmount All Volumes")
-            Text("⌘⇧M - Mount All Volumes")
-          }
-          .font(.caption)
-          .foregroundColor(.secondary)
-          .padding(.leading, 4)
         }
-        Picker("Language", selection: $selectedLanguage) {
+
+        if hotkeysEnabled {
+          VStack(alignment: .leading, spacing: 6) {
+            shortcutRow(key: "⌘ ⇧ U", description: "Unmount All Volumes")
+            shortcutRow(key: "⌘ ⇧ M", description: "Mount All Volumes")
+          }
+          .padding(.vertical, 2)
+        }
+
+        Picker(selection: $selectedLanguage) {
           Text("English").tag("en")
           Text("Français").tag("fr")
           Text("Українська").tag("uk")
@@ -86,12 +109,16 @@ struct GeneralSettingsView: View {
           Text("Tiếng Việt").tag("vi")
           Text("中文（简体）").tag("zh-Hans")
           Text("中文（繁体）").tag("zh-Hant")
+        } label: {
+          Label("Language", systemImage: "globe")
         }
         .pickerStyle(.menu)
         .onChange(of: selectedLanguage) { _ in showRestartAlert = true }
+      } header: {
+        Label("Shortcuts & Language", systemImage: "slider.horizontal.below.rectangle")
       }
 
-      Section("About & Updates") {
+      Section {
         Link(destination: URL(string: "https://homielab.com/page/mountmate")!) {
           Label("Homepage", systemImage: "house.fill")
         }
@@ -101,19 +128,24 @@ struct GeneralSettingsView: View {
         Link(destination: URL(string: "https://ko-fi.com/homielab")!) {
           Label(
             title: { Text("Donate") },
-            icon: { Image(systemName: "heart.fill").foregroundColor(.red) })
+            icon: { Image(systemName: "heart.fill").foregroundStyle(.red) })
         }
         Button(action: { updaterViewModel.checkForUpdates() }) {
           Label("Check for Updates...", systemImage: "arrow.down.circle.fill")
         }
+      } header: {
+        Label("About & Updates", systemImage: "info.circle")
       }
-      .foregroundColor(.primary)
 
-      Text(appVersion).font(.caption).foregroundColor(.secondary).frame(
-        maxWidth: .infinity, alignment: .center)
+      Text(appVersion)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 4)
     }
     .formStyle(.grouped)
-    .padding()
+    .padding(.horizontal)
+
     .alert("Restart Required", isPresented: $showRestartAlert) {
       Button("Restart Now", role: .destructive) { relaunchApp() }
       Button("Later", role: .cancel) {}
@@ -133,6 +165,21 @@ struct GeneralSettingsView: View {
       Text(
         "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility."
       )
+    }
+  }
+
+  private func shortcutRow(key: String, description: LocalizedStringKey) -> some View {
+    HStack(spacing: 8) {
+      Text(key)
+        .font(.system(.caption, design: .monospaced))
+        .bold()
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Color.primary.opacity(0.08))
+        .clipShape(.rect(cornerRadius: 4))
+      Text(description)
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
   }
 
