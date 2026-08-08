@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write # Needed for uploading assets and committing back
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: |
+          brew install create-dmg
+          
+          # Download Sparkle tools to get generate_appcast
+          wget https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz
+          mkdir -p sparkle-tools
+          tar -xf Sparkle-2.6.4.tar.xz -C sparkle-tools
+          echo "$PWD/sparkle-tools/bin" >> $GITHUB_PATH
+
+      - name: Setup Code Signing
+        env:
+          P12_BASE64: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          echo -n "$P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          security create-keychain -p "" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "" $KEYCHAIN_PATH
+
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
+          
+          # Add to search list
+          security list-keychains -d user -s $KEYCHAIN_PATH
+
+      - name: Setup Notarytool Credentials
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          xcrun notarytool store-credentials "MountMateProfile" \
+            --apple-id "$NOTARY_APPLE_ID" \
+            --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_PASSWORD"
+
+      - name: Setup Environment Variables
+        run: |
+          echo "CERTIFICATE_NAME=Developer ID Application" >> .env.local
+          echo "NOTARY_PROFILE=MountMateProfile" >> .env.local
+          echo "SPARKLE_PRIVATE_KEY=$RUNNER_TEMP/sparkle_private_key.pem" >> .env.local
+          
+          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > $RUNNER_TEMP/sparkle_private_key.pem
+
+      - name: Create App
+        run: ./scripts/1-create-app.sh
+
+      - name: Build Release (DMG & Zip & Appcast)
+        run: ./scripts/2-build.sh
+
+      - name: Generate Cask
+        run: ./scripts/4-generate_cask.sh
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Dist/Final/MountMate_*.zip
+            Dist/Final/MountMate_*.dmg
+
+      - name: Commit Appcast and Cask to main
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/appcast.xml Casks/mountmate.rb
+          git commit -m "chore: update appcast and cask for ${{ github.ref_name }}" || echo "No changes to commit"
+          git push origin HEAD:main
