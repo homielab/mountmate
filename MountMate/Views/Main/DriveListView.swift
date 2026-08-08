@@ -31,7 +31,7 @@ struct DriveListView: View {
         }
       }
       if !diskImages.isEmpty {
-        Section(header: Label("Disk Images", systemImage: "disk.fill")) {
+        Section(header: Label("Disk Images", systemImage: "opticaldisc")) {
           ForEach(diskImages) { disk in
             DiskAndVolumesView(
               disk: disk,
