@@ -20,14 +20,13 @@ struct InlineCustomMountPointEditor: View {
             comment: "Custom mount point path placeholder"))
       )
       .textFieldStyle(.roundedBorder)
-      .foregroundStyle(.white)
 
       HStack(spacing: 8) {
         Button(NSLocalizedString("Choose Folder", comment: "Choose folder button")) {
           chooseFolder()
         }
-        .buttonStyle(.borderless)
-        .foregroundStyle(.white)
+        .buttonStyle(.bordered)
+        .controlSize(.small)
 
         Button(NSLocalizedString("Default Path", comment: "Default path button")) {
           editorState.mountPointPath = ""
@@ -35,8 +34,8 @@ struct InlineCustomMountPointEditor: View {
           editorState.pendingSavePath = nil
           editorState.selectedFolderURL = nil
         }
-        .buttonStyle(.borderless)
-        .foregroundStyle(.white)
+        .buttonStyle(.bordered)
+        .controlSize(.small)
 
         Spacer()
       }
@@ -47,7 +46,7 @@ struct InlineCustomMountPointEditor: View {
           comment: "Custom mount point helper text")
       )
       .font(.caption)
-      .foregroundStyle(.white.opacity(0.92))
+      .foregroundStyle(.secondary)
       .lineLimit(nil)
       .fixedSize(horizontal: false, vertical: true)
 
@@ -63,18 +62,23 @@ struct InlineCustomMountPointEditor: View {
         Button(NSLocalizedString("Cancel", comment: "Cancel button")) {
           onClose()
         }
-        .foregroundStyle(.white)
+        .buttonStyle(.borderless)
+
         Spacer()
+
         Button(NSLocalizedString("Save", comment: "Save button")) {
           save()
         }
         .buttonStyle(.borderedProminent)
+        .controlSize(.small)
       }
     }
-    .padding(10)
-    .background(
-      RoundedRectangle(cornerRadius: 8, style: .continuous)
-        .fill(Color.white.opacity(0.08))
+    .padding(12)
+    .background(Color(nsColor: .controlBackgroundColor))
+    .clipShape(.rect(cornerRadius: 8))
+    .overlay(
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
     )
     .alert(
       NSLocalizedString("Create Folder Title", comment: "Create folder alert title"),

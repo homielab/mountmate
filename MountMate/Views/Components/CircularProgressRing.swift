@@ -15,7 +15,7 @@ struct CircularProgressRing: View {
           lineWidth: lineWidth
         )
       Circle()
-        .trim(from: 0, to: progress)
+        .trim(from: 0, to: max(0.0, min(1.0, progress)))
         .stroke(
           color,
           style: StrokeStyle(
@@ -24,6 +24,7 @@ struct CircularProgressRing: View {
           )
         )
         .rotationEffect(.degrees(-90))
+        .animation(.easeInOut(duration: 0.3), value: progress)
     }
   }
 }

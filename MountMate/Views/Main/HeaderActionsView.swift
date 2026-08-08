@@ -11,88 +11,107 @@ struct HeaderActionsView: View {
   }
 
   var body: some View {
-    HStack {
-      Text("MountMate").font(.headline)
+    HStack(spacing: 8) {
+      HStack(spacing: 6) {
+        Image(systemName: "externaldrive.connected.to.line.below")
+          .font(.subheadline)
+          .foregroundStyle(.blue)
+
+        Text("MountMate")
+          .font(.headline)
+          .bold()
+      }
+
       Spacer()
 
-      // Global Expand/Collapse Button
-      Button(action: toggleExpansion) {
-        Image(
-          systemName: allCollapsed
-            ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
-      }
-      .buttonStyle(.plain)
-      .help(
-        allCollapsed
-          ? NSLocalizedString("Expand All", comment: "Tooltip")
-          : NSLocalizedString("Collapse All", comment: "Tooltip")
-      )
-      .accessibilityLabel(
-        allCollapsed
-          ? NSLocalizedString("Expand All", comment: "Accessibility label")
-          : NSLocalizedString("Collapse All", comment: "Accessibility label"))
+      HStack(spacing: 4) {
+        // Global Expand/Collapse Button
+        Button(action: toggleExpansion) {
+          Image(
+            systemName: allCollapsed
+              ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left"
+          )
+          .font(.subheadline)
+        }
+        .buttonStyle(.borderless)
+        .help(
+          allCollapsed
+            ? NSLocalizedString("Expand All", comment: "Tooltip")
+            : NSLocalizedString("Collapse All", comment: "Tooltip")
+        )
+        .accessibilityLabel(
+          allCollapsed
+            ? NSLocalizedString("Expand All", comment: "Accessibility label")
+            : NSLocalizedString("Collapse All", comment: "Accessibility label"))
 
-      // Unmount All Button
-      Button(action: { driveManager.unmountAllDrives() }) {
-        if driveManager.isUnmountingAll {
-          ProgressView().controlSize(.small)
+        // Unmount All Button
+        Button(action: { driveManager.unmountAllDrives() }) {
+          if driveManager.isUnmountingAll {
+            ProgressView().controlSize(.small)
+          } else {
+            Image(systemName: "eject.circle.fill")
+              .font(.subheadline)
+          }
+        }
+        .buttonStyle(.borderless)
+        .help(NSLocalizedString("Unmount All", comment: "Tooltip"))
+        .accessibilityLabel(NSLocalizedString("Unmount All", comment: "Accessibility label"))
+        .disabled(!canUnmountAll || driveManager.isUnmountingAll)
+
+        // Settings Button
+        if #available(macOS 14.0, *) {
+          SettingsLink {
+            Image(systemName: "gearshape.fill")
+              .font(.subheadline)
+          }
+          .buttonStyle(.borderless)
+          .help(NSLocalizedString("Settings", comment: "Tooltip"))
+          .accessibilityLabel(NSLocalizedString("Settings", comment: "Accessibility label"))
+          .simultaneousGesture(
+            TapGesture().onEnded {
+              focusSettingsWindow()
+            })
         } else {
-          Image(systemName: "eject.circle.fill")
+          Button(action: {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            NSApp.activate(ignoringOtherApps: true)
+          }) {
+            Image(systemName: "gearshape.fill")
+              .font(.subheadline)
+          }
+          .buttonStyle(.borderless)
+          .help(NSLocalizedString("Settings", comment: "Tooltip"))
+          .accessibilityLabel(NSLocalizedString("Settings", comment: "Accessibility label"))
         }
-      }
-      .buttonStyle(.plain)
-      .help(NSLocalizedString("Unmount All", comment: "Tooltip"))
-      .accessibilityLabel(NSLocalizedString("Unmount All", comment: "Accessibility label"))
-      .disabled(!canUnmountAll || driveManager.isUnmountingAll)
 
-      // Settings Button
-      if #available(macOS 14.0, *) {
-        SettingsLink {
-          Image(systemName: "gearshape.fill")
+        // Refresh Button
+        Button(action: { driveManager.refreshDrives(qos: .userInitiated) }) {
+          if driveManager.isRefreshing {
+            ProgressView().controlSize(.small)
+          } else {
+            Image(systemName: "arrow.clockwise")
+              .font(.subheadline)
+          }
         }
-        .buttonStyle(.plain)
-        .help(NSLocalizedString("Settings", comment: "Tooltip"))
-        .accessibilityLabel(NSLocalizedString("Settings", comment: "Accessibility label"))
-        .simultaneousGesture(
-          TapGesture().onEnded {
-            focusSettingsWindow()
-          })
-      } else {
-        Button(action: {
-          NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-          NSApp.activate(ignoringOtherApps: true)
-        }) {
-          Image(systemName: "gearshape.fill")
-        }
-        .buttonStyle(.plain)
-        .help(NSLocalizedString("Settings", comment: "Tooltip"))
-        .accessibilityLabel(NSLocalizedString("Settings", comment: "Accessibility label"))
-      }
+        .buttonStyle(.borderless)
+        .help(NSLocalizedString("Refresh Drives", comment: "Tooltip"))
+        .accessibilityLabel(NSLocalizedString("Refresh Drives", comment: "Accessibility label"))
+        .disabled(driveManager.isRefreshing)
 
-      // Refresh Button
-      Button(action: { driveManager.refreshDrives(qos: .userInitiated) }) {
-        if driveManager.isRefreshing {
-          ProgressView().controlSize(.small)
-        } else {
-          Image(systemName: "arrow.clockwise")
+        // Quit Button
+        Button(action: { NSApplication.shared.terminate(nil) }) {
+          Image(systemName: "power")
+            .font(.subheadline)
+            .foregroundStyle(.red)
         }
+        .buttonStyle(.borderless)
+        .help(NSLocalizedString("Quit MountMate", comment: "Tooltip"))
+        .accessibilityLabel(NSLocalizedString("Quit MountMate", comment: "Accessibility label"))
       }
-      .buttonStyle(.plain)
-      .help(NSLocalizedString("Refresh Drives", comment: "Tooltip"))
-      .accessibilityLabel(NSLocalizedString("Refresh Drives", comment: "Accessibility label"))
-      .disabled(driveManager.isRefreshing)
-
-      // Quit Button
-      Button(action: { NSApplication.shared.terminate(nil) }) {
-        Image(systemName: "power").foregroundColor(.red)
-      }
-      .buttonStyle(.plain)
-      .help(NSLocalizedString("Quit MountMate", comment: "Tooltip"))
-      .accessibilityLabel(NSLocalizedString("Quit MountMate", comment: "Accessibility label"))
     }
+    .padding(.horizontal, 14)
+    .padding(.vertical, 10)
 
-    .frame(width: 320)
-    .padding()
   }
 
   @State private var allCollapsed = false

@@ -7,7 +7,7 @@ struct ManualSharesSectionHeader: View {
 
   var body: some View {
     HStack {
-      Text("Manually Connected Shares")
+      Label("Manually Connected Shares", systemImage: "network")
       Spacer()
       Button(action: ejectAllManualShares) {
         if networkManager.isUnmountingManualShares {

@@ -6,12 +6,13 @@ struct SnapshotRowView: View {
   let snapshot: APFSSnapshot
 
   var body: some View {
-    HStack {
+    HStack(spacing: 6) {
       Image(systemName: "camera.fill")
-        .foregroundColor(.secondary)
         .font(.caption)
+        .foregroundStyle(.secondary)
       Text(snapshot.name)
         .font(.caption)
+        .foregroundStyle(.secondary)
       Spacer()
     }
   }

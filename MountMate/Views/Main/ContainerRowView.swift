@@ -6,10 +6,17 @@ struct ContainerRowView: View {
   let container: APFSContainer
   var body: some View {
     HStack {
-      Image(systemName: "shippingbox.fill").font(.body).foregroundColor(.secondary)
-        .frame(width: 24, alignment: .center).padding(.trailing, 4)
+      Image(systemName: "shippingbox.fill")
+        .font(.body)
+        .foregroundStyle(.secondary)
+        .frame(width: 24, alignment: .center)
+        .padding(.trailing, 4)
+
       Text("APFS Container • \(container.id)")
-        .font(.subheadline).fontWeight(.semibold).foregroundColor(.secondary)
+        .font(.subheadline)
+        .bold()
+        .foregroundStyle(.secondary)
+
       Spacer()
     }
     .padding(.leading, 24)

@@ -13,7 +13,7 @@ struct DriveListView: View {
   var body: some View {
     List {
       if !internalDisks.isEmpty {
-        Section(header: Text("Internal Disks")) {
+        Section(header: Label("Internal Disks", systemImage: "internaldrive")) {
           ForEach(internalDisks) { disk in
             DiskAndVolumesView(
               disk: disk,
@@ -22,7 +22,7 @@ struct DriveListView: View {
         }
       }
       if !externalDisks.isEmpty {
-        Section(header: Text("External Disks")) {
+        Section(header: Label("External Disks", systemImage: "externaldrive.fill")) {
           ForEach(externalDisks) { disk in
             DiskAndVolumesView(
               disk: disk,
@@ -31,7 +31,7 @@ struct DriveListView: View {
         }
       }
       if !diskImages.isEmpty {
-        Section(header: Text("Disk Images")) {
+        Section(header: Label("Disk Images", systemImage: "disk.fill")) {
           ForEach(diskImages) { disk in
             DiskAndVolumesView(
               disk: disk,
@@ -40,7 +40,7 @@ struct DriveListView: View {
         }
       }
       if !networkShares.isEmpty {
-        Section(header: Text("Saved Network Shares")) {
+        Section(header: Label("Saved Network Shares", systemImage: "server.rack")) {
           ForEach(networkShares) { share in NetworkShareMainRow(share: share) }
         }
       }

@@ -27,12 +27,12 @@ struct VolumeRowView: View {
           ZStack {
             Image(systemName: "externaldrive")
               .font(.body)
-              .foregroundColor(
-                volume.isMounted ? .accentColor : .secondary.opacity(0.6))
+              .foregroundStyle(volume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
+
             if let error = volume.storageError {
               Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
                 .help(error)
             } else if volume.isMounted, let percentage = volume.usagePercentage {
               CircularProgressRing(
@@ -41,34 +41,52 @@ struct VolumeRowView: View {
               ).frame(width: 26, height: 26)
             }
           }
-          .frame(width: 24, alignment: .center).padding(.trailing, 8)
+          .frame(width: 24, alignment: .center)
+          .padding(.trailing, 8)
 
           VStack(alignment: .leading, spacing: 2) {
-            Text(volume.name).fontWeight(.semibold).foregroundColor(
-              volume.isMounted ? .primary : .secondary)
+            Text(volume.name)
+              .font(.body)
+              .bold()
+              .foregroundStyle(volume.isMounted ? .primary : .secondary)
+
             if volume.isMounted {
               if let total = volume.totalSize, let used = volume.usedSpace {
-                // Keep simple used/total; localize only if desired separately
-                Text(String(format: "%@ / %@", used, total)).font(.caption).foregroundColor(
-                  .secondary)
+                Text(String(format: "%@ / %@", used, total))
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
               } else if let fsType = volume.fileSystemType {
-                Text(fsType).font(.caption).foregroundColor(.secondary)
+                Text(fsType)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
               }
             } else {
-              Text("Unmounted").font(.caption).foregroundColor(.secondary)
+              Text("Unmounted")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
+
             if let customMountPoint {
-              Text(
-                String(
-                  format: NSLocalizedString(
-                    "Custom Mount Point Summary",
-                    comment: "Volume row custom mount point summary"),
-                  customMountPoint)
-              )
-              .font(.caption2)
-              .foregroundColor(.secondary)
-              .lineLimit(nil)
-              .fixedSize(horizontal: false, vertical: true)
+              HStack(spacing: 4) {
+                Image(systemName: "folder.badge.gearshape")
+                  .font(.caption2)
+
+                Text(
+                  String(
+                    format: NSLocalizedString(
+                      "Custom Mount Point Summary",
+                      comment: "Volume row custom mount point summary"),
+                    customMountPoint)
+                )
+                .font(.caption2)
+                .lineLimit(1)
+                .truncationMode(.middle)
+              }
+              .foregroundStyle(.blue)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.blue.opacity(0.1))
+              .clipShape(.rect(cornerRadius: 4))
               .help(customMountPoint)
             }
           }
@@ -93,8 +111,14 @@ struct VolumeRowView: View {
           )
           .opacity(isLoading ? 0 : 1)
         }
-        .buttonStyle(.bordered).tint(volume.isMounted ? .red : .blue).disabled(isLoading)
-        .overlay { if isLoading { ProgressView().controlSize(.small) } }
+        .buttonStyle(.bordered)
+        .tint(volume.isMounted ? .red : .blue)
+        .disabled(isLoading)
+        .overlay {
+          if isLoading {
+            ProgressView().controlSize(.small)
+          }
+        }
         .help(
           volume.isMounted
             ? NSLocalizedString("Unmount", comment: "...")
@@ -104,8 +128,8 @@ struct VolumeRowView: View {
       }
       .padding(.vertical, 4)
       .padding(.horizontal, 4)
-      .background(isHovering ? Color.primary.opacity(0.1) : Color.clear)
-      .cornerRadius(5)
+      .background(isHovering ? Color.primary.opacity(0.08) : Color.clear)
+      .clipShape(.rect(cornerRadius: 6))
       .onHover { hovering in
         self.isHovering = hovering
       }

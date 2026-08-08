@@ -17,18 +17,28 @@ struct NetworkShareMainRow: View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
         HStack {
-          ZStack {
-            Image(systemName: "network")
+          ZStack(alignment: .bottomTrailing) {
+            Image(systemName: "server.rack")
               .font(.body)
-              .foregroundColor(isMounted ? .accentColor : .secondary.opacity(0.6))
+              .foregroundStyle(isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
+
+            Circle()
+              .fill(isMounted ? Color.green : Color.secondary.opacity(0.4))
+              .frame(width: 6, height: 6)
+              .offset(x: 2, y: 2)
           }
-          .frame(width: 24, alignment: .center).padding(.trailing, 8)
+          .frame(width: 24, alignment: .center)
+          .padding(.trailing, 8)
 
           VStack(alignment: .leading, spacing: 2) {
-            Text(share.name).fontWeight(.semibold).foregroundColor(
-              isMounted ? .primary : .secondary)
+            Text(share.name)
+              .font(.body)
+              .bold()
+              .foregroundStyle(isMounted ? .primary : .secondary)
+
             Text(isMounted ? "Mounted" : "Not Mounted")
-              .font(.caption).foregroundColor(.secondary)
+              .font(.caption)
+              .foregroundStyle(.secondary)
           }
           Spacer()
         }
@@ -45,7 +55,6 @@ struct NetworkShareMainRow: View {
           if isMounted {
             NetworkMountManager.shared.unmount(share: share) { success, error in
               isWorking = false
-              // Status update handled by manager
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
                   title: "Unmount Failed", message: error, kind: .basic)
@@ -54,7 +63,6 @@ struct NetworkShareMainRow: View {
           } else {
             NetworkMountManager.shared.mount(share: share) { success, error in
               isWorking = false
-              // Status update handled by manager
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
                   title: "Mount Failed", message: error, kind: .basic)
@@ -67,15 +75,21 @@ struct NetworkShareMainRow: View {
           )
           .opacity(isWorking ? 0 : 1)
         }
-        .buttonStyle(.bordered).tint(isMounted ? .red : .blue).disabled(isWorking)
-        .overlay { if isWorking { ProgressView().controlSize(.small) } }
+        .buttonStyle(.bordered)
+        .tint(isMounted ? .red : .blue)
+        .disabled(isWorking)
+        .overlay {
+          if isWorking {
+            ProgressView().controlSize(.small)
+          }
+        }
         .help(isMounted ? "Eject" : "Mount")
         .padding(.leading, 8)
       }
       .padding(.vertical, 4)
       .padding(.horizontal, 4)
-      .background(isHovering ? Color.primary.opacity(0.1) : Color.clear)
-      .cornerRadius(5)
+      .background(isHovering ? Color.primary.opacity(0.08) : Color.clear)
+      .clipShape(.rect(cornerRadius: 6))
       .onHover { hovering in
         self.isHovering = hovering
       }
