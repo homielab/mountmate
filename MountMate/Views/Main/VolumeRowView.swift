@@ -22,30 +22,7 @@ struct VolumeRowView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
-        Button(action: {
-          syncEditorStateFromPersistence()
-          withAnimation(.easeInOut(duration: 0.18)) {
-            customMountPointEditor.expandedVolumeID = isCustomMountPointExpanded ? nil : volume.id
-          }
-        }) {
-          Image(systemName: "chevron.right")
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.white.opacity(0.9))
-            .rotationEffect(.degrees(isCustomMountPointExpanded ? 90 : 0))
-            .frame(width: 12, height: 12)
-            .padding(8)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .frame(width: 28, height: 28, alignment: .center)
-        .contentShape(Rectangle())
-        .disabled(isLoading)
-        .help(
-          NSLocalizedString(
-            "Custom Mount Point Menu",
-            comment: "Volume context menu custom mount point action")
-        )
-        .padding(.trailing, 8)
+
 
         HStack {
           ZStack {
