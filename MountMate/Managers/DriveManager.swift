@@ -549,10 +549,10 @@ class DriveManager: ObservableObject {
     return APFSContainer(id: containerID, volumes: volumes)
   }
 
-  public func getInfoForDisk(for identifier: String) -> [String: Any]? {
+  public func getInfoForDisk(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]? {
     guard !identifier.isEmpty else { return nil }
     let result = runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
+      executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier], timeout: timeout)
     return result.stdout.data(using: .utf8).flatMap {
       try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil)
         as? [String: Any]

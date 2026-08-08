@@ -106,12 +106,15 @@ func runProcess(
       exitCode: nil, timedOut: false)
   }
 
+  let currentQoS = DispatchQoS.QoSClass(rawValue: qos_class_self()) ?? .userInitiated
+  let qosClass: DispatchQoS.QoSClass = (currentQoS == .unspecified) ? .userInitiated : currentQoS
+
   // Write stdin AFTER the process has launched to avoid a deadlock: if the
   // data is larger than the stdin pipe buffer, write() blocks indefinitely
   // when no reader is alive yet. Use the throwing API so broken-pipe errors
   // surface rather than being silently dropped.
   if let data = input, let pipe = inPipe {
-    DispatchQueue.global(qos: .utility).async {
+    DispatchQueue.global(qos: qosClass).async {
       try? pipe.fileHandleForWriting.write(contentsOf: data)
       try? pipe.fileHandleForWriting.close()
     }
@@ -127,10 +130,16 @@ func runProcess(
   let processExitSem = DispatchSemaphore(value: 0)
   let completionSem = DispatchSemaphore(value: 0)
 
-  DispatchQueue.global(qos: .utility).async {
+  DispatchQueue.global(qos: qosClass).async {
     task.waitUntilExit()
     processExited.value = true
     processExitSem.signal()  // fires as soon as process exits
+
+    outPipe.fileHandleForReading.readabilityHandler = nil
+    errPipe.fileHandleForReading.readabilityHandler = nil
+    if outClaim.claim() { ioGroup.leave() }
+    if errClaim.claim() { ioGroup.leave() }
+
     ioGroup.wait()
     completionSem.signal()  // fires when I/O drain is also done
   }
@@ -174,6 +183,9 @@ func runProcess(
     // up to 2 s, which is enough for well-behaved processes like diskutil.
     if processExitSem.wait(timeout: .now() + 2.0) == .timedOut {
       print("⚠️ PROCESS DID NOT EXIT within 2s after SIGTERM: \(executable)")
+      if task.isRunning {
+        kill(task.processIdentifier, SIGKILL)
+      }
     }
 
     // Return whatever partial output had been drained up to this point —
