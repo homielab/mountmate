@@ -26,7 +26,7 @@ struct ManualSharesSectionHeader: View {
     networkManager.unmountAllManuallyConnectedShares { failures in
       guard !failures.isEmpty else { return }
       DriveManager.shared.userActionError = AppAlert(
-        title: "Eject Failed",
+        title: NSLocalizedString("Eject Failed", comment: "Alert title"),
         message: "Could not eject: \(failures.joined(separator: ", "))",
         kind: .basic)
     }

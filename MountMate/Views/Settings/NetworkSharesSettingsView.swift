@@ -29,7 +29,7 @@ struct NetworkSharesSettingsView: View {
             NetworkShareRow(
               share: share, onEdit: { editingShare = share },
               onError: { error in
-                errorAlert = AppAlert(title: "Mount Failed", message: error, kind: .basic)
+                errorAlert = AppAlert(title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error, kind: .basic)
               })
           }
         }

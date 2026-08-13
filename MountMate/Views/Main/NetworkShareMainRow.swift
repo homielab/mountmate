@@ -36,7 +36,7 @@ struct NetworkShareMainRow: View {
               .bold()
               .foregroundStyle(isMounted ? .primary : .secondary)
 
-            Text(isMounted ? "Mounted" : "Not Mounted")
+            Text(isMounted ? NSLocalizedString("Mounted", comment: "Status") : NSLocalizedString("Not Mounted", comment: "Status"))
               .font(.caption)
               .foregroundStyle(.secondary)
           }
@@ -57,7 +57,7 @@ struct NetworkShareMainRow: View {
               isWorking = false
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
-                  title: "Unmount Failed", message: error, kind: .basic)
+                  title: NSLocalizedString("Unmount Failed", comment: "Alert title"), message: error, kind: .basic)
               }
             }
           } else {
@@ -65,13 +65,13 @@ struct NetworkShareMainRow: View {
               isWorking = false
               if !success, let error = error {
                 DriveManager.shared.userActionError = AppAlert(
-                  title: "Mount Failed", message: error, kind: .basic)
+                  title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error, kind: .basic)
               }
             }
           }
         }) {
           Label(
-            isMounted ? "Eject" : "Mount",
+            isMounted ? NSLocalizedString("Eject", comment: "Action") : NSLocalizedString("Mount", comment: "Action"),
             systemImage: isMounted ? "eject.fill" : "play.fill"
           )
           .font(.caption)
@@ -87,7 +87,7 @@ struct NetworkShareMainRow: View {
             ProgressView().controlSize(.small)
           }
         }
-        .help(isMounted ? "Eject" : "Mount")
+        .help(isMounted ? NSLocalizedString("Eject", comment: "Tooltip") : NSLocalizedString("Mount", comment: "Tooltip"))
         .padding(.leading, 8)
       }
       .padding(.vertical, 4)

@@ -18,10 +18,10 @@
 
 "Expand All" = "Mở rộng tất cả";
 "Collapse All" = "Thu gọn tất cả";
-"Unmount All" = "Tháo tất cả phân vùng người dùng";
+"Unmount All" = "Tháo tất cả phân vùng";
 "Settings" = "Cài đặt";
 "Refresh Drives" = "Làm mới ổ đĩa";
-"Eject" = "Đẩy ra an toàn";
+"Eject" = "Đẩy ra";
 "Mount" = "Gắn";
 "Unmount" = "Tháo";
 "Quit MountMate" = "Thoát MountMate";
@@ -32,6 +32,8 @@
 
 "Unknown" = "Không rõ";
 "Unmounted" = "Chưa gắn";
+"Apple RAID" = "Apple RAID";
+"Disk Image" = "Ảnh đĩa";
 
 
 // MARK: - Context Menus
@@ -47,27 +49,43 @@
 // MARK: - Settings View
 //=============================================
 
-"MountMate Settings" = "Cài đặt MountMate";
-
 // Tabs
 "General" = "Chung";
 "Management" = "Quản lý";
+"Network Shares" = "Chia sẻ Mạng";
 
-// General Tab
+// Display Section
+"Display" = "Hiển thị";
 "Show Count in Menu Bar" = "Hiển thị số lượng trên thanh menu";
 "Show Internal Disks" = "Hiển thị ổ đĩa trong";
+"Show Only Volumes" = "Chỉ hiển thị phân vùng";
+
+// Behavior Section
+"Behavior" = "Hành vi";
 "Start MountMate at Login" = "Khởi động cùng máy";
 "Block USB Auto-Mount" = "Chặn tự động gắn USB";
 "Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
-"Language" = "Ngôn ngữ";
+
+// Shortcuts & Language Section
+"Shortcuts & Language" = "Phím tắt & Ngôn ngữ";
 "Enable Keyboard Shortcuts" = "Bật phím tắt";
+"Unmount All Volumes" = "Tháo tất cả phân vùng";
+"Mount All Volumes" = "Gắn tất cả phân vùng";
+"Language" = "Ngôn ngữ";
+"English" = "Tiếng Anh";
+"Français" = "Tiếng Pháp";
+"Українська" = "Tiếng Ukraina";
+"Русский" = "Tiếng Nga";
+"Tiếng Việt" = "Tiếng Việt";
+"中文（简体）" = "Tiếng Trung (Giản thể)";
+"中文（繁体）" = "Tiếng Trung (Phồn thể)";
 
 // About & Updates Section
+"About & Updates" = "Giới thiệu & Cập nhật";
 "Homepage" = "Trang chủ";
 "Support Email" = "Email hỗ trợ";
 "Donate" = "Ủng hộ";
 "Check for Updates..." = "Kiểm tra cập nhật...";
-"About & Updates" = "Giới thiệu & Cập nhật";
 
 // Management Tab
 "Ignored Volumes" = "Phân vùng bị bỏ qua";
@@ -93,6 +111,9 @@
 "Unmount Failed" = "Tháo thất bại";
 "“%@” is locked" = "“%@” đã bị khoá";
 "Full Disk Access Recommended" = "Nên cấp quyền Truy cập Toàn bộ Đĩa";
+"Action Failed" = "Thao tác thất bại";
+"Accessibility Permission Required" = "Cần quyền Trợ năng";
+"Restart Required" = "Cần khởi động lại";
 
 // Buttons
 "OK" = "OK";
@@ -100,6 +121,14 @@
 "Cancel" = "Huỷ";
 "Open System Settings" = "Mở Cài đặt Hệ thống";
 "Later" = "Để sau";
+"Retry" = "Thử lại";
+"Try Again" = "Thử lại";
+"Force Eject" = "Buộc Đẩy ra";
+"Force Unmount" = "Buộc tháo";
+"Remember password in Keychain" = "Ghi nhớ mật khẩu trong Keychain";
+"Restart Now" = "Khởi động lại ngay";
+"MountMate" = "MountMate";
+"Details" = "Chi tiết";
 
 // Verbs for error messages
 "unmount" = "tháo";
@@ -107,7 +136,6 @@
 "mount" = "gắn";
 
 // Error Messages & Formats
-"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nVui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Không thể gắn trực tiếp phân vùng “EFI”. Đây là một phân vùng hệ thống đặc biệt và hành vi này là bình thường.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Không thể đẩy ra “%@” vì một trong các phân vùng của nó đang bận hoặc đang được sử dụng.";
 "Failed to %@ “%@” because it is currently in use by another application." = "Không thể %@ “%@” vì đang được sử dụng bởi một ứng dụng khác.";
@@ -117,54 +145,70 @@
 "Password" = "Mật khẩu";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Để đảm bảo MountMate có thể thấy tất cả các loại ổ đĩa và ngăn ngừa lỗi, vui lòng cấp quyền Truy cập Toàn bộ Đĩa.\n\nNhấp vào 'Mở Cài đặt Hệ thống' để được đưa đến bảng điều khiển chính xác.";
 "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate không thể lấy thông tin ổ đĩa. Hệ thống có thể đang bận, một ổ đĩa không phản hồi, hoặc quyền truy cập có thể không chính xác.";
+"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Không thể đọc thông tin lưu trữ. Vui lòng cấp cho MountMate quyền 'Truy cập Toàn bộ Đĩa' hoặc 'Tệp và Thư mục' trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
+"Could not save settings for “%@” because it does not have a unique identifier (UUID)." = "Không thể lưu cài đặt cho “%@” vì nó không có mã định danh duy nhất (UUID).";
 
-// MARK: - App Lifecycle & Loading
-//=============================================
+// Disk usage format
+"DiskUsageUsedFree" = "%@ đã sử dụng / %@ (%@ còn trống)";
 
+// App Lifecycle
 "Loading Disks..." = "Đang tải ổ đĩa...";
-"Restart Required" = "Cần khởi động lại";
 "Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
-"Restart Now" = "Khởi động lại ngay";
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Để sử dụng phím tắt, vui lòng cấp MountMate quyền Accessibility trong Cài đặt Hệ thống → Quyền riêng tư & Bảo mật → Trợ năng.";
+
 
 // MARK: - Network Shares
 //=============================================
-"Network Shares" = "Chia sẻ Mạng";
-"Add Share" = "Thêm Chia sẻ";
+
+"Add Share" = "Thêm chia sẻ";
 "Add Network Share" = "Thêm Chia sẻ Mạng";
 "Edit Network Share" = "Sửa Chia sẻ Mạng";
-"Server Address" = "Địa chỉ Máy chủ";
-"Share Name/Path" = "Tên/Đường dẫn Chia sẻ";
-"Username" = "Tên đăng nhập";
-"Password" = "Mật khẩu";
-"Custom Mount Point" = "Điểm Gắn Tùy chỉnh";
-"Mount at Login" = "Gắn khi Đăng nhập";
 "MountMate can automatically mount these SMB shares at login." = "MountMate có thể tự động gắn các chia sẻ SMB này khi đăng nhập.";
 "No Network Shares Configured" = "Chưa cấu hình Chia sẻ Mạng";
+"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Thêm chia sẻ mạng SMB hoặc NAS của bạn vào đây để gắn tự động hoặc theo yêu cầu.";
+"Saved Network Shares" = "Chia sẻ mạng đã lưu";
+"Manually Connected Shares" = "Chia sẻ kết nối thủ công";
+"Eject All Manually Connected Shares" = "Đẩy ra tất cả chia sẻ kết nối thủ công";
+"Auto-mount" = "Tự động gắn";
+"Auto-mounts at login" = "Tự động gắn khi đăng nhập";
+"Mount Share" = "Gắn chia sẻ";
+"Unmount Share" = "Tháo chia sẻ";
+"Edit Share" = "Sửa chia sẻ";
+"Delete Share" = "Xóa chia sẻ";
+"Remove" = "Xóa";
 "Mounted" = "Đã gắn";
 "Not Mounted" = "Chưa gắn";
 "Display Name" = "Tên Hiển thị";
 "Connection" = "Kết nối";
 "Credentials" = "Thông tin xác thực";
 "Options" = "Tùy chọn";
+"Server Address" = "Địa chỉ Máy chủ";
+"Share Name/Path" = "Tên/Đường dẫn Chia sẻ";
+"Username" = "Tên đăng nhập";
+"Custom Mount Point" = "Điểm Gắn Tùy chỉnh";
+"Mount at Login" = "Gắn khi Đăng nhập";
 "Leave empty to use default location" = "Để trống để dùng vị trí mặc định";
-"Preview: %@" = "Xem trước: %@";
+"Optional (Defaults to share name)" = "Tùy chọn (Mặc định: tên chia sẻ)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Tùy chọn (Khách)";
 
 
 // MARK: - Custom Mount Point
 //=============================================
+
 "Custom Mount Point Menu" = "Điểm gắn tùy chỉnh…";
 "Use Custom Mount Point" = "Dùng điểm gắn tùy chỉnh";
 "Folder Path" = "Đường dẫn thư mục";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "Chọn…";
 "Choose" = "Chọn";
-"Reset" = "Đặt lại";
+"Choose..." = "Chọn…";
+"Select custom mount directory" = "Chọn thư mục gắn";
 "Default Path" = "Đường dẫn mặc định";
 "Save" = "Lưu";
 "Create" = "Tạo";
 "Use Folder" = "Dùng thư mục";
-"Custom Mount Point Help" = "Tắt tùy chọn này để dùng vị trí gắn mặc định của macOS.";
-"Custom Mount Point Empty Means Default" = "Để trống để dùng vị trí gắn mặc định của macOS.";
 "Custom Mount Point System Helper" = "Để trống để dùng vị trí gắn mặc định của macOS. Khi lưu, quy tắc gắn hệ thống sẽ được cập nhật và có thể hỏi mật khẩu quản trị một lần.";
 "Custom Mount Point Summary" = "Tùy chỉnh: %@";
 "Create Folder Title" = "Tạo thư mục?";
@@ -176,8 +220,6 @@
 "Custom Mount Point Cannot Be Root" = "Điểm gắn tùy chỉnh không được là thư mục gốc.";
 "Custom Mount Point In Use" = "Thư mục này đang được dùng bởi phân vùng đã gắn “%@”.";
 "Custom Mount Point Must Be Folder" = "Điểm gắn tùy chỉnh phải là một thư mục.";
-"Custom Mount Point Prepare Fallback" = "MountMate không thể chuẩn bị điểm gắn tùy chỉnh.";
-"Custom Mount Point Prepare Error" = "MountMate không thể chuẩn bị điểm gắn tùy chỉnh.\n\nChi tiết:\n%@";
 "Custom Mount Point Inspect Error" = "MountMate không thể kiểm tra thư mục này.\n\nChi tiết:\n%@";
 "Custom Mount Point Create Error" = "MountMate không thể tạo thư mục này.\n\nChi tiết:\n%@";
 "Custom Mount Point Requires UUID" = "Ổ này không cung cấp UUID ổn định nên MountMate không thể thêm quy tắc gắn hệ thống cho nó.";
@@ -185,54 +227,10 @@
 "Custom Mount Point System Conflict" = "Ổ này đã có một mục /etc/fstab khác không do MountMate quản lý.";
 "Custom Mount Point System Error" = "MountMate không thể cập nhật quy tắc gắn hệ thống.";
 "Custom Mount Point System Save Error" = "MountMate không thể cập nhật quy tắc gắn hệ thống.\n\nChi tiết:\n%@";
+"~/mountmate/MyShare" = "~/mountmate/MyShare";
 
-// MARK: - Force Eject
+
+// MARK: - Connection String Preview
 //=============================================
-"Force Eject" = "Buộc Đẩy ra";
-"The disk is in use. Do you want to force eject it?" = "Ổ đĩa đang được sử dụng. Bạn có muốn buộc đẩy ra không?";
-"This may result in data loss." = "Việc này có thể dẫn đến mất dữ liệu.";
-"Remember password in Keychain" = "Ghi nhớ mật khẩu trong Keychain";
 
-// Các chuỗi còn lại
-"MountMate" = "MountMate";
-"Expand All" = "Mở rộng tất cả";
-"Collapse All" = "Thu gọn tất cả";
-"Try Again" = "Thử lại";
-"Action Failed" = "Thao tác thất bại";
-
-// Chuỗi bổ sung được phát hiện trong SwiftUI
-"⌘⇧U - Unmount All Volumes" = "⌘⇧U - Tháo tất cả phân vùng";
-"⌘⇧M - Mount All Volumes" = "⌘⇧M - Gắn tất cả phân vùng";
-
-"English" = "English";
-"Français" = "Français";
-"Українська" = "Українська";
-"Tiếng Việt" = "Tiếng Việt";
-"中文（简体）" = "中文（简体）";
-"中文（繁体）" = "中文（繁体）";
-
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Để sử dụng phím tắt, vui lòng cấp MountMate quyền Accessibility trong Cài đặt Hệ thống → Quyền riêng tư & Bảo mật → Trợ năng.";
-
-"Volume: %@" = "Phân vùng: %@";
-"Disk: %@" = "Ổ đĩa: %@";
-"APFS Container • %@" = "Bộ chứa APFS • %@";
-
-"Settings" = "Cài đặt";
-"Refresh Drives" = "Làm mới ổ đĩa";
-"Retry" = "Thử lại";
-"Auto-mounts at login" = "Tự động gắn khi đăng nhập";
-"Mount Now" = "Gắn ngay";
-"Edit" = "Chỉnh sửa";
-"Delete" = "Xóa";
-
-"Accessibility Permission Required" = "Cần quyền Trợ năng";
-
-"Add Share" = "Thêm chia sẻ";
-
-"Optional (Defaults to share name)" = "Tùy chọn (Mặc định: tên chia sẻ)";
-"192.168.1.100" = "192.168.1.100";
-"public" = "public";
-"Optional (Guest)" = "Tùy chọn (Khách)";
-
-// Disk usage format
-"DiskUsageUsedFree" = "%@ đã sử dụng / %@ (%@ còn trống)";
+"Preview: %@" = "Xem trước: %@";
