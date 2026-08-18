@@ -147,8 +147,8 @@ struct EditNetworkShareSheet: View {
     panel.canChooseFiles = false
     panel.canChooseDirectories = true
     panel.allowsMultipleSelection = false
-    panel.prompt = "Choose"
-    panel.message = "Select custom mount directory"
+    panel.prompt = NSLocalizedString("Choose", comment: "Choose button")
+    panel.message = NSLocalizedString("Select custom mount directory", comment: "Open panel message")
     if panel.runModal() == .OK, let url = panel.url {
       customMountPoint = url.path
     }

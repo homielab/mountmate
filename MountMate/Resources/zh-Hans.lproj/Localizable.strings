@@ -16,8 +16,8 @@
 // MARK: - Action Buttons & Tooltips
 //=============================================
 
-"Expand All" = "展开全部";
-"Collapse All" = "折叠全部";
+"Expand All" = "全部展开";
+"Collapse All" = "全部折叠";
 "Unmount All" = "卸载所有卷宗";
 "Settings" = "设置";
 "Refresh Drives" = "刷新磁盘";
@@ -32,6 +32,8 @@
 
 "Unknown" = "未知";
 "Unmounted" = "已卸载";
+"Apple RAID" = "Apple RAID";
+"Disk Image" = "磁盘映像";
 
 
 // MARK: - Context Menus
@@ -47,20 +49,36 @@
 // MARK: - Settings View
 //=============================================
 
-"MountMate Settings" = "MountMate 设置";
-
 // Tabs
 "General" = "通用";
 "Management" = "管理";
+"Network Shares" = "网络共享";
 
-// General Tab
+// Display Section
+"Display" = "显示";
 "Show Count in Menu Bar" = "在菜单栏显示数量";
 "Show Internal Disks" = "显示内置磁盘";
+"Show Only Volumes" = "仅显示卷宗";
+
+// Behavior Section
+"Behavior" = "行为";
 "Start MountMate at Login" = "登录时启动 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自动挂载";
 "Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
-"Language" = "语言";
+
+// Shortcuts & Language Section
+"Shortcuts & Language" = "快捷键与语言";
 "Enable Keyboard Shortcuts" = "启用键盘快捷键";
+"Unmount All Volumes" = "卸载所有卷宗";
+"Mount All Volumes" = "挂载所有卷宗";
+"Language" = "语言";
+"English" = "英语";
+"Français" = "法语";
+"Українська" = "乌克兰语";
+"Русский" = "俄语";
+"Tiếng Việt" = "越南语";
+"中文（简体）" = "中文（简体）";
+"中文（繁体）" = "中文（繁体）";
 
 // About & Updates Section
 "About & Updates" = "关于与更新";
@@ -74,8 +92,8 @@
 "No Ignored Volumes" = "暂无忽略的卷宗";
 "Right-click a volume to ignore it. Useful for system partitions like 'EFI' that you don't need to manage." = "右键点击卷宗可将其忽略。对于无需管理的系统分区（如“EFI”）很有用。";
 "Protected Volumes" = "受保护卷宗";
-"No protected volumes" = "暂无受保护卷宗";
-"Right-click a volume to protect it from 'Unmount All' and system sleep actions." = "右键点击卷宗可将其设置为保护状态，防止被“卸载所有”或系统睡眠时卸载。";
+"No Protected Volumes" = "暂无受保护卷宗";
+"Right-click a volume to protect it from 'Unmount All' and sleep actions." = "右键点击卷宗可将其设置为保护状态，防止被“卸载所有”或系统睡眠时卸载。";
 
 "Don't Auto-Mount This Volume" = "禁止自动挂载此卷宗";
 "Blocked from Auto-Mounting" = "已被阻止自动挂载";
@@ -93,6 +111,9 @@
 "Unmount Failed" = "卸载失败";
 "“%@” is locked" = "“%@” 已被锁定";
 "Full Disk Access Recommended" = "建议授予完全磁盘访问权限";
+"Action Failed" = "操作失败";
+"Accessibility Permission Required" = "需要辅助功能权限";
+"Restart Required" = "需要重新启动";
 
 // Buttons
 "OK" = "好";
@@ -100,14 +121,21 @@
 "Cancel" = "取消";
 "Open System Settings" = "打开系统设置";
 "Later" = "稍后";
+"Retry" = "重试";
+"Try Again" = "重试";
+"Force Eject" = "强制推出";
+"Force Unmount" = "强制卸载";
+"Remember password in Keychain" = "在钥匙串中记住密码";
+"Restart Now" = "立即重新启动";
+"MountMate" = "MountMate";
+"Details" = "详细信息";
 
 // Verbs for error messages
 "unmount" = "卸载";
 "eject" = "推出";
 "mount" = "挂载";
 
-// Error message formats
-"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\n请在“系统设置 > 隐私与安全性”中为 MountMate 授予“完全磁盘访问权限”。";
+// Error Messages & Formats
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "“EFI” 分区是系统的特殊分区，无法直接挂载，这是正常现象。";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "由于其中的某个卷宗正在使用，无法推出“%@”。";
 "Failed to %@ “%@” because it is currently in use by another application." = "由于“%2$@”正被其他应用使用，无法执行 %1$@ 操作。";
@@ -116,55 +144,71 @@
 "Enter the password to unlock “%@”" = "请输入密码以解锁“%@”";
 "Password" = "密码";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "为确保 MountMate 能检测到所有类型的磁盘并避免错误，请授予“完全磁盘访问权限”。\n\n点击“打开系统设置”前往相关面板。";
+"MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate 无法获取磁盘信息。系统可能正忙、磁盘可能无响应，或权限可能不正确。";
+"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "无法读取存储详情。请在“系统设置 > 隐私与安全性”中为 MountMate 授予“完全磁盘访问权限”或“文件和文件夹”权限。";
+"Could not save settings for “%@” because it does not have a unique identifier (UUID)." = "无法保存“%@”的设置，因为它没有唯一标识符 (UUID)。";
 
+// Disk usage format
+"DiskUsageUsedFree" = "%@ 已用 / %@ (%@ 可用)";
 
-// MARK: - App Lifecycle
-//=============================================
-
+// App Lifecycle
 "Loading Disks..." = "正在加载磁盘...";
-"Restart Required" = "需要重新启动";
 "Please restart MountMate for the language change to take effect." = "请重新启动 MountMate 以使语言更改生效。";
-"Restart Now" = "立即重新启动";
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "要使用键盘快捷键，请在系统设置 → 隐私与安全 → 辅助功能 中授予 MountMate 辅助功能访问权限。";
+
 
 // MARK: - Network Shares
 //=============================================
-"Network Shares" = "网络共享";
+
 "Add Share" = "添加共享";
 "Add Network Share" = "添加网络共享";
 "Edit Network Share" = "编辑网络共享";
-"Server Address" = "服务器地址";
-"Share Name/Path" = "共享名称/路径";
-"Username" = "用户名";
-"Password" = "密码";
-"Custom Mount Point" = "自定义挂载点";
-"Mount at Login" = "登录时挂载";
 "MountMate can automatically mount these SMB shares at login." = "MountMate 可以在登录时自动挂载这些 SMB 共享。";
 "No Network Shares Configured" = "未配置网络共享";
+"Add your SMB or NAS network shares here to mount them automatically or on demand." = "在此添加您的 SMB 或 NAS 网络共享，以便自动或按需挂载。";
+"Saved Network Shares" = "已保存的网络共享";
+"Manually Connected Shares" = "手动连接的共享";
+"Eject All Manually Connected Shares" = "推出所有手动连接的共享";
+"Auto-mount" = "自动挂载";
+"Auto-mounts at login" = "登录时自动挂载";
+"Mount Share" = "挂载共享";
+"Unmount Share" = "卸载共享";
+"Edit Share" = "编辑共享";
+"Delete Share" = "删除共享";
+"Remove" = "移除";
 "Mounted" = "已挂载";
 "Not Mounted" = "未挂载";
 "Display Name" = "显示名称";
 "Connection" = "连接";
 "Credentials" = "凭证";
 "Options" = "选项";
+"Server Address" = "服务器地址";
+"Share Name/Path" = "共享名称/路径";
+"Username" = "用户名";
+"Custom Mount Point" = "自定义挂载点";
+"Mount at Login" = "登录时挂载";
 "Leave empty to use default location" = "留空以使用默认位置";
-"Preview: %@" = "预览: %@";
+"Optional (Defaults to share name)" = "可选（默认使用共享名）";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "可选（访客）";
 
 
 // MARK: - Custom Mount Point
 //=============================================
+
 "Custom Mount Point Menu" = "自定义挂载点…";
 "Use Custom Mount Point" = "使用自定义挂载点";
 "Folder Path" = "文件夹路径";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "选择…";
 "Choose" = "选择";
-"Reset" = "重置";
+"Choose..." = "选择…";
+"Select custom mount directory" = "选择挂载文件夹";
 "Default Path" = "默认路径";
 "Save" = "保存";
 "Create" = "创建";
 "Use Folder" = "使用文件夹";
-"Custom Mount Point Help" = "关闭此选项可使用 macOS 标准挂载位置。";
-"Custom Mount Point Empty Means Default" = "留空即可使用 macOS 标准挂载位置。";
 "Custom Mount Point System Helper" = "留空即可使用 macOS 标准挂载位置。保存时会更新系统挂载规则，并且可能会要求您输入一次管理员密码。";
 "Custom Mount Point Summary" = "自定义: %@";
 "Create Folder Title" = "创建文件夹？";
@@ -176,8 +220,6 @@
 "Custom Mount Point Cannot Be Root" = "自定义挂载点不能是根目录。";
 "Custom Mount Point In Use" = "该文件夹已被已挂载的卷“%@”使用。";
 "Custom Mount Point Must Be Folder" = "自定义挂载点必须是文件夹。";
-"Custom Mount Point Prepare Fallback" = "MountMate 无法准备自定义挂载点。";
-"Custom Mount Point Prepare Error" = "MountMate 无法准备自定义挂载点。\n\n详细信息：\n%@";
 "Custom Mount Point Inspect Error" = "MountMate 无法检查此文件夹。\n\n详细信息：\n%@";
 "Custom Mount Point Create Error" = "MountMate 无法创建此文件夹。\n\n详细信息：\n%@";
 "Custom Mount Point Requires UUID" = "此卷没有稳定的 UUID，因此 MountMate 无法为其添加系统挂载规则。";
@@ -185,54 +227,10 @@
 "Custom Mount Point System Conflict" = "此卷已经有一个不受 MountMate 管理的 /etc/fstab 条目。";
 "Custom Mount Point System Error" = "MountMate 无法更新系统挂载规则。";
 "Custom Mount Point System Save Error" = "MountMate 无法更新系统挂载规则。\n\n详细信息：\n%@";
+"~/mountmate/MyShare" = "~/mountmate/MyShare";
 
-// MARK: - Force Eject
+
+// MARK: - Connection String Preview
 //=============================================
-"Force Eject" = "强制推出";
-"The disk is in use. Do you want to force eject it?" = "磁盘正在使用中。您要强制推出吗？";
-"This may result in data loss." = "这可能会导致数据丢失。";
-"Remember password in Keychain" = "在钥匙串中记住密码";
 
-// 新增在 SwiftUI 视图中发现的字符串
-"⌘⇧U - Unmount All Volumes" = "⌘⇧U - 卸载所有卷";
-"⌘⇧M - Mount All Volumes" = "⌘⇧M - 挂载所有卷";
-
-"English" = "English";
-"Français" = "Français";
-"Українська" = "Українська";
-"Tiếng Việt" = "Tiếng Việt";
-"中文（简体）" = "中文（简体）";
-"中文（繁体）" = "中文（繁体）";
-
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "要使用键盘快捷键，请在系统设置 → 隐私与安全 → 辅助功能 中授予 MountMate 辅助功能访问权限。";
-
-"Volume: %@" = "卷： %@";
-"Disk: %@" = "磁盘： %@";
-"APFS Container • %@" = "APFS 容器 • %@";
-
-"Settings" = "设置";
-"Refresh Drives" = "刷新磁盘";
-"Retry" = "重试";
-"Auto-mounts at login" = "登录时自动挂载";
-"Mount Now" = "立即挂载";
-"Edit" = "编辑";
-"Delete" = "删除";
-
-"Accessibility Permission Required" = "需要辅助功能权限";
-
-"Add Share" = "添加共享";
-
-"Optional (Defaults to share name)" = "可选（默认使用共享名）";
-"192.168.1.100" = "192.168.1.100";
-"public" = "public";
-"Optional (Guest)" = "可选（访客）";
-
-// 剩余 UI 字符串
-"MountMate" = "MountMate";
-"Expand All" = "全部展开";
-"Collapse All" = "全部折叠";
-"Try Again" = "重试";
-"Action Failed" = "操作失败";
-
-// Disk usage format
-"DiskUsageUsedFree" = "%@ 已用 / %@ (%@ 可用)";
+"Preview: %@" = "预览: %@";

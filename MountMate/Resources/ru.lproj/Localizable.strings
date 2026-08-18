@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings (Russian)
 */
 
@@ -32,6 +32,8 @@
 
 "Unknown" = "Неизвестно";
 "Unmounted" = "Не смонтировано";
+"Apple RAID" = "Apple RAID";
+"Disk Image" = "Образ диска";
 
 
 // MARK: - Context Menus
@@ -47,23 +49,39 @@
 // MARK: - Settings View
 //=============================================
 
-"MountMate Settings" = "Настройки MountMate";
-
 // Tabs
 "General" = "Основные";
 "Management" = "Управление";
+"Network Shares" = "Сетевые ресурсы";
 
-// General Tab
-"Enable Keyboard Shortcuts" = "Включить сочетания клавиш";
+// Display Section
+"Display" = "Отображение";
 "Show Count in Menu Bar" = "Показывать количество в строке меню";
 "Show Internal Disks" = "Показывать внутренние диски";
+"Show Only Volumes" = "Показывать только томы";
+
+// Behavior Section
+"Behavior" = "Поведение";
 "Start MountMate at Login" = "Запускать MountMate при входе";
 "Block USB Auto-Mount" = "Блокировать автоподключение USB";
 "Unmount All Disks on Sleep" = "Отмонтировать все диски во время сна";
+
+// Shortcuts & Language Section
+"Shortcuts & Language" = "Сочетания и язык";
+"Enable Keyboard Shortcuts" = "Включить сочетания клавиш";
+"Unmount All Volumes" = "Отмонтировать все томы";
+"Mount All Volumes" = "Смонтировать все томы";
 "Language" = "Язык";
+"English" = "Английский";
+"Français" = "Французский";
+"Українська" = "Украинский";
+"Русский" = "Русский";
+"Tiếng Việt" = "Вьетнамский";
+"中文（简体）" = "Китайский (упрощённый)";
+"中文（繁体）" = "Китайский (традиционный)";
 
 // About & Updates Section
-"About & Updates" = "О приложении и обновления";
+"About & Updates" = "О приложении и обновлениях";
 "Homepage" = "Домашняя страница";
 "Support Email" = "Электронная почта поддержки";
 "Donate" = "Пожертвовать";
@@ -78,7 +96,7 @@
 "Right-click a volume to protect it from 'Unmount All' and sleep actions." = "Щёлкните правой кнопкой на томе, чтобы защитить его от 'Отмонтировать все' и действий во время сна.";
 
 "Don't Auto-Mount This Volume" = "Не монтировать этот том автоматически";
-"Blocked from Auto-Mounting" = "Заблокировано от автоподключения";
+"Blocked from Auto-Mounting" = "Заблокированные от автоподключения";
 "No Volumes Blocked from Auto-Mounting" = "Нет томов, заблокированных от автоподключения";
 "Right-click a volume to prevent it from mounting automatically when connected." = "Щёлкните правой кнопкой на томе, чтобы запретить его автоматическое монтирование при подключении.";
 
@@ -91,8 +109,11 @@
 "Eject Failed" = "Не удалось извлечь";
 "Mount Failed" = "Не удалось смонтировать";
 "Unmount Failed" = "Не удалось отмонтировать";
-"\"%@\" is locked" = "«%@» заблокирован";
+"“%@” is locked" = "«%@» заблокирован";
 "Full Disk Access Recommended" = "Рекомендуется полный доступ к дискам";
+"Action Failed" = "Операция не удалась";
+"Accessibility Permission Required" = "Требуется разрешение на универсальный доступ";
+"Restart Required" = "Требуется перезапуск";
 
 // Buttons
 "OK" = "OK";
@@ -100,6 +121,14 @@
 "Cancel" = "Отмена";
 "Open System Settings" = "Открыть системные настройки";
 "Later" = "Позже";
+"Retry" = "Повторить";
+"Try Again" = "Попробовать снова";
+"Force Eject" = "Принудительно извлечь";
+"Force Unmount" = "Принудительно отмонтировать";
+"Remember password in Keychain" = "Запомнить пароль в Keychain";
+"Restart Now" = "Перезапустить сейчас";
+"MountMate" = "MountMate";
+"Details" = "Детали";
 
 // Verbs for error messages
 "unmount" = "отмонтировать";
@@ -107,52 +136,101 @@
 "mount" = "смонтировать";
 
 // Error Messages & Formats
-"\n\nPlease grant MountMate 'Full Disk Access' in System Settings > Privacy & Security." = "\n\nПредоставьте MountMate полный доступ к дискам в Системных настройках > Конфиденциальность и безопасность.";
-"The \"EFI\" partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Раздел «EFI» нельзя смонтировать напрямую. Это специальный системный раздел, и такое поведение является нормальным.";
-"Failed to eject \"%@\" because one of its volumes is busy or in use." = "Не удалось извлечь «%@», поскольку один из его томов занят или используется.";
-"Failed to %@ \"%@\" because it is currently in use by another application." = "Не удалось %@ «%@», поскольку он сейчас используется другой программой.";
-"Failed to %@ \"%@\" because it is currently in use by \"%@\"." = "Не удалось %@ «%@», поскольку он сейчас используется «%@».";
-"An unknown error occurred while trying to %@ \"%@\"." = "Во время попытки %@ «%@» произошла неизвестная ошибка.";
-"Enter the password to unlock \"%@\"" = "Введите пароль, чтобы разблокировать «%@»";
+"The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Раздел «EFI» нельзя смонтировать напрямую. Это специальный системный раздел, и такое поведение является нормальным.";
+"Failed to eject “%@” because one of its volumes is busy or in use." = "Не удалось извлечь «%@», потому что один из его томов занят или используется.";
+"Failed to %@ “%@” because it is currently in use by another application." = "Не удалось %@ «%@», потому что он используется другим приложением.";
+"Failed to %@ “%@” because it is currently in use by “%@”." = "Не удалось %@ «%@», потому что он используется приложением «%@».";
+"An unknown error occurred while trying to %@ “%@”." = "Произошла неизвестная ошибка при попытке %@ «%@».";
+"Enter the password to unlock “%@”" = "Введите пароль, чтобы разблокировать «%@»";
 "Password" = "Пароль";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Чтобы убедиться, что MountMate видит все типы дисков и предотвращает ошибки, предоставьте полный доступ к дискам.\n\nНажмите «Открыть системные настройки», чтобы перейти к соответствующей панели.";
 "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate не смог получить информацию о дисках. Система может быть занята, диск может не отвечать, или права доступа могут быть неправильными.";
+"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Не удалось прочитать данные о хранилище. Предоставьте MountMate полный доступ к дискам или разрешения «Файлы и папки» в Системных настройках > Конфиденциальность и безопасность.";
+"Could not save settings for “%@” because it does not have a unique identifier (UUID)." = "Не удалось сохранить настройки для «%@», потому что у него нет уникального идентификатора (UUID).";
 
-// MARK: - App Lifecycle & Loading
-//=============================================
+// Disk usage format
+"DiskUsageUsedFree" = "%@ использовано / %@ (%@ свободно)";
 
+// App Lifecycle
 "Loading Disks..." = "Загрузка дисков...";
-"Restart Required" = "Требуется перезапуск";
 "Please restart MountMate for the language change to take effect." = "Пожалуйста, перезапустите MountMate, чтобы изменения языка вступили в силу.";
-"Restart Now" = "Перезапустить сейчас";
+"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Чтобы использовать сочетания клавиш, предоставьте MountMate доступ к универсальному доступу в Системных настройках → Конфиденциальность и безопасность → Специальные возможности.";
+
 
 // MARK: - Network Shares
 //=============================================
-"Network Shares" = "Сетевые ресурсы";
+
 "Add Share" = "Добавить ресурс";
 "Add Network Share" = "Добавить сетевой ресурс";
 "Edit Network Share" = "Редактировать сетевой ресурс";
-"Server Address" = "Адрес сервера";
-"Share Name/Path" = "Название/путь ресурса";
-"Username" = "Имя пользователя";
-"Password" = "Пароль";
-"Custom Mount Point" = "Пользовательская точка подключения";
-"Mount at Login" = "Монтировать при входе";
 "MountMate can automatically mount these SMB shares at login." = "MountMate может автоматически монтировать эти SMB-ресурсы при входе.";
 "No Network Shares Configured" = "Сетевые ресурсы не настроены";
+"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Добавляйте сюда ваши SMB или NAS сетевые ресурсы для автоматического или по запросу монтирования.";
+"Saved Network Shares" = "Сохранённые сетевые ресурсы";
+"Manually Connected Shares" = "Ручные подключённые ресурсы";
+"Eject All Manually Connected Shares" = "Извлечь все ручные подключённые ресурсы";
+"Auto-mount" = "Автомонт";
+"Auto-mounts at login" = "Автоматически монтируется при входе";
+"Mount Share" = "Смонтировать";
+"Unmount Share" = "Отмонтировать";
+"Edit Share" = "Редактировать";
+"Delete Share" = "Удалить";
+"Remove" = "Удалить";
 "Mounted" = "Смонтировано";
 "Not Mounted" = "Не смонтировано";
 "Display Name" = "Отображаемое имя";
 "Connection" = "Подключение";
 "Credentials" = "Учётные данные";
 "Options" = "Параметры";
+"Server Address" = "Адрес сервера";
+"Share Name/Path" = "Название/путь ресурса";
+"Username" = "Имя пользователя";
+"Custom Mount Point" = "Пользовательская точка подключения";
+"Mount at Login" = "Монтировать при входе";
 "Leave empty to use default location" = "Оставьте пустым, чтобы использовать место по умолчанию";
-"Preview: %@" = "Предварительный просмотр: %@";
+"Optional (Defaults to share name)" = "Необязательно (По умолчанию - имя ресурса)";
+"192.168.1.100" = "192.168.1.100";
+"public" = "public";
+"Optional (Guest)" = "Необязательно (Гость)";
 
-// MARK: - Force Eject
+
+// MARK: - Custom Mount Point
 //=============================================
-"Force Eject" = "Принудительно извлечь";
-"The disk is in use. Do you want to force eject it?" = "Диск используется. Желаете принудительно извлечь его?";
-"This may result in data loss." = "Это может привести к потере данных.";
-"Remember password in Keychain" = "Запомнить пароль в Keychain";
-"Custom Mount Point System Error" = "MountMate не удалось обновить системное правило монтирования.";
+
+"Custom Mount Point Menu" = "Пользовательская точка монтирования…";
+"Use Custom Mount Point" = "Использовать пользовательскую точку монтирования";
+"Folder Path" = "Путь к папке";
+"Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
+"Choose Folder" = "Выбрать…";
+"Choose" = "Выбрать";
+"Choose..." = "Выбрать…";
+"Select custom mount directory" = "Выберите папку для монтирования";
+"Default Path" = "Путь по умолчанию";
+"Save" = "Сохранить";
+"Create" = "Создать";
+"Use Folder" = "Использовать папку";
+"Custom Mount Point System Helper" = "Оставьте поле пустым, чтобы использовать стандартное место монтирования macOS. Сохранение обновляет системное правило монтирования и может один раз запросить пароль администратора.";
+"Custom Mount Point Summary" = "Пользовательская: %@";
+"Create Folder Title" = "Создать папку?";
+"Create Folder Message" = "Эта папка ещё не существует. MountMate может создать её перед сохранением.";
+"Folder Not Empty Title" = "Папка не пуста";
+"Folder Not Empty Message" = "Выбранная папка уже содержит файлы. Монтирование здесь может временно скрыть их, пока том смонтирован.";
+"Custom Mount Point Empty Path" = "Введите путь к папке.";
+"Custom Mount Point Must Be Absolute" = "Пользовательская точка монтирования должна быть абсолютным путём.";
+"Custom Mount Point Cannot Be Root" = "Пользовательская точка монтирования не может быть корневой папкой.";
+"Custom Mount Point In Use" = "Эта папка уже используется смонтированным томом «%@».";
+"Custom Mount Point Must Be Folder" = "Пользовательская точка монтирования должна быть папкой.";
+"Custom Mount Point Inspect Error" = "MountMate не смог проверить эту папку.\n\nДетали:\n%@";
+"Custom Mount Point Create Error" = "MountMate не смог создать эту папку.\n\nДетали:\n%@";
+"Custom Mount Point Requires UUID" = "Этот том не имеет стабильного UUID, поэтому MountMate не может добавить для него системное правило монтирования.";
+"Custom Mount Point Unsupported File System" = "MountMate не смог определить правильный тип файловой системы для системного правила монтирования этого тома.";
+"Custom Mount Point System Conflict" = "Для этого тома уже существует другая запись /etc/fstab, которой MountMate не управляет.";
+"Custom Mount Point System Error" = "MountMate не смог обновить системное правило монтирования.";
+"Custom Mount Point System Save Error" = "MountMate не смог обновить системное правило монтирования.\n\nДетали:\n%@";
+"~/mountmate/MyShare" = "~/mountmate/MyShare";
+
+
+// MARK: - Connection String Preview
+//=============================================
+
+"Preview: %@" = "Предварительный просмотр: %@";
