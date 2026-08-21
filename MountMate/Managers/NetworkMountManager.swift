@@ -72,6 +72,24 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
+  /// Returns the currently mounted SMB shares that are not already saved in MountMate.
+  /// Refreshing first keeps the result useful when Settings has been open for a while.
+  func discoverManuallyMountedShares(completion: @escaping ([NetworkShare]) -> Void) {
+    refreshMountStatus { [weak self] in
+      completion(self?.manuallyConnectedShares ?? [])
+    }
+  }
+
+  /// Resolves a Finder URL dropped anywhere inside a mounted share back to its SMB share.
+  func manuallyMountedShare(containing url: URL) -> NetworkShare? {
+    let droppedPath = url.standardizedFileURL.path
+    return manuallyConnectedShares.first { share in
+      guard let mountPoint = share.customMountPoint else { return false }
+      let mountedPath = URL(fileURLWithPath: mountPoint).standardizedFileURL.path
+      return droppedPath == mountedPath || droppedPath.hasPrefix(mountedPath + "/")
+    }
+  }
+
   private func parseMountedShares(from mountOutput: String) -> (
     mountedUUIDs: Set<UUID>, manualShares: [NetworkShare]
   ) {

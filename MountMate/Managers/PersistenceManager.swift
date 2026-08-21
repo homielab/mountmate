@@ -97,6 +97,42 @@ class PersistenceManager: ObservableObject {
     saveNetworkShares()
   }
 
+  /// Adds discovered shares without creating duplicate entries for the same SMB endpoint.
+  @discardableResult
+  func addNetworkSharesIfNeeded(_ shares: [NetworkShare]) -> Int {
+    var addedCount = 0
+
+    for share in shares where !containsNetworkShare(matching: share) {
+      networkShares.append(share)
+      addedCount += 1
+    }
+
+    if addedCount > 0 {
+      saveNetworkShares()
+    }
+    return addedCount
+  }
+
+  func containsNetworkShare(matching share: NetworkShare) -> Bool {
+    let server = share.server.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    let path = share.sharePath
+      .removingPercentEncoding?
+      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      .lowercased()
+      ?? share.sharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+
+    return networkShares.contains { existing in
+      let existingServer = existing.server
+        .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      let existingPath = existing.sharePath
+        .removingPercentEncoding?
+        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        .lowercased()
+        ?? existing.sharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+      return existingServer == server && existingPath == path
+    }
+  }
+
   func updateNetworkShare(_ share: NetworkShare) {
     if let index = networkShares.firstIndex(where: { $0.id == share.id }) {
       networkShares[index] = share

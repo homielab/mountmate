@@ -192,6 +192,11 @@
 "192.168.1.100" = "192.168.1.100";
 "public" = "public";
 "Optional (Guest)" = "Optional (Guest)";
+"Import Mounted" = "Import Mounted";
+"Import SMB shares that are currently mounted in Finder" = "Import SMB shares that are currently mounted in Finder";
+"Imported %d mounted share(s). Add credentials by editing each share." = "Imported %d mounted share(s). Add credentials by editing each share.";
+"Those mounted shares are already in MountMate." = "Those mounted shares are already in MountMate.";
+"No mounted SMB shares were found." = "No mounted SMB shares were found.";
 
 
 // MARK: - Custom Mount Point
