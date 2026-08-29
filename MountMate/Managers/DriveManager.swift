@@ -504,24 +504,24 @@ class DriveManager: ObservableObject {
             let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
             if let containerData = findAPFSContainer(
               forStore: storeID, in: allDisksAndPartitions),
-              let container = createContainer(from: containerData, parentInfo: infoPlist)
+              let container = createContainer(from: containerData)
             {
               containers.append(container)
             }
           } else {
-            if let volume = createVolume(from: partitionData, snapshotsData: nil, parentInfo: infoPlist) {
+            if let volume = createVolume(from: partitionData, snapshotsData: nil) {
               partitions.append(volume)
             }
           }
         }
       } else if diskData["APFSVolumes"] as? [[String: Any]] != nil {
-        if let container = createContainer(from: diskData, parentInfo: infoPlist) {
+        if let container = createContainer(from: diskData) {
           containers.append(container)
         }
       }
 
-      if partitions.isEmpty && containers.isEmpty {
-        if let volume = createVolume(from: diskData, snapshotsData: nil, parentInfo: infoPlist) {
+      if partitions.isEmpty && containers.isEmpty, DiskTopology.hasWholeDiskVolume(diskData) {
+        if let volume = createVolume(from: diskData, snapshotsData: nil) {
           partitions.append(volume)
         }
       }
@@ -559,18 +559,20 @@ class DriveManager: ObservableObject {
     }
   }
 
-  private func createContainer(
-    from containerData: [String: Any],
-    parentInfo: [String: Any]? = nil
-  ) -> APFSContainer? {
+  private func createContainer(from containerData: [String: Any]) -> APFSContainer? {
     guard let containerID = containerData["DeviceIdentifier"] as? String,
       let apfsVolumesData = containerData["APFSVolumes"] as? [[String: Any]]
     else {
       return nil
     }
 
-    let volumes = apfsVolumesData.compactMap {
-      createVolume(from: $0, snapshotsData: $0["MountedSnapshots"] as? [[String: Any]], parentInfo: parentInfo)
+    let volumes = apfsVolumesData.compactMap { apfsVolumeData -> Volume? in
+      guard
+        let deviceIdentifier = apfsVolumeData["DeviceIdentifier"] as? String,
+        !DiskTopology.isSealedSnapshotDevice(deviceIdentifier)
+      else { return nil }
+      return createVolume(
+        from: apfsVolumeData, snapshotsData: apfsVolumeData["MountedSnapshots"] as? [[String: Any]])
     }
     return APFSContainer(id: containerID, volumes: volumes)
   }
@@ -623,8 +625,7 @@ class DriveManager: ObservableObject {
 
   private func createVolume(
     from volumeData: [String: Any],
-    snapshotsData: [[String: Any]]?,
-    parentInfo: [String: Any]? = nil
+    snapshotsData: [[String: Any]]?
   ) -> Volume? {
     guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
 
@@ -650,8 +651,7 @@ class DriveManager: ObservableObject {
     let isProtected = PersistenceManager.shared.isVolumeProtected(tempVolume)
     let snapshots = snapshotsData?.compactMap { createSnapshot(from: $0) } ?? []
 
-    let isParentVirtual = (parentInfo?["VirtualOrPhysical"] as? String) == "Virtual"
-    let category: DriveCategory = (contentType == "EFI" && isParentVirtual) ? .system : .user
+    let category: DriveCategory = contentType == "EFI" ? .system : .user
 
     let isMounted = volumeData["MountPoint"] != nil
     let mountPoint = volumeData["MountPoint"] as? String

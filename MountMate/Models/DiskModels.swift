@@ -51,6 +51,22 @@ enum DiskTopology {
     }
     return (volume["VolumeName"] as? String) == "Backups.backupdb"
   }
+
+  /// Sealed system snapshot volumes show up as a nested BSD slice of their
+  /// origin volume (e.g. `disk5s1s1` for `disk5s1`) and mirror its name and
+  /// usage, so listing them duplicates the row and skews disk statistics.
+  static func isSealedSnapshotDevice(_ deviceIdentifier: String) -> Bool {
+    deviceIdentifier.range(of: "^disk\\d+s\\d+s\\d+$", options: .regularExpression) != nil
+  }
+
+  /// Whole-disk entries without a mounted point or a volume name carry no
+  /// mountable volume; they are bare OS-internal devices (e.g. cryptex RAM
+  /// disks) rather than user-visible media.
+  static func hasWholeDiskVolume(_ diskData: [String: Any]) -> Bool {
+    let hasVolumeName = (diskData["VolumeName"] as? String)?.isEmpty == false
+    let hasMountPoint = diskData["MountPoint"] != nil
+    return hasVolumeName || hasMountPoint
+  }
 }
 
 struct APFSSnapshot: Identifiable, Hashable {
