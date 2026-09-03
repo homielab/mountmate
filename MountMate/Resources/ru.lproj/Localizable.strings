@@ -254,3 +254,11 @@
 "NFS mounts use host-based access; no credentials are required." = "Для монтирования NFS доступ выдаётся по узлу; учётные данные не требуются.";
 "exports/public" = "exports/public";
 "Reconnects automatically when the share drops" = "Автоматически переподключает ресурс при обрыве связи";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "Этот том заблокирован для автоматического монтирования. Разблокируйте его, прежде чем назначать пользовательскую точку монтирования.";
+"System Mount Rule Not Updated" = "Системное правило монтирования не обновлено";
+"System Mount Rule Update Failed" = "MountMate не удалось обновить системное правило монтирования в /etc/fstab. После перезагрузки блокировка автоматического монтирования может работать не так, как ожидается.\n\nПодробности:\n%@";

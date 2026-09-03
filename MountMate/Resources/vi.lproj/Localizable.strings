@@ -254,3 +254,11 @@
 "NFS mounts use host-based access; no credentials are required." = "Ổ NFS sử dụng quyền truy cập theo máy chủ; không cần thông tin đăng nhập.";
 "exports/public" = "exports/public";
 "Reconnects automatically when the share drops" = "Tự động kết nối lại ổ đĩa mạng khi bị ngắt";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "Volume này đã bị chặn tự động gắn kết. Hãy bỏ chặn trước khi chỉ định điểm gắn kết tùy chỉnh.";
+"System Mount Rule Not Updated" = "Chưa cập nhật quy tắc gắn kết hệ thống";
+"System Mount Rule Update Failed" = "MountMate không thể cập nhật quy tắc gắn kết hệ thống trong /etc/fstab. Sau khi khởi động lại, việc chặn tự động gắn kết có thể không hoạt động như mong đợi.\n\nChi tiết:\n%@";

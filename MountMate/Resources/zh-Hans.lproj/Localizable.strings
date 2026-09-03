@@ -254,3 +254,11 @@
 "NFS mounts use host-based access; no credentials are required." = "NFS 挂载基于主机的访问权限，无需凭据。";
 "exports/public" = "exports/public";
 "Reconnects automatically when the share drops" = "共享断开时自动重新连接";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "该卷宗已被禁止自动挂载，请先解除阻止，再为其指定自定义挂载点。";
+"System Mount Rule Not Updated" = "系统挂载规则未更新";
+"System Mount Rule Update Failed" = "MountMate 无法更新 /etc/fstab 中的系统挂载规则。重启后，自动挂载阻止可能不会按预期生效。\n\n详细信息：\n%@";

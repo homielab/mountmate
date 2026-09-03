@@ -258,3 +258,11 @@
 "Protocol" = "Protocol";
 "NFS mounts use host-based access; no credentials are required." = "NFS mounts use host-based access; no credentials are required.";
 "exports/public" = "exports/public";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "This volume is blocked from auto-mounting. Unblock it before assigning a custom mount point.";
+"System Mount Rule Not Updated" = "System Mount Rule Not Updated";
+"System Mount Rule Update Failed" = "MountMate could not update the system mount rule in /etc/fstab. Auto-mount blocking may not behave as expected after a restart.\n\nDetails:\n%@";

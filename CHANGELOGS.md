@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Boot-Time Auto-Mount Blocking**: Blocked volumes are now persisted as `rw,noauto` rules in `/etc/fstab`, so macOS itself skips their auto-mount during startup — even before MountMate launches. Previously the block only existed while the app was running, so volumes connected at boot could end up mounted anyway. Each rule is installed with one admin-authorized prompt, and stale rules are cleaned up automatically.
+- **Startup Unmount Sweep**: When MountMate launches and finds a blocked volume already mounted (for example mounted during boot before the app started, or when no stable UUID exists for an fstab rule), it unmounts it automatically, retrying briefly if the volume is still busy. Volumes marked "Keep Mounted" are never touched.
 - **Keep Alive (Auto-Reconnect)**: MountMate can now keep mounts alive automatically. Network shares and volumes marked "Keep Mounted" are remounted when they drop unexpectedly, with retry attempts at a configurable interval and exponential backoff.
 - **Network Change Handling**: MountMate watches the network path and remounts active shares through the new primary interface when Wi-Fi/Ethernet changes, then reconnects dropped shares as soon as connectivity recovers.
 - **Mount on Login & Wake**: Keep-alive shares and volumes mount at login and reconnect promptly after the Mac wakes from sleep. Volumes unmounted by "Unmount All Disks on Sleep" come back on wake.
@@ -14,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Manual Mounts of Blocked Volumes**: Once a volume has a boot-time block rule, mounting it manually through Finder, Terminal, or MountMate is always allowed — the rule only suppresses the automatic mount at connection and startup.
+- **Custom Mount Points and Blocked Volumes**: A custom mount point can no longer be assigned to a volume that is blocked from auto-mounting (and blocking a volume replaces any mount rule it had), since the two settings contradict each other.
 - **Never Fights the User**: Shares and volumes unmounted explicitly through MountMate are not auto-remounted until you mount them again; automatic reconnect failures no longer pop error dialogs.
 
 ### Fixed

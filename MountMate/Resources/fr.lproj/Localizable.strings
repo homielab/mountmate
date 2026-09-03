@@ -254,3 +254,11 @@
 "NFS mounts use host-based access; no credentials are required." = "Les montages NFS utilisent un accès par hôte ; aucun identifiant n'est requis.";
 "exports/public" = "exports/public";
 "Reconnects automatically when the share drops" = "Reconnecte automatiquement le partage lorsqu'il se déconnecte";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "Ce volume est bloqué pour le montage automatique. Débloquez-le avant de lui attribuer un point de montage personnalisé.";
+"System Mount Rule Not Updated" = "Règle de montage système non mise à jour";
+"System Mount Rule Update Failed" = "MountMate n'a pas pu mettre à jour la règle de montage système dans /etc/fstab. Le blocage du montage automatique pourrait ne pas se comporter comme prévu après un redémarrage.\n\nDétails :\n%@";

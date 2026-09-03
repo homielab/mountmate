@@ -254,3 +254,11 @@
 "NFS mounts use host-based access; no credentials are required." = "NFS 掛載採用主機式存取權限，無需憑證。";
 "exports/public" = "exports/public";
 "Reconnects automatically when the share drops" = "共享中斷連線時自動重新連接";
+
+
+// MARK: - Boot-Time Auto-Mount Blocking
+//=============================================
+
+"Custom Mount Point Volume Blocked" = "此卷宗已被禁止自動掛載，請先解除封鎖，再為其指定自訂掛載點。";
+"System Mount Rule Not Updated" = "系統掛載規則未更新";
+"System Mount Rule Update Failed" = "MountMate 無法更新 /etc/fstab 中的系統掛載規則。重新啟動後，自動掛載封鎖可能不會如預期生效。\n\n詳細資訊：\n%@";
