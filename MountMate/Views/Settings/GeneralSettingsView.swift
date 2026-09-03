@@ -6,6 +6,7 @@ struct GeneralSettingsView: View {
   @EnvironmentObject var launchManager: LaunchAtLoginManager
   @EnvironmentObject var diskMounter: DiskMounter
   @EnvironmentObject var updaterViewModel: UpdaterController
+  @ObservedObject private var keepAliveManager = KeepAliveManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
@@ -51,6 +52,21 @@ struct GeneralSettingsView: View {
     return "Version \(version) (\(build))"
   }
 
+  static func retryIntervalLabel(_ interval: Double) -> String {
+    switch interval {
+    case ..<60:
+      return String(
+        format: NSLocalizedString(
+          "Every %d seconds", comment: "Keep-alive retry interval option"),
+        Int(interval))
+    default:
+      return String(
+        format: NSLocalizedString(
+          "Every %d minutes", comment: "Keep-alive retry interval option"),
+        Int(interval / 60))
+    }
+  }
+
   var body: some View {
     Form {
       Section {
@@ -79,6 +95,42 @@ struct GeneralSettingsView: View {
         }
       } header: {
         Label("Behavior", systemImage: "gearshape")
+      }
+
+      Section {
+        Toggle(isOn: $keepAliveManager.isEnabled) {
+          Label("Keep Mounts Alive", systemImage: "arrow.triangle.2.circlepath")
+        }
+
+        if keepAliveManager.isEnabled {
+          Picker(selection: $keepAliveManager.retryInterval) {
+            ForEach(KeepAliveManager.allowedRetryIntervals, id: \.self) { interval in
+              Text(Self.retryIntervalLabel(interval)).tag(interval)
+            }
+          } label: {
+            Label("Retry Interval", systemImage: "clock.arrow.circlepath")
+          }
+          .pickerStyle(.menu)
+
+          Toggle(isOn: $keepAliveManager.remountOnNetworkChange) {
+            Label("Remount on Network Change", systemImage: "wifi")
+          }
+          Toggle(isOn: $keepAliveManager.remountOnWake) {
+            Label("Reconnect After Sleep", systemImage: "sun.max")
+          }
+        }
+      } header: {
+        Label("Keep Alive", systemImage: "bolt.horizontal.circle")
+      } footer: {
+        Text(
+          NSLocalizedString(
+            "Keep Alive Footer",
+            comment:
+              "Keep Alive settings explanation: automatically remounts network shares marked Keep Mounted and volumes marked Keep Mounted when they drop, after network changes, on wake, and at login."
+          )
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
 
       Section {
@@ -119,7 +171,7 @@ struct GeneralSettingsView: View {
       }
 
       Section {
-        Link(destination: URL(string: "https://homielab.com/page/mountmate")!) {
+        Link(destination: URL(string: "https://homielab.com/en/page/mountmate")!) {
           Label("Homepage", systemImage: "house.fill")
         }
         Link(destination: URL(string: "mailto:contact@homielab.com")!) {

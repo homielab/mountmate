@@ -234,3 +234,23 @@
 //=============================================
 
 "Preview: %@" = "Xem trước: %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "Tự động kết nối lại";
+"Keep Mounts Alive" = "Giữ gắn kết tự động";
+"Retry Interval" = "Khoảng thời gian thử lại";
+"Remount on Network Change" = "Gắn kết lại khi thay đổi mạng";
+"Reconnect After Sleep" = "Kết nối lại sau khi ngủ";
+"Every %d seconds" = "Mỗi %d giây";
+"Every %d minutes" = "Mỗi %d phút";
+"Keep Alive Footer" = "Tự động kết nối lại sẽ gắn kết lại các ổ đĩa mạng và phân vùng được đánh dấu \"Giữ gắn kết\" khi bị ngắt kết nối, sau khi thay đổi mạng, khi đánh thức máy và khi đăng nhập.";
+"Keep Mounted" = "Giữ gắn kết";
+"Reconnecting…" = "Đang kết nối lại…";
+"Keep Mounted (Auto-Reconnect)" = "Giữ gắn kết (tự động)";
+"Disable Keep Mounted" = "Tắt giữ gắn kết";
+"Protocol" = "Giao thức";
+"NFS mounts use host-based access; no credentials are required." = "Ổ NFS sử dụng quyền truy cập theo máy chủ; không cần thông tin đăng nhập.";
+"exports/public" = "exports/public";
+"Reconnects automatically when the share drops" = "Tự động kết nối lại ổ đĩa mạng khi bị ngắt";

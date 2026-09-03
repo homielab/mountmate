@@ -234,3 +234,23 @@
 //=============================================
 
 "Preview: %@" = "Aperçu : %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "Maintien actif";
+"Keep Mounts Alive" = "Maintenir les montages actifs";
+"Retry Interval" = "Intervalle de nouvelle tentative";
+"Remount on Network Change" = "Remonter au changement de réseau";
+"Reconnect After Sleep" = "Reconnecter après la veille";
+"Every %d seconds" = "Toutes les %d secondes";
+"Every %d minutes" = "Toutes les %d minutes";
+"Keep Alive Footer" = "Le maintien actif remonte automatiquement les partages réseau marqués « Maintenir monté » et les volumes marqués « Maintenir monté » lorsqu'ils se déconnectent, après un changement de réseau, au réveil et à l'ouverture de session.";
+"Keep Mounted" = "Maintenir monté";
+"Reconnecting…" = "Reconnexion…";
+"Keep Mounted (Auto-Reconnect)" = "Maintenir monté (reconnexion auto)";
+"Disable Keep Mounted" = "Désactiver le maintien monté";
+"Protocol" = "Protocole";
+"NFS mounts use host-based access; no credentials are required." = "Les montages NFS utilisent un accès par hôte ; aucun identifiant n'est requis.";
+"exports/public" = "exports/public";
+"Reconnects automatically when the share drops" = "Reconnecte automatiquement le partage lorsqu'il se déconnecte";

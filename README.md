@@ -62,7 +62,8 @@ So I built **MountMate**.
 - **Mount/unmount** any drive with a click
 - Check available **free space**
 - **Keyboard Shortcuts**: Quick mount/unmount with `⌘⇧M` and `⌘⇧U`
-- **Network Shares**: Auto-mount SMB shares at login
+- **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
+- **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login
 - **Force Eject**: Safely force eject drives that are in use
 - Runs quietly in the **menu bar**
 - Fully native – no Electron, no dependencies
@@ -75,6 +76,7 @@ macOS automatically mounts drives when they’re plugged in – but gives you **
 - Drives used only for backup
 - Reducing wear and tear or noise
 - Improving system responsiveness
+- Network shares that silently drop and need reconnecting
 
 ## 🔐 Private, Fast, and Safe
 

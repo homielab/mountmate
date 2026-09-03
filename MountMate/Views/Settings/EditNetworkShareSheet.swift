@@ -13,6 +13,8 @@ struct EditNetworkShareSheet: View {
   @State private var username = ""
   @State private var password = ""
   @State private var mountAtLogin = true
+  @State private var keepMounted = true
+  @State private var shareProtocol: ShareProtocol = .smb
   @State private var customMountPoint = ""
 
   private var isValid: Bool {
@@ -22,7 +24,10 @@ struct EditNetworkShareSheet: View {
   private var connectionStringPreview: String {
     let srv = server.isEmpty ? "server" : server
     let path = sharePath.isEmpty ? "share" : sharePath
-    return "smb://\(srv)/\(path)"
+    if shareProtocol == .nfs {
+      return "nfs://\(srv)/\(path)"
+    }
+    return "\(shareProtocol.urlScheme)://\(srv)/\(path)"
   }
 
   var body: some View {
@@ -47,6 +52,15 @@ struct EditNetworkShareSheet: View {
         }
 
         Section {
+          Picker(selection: $shareProtocol) {
+            ForEach(ShareProtocol.allCases) { item in
+              Text(item.displayName).tag(item)
+            }
+          } label: {
+            Label("Protocol", systemImage: "network.badge.shield.half.filled")
+          }
+          .pickerStyle(.segmented)
+
           HStack {
             Image(systemName: "server.rack").frame(width: 20)
             TextField("Server Address", text: $server, prompt: Text("192.168.1.100"))
@@ -54,7 +68,12 @@ struct EditNetworkShareSheet: View {
 
           HStack {
             Image(systemName: "folder").frame(width: 20)
-            TextField("Share Name/Path", text: $sharePath, prompt: Text("public"))
+            TextField(
+              "Share Name/Path", text: $sharePath,
+              prompt: Text(
+                shareProtocol == .nfs
+                  ? NSLocalizedString("exports/public", comment: "NFS share path prompt")
+                  : NSLocalizedString("public", comment: "Share path prompt")))
           }
         } header: {
           Label("Connection", systemImage: "network")
@@ -71,14 +90,20 @@ struct EditNetworkShareSheet: View {
         }
 
         Section {
-          HStack {
-            Image(systemName: "person").frame(width: 20)
-            TextField("Username", text: $username, prompt: Text("Optional (Guest)"))
-          }
+          if shareProtocol.supportsUserCredentials {
+            HStack {
+              Image(systemName: "person").frame(width: 20)
+              TextField("Username", text: $username, prompt: Text("Optional (Guest)"))
+            }
 
-          HStack {
-            Image(systemName: "key").frame(width: 20)
-            SecureField("Password", text: $password)
+            HStack {
+              Image(systemName: "key").frame(width: 20)
+              SecureField("Password", text: $password)
+            }
+          } else {
+            Text("NFS mounts use host-based access; no credentials are required.")
+              .font(.caption)
+              .foregroundStyle(.secondary)
           }
         } header: {
           Label("Credentials", systemImage: "lock")
@@ -87,6 +112,10 @@ struct EditNetworkShareSheet: View {
         Section {
           Toggle(isOn: $mountAtLogin) {
             Label("Mount at Login", systemImage: "arrow.right.circle")
+          }
+
+          Toggle(isOn: $keepMounted) {
+            Label("Keep Mounted", systemImage: "arrow.triangle.2.circlepath")
           }
 
           VStack(alignment: .leading, spacing: 6) {
@@ -134,7 +163,7 @@ struct EditNetworkShareSheet: View {
       }
       .padding()
     }
-    .frame(width: 460, height: 520)
+    .frame(width: 460, height: 580)
     .onAppear {
       loadExistingData()
     }
@@ -162,6 +191,8 @@ struct EditNetworkShareSheet: View {
     sharePath = share.sharePath
     username = share.username
     mountAtLogin = share.mountAtLogin
+    keepMounted = share.keepMounted
+    shareProtocol = share.shareProtocol
     customMountPoint = share.customMountPoint ?? ""
 
     if let loadedPassword = KeychainManager.shared.load(account: share.id.uuidString) {
@@ -180,6 +211,8 @@ struct EditNetworkShareSheet: View {
       sharePath: sharePath,
       username: username,
       mountAtLogin: mountAtLogin,
+      keepMounted: keepMounted,
+      shareProtocol: shareProtocol,
       customMountPoint: customMountPoint.isEmpty ? nil : customMountPoint
     )
 

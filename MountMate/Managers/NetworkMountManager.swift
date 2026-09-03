@@ -2,6 +2,60 @@
 
 import Foundation
 
+/// A network mount reported by `/sbin/mount`, independent of protocol.
+struct MountedNetworkShare {
+  let source: String
+  let mountPoint: String
+  let shareProtocol: ShareProtocol
+
+  init?(mountOutputLine: String) {
+    // Match the filesystem name as a parenthesized option (e.g. "(smbfs,")
+    // so it is never confused with a mount point that happens to contain
+    // the same word.
+    guard let openIndex = mountOutputLine.lastIndex(of: "("),
+      let closeIndex = mountOutputLine[openIndex...].firstIndex(of: ")")
+    else { return nil }
+
+    let options = mountOutputLine[mountOutputLine.index(after: openIndex)..<closeIndex]
+    let fileSystem =
+      options
+      .split(separator: ",")
+      .first?
+      .trimmingCharacters(in: .whitespaces)
+      .lowercased() ?? ""
+
+    guard let shareProtocol = ShareProtocol.from(mountFilesystemName: fileSystem) else {
+      return nil
+    }
+
+    let mountPart = String(mountOutputLine[..<openIndex])
+    let parts = mountPart.components(separatedBy: " on ")
+    guard parts.count >= 2 else { return nil }
+
+    source = parts[0].trimmingCharacters(in: .whitespaces)
+    mountPoint = parts[1].trimmingCharacters(in: .whitespaces)
+    self.shareProtocol = shareProtocol
+  }
+
+  func matches(_ share: NetworkShare) -> Bool {
+    let decodedSource = source.removingPercentEncoding ?? source
+    let cleanSource =
+      decodedSource
+      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      .lowercased()
+    let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
+    let cleanSharePath =
+      decodedSharePath
+      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      .lowercased()
+    let cleanServer = share.server.lowercased()
+
+    return cleanSource.contains(cleanServer)
+      && cleanSource.contains(cleanSharePath)
+      && cleanSource.hasSuffix("/\(cleanSharePath)")
+  }
+}
+
 class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
 
@@ -10,39 +64,6 @@ class NetworkMountManager: ObservableObject {
   @Published var isUnmountingManualShares = false
 
   private var manualSharesDictionary: [String: NetworkShare] = [:]
-
-  private struct MountedSMBShare {
-    let source: String
-    let mountPoint: String
-
-    init?(mountOutputLine: String) {
-      guard mountOutputLine.contains("smbfs") else { return nil }
-
-      let parts = mountOutputLine.components(separatedBy: " on ")
-      guard parts.count >= 2 else { return nil }
-
-      source = parts[0].trimmingCharacters(in: .whitespaces)
-      mountPoint = parts[1].components(separatedBy: " (").first ?? ""
-    }
-
-    func matches(_ share: NetworkShare) -> Bool {
-      let decodedSource = source.removingPercentEncoding ?? source
-      let cleanSource =
-        decodedSource
-        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        .lowercased()
-      let decodedSharePath = share.sharePath.removingPercentEncoding ?? share.sharePath
-      let cleanSharePath =
-        decodedSharePath
-        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        .lowercased()
-      let cleanServer = share.server.lowercased()
-
-      return cleanSource.contains(cleanServer)
-        && cleanSource.contains(cleanSharePath)
-        && cleanSource.hasSuffix("/\(cleanSharePath)")
-    }
-  }
 
   private init() {
     // Initial check
@@ -72,15 +93,17 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
-  /// Returns the currently mounted SMB shares that are not already saved in MountMate.
-  /// Refreshing first keeps the result useful when Settings has been open for a while.
+  /// Returns the currently mounted network shares that are not already saved in
+  /// MountMate. Refreshing first keeps the result useful when Settings has been
+  /// open for a while.
   func discoverManuallyMountedShares(completion: @escaping ([NetworkShare]) -> Void) {
     refreshMountStatus { [weak self] in
       completion(self?.manuallyConnectedShares ?? [])
     }
   }
 
-  /// Resolves a Finder URL dropped anywhere inside a mounted share back to its SMB share.
+  /// Resolves a Finder URL dropped anywhere inside a mounted share back to its
+  /// network share.
   func manuallyMountedShare(containing url: URL) -> NetworkShare? {
     let droppedPath = url.standardizedFileURL.path
     return manuallyConnectedShares.first { share in
@@ -99,7 +122,7 @@ class NetworkMountManager: ObservableObject {
 
     let shares = PersistenceManager.shared.networkShares
     let mountedShares = mountOutput.components(separatedBy: .newlines).compactMap {
-      MountedSMBShare(mountOutputLine: $0)
+      MountedNetworkShare(mountOutputLine: $0)
     }
 
     for mountedShare in mountedShares {
@@ -117,14 +140,26 @@ class NetworkMountManager: ObservableObject {
           var server = ""
           var sharePath = ""
 
-          let urlString = mountedShare.source.replacingOccurrences(of: "//", with: "smb://")
-          if let url = URL(string: urlString) {
-            username = url.user ?? ""
-            server = url.host ?? ""
-            sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-          } else {
-            server = "Unknown"
-            sharePath = "Share"
+          switch mountedShare.shareProtocol {
+          case .nfs:
+            // NFS sources look like `server:/export/path`.
+            let withoutSlashes = mountedShare.source
+              .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let components = withoutSlashes.components(separatedBy: ":")
+            server = components.first ?? ""
+            sharePath = components.dropFirst().joined(separator: ":")
+              .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+          default:
+            let urlString = mountedShare.source.replacingOccurrences(
+              of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
+            if let url = URL(string: urlString) {
+              username = url.user ?? ""
+              server = url.host ?? ""
+              sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            } else {
+              server = "Unknown"
+              sharePath = "Share"
+            }
           }
 
           if sharePath.isEmpty {
@@ -138,6 +173,8 @@ class NetworkMountManager: ObservableObject {
             sharePath: sharePath,
             username: username,
             mountAtLogin: false,
+            keepMounted: false,
+            shareProtocol: mountedShare.shareProtocol,
             customMountPoint: mountedShare.mountPoint
           )
           manualSharesDictionary[mountedShare.mountPoint] = newShare
@@ -158,6 +195,10 @@ class NetworkMountManager: ObservableObject {
     let mountPoint = configuredMountPoint(for: share)
 
     let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
+
+    // An explicit (or automatic) mount clears any user-intent suppression and
+    // retry state so keep-alive tracking restarts cleanly.
+    KeepAliveManager.shared.resume(shareID: share.id)
 
     // Check if already mounted (either at our target path or elsewhere)
     if let existingMount = findExistingMountPoint(for: share) {
@@ -196,25 +237,16 @@ class NetworkMountManager: ObservableObject {
       return
     }
 
-    // Construct the URL string carefully
-    var urlComponents = URLComponents()
-    urlComponents.scheme = "smb"
-    if !share.username.isEmpty {
-      urlComponents.user = share.username
-      urlComponents.password = password
-    }
-    urlComponents.host = share.server
-    urlComponents.path = "/\(share.sharePath)"
-
-    guard let url = urlComponents.url else {
+    guard let url = connectionURL(for: share, password: password) else {
       completion(false, "Invalid share configuration")
       return
     }
 
+    let (executable, arguments) = mountCommand(
+      for: share, url: url.absoluteString, mountPoint: mountPoint)
+
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runProcess(
-        executable: "/sbin/mount_smbfs",
-        arguments: ["-o", "noowners,nosuid", url.absoluteString, mountPoint])
+      let result = runProcess(executable: executable, arguments: arguments)
 
       DispatchQueue.main.async {
         if !result.succeeded {
@@ -223,7 +255,7 @@ class NetworkMountManager: ObservableObject {
 
           let rawError =
             result.stderr.isEmpty
-            ? "mount_smbfs exited with code \(result.exitCode ?? -1)."
+            ? "\(executable) exited with code \(result.exitCode ?? -1)."
             : result.stderr
           let sanitized = self.sanitizeError(rawError)
           // Detect permission-related mount failures
@@ -251,6 +283,51 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
+  /// Builds the protocol-specific connection URL for a share.
+  ///
+  /// - SMB: `smb://user:pass@server/share`
+  /// - AFP: `afp://user:pass@server/share`
+  /// - NFS: `server:/export/path` (credentials do not apply)
+  func connectionURL(for share: NetworkShare, password: String) -> URL? {
+    if share.shareProtocol == .nfs {
+      var components = URLComponents()
+      components.scheme = "nfs"
+      components.host = share.server
+      components.path = "/\(share.sharePath)"
+      return components.url
+    }
+
+    var urlComponents = URLComponents()
+    urlComponents.scheme = share.shareProtocol.urlScheme
+    if !share.username.isEmpty, share.shareProtocol.supportsUserCredentials {
+      urlComponents.user = share.username
+      urlComponents.password = password
+    }
+    urlComponents.host = share.server
+    urlComponents.path = "/\(share.sharePath)"
+
+    return urlComponents.url
+  }
+
+  /// Returns the protocol-specific mount executable and arguments.
+  private func mountCommand(for share: NetworkShare, url: String, mountPoint: String) -> (
+    executable: String, arguments: [String]
+  ) {
+    switch share.shareProtocol {
+    case .smb:
+      return ("/sbin/mount_smbfs", ["-o", "noowners,nosuid", url, mountPoint])
+    case .nfs:
+      // mount_nfs expects the canonical `server:/export` form.
+      let exportPath = "/" + share.sharePath.trimmingCharacters(
+        in: CharacterSet(charactersIn: "/"))
+      return ("/sbin/mount_nfs", ["-o", "resvport", "\(share.server):\(exportPath)", mountPoint])
+    case .afp:
+      // No `-i`: credentials are embedded in the URL, and an interactive
+      // prompt would block the mount.
+      return ("/sbin/mount_afp", [url, mountPoint])
+    }
+  }
+
   func mountAllAutoShares() {
     let shares = PersistenceManager.shared.networkShares.filter { $0.mountAtLogin }
     for share in shares {
@@ -263,6 +340,27 @@ class NetworkMountManager: ObservableObject {
         }
       }
     }
+  }
+
+  /// Unmounts and immediately mounts a share again so the connection is
+  /// re-established over the current network path. Used after network
+  /// interface changes when the stale mount still exists.
+  func forceRemount(share: NetworkShare, completion: (() -> Void)? = nil) {
+    let mountPoint = configuredMountPoint(for: share)
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+      DispatchQueue.main.async {
+        self?.mount(share: share) { _, _ in
+          completion?()
+        }
+      }
+    }
+  }
+
+  /// Marks a share as intentionally unmounted by the user so the keep-alive
+  /// layer does not fight that decision. Cleared on the next explicit mount.
+  func markShareUnmountedByUser(_ share: NetworkShare) {
+    KeepAliveManager.shared.suppress(shareID: share.id)
   }
 
   func unmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
@@ -281,6 +379,7 @@ class NetworkMountManager: ObservableObject {
             completion(false, errMsg)
           }
         } else {
+          self.markShareUnmountedByUser(share)
           self.refreshMountStatus {
             completion(true, nil)
           }
@@ -350,7 +449,7 @@ class NetworkMountManager: ObservableObject {
     return
       output
       .components(separatedBy: .newlines)
-      .compactMap { MountedSMBShare(mountOutputLine: $0) }
+      .compactMap { MountedNetworkShare(mountOutputLine: $0) }
       .first(where: { $0.matches(share) })?
       .mountPoint
   }
@@ -371,11 +470,11 @@ class NetworkMountManager: ObservableObject {
     return fileStat.st_dev != parentStat.st_dev
   }
 
-  /// Strips credentials from SMB URLs in error strings to prevent password leaks.
-  /// e.g. "smb://user:p%40ss@host/share" → "smb://user:***@host/share"
+  /// Strips credentials from network URLs in error strings to prevent password
+  /// leaks. e.g. "smb://user:p%40ss@host/share" → "smb://user:***@host/share"
   private func sanitizeError(_ error: String) -> String {
-    // Match smb://user:password@host patterns (password may be URL-encoded)
-    let pattern = "(smb://[^:]+:)([^@]+)(@)"
+    // Match protocol://user:password@host patterns (password may be URL-encoded)
+    let pattern = "((?:smb|afp|nfs)://[^:/@]+:)([^@]+)(@)"
     guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
       return error
     }

@@ -234,3 +234,23 @@
 //=============================================
 
 "Preview: %@" = "Попередній перегляд: %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "Автопідключення";
+"Keep Mounts Alive" = "Підтримувати підключення";
+"Retry Interval" = "Інтервал повторних спроб";
+"Remount on Network Change" = "Перемонтувати при зміні мережі";
+"Reconnect After Sleep" = "Перепідключати після сну";
+"Every %d seconds" = "Кожні %d сек.";
+"Every %d minutes" = "Кожні %d хв.";
+"Keep Alive Footer" = "Автопідключення повторно монтує мережеві ресурси та томи з увімкненою опцією «Тримати підключеним» після обриву зв'язку, зміни мережі, пробудження та входу в систему.";
+"Keep Mounted" = "Тримати підключеним";
+"Reconnecting…" = "Перепідключення…";
+"Keep Mounted (Auto-Reconnect)" = "Тримати підключеним (авто)";
+"Disable Keep Mounted" = "Вимкнути «Тримати підключеним»";
+"Protocol" = "Протокол";
+"NFS mounts use host-based access; no credentials are required." = "Для монтування NFS доступ надається за вузлом; облікові дані не потрібні.";
+"exports/public" = "exports/public";
+"Reconnects automatically when the share drops" = "Автоматично перепідключає ресурс після обриву зв'язку";

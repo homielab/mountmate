@@ -7,6 +7,7 @@ struct VolumeRowView: View {
   @ObservedObject var customMountPointEditor: CustomMountPointEditorState
   @EnvironmentObject var manager: DriveManager
   @ObservedObject private var persistence = PersistenceManager.shared
+  @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @State private var isHovering = false
   private var currentVolume: Volume {
     (manager.physicalDisks ?? []).flatMap(\.allVolumes).first(where: { $0.id == volume.id }) ?? volume
@@ -14,6 +15,7 @@ struct VolumeRowView: View {
 
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
   private var customMountPoint: String? { persistence.customMountPoint(for: currentVolume)?.mountPoint }
+  private var isKeepAlive: Bool { persistence.isVolumeKeepAlive(currentVolume) }
   private var isCustomMountPointExpanded: Bool {
     customMountPointEditor.expandedVolumeID == currentVolume.id
   }
@@ -43,6 +45,12 @@ struct VolumeRowView: View {
                 progress: percentage, color: usageColor(for: percentage),
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
+            } else if keepAliveManager.reconnectingVolumeIDs.contains(currentVolume.compositeId ?? "") {
+              ProgressView()
+                .controlSize(.mini)
+                .help(
+                  NSLocalizedString(
+                    "Reconnecting…", comment: "Keep-alive reconnect tooltip"))
             }
           }
           .frame(width: 24, alignment: .center)
@@ -65,9 +73,17 @@ struct VolumeRowView: View {
                   .foregroundStyle(.secondary)
               }
             } else {
-              Text("Unmounted")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+              if keepAliveManager.reconnectingVolumeIDs.contains(
+                currentVolume.compositeId ?? "")
+              {
+                Text("Reconnecting…")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              } else {
+                Text("Unmounted")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
             }
 
             if let customMountPoint {
@@ -223,7 +239,25 @@ struct VolumeRowView: View {
       } label: {
         Label("Mount", systemImage: "plus.circle")
       }
-      Divider()
+    }
+
+    Divider()
+    if isKeepAlive {
+      Button {
+        if !persistence.setKeepAlive(false, volume: volume) {
+          showPersistenceError(for: volume)
+        }
+      } label: {
+        Label("Disable Keep Mounted", systemImage: "arrow.triangle.2.circlepath")
+      }
+    } else {
+      Button {
+        if !persistence.setKeepAlive(true, volume: volume) {
+          showPersistenceError(for: volume)
+        }
+      } label: {
+        Label("Keep Mounted (Auto-Reconnect)", systemImage: "arrow.triangle.2.circlepath")
+      }
     }
 
     Button {

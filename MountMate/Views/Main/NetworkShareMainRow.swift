@@ -6,11 +6,20 @@ struct NetworkShareMainRow: View {
   let share: NetworkShare
   var isManual: Bool = false
   @ObservedObject var networkManager = NetworkMountManager.shared
+  @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @State private var isWorking = false
   @State private var isHovering = false
 
   private var isMounted: Bool {
     isManual || networkManager.mountedShareIDs.contains(share.id)
+  }
+
+  private var statusText: String {
+    if isMounted { return NSLocalizedString("Mounted", comment: "Status") }
+    if keepAliveManager.reconnectingShareIDs.contains(share.id) {
+      return NSLocalizedString("Reconnecting…", comment: "Keep-alive reconnect status")
+    }
+    return NSLocalizedString("Not Mounted", comment: "Status")
   }
 
   var body: some View {
@@ -36,7 +45,7 @@ struct NetworkShareMainRow: View {
               .bold()
               .foregroundStyle(isMounted ? .primary : .secondary)
 
-            Text(isMounted ? NSLocalizedString("Mounted", comment: "Status") : NSLocalizedString("Not Mounted", comment: "Status"))
+            Text(statusText)
               .font(.caption)
               .foregroundStyle(.secondary)
           }

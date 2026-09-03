@@ -234,3 +234,23 @@
 //=============================================
 
 "Preview: %@" = "预览: %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "保持活跃";
+"Keep Mounts Alive" = "保持挂载活跃";
+"Retry Interval" = "重试间隔";
+"Remount on Network Change" = "更换网络时重新挂载";
+"Reconnect After Sleep" = "唤醒后重新连接";
+"Every %d seconds" = "每 %d 秒";
+"Every %d minutes" = "每 %d 分钟";
+"Keep Alive Footer" = "当标记为“保持挂载”的网络共享或宗卷断开时、网络切换后、系统唤醒时以及登录时，自动重新挂载它们。";
+"Keep Mounted" = "保持挂载";
+"Reconnecting…" = "正在重新连接…";
+"Keep Mounted (Auto-Reconnect)" = "保持挂载（自动重连）";
+"Disable Keep Mounted" = "停用保持挂载";
+"Protocol" = "协议";
+"NFS mounts use host-based access; no credentials are required." = "NFS 挂载基于主机的访问权限，无需凭据。";
+"exports/public" = "exports/public";
+"Reconnects automatically when the share drops" = "共享断开时自动重新连接";

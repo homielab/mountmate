@@ -13,6 +13,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     setupErrorObserver()
     setupSleepObserver()
     checkAndRequestFullDiskAccessIfNeeded()
+    // Starts the keep-alive scheduler (reconnect sweeps, network and wake
+    // monitoring) and the login mount for network shares.
+    KeepAliveManager.shared.sweepNow()
     NetworkMountManager.shared.mountAllAutoShares()
   }
 
@@ -42,7 +45,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc private func systemWillSleep(_ notification: Notification) {
     if UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") {
       print("System will sleep. Ejecting all user volumes.")
-      DriveManager.shared.unmountAllDrives()
+      // The unmount is not a user decision — keep-alive targets reconnect on
+      // wake, so pass suppressReconnect: false.
+      DriveManager.shared.unmountAllDrives(suppressReconnect: false)
     }
   }
 

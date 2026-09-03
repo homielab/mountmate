@@ -144,13 +144,19 @@ class DriveManager: ObservableObject {
     }
   }
 
-  func unmountAllDrives() {
+  /// - Parameter suppressReconnect: `false` when the unmount is not a user
+  ///   decision (e.g. the unmount-all-on-sleep action) so that keep-alive
+  ///   targets are reconnected on the next wake or sweep.
+  func unmountAllDrives(suppressReconnect: Bool = true) {
     let drivesToUnmount = (self.physicalDisks ?? [])
       .filter(\.isRemovable)
       .flatMap(\.allVolumes)
       .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
 
     guard !drivesToUnmount.isEmpty else { return }
+    if suppressReconnect {
+      KeepAliveManager.shared.suppress(volumes: drivesToUnmount)
+    }
     DispatchQueue.main.async { self.isUnmountingAll = true }
 
     DispatchQueue.global(qos: .userInitiated).async {
@@ -177,6 +183,7 @@ class DriveManager: ObservableObject {
 
     DispatchQueue.global(qos: .userInitiated).async {
       for volume in volumesToMount {
+        KeepAliveManager.shared.resume(volume: volume)
         let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
         _ = runProcess(
@@ -189,6 +196,7 @@ class DriveManager: ObservableObject {
   }
 
   func eject(disk: PhysicalDisk) {
+    KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {
       // A RAID master is a virtual logical disk. `eject` is only valid for a
@@ -213,6 +221,7 @@ class DriveManager: ObservableObject {
   }
 
   func forceEject(disk: PhysicalDisk) {
+    KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     DispatchQueue.main.async { self.busyEjectingIdentifier = disk.id }
     DispatchQueue.global(qos: .userInitiated).async {
       let forceUnmountResult = runProcess(
@@ -238,6 +247,7 @@ class DriveManager: ObservableObject {
   }
 
   func forceUnmount(volume: Volume) {
+    KeepAliveManager.shared.suppress(volume: volume)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(
@@ -258,9 +268,15 @@ class DriveManager: ObservableObject {
     }
   }
 
-  func mount(volume: Volume) {
+  /// Mounts a volume.
+  ///
+  /// - Parameter allowsErrorAlerts: Pass `false` for automatic (keep-alive)
+  ///   mount attempts so transient reconnect failures never surface as error
+  ///   dialogs.
+  func mount(volume: Volume, allowsErrorAlerts: Bool = true) {
     let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+    KeepAliveManager.shared.resume(volume: volume)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(
@@ -276,23 +292,27 @@ class DriveManager: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
           let retryResult = runProcess(
             executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
-          self.handleMountResult(retryResult, for: volume)
+          self.handleMountResult(retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts)
         }
       } else {
-        self.handleMountResult(result, for: volume)
+        self.handleMountResult(result, for: volume, allowsErrorAlerts: allowsErrorAlerts)
       }
     }
   }
 
-  private func handleMountResult(_ result: ProcessResult, for volume: Volume) {
+  private func handleMountResult(
+    _ result: ProcessResult, for volume: Volume, allowsErrorAlerts: Bool = true
+  ) {
     DispatchQueue.main.async {
       if !result.succeeded {
-        let errMsg =
-          result.timedOut
-          ? "The operation timed out after 15 seconds."
-          : (result.stderr.isEmpty
-            ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
-        self.handleDiskUtilError(errMsg, for: volume.name, volume: volume, operation: .mount)
+        if allowsErrorAlerts {
+          let errMsg =
+            result.timedOut
+            ? "The operation timed out after 15 seconds."
+            : (result.stderr.isEmpty
+              ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
+          self.handleDiskUtilError(errMsg, for: volume.name, volume: volume, operation: .mount)
+        }
         self.busyVolumeIdentifier = nil
       }
       self.refreshDrives(qos: .userInitiated)
@@ -300,6 +320,7 @@ class DriveManager: ObservableObject {
   }
 
   func mountLockedVolume(_ volume: Volume, passphrase: String) {
+    KeepAliveManager.shared.resume(volume: volume)
     let userInfo = ["deviceIdentifier": volume.id]
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
@@ -338,6 +359,7 @@ class DriveManager: ObservableObject {
   }
 
   func unmount(volume: Volume) {
+    KeepAliveManager.shared.suppress(volume: volume)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(

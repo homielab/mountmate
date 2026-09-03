@@ -9,12 +9,14 @@ class PersistenceManager: ObservableObject {
   private let protectedVolumesKey = "mountmate_protectedVolumes_v4"
   private let ignoredVolumesKey = "mountmate_ignoredVolumes_v4"
   private let blockedVolumesKey = "mountmate_blockedVolumes_v1"
+  private let keepAliveVolumesKey = "mountmate_keepAliveVolumes_v1"
   private let networkSharesKey = "mountmate_networkShares_v1"
   private let customMountPointsKey = "mountmate_customMountPoints_v1"
 
   @Published var protectedVolumes: [ManagedVolumeInfo]
   @Published var ignoredVolumes: [ManagedVolumeInfo]
   @Published var blockedVolumes: [ManagedVolumeInfo]
+  @Published var keepAliveVolumes: [ManagedVolumeInfo]
   @Published var networkShares: [NetworkShare]
   @Published var customMountPoints: [VolumeCustomMountPoint]
   private let mountMateFstabPrefix = "# MountMate custom mount:"
@@ -23,6 +25,7 @@ class PersistenceManager: ObservableObject {
     self.protectedVolumes = Self.load(from: protectedVolumesKey)
     self.ignoredVolumes = Self.load(from: ignoredVolumesKey)
     self.blockedVolumes = Self.load(from: blockedVolumesKey)
+    self.keepAliveVolumes = Self.load(from: keepAliveVolumesKey)
     self.networkShares = Self.load(from: networkSharesKey)
     self.customMountPoints = Self.load(from: customMountPointsKey)
   }
@@ -90,6 +93,29 @@ class PersistenceManager: ObservableObject {
   func unblock(info: ManagedVolumeInfo) {
     blockedVolumes.removeAll { $0.id == info.id }
     saveBlockedVolumes()
+  }
+
+  @discardableResult
+  func setKeepAlive(_ enabled: Bool, volume: Volume) -> Bool {
+    guard let info = volume.managedVolumeInfo else { return false }
+    if enabled {
+      guard !keepAliveVolumes.contains(where: { $0.id == info.id }) else { return true }
+      keepAliveVolumes.append(info)
+    } else {
+      keepAliveVolumes.removeAll { $0.id == info.id }
+    }
+    saveKeepAliveVolumes()
+    return true
+  }
+
+  func unkeepAlive(info: ManagedVolumeInfo) {
+    keepAliveVolumes.removeAll { $0.id == info.id }
+    saveKeepAliveVolumes()
+  }
+
+  func isVolumeKeepAlive(_ volume: Volume) -> Bool {
+    guard let compositeId = volume.compositeId else { return false }
+    return keepAliveVolumes.contains { $0.id == compositeId }
   }
 
   func addNetworkShare(_ share: NetworkShare) {
@@ -506,6 +532,7 @@ class PersistenceManager: ObservableObject {
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }
   private func saveIgnoredVolumes() { save(ignoredVolumes, to: ignoredVolumesKey) }
   private func saveBlockedVolumes() { save(blockedVolumes, to: blockedVolumesKey) }
+  private func saveKeepAliveVolumes() { save(keepAliveVolumes, to: keepAliveVolumesKey) }
   private func saveNetworkShares() { save(networkShares, to: networkSharesKey) }
   private func saveCustomMountPoints() { save(customMountPoints, to: customMountPointsKey) }
 

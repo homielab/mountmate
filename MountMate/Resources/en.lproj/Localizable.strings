@@ -239,3 +239,22 @@
 //=============================================
 
 "Preview: %@" = "Preview: %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "Keep Alive";
+"Keep Mounts Alive" = "Keep Mounts Alive";
+"Retry Interval" = "Retry Interval";
+"Remount on Network Change" = "Remount on Network Change";
+"Reconnect After Sleep" = "Reconnect After Sleep";
+"Every %d seconds" = "Every %d seconds";
+"Every %d minutes" = "Every %d minutes";
+"Keep Alive Footer" = "Keep Alive automatically remounts network shares marked \"Keep Mounted\" and volumes marked \"Keep Mounted\" when they drop, after network changes, on wake, and at login.";
+"Keep Mounted" = "Keep Mounted";
+"Reconnecting…" = "Reconnecting…";
+"Keep Mounted (Auto-Reconnect)" = "Keep Mounted (Auto-Reconnect)";
+"Disable Keep Mounted" = "Disable Keep Mounted";
+"Protocol" = "Protocol";
+"NFS mounts use host-based access; no credentials are required." = "NFS mounts use host-based access; no credentials are required.";
+"exports/public" = "exports/public";

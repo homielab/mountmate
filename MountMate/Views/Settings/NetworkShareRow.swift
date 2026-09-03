@@ -43,10 +43,22 @@ struct NetworkShareRow: View {
               .clipShape(.rect(cornerRadius: 4))
               .help("Auto-mounts at login")
           }
+
+          if share.keepMounted {
+            Label("Keep Alive", systemImage: "arrow.triangle.2.circlepath")
+              .font(.caption2)
+              .bold()
+              .foregroundStyle(.blue)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.blue.opacity(0.12))
+              .clipShape(.rect(cornerRadius: 4))
+              .help("Reconnects automatically when the share drops")
+          }
         }
 
         Text(
-          "smb://\(share.username.isEmpty ? "" : "\(share.username)@")\(share.server)/\(share.sharePath)"
+          "\(share.shareProtocol.urlScheme)://\(share.username.isEmpty ? "" : "\(share.username)@")\(share.server)/\(share.sharePath)"
         )
         .font(.system(.caption, design: .monospaced))
         .foregroundStyle(.secondary)

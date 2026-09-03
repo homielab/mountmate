@@ -234,3 +234,23 @@
 //=============================================
 
 "Preview: %@" = "預覽: %@";
+
+// MARK: - Keep Alive (Auto-Reconnect)
+//=============================================
+
+"Keep Alive" = "保持作用中";
+"Keep Mounts Alive" = "保持掛載作用中";
+"Retry Interval" = "重試間隔";
+"Remount on Network Change" = "網路變更時重新掛載";
+"Reconnect After Sleep" = "喚醒後重新連線";
+"Every %d seconds" = "每 %d 秒";
+"Every %d minutes" = "每 %d 分鐘";
+"Keep Alive Footer" = "當標記為「保持掛載」的網路共享或卷宗中斷連線時、網路變更後、系統喚醒時以及登入時，自動重新掛載。";
+"Keep Mounted" = "保持掛載";
+"Reconnecting…" = "正在重新連線…";
+"Keep Mounted (Auto-Reconnect)" = "保持掛載（自動重連）";
+"Disable Keep Mounted" = "停用保持掛載";
+"Protocol" = "通訊協定";
+"NFS mounts use host-based access; no credentials are required." = "NFS 掛載採用主機式存取權限，無需憑證。";
+"exports/public" = "exports/public";
+"Reconnects automatically when the share drops" = "共享中斷連線時自動重新連接";

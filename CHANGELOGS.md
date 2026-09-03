@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Keep Alive (Auto-Reconnect)**: MountMate can now keep mounts alive automatically. Network shares and volumes marked "Keep Mounted" are remounted when they drop unexpectedly, with retry attempts at a configurable interval and exponential backoff.
+- **Network Change Handling**: MountMate watches the network path and remounts active shares through the new primary interface when Wi-Fi/Ethernet changes, then reconnects dropped shares as soon as connectivity recovers.
+- **Mount on Login & Wake**: Keep-alive shares and volumes mount at login and reconnect promptly after the Mac wakes from sleep. Volumes unmounted by "Unmount All Disks on Sleep" come back on wake.
+- **NFS & AFP Shares**: Network shares now support the NFS and AFP protocols in addition to SMB, including import of manually mounted NFS/AFP shares.
+- **Keep Mounted for Volumes**: Right-click any local or external volume and choose "Keep Mounted (Auto-Reconnect)" to have MountMate remount it whenever it drops while the disk is connected.
+
+### Changed
+
+- **Never Fights the User**: Shares and volumes unmounted explicitly through MountMate are not auto-remounted until you mount them again; automatic reconnect failures no longer pop error dialogs.
+
 ### Fixed
 
 - **Ghost "Disk Images" Entries**: Bare OS-internal devices (e.g. cryptex RAM disks used for Siri/PKI assets on macOS 26) no longer appear as anonymous unmounted rows under "Disk Images".
