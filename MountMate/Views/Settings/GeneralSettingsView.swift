@@ -7,6 +7,7 @@ struct GeneralSettingsView: View {
   @EnvironmentObject var diskMounter: DiskMounter
   @EnvironmentObject var updaterViewModel: UpdaterController
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
+  @ObservedObject private var hotkeyManager = HotkeyManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
@@ -43,6 +44,9 @@ struct GeneralSettingsView: View {
 
   @State private var showRestartAlert = false
   @State private var showAccessibilityAlert = false
+  @State private var recordingShortcut: HotkeyAction?
+  @State private var showShortcutConflictAlert = false
+  @State private var shortcutConflictMessage = ""
 
   private var appVersion: String {
     let version =
@@ -144,9 +148,14 @@ struct GeneralSettingsView: View {
         }
 
         if hotkeysEnabled {
-          VStack(alignment: .leading, spacing: 6) {
-            shortcutRow(key: "⌘ ⇧ U", description: "Unmount All Volumes")
-            shortcutRow(key: "⌘ ⇧ M", description: "Mount All Volumes")
+          VStack(alignment: .leading, spacing: 8) {
+            shortcutRow(description: "Unmount All Volumes", action: .unmountAll)
+            shortcutRow(description: "Mount All Volumes", action: .mountAll)
+            Text(
+              "Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
           }
           .padding(.vertical, 2)
         }
@@ -219,6 +228,11 @@ struct GeneralSettingsView: View {
         "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility."
       )
     }
+    .alert("Shortcut Already Assigned", isPresented: $showShortcutConflictAlert) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text(shortcutConflictMessage)
+    }
   }
 
   private func checkAccessibilityPermission() {
@@ -226,19 +240,48 @@ struct GeneralSettingsView: View {
     showAccessibilityAlert = true
   }
 
-  private func shortcutRow(key: String, description: LocalizedStringKey) -> some View {
+  private func shortcutRow(description: LocalizedStringKey, action: HotkeyAction) -> some View {
     HStack(spacing: 8) {
-      Text(key)
-        .font(.system(.caption, design: .monospaced))
-        .bold()
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(Color.primary.opacity(0.08))
-        .clipShape(.rect(cornerRadius: 4))
       Text(description)
         .font(.caption)
         .foregroundStyle(.secondary)
+      Spacer(minLength: 8)
+      KeyboardShortcutRecorder(
+        shortcut: Binding(
+          get: { hotkeyManager.shortcut(for: action) },
+          set: { updateShortcut($0, for: action) }
+        ),
+        isRecording: Binding(
+          get: { recordingShortcut == action },
+          set: { setRecording($0, for: action) }
+        )
+      )
+      .frame(width: 150, height: 26)
     }
+  }
+
+  private func setRecording(_ recording: Bool, for action: HotkeyAction) {
+    recordingShortcut = recording ? action : nil
+    if recording {
+      hotkeyManager.stopListening()
+    } else if hotkeysEnabled {
+      hotkeyManager.startListening()
+    }
+  }
+
+  private func updateShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
+    let otherAction: HotkeyAction = action == .unmountAll ? .mountAll : .unmountAll
+    guard shortcut != hotkeyManager.shortcut(for: otherAction) else {
+      shortcutConflictMessage = NSLocalizedString(
+        "This shortcut is already assigned to the other action.",
+        comment: "Duplicate keyboard shortcut warning")
+      showShortcutConflictAlert = true
+      recordingShortcut = nil
+      return
+    }
+
+    hotkeyManager.setShortcut(shortcut, for: action)
+    recordingShortcut = nil
   }
 
   private func relaunchApp() {

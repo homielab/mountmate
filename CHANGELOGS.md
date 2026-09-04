@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 - **Manual Mounts of Blocked Volumes**: MountMate can still mount a blocked volume through its own controls. Automatic reconnects and mount requests not initiated by MountMate remain blocked while the app is running.
 - **Keyboard Shortcut Permission Flow**: Keyboard shortcuts are disabled by default. Accessibility checks no longer prompt during launch; a warning appears only when shortcuts are enabled without Accessibility access.
+- **Custom Keyboard Shortcuts**: Configure separate shortcuts for mounting and unmounting all volumes in Settings. The default unmount shortcut now includes Option to avoid Finder's `⌘⇧U` conflict.
 - **Custom Mount Points and Blocked Volumes**: A custom mount point can no longer be assigned to a volume that is blocked from auto-mounting, since the two settings contradict each other.
 - **Never Fights the User**: Shares and volumes unmounted explicitly through MountMate are not auto-remounted until you mount them again; automatic reconnect failures no longer pop error dialogs.
 

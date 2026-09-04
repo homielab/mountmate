@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "启用键盘快捷键";
 "Unmount All Volumes" = "卸载所有卷宗";
 "Mount All Volumes" = "挂载所有卷宗";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "点按快捷键以录制新的按键组合。某些快捷键可能已被 macOS 或其他 App 保留。";
+"Press Shortcut…" = "按下快捷键…";
+"Keyboard Shortcut" = "键盘快捷键";
+"Shortcut Already Assigned" = "快捷键已分配";
+"This shortcut is already assigned to the other action." = "此快捷键已分配给其他操作。";
 "Language" = "语言";
 "English" = "英语";
 "Français" = "法语";

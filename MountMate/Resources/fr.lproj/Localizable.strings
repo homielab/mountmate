@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "Activer les raccourcis clavier";
 "Unmount All Volumes" = "Démonter tous les volumes";
 "Mount All Volumes" = "Monter tous les volumes";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Cliquez sur un raccourci pour enregistrer une nouvelle combinaison de touches. Certains raccourcis peuvent être réservés par macOS ou une autre application.";
+"Press Shortcut…" = "Appuyez sur le raccourci…";
+"Keyboard Shortcut" = "Raccourci clavier";
+"Shortcut Already Assigned" = "Raccourci déjà attribué";
+"This shortcut is already assigned to the other action." = "Ce raccourci est déjà attribué à l’autre action.";
 "Language" = "Langue";
 "English" = "Anglais";
 "Français" = "Français";

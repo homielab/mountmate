@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "Enable Keyboard Shortcuts";
 "Unmount All Volumes" = "Unmount All Volumes";
 "Mount All Volumes" = "Mount All Volumes";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app.";
+"Press Shortcut…" = "Press Shortcut…";
+"Keyboard Shortcut" = "Keyboard Shortcut";
+"Shortcut Already Assigned" = "Shortcut Already Assigned";
+"This shortcut is already assigned to the other action." = "This shortcut is already assigned to the other action.";
 "Language" = "Language";
 "English" = "English";
 "Français" = "French";

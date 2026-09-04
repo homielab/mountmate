@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "Bật phím tắt";
 "Unmount All Volumes" = "Tháo tất cả phân vùng";
 "Mount All Volumes" = "Gắn tất cả phân vùng";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Bấm vào phím tắt để ghi lại tổ hợp phím mới. Một số phím tắt có thể được macOS hoặc ứng dụng khác sử dụng.";
+"Press Shortcut…" = "Nhấn phím tắt…";
+"Keyboard Shortcut" = "Phím tắt";
+"Shortcut Already Assigned" = "Phím tắt đã được gán";
+"This shortcut is already assigned to the other action." = "Phím tắt này đã được gán cho thao tác khác.";
 "Language" = "Ngôn ngữ";
 "English" = "Tiếng Anh";
 "Français" = "Tiếng Pháp";

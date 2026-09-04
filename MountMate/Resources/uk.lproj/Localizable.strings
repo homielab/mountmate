@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "Увімкнути клавіатурні скорочення";
 "Unmount All Volumes" = "Відмонтувати всі томи";
 "Mount All Volumes" = "Підключити всі томи";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Натисніть скорочення, щоб записати нову комбінацію клавіш. Деякі комбінації можуть бути зарезервовані macOS або іншою програмою.";
+"Press Shortcut…" = "Натисніть комбінацію клавіш…";
+"Keyboard Shortcut" = "Клавіатурне скорочення";
+"Shortcut Already Assigned" = "Скорочення вже призначено";
+"This shortcut is already assigned to the other action." = "Це скорочення вже призначено іншій дії.";
 "Language" = "Мова";
 "English" = "Англійська";
 "Français" = "Французька";

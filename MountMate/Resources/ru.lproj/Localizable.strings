@@ -71,6 +71,11 @@
 "Enable Keyboard Shortcuts" = "Включить сочетания клавиш";
 "Unmount All Volumes" = "Отмонтировать все томы";
 "Mount All Volumes" = "Смонтировать все томы";
+"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Нажмите на сочетание клавиш, чтобы записать новую комбинацию. Некоторые сочетания могут быть зарезервированы macOS или другим приложением.";
+"Press Shortcut…" = "Нажмите сочетание клавиш…";
+"Keyboard Shortcut" = "Сочетание клавиш";
+"Shortcut Already Assigned" = "Сочетание уже назначено";
+"This shortcut is already assigned to the other action." = "Это сочетание уже назначено другому действию.";
 "Language" = "Язык";
 "English" = "Английский";
 "Français" = "Французский";
