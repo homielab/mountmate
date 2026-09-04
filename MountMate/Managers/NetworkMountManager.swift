@@ -318,8 +318,10 @@ class NetworkMountManager: ObservableObject {
       return ("/sbin/mount_smbfs", ["-o", "noowners,nosuid", url, mountPoint])
     case .nfs:
       // mount_nfs expects the canonical `server:/export` form.
-      let exportPath = "/" + share.sharePath.trimmingCharacters(
-        in: CharacterSet(charactersIn: "/"))
+      let exportPath =
+        "/"
+        + share.sharePath.trimmingCharacters(
+          in: CharacterSet(charactersIn: "/"))
       return ("/sbin/mount_nfs", ["-o", "resvport", "\(share.server):\(exportPath)", mountPoint])
     case .afp:
       // No `-i`: credentials are embedded in the URL, and an interactive

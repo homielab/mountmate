@@ -51,7 +51,9 @@ struct NetworkSharesSettingsView: View {
             NetworkShareRow(
               share: share, onEdit: { editingShare = share },
               onError: { error in
-                errorAlert = AppAlert(title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error, kind: .basic)
+                errorAlert = AppAlert(
+                  title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,
+                  kind: .basic)
               })
           }
         }
@@ -123,13 +125,17 @@ struct NetworkSharesSettingsView: View {
   private func importResultMessage(added: Int, discovered: Int) -> String {
     if added > 0 {
       return String(
-        format: NSLocalizedString("Imported %d mounted share(s). Add credentials by editing each share.", comment: "Mounted share import result"),
+        format: NSLocalizedString(
+          "Imported %d mounted share(s). Add credentials by editing each share.",
+          comment: "Mounted share import result"),
         added)
     }
     if discovered > 0 {
-      return NSLocalizedString("Those mounted shares are already in MountMate.", comment: "Mounted share import result")
+      return NSLocalizedString(
+        "Those mounted shares are already in MountMate.", comment: "Mounted share import result")
     }
-    return NSLocalizedString("No mounted SMB shares were found.", comment: "Mounted share import result")
+    return NSLocalizedString(
+      "No mounted SMB shares were found.", comment: "Mounted share import result")
   }
 
   private var emptyStateView: some View {

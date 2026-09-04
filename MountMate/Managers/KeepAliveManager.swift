@@ -116,13 +116,17 @@ class KeepAliveManager: ObservableObject {
 
   private init() {
     let defaults = UserDefaults.standard
-    isEnabled = defaults.object(forKey: SettingsKey.enabled) == nil
+    isEnabled =
+      defaults.object(forKey: SettingsKey.enabled) == nil
       ? true : defaults.bool(forKey: SettingsKey.enabled)
-    remountOnNetworkChange = defaults.object(forKey: SettingsKey.remountOnNetworkChange) == nil
+    remountOnNetworkChange =
+      defaults.object(forKey: SettingsKey.remountOnNetworkChange) == nil
       ? true : defaults.bool(forKey: SettingsKey.remountOnNetworkChange)
-    remountOnWake = defaults.object(forKey: SettingsKey.remountOnWake) == nil
+    remountOnWake =
+      defaults.object(forKey: SettingsKey.remountOnWake) == nil
       ? true : defaults.bool(forKey: SettingsKey.remountOnWake)
-    let storedInterval = defaults.object(forKey: SettingsKey.retryInterval) == nil
+    let storedInterval =
+      defaults.object(forKey: SettingsKey.retryInterval) == nil
       ? 30.0 : defaults.double(forKey: SettingsKey.retryInterval)
     retryInterval = Self.allowedRetryIntervals.contains(storedInterval) ? storedInterval : 30.0
 
@@ -501,7 +505,8 @@ class KeepAliveManager: ObservableObject {
       // `mount` refreshes the disk list when it finishes; give it a moment to
       // settle before recording the result.
       DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-        let stillDown = (DriveManager.shared.physicalDisks ?? [])
+        let stillDown =
+          (DriveManager.shared.physicalDisks ?? [])
           .flatMap(\.allVolumes)
           .first(where: { $0.compositeId == compositeId })?
           .isMounted == false

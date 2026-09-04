@@ -67,7 +67,8 @@ final class NetworkShareCodableTests: XCTestCase {
       name: "Time Capsule", server: "tc.local", sharePath: "Data", username: "admin",
       mountAtLogin: false, shareProtocol: .afp)
 
-    let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share, password: "s3cret"))
+    let url = try XCTUnwrap(
+      NetworkMountManager.shared.connectionURL(for: share, password: "s3cret"))
     XCTAssertTrue(url.absoluteString.hasPrefix("afp://admin:s3cret@tc.local/Data"))
   }
 }

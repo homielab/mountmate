@@ -162,7 +162,8 @@ class PersistenceManager: ObservableObject {
 
   func containsNetworkShare(matching share: NetworkShare) -> Bool {
     let server = share.server.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    let path = share.sharePath
+    let path =
+      share.sharePath
       .removingPercentEncoding?
       .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
       .lowercased()
@@ -171,7 +172,8 @@ class PersistenceManager: ObservableObject {
     return networkShares.contains { existing in
       let existingServer = existing.server
         .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-      let existingPath = existing.sharePath
+      let existingPath =
+        existing.sharePath
         .removingPercentEncoding?
         .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         .lowercased()

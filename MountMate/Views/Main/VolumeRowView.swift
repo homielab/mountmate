@@ -10,11 +10,14 @@ struct VolumeRowView: View {
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @State private var isHovering = false
   private var currentVolume: Volume {
-    (manager.physicalDisks ?? []).flatMap(\.allVolumes).first(where: { $0.id == volume.id }) ?? volume
+    (manager.physicalDisks ?? []).flatMap(\.allVolumes).first(where: { $0.id == volume.id })
+      ?? volume
   }
 
   private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
-  private var customMountPoint: String? { persistence.customMountPoint(for: currentVolume)?.mountPoint }
+  private var customMountPoint: String? {
+    persistence.customMountPoint(for: currentVolume)?.mountPoint
+  }
   private var isKeepAlive: Bool { persistence.isVolumeKeepAlive(currentVolume) }
   private var isCustomMountPointExpanded: Bool {
     customMountPointEditor.expandedVolumeID == currentVolume.id
@@ -33,7 +36,8 @@ struct VolumeRowView: View {
           ZStack {
             Image(systemName: "externaldrive")
               .font(.body)
-              .foregroundStyle(currentVolume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
+              .foregroundStyle(
+                currentVolume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
 
             if let error = currentVolume.storageError {
               Image(systemName: "exclamationmark.triangle.fill")
@@ -45,7 +49,9 @@ struct VolumeRowView: View {
                 progress: percentage, color: usageColor(for: percentage),
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
-            } else if keepAliveManager.reconnectingVolumeIDs.contains(currentVolume.compositeId ?? "") {
+            } else if keepAliveManager.reconnectingVolumeIDs.contains(
+              currentVolume.compositeId ?? "")
+            {
               ProgressView()
                 .controlSize(.mini)
                 .help(

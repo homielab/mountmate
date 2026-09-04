@@ -599,7 +599,8 @@ class DriveManager: ObservableObject {
     return APFSContainer(id: containerID, volumes: volumes)
   }
 
-  public func getInfoForDisk(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]? {
+  public func getInfoForDisk(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]?
+  {
     guard !identifier.isEmpty else { return nil }
     let result = runProcess(
       executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier], timeout: timeout)
@@ -816,7 +817,8 @@ class DriveManager: ObservableObject {
         String(
           format: NSLocalizedString(
             "Failed to eject “%@” because one of its volumes is busy or in use.",
-            comment: "Error message"), name) + "\n\n" + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
+            comment: "Error message"), name) + "\n\n"
+        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
       if let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
       } else {
@@ -842,13 +844,15 @@ class DriveManager: ObservableObject {
           String(
             format: NSLocalizedString(
               "Failed to %@ “%@” because it is currently in use by “%@”.",
-              comment: "Error message"), verb, name, proc) + "\n\n" + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
+              comment: "Error message"), verb, name, proc) + "\n\n"
+          + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
       } else {
         message =
           String(
             format: NSLocalizedString(
               "Failed to %@ “%@” because it is currently in use by another application.",
-              comment: "Error message"), verb, name) + "\n\n" + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
+              comment: "Error message"), verb, name) + "\n\n"
+          + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
       }
 
       if operation == .eject, let disk = disk {
@@ -872,7 +876,8 @@ class DriveManager: ObservableObject {
         verb = "eject"
       }
       message =
-        "\(String(format: NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message"), verb, name))\n\n" + NSLocalizedString("Details", comment: "Error details prefix") + ":\n\(error)"
+        "\(String(format: NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message"), verb, name))\n\n"
+        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n\(error)"
       kind = .basic
     }
     self.userActionError = AppAlert(title: title, message: message, kind: kind)

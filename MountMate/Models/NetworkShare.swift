@@ -48,7 +48,8 @@ struct NetworkShare: Identifiable, Codable, Hashable {
     username = try container.decode(String.self, forKey: .username)
     mountAtLogin = try container.decode(Bool.self, forKey: .mountAtLogin)
     keepMounted = try container.decodeIfPresent(Bool.self, forKey: .keepMounted) ?? mountAtLogin
-    shareProtocol = try container.decodeIfPresent(ShareProtocol.self, forKey: .shareProtocol)
+    shareProtocol =
+      try container.decodeIfPresent(ShareProtocol.self, forKey: .shareProtocol)
       ?? .smb
     customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
   }
