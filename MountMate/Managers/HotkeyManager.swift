@@ -40,6 +40,16 @@ class HotkeyManager: ObservableObject {
       }
       .store(in: &cancellables)
 
+    // Retry after the user returns from System Settings where they may have
+    // granted Accessibility access.
+    NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in
+        guard UserDefaults.standard.bool(forKey: "hotkeysEnabled") else { return }
+        self?.startListening()
+      }
+      .store(in: &cancellables)
+
     // Start listening if already enabled
     if UserDefaults.standard.bool(forKey: "hotkeysEnabled") {
       startListening()
@@ -48,11 +58,9 @@ class HotkeyManager: ObservableObject {
 
   // MARK: - Accessibility Check
 
-  /// Check if the app has accessibility permissions
+  /// Check if the app has accessibility permissions without displaying a prompt.
   static func checkAccessibilityPermissions() -> Bool {
-    let options =
-      [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-    return AXIsProcessTrustedWithOptions(options)
+    AXIsProcessTrustedWithOptions(nil)
   }
 
   // MARK: - Listening
@@ -60,12 +68,15 @@ class HotkeyManager: ObservableObject {
   func startListening() {
     guard globalMonitor == nil else { return }
 
-    // Check accessibility permissions and prompt if needed
-    let trusted = HotkeyManager.checkAccessibilityPermissions()
-
-    #if DEBUG
-      print("HotkeyManager: Accessibility permissions granted: \(trusted)")
-    #endif
+    // Startup checks must remain silent. The settings UI handles the explicit
+    // user prompt when shortcuts are enabled without Accessibility access.
+    guard HotkeyManager.checkAccessibilityPermissions() else {
+      isListening = false
+      #if DEBUG
+        print("HotkeyManager: Accessibility permissions are not granted")
+      #endif
+      return
+    }
 
     // Add global monitor for when other apps are focused
     globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in

@@ -139,9 +139,7 @@ struct GeneralSettingsView: View {
         }
         .onChange(of: hotkeysEnabled) { enabled in
           if enabled {
-            if !HotkeyManager.checkAccessibilityPermissions() {
-              showAccessibilityAlert = true
-            }
+            checkAccessibilityPermission()
           }
         }
 
@@ -197,6 +195,9 @@ struct GeneralSettingsView: View {
     }
     .formStyle(.grouped)
     .padding(.horizontal)
+    .onAppear {
+      checkAccessibilityPermission()
+    }
 
     .alert("Restart Required", isPresented: $showRestartAlert) {
       Button("Restart Now", role: .destructive) { relaunchApp() }
@@ -218,6 +219,11 @@ struct GeneralSettingsView: View {
         "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility."
       )
     }
+  }
+
+  private func checkAccessibilityPermission() {
+    guard hotkeysEnabled, !HotkeyManager.checkAccessibilityPermissions() else { return }
+    showAccessibilityAlert = true
   }
 
   private func shortcutRow(key: String, description: LocalizedStringKey) -> some View {
