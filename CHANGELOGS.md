@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **Manual Mounts of Blocked Volumes**: MountMate can still mount a blocked volume through its own controls. Automatic reconnects and mount requests not initiated by MountMate remain blocked while the app is running.
+- **Keyboard Shortcut Permission Flow**: Keyboard shortcuts are disabled by default. Accessibility checks no longer prompt during launch; a warning appears only when shortcuts are enabled without Accessibility access.
 - **Custom Mount Points and Blocked Volumes**: A custom mount point can no longer be assigned to a volume that is blocked from auto-mounting, since the two settings contradict each other.
 - **Never Fights the User**: Shares and volumes unmounted explicitly through MountMate are not auto-remounted until you mount them again; automatic reconnect failures no longer pop error dialogs.
 
@@ -25,6 +26,8 @@ All notable changes to this project will be documented in this file.
 - **Ghost "Disk Images" Entries**: Bare OS-internal devices (e.g. cryptex RAM disks used for Siri/PKI assets on macOS 26) no longer appear as anonymous unmounted rows under "Disk Images".
 - **Duplicate Boot Volume Row**: Sealed APFS system snapshot volumes (e.g. `disk5s1s1` mirroring `disk5s1`) are no longer listed as a second row with the same name, and no longer double-count used space in the parent disk header.
 - **EFI in Bulk Actions**: EFI partitions are now categorized as system volumes, so "Mount All Volumes" no longer fails with the "EFI cannot be mounted directly" error and "Unmount All" no longer counts them.
+- **Blocked Volume Startup Cleanup**: Volumes that are already unmounted are no longer retried or reported as failed during MountMate's startup cleanup.
+- **Shell Process Diagnostics**: Large but fast `diskutil` plist responses are no longer mislabeled as slow processes. Shell output handling now avoids pipe-draining races and consolidates timeout termination into a single diagnostic.
 
 ---
 
