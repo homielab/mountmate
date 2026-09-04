@@ -98,7 +98,7 @@
 "Don't Auto-Mount This Volume" = "禁止自动挂载此卷宗";
 "Blocked from Auto-Mounting" = "已被阻止自动挂载";
 "No Volumes Blocked from Auto-Mounting" = "暂无被阻止自动挂载的卷宗";
-"Right-click a volume to prevent it from mounting automatically when connected." = "右键点击卷宗可禁止其在连接时自动挂载。";
+"Right-click a volume to prevent it from mounting automatically while MountMate is running." = "右键点击卷宗可在 MountMate 运行时禁止其自动挂载。";
 
 // MARK: - Alerts & Errors
 //=============================================

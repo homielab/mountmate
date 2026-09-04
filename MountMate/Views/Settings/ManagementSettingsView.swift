@@ -32,7 +32,8 @@ struct ManagementSettingsView: View {
           iconName: "hand.raised.fill",
           items: persistence.blockedVolumes,
           emptyStateText: "No Volumes Blocked from Auto-Mounting",
-          footer: "Right-click a volume to prevent it from mounting automatically when connected.",
+          footer:
+            "Right-click a volume to prevent it from mounting automatically while MountMate is running.",
           onDelete: { info in persistence.unblock(info: info) }
         )
 

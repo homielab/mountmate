@@ -98,7 +98,7 @@
 "Don't Auto-Mount This Volume" = "Don't Auto-Mount This Volume";
 "Blocked from Auto-Mounting" = "Blocked from Auto-Mounting";
 "No Volumes Blocked from Auto-Mounting" = "No Volumes Blocked from Auto-Mounting";
-"Right-click a volume to prevent it from mounting automatically when connected." = "Right-click a volume to prevent it from mounting automatically when connected.";
+"Right-click a volume to prevent it from mounting automatically while MountMate is running." = "Right-click a volume to prevent it from mounting automatically while MountMate is running.";
 
 // MARK: - Alerts & Errors
 //=============================================

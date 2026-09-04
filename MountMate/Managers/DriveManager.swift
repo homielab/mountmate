@@ -273,9 +273,15 @@ class DriveManager: ObservableObject {
   /// - Parameter allowsErrorAlerts: Pass `false` for automatic (keep-alive)
   ///   mount attempts so transient reconnect failures never surface as error
   ///   dialogs.
-  func mount(volume: Volume, allowsErrorAlerts: Bool = true) {
-    let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
-    NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+  /// - Parameter isUserInitiated: Set to `false` for automatic reconnects so
+  ///   blocked-volume mount approval cannot be bypassed.
+  func mount(
+    volume: Volume, allowsErrorAlerts: Bool = true, isUserInitiated: Bool = true
+  ) {
+    if isUserInitiated {
+      let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
+      NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+    }
     KeepAliveManager.shared.resume(volume: volume)
     DispatchQueue.main.async { self.busyVolumeIdentifier = volume.id }
     DispatchQueue.global(qos: .userInitiated).async {
@@ -290,6 +296,11 @@ class DriveManager: ObservableObject {
         )
 
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 15) {
+          if isUserInitiated {
+            let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
+            NotificationCenter.default.post(
+              name: .willManuallyMount, object: nil, userInfo: userInfo)
+          }
           let retryResult = runProcess(
             executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
           self.handleMountResult(retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts)
@@ -476,7 +487,9 @@ class DriveManager: ObservableObject {
     var childDeviceIDs = Set<String>()
     for diskData in allDisksAndPartitions {
       if let partitions = diskData["Partitions"] as? [[String: Any]] {
-        partitions.forEach { childDeviceIDs.insert($0["DeviceIdentifier"] as? String ?? "") }
+        for partition in partitions {
+          childDeviceIDs.insert(partition["DeviceIdentifier"] as? String ?? "")
+        }
       }
     }
 
@@ -676,8 +689,18 @@ class DriveManager: ObservableObject {
 
     let category: DriveCategory = contentType == "EFI" ? .system : .user
 
-    let isMounted = volumeData["MountPoint"] != nil
-    let mountPoint = volumeData["MountPoint"] as? String
+    let mountPoint: String?
+    if let path = volumeData["MountPoint"] as? String {
+      let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty && trimmed.caseInsensitiveCompare("Not Mounted") != .orderedSame {
+        mountPoint = path
+      } else {
+        mountPoint = nil
+      }
+    } else {
+      mountPoint = nil
+    }
+    let isMounted = mountPoint != nil
     let fileSystemType = contentType ?? (volumeData["FilesystemName"] as? String) ?? "Unknown"
 
     var freeSpaceStr: String?

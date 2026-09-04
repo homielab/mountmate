@@ -14,23 +14,12 @@ class DiskMounter: ObservableObject {
   }
 
   private var session: DASession?
-  private var approvingManualMountFor: String?
-  private var clearApprovalWorkItem: DispatchWorkItem?
+  private var manualMountApprovals: [String: Date] = [:]
+  private let manualMountApprovalLock = NSLock()
   private var cancellables = Set<AnyCancellable>()
-  /// Guards the launch-time maintenance (unmount sweep + fstab reconcile) so
-  /// it runs once per app launch even when the session is restarted.
+  /// Guards the launch-time cleanup so it runs once per app launch even when
+  /// the session is restarted.
   private var hasPerformedStartupMaintenance = false
-
-  /// BSD names of volumes whose first auto-mount we have already dissented.
-  ///
-  /// The OS-triggered auto-mount fires within milliseconds of the drive being
-  /// connected. We block it and record the BSD name here. Any subsequent mount
-  /// request for the same BSD name (Terminal `diskutil mount`, Finder, another
-  /// app) is considered a deliberate user action and is allowed through.
-  ///
-  /// The record is cleared in `diskDisappearedCallback` so that re-plugging the
-  /// same drive causes the auto-mount to be blocked again.
-  private var dissentedAutoMounts: Set<String> = []
 
   init() {
     NotificationCenter.default.addObserver(
@@ -59,15 +48,44 @@ class DiskMounter: ObservableObject {
   }
 
   @objc private func handleWillMount(notification: Notification) {
-    clearApprovalWorkItem?.cancel()
-    if let identifier = notification.userInfo?["deviceIdentifier"] as? String {
-      self.approvingManualMountFor = identifier
-      let workItem = DispatchWorkItem { [weak self] in
-        self?.approvingManualMountFor = nil
+    guard let identifier = notification.userInfo?["deviceIdentifier"] as? String,
+      !identifier.isEmpty
+    else { return }
+
+    let key = identifier.lowercased()
+    let expiration = Date().addingTimeInterval(5.0)
+    manualMountApprovalLock.lock()
+    manualMountApprovals[key] = expiration
+    manualMountApprovalLock.unlock()
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+      guard let self else { return }
+      self.manualMountApprovalLock.lock()
+      if self.manualMountApprovals[key] == expiration {
+        self.manualMountApprovals.removeValue(forKey: key)
       }
-      self.clearApprovalWorkItem = workItem
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
+      self.manualMountApprovalLock.unlock()
     }
+  }
+
+  private func consumeManualMountApproval(
+    bsdName: String?, volumeUUID: String?, diskUUID: String?
+  ) -> Bool {
+    let identifiers = [bsdName, volumeUUID, diskUUID]
+      .compactMap { $0?.lowercased() }
+    guard !identifiers.isEmpty else { return false }
+
+    let now = Date()
+    manualMountApprovalLock.lock()
+    defer { manualMountApprovalLock.unlock() }
+    manualMountApprovals = manualMountApprovals.filter { $0.value > now }
+
+    for identifier in identifiers {
+      if manualMountApprovals.removeValue(forKey: identifier) != nil {
+        return true
+      }
+    }
+    return false
   }
 
   private func startDiskArbitration() {
@@ -77,17 +95,6 @@ class DiskMounter: ObservableObject {
     guard let session = session else { return }
 
     let context = Unmanaged.passUnretained(self).toOpaque()
-
-    // Remove a volume from the dissented-auto-mounts set when it leaves the
-    // system, so that re-plugging the same drive is correctly blocked again.
-    let disappearedCallback: DADiskDisappearedCallback = { (disk, context) in
-      guard let context = context else { return }
-      let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
-      if let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) }) {
-        this.dissentedAutoMounts.remove(bsdName)
-      }
-    }
-    DARegisterDiskDisappearedCallback(session, nil, disappearedCallback, context)
 
     let mountCallback: DADiskMountApprovalCallback = { (disk, context) -> Unmanaged<DADissenter>? in
       guard let context = context else { return nil }
@@ -118,34 +125,16 @@ class DiskMounter: ObservableObject {
         diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
       }
 
-      // Approve explicit manual mounts triggered by the MountMate app itself.
-      if let approved = this.approvingManualMountFor {
-        if approved == "*" {
-          return nil
-        }
-        if let name = bsdName, approved.lowercased() == name.lowercased() {
-          return nil
-        }
-        if let volUUID = volumeUUIDString, approved.lowercased() == volUUID.lowercased() {
-          return nil
-        }
-        if let diskUUID = diskUUIDString, approved.lowercased() == diskUUID.lowercased() {
-          return nil
-        }
-      }
-
-      // If we already blocked this volume's auto-mount once, any subsequent
-      // mount request is a deliberate user action (Terminal, Finder, another
-      // app) — allow it through without applying any blocking rules.
-      if let name = bsdName, this.dissentedAutoMounts.contains(name) {
+      // Only mount requests explicitly initiated by MountMate bypass the
+      // runtime block. Disk Arbitration does not identify the source of a
+      // request from Finder, Terminal, or the OS.
+      if this.consumeManualMountApproval(
+        bsdName: bsdName, volumeUUID: volumeUUIDString, diskUUID: diskUUIDString)
+      {
         return nil
       }
 
       var shouldBlock = false
-      // True when shouldBlock was decided by the per-volume blocked list
-      // (as opposed to the global USB/SD block), so a missing boot-time
-      // fstab rule can be installed for it.
-      var blockedByList = false
 
       // Global USB block.
       // kDADiskDescriptionDeviceProtocolKey ("DADeviceProtocol") is rarely
@@ -179,32 +168,11 @@ class DiskMounter: ObservableObject {
         let dUUID = diskUUIDString ?? "NONE"
         let compositeId = "\(dUUID)-\(volUUID)"
         if PersistenceManager.shared.blockedVolumes.contains(where: { $0.id == compositeId }) {
-          // When the boot-time fstab "noauto" rule is in place,
-          // diskarbitrationd never attempts the auto-mount itself, so a
-          // mount request that still reaches this callback is a deliberate
-          // manual action (Finder, Terminal, MountMate) — allow it through.
-          if !PersistenceManager.shared.fstabBlockedVolumeUUIDs.contains(
-            volUUID.uppercased())
-          {
-            shouldBlock = true
-            blockedByList = true
-          }
+          shouldBlock = true
         }
       }
 
       if shouldBlock {
-        // Record that we've blocked the auto-mount for this BSD name.
-        // The next mount request for this volume will be allowed through
-        // as a manual user action.
-        if let name = bsdName {
-          this.dissentedAutoMounts.insert(name)
-        }
-        if blockedByList {
-          // The volume is connected but has no boot-time rule yet — schedule
-          // a reconcile so its /etc/fstab rule is installed and future boots
-          // never get this far.
-          PersistenceManager.shared.scheduleBlockedFstabReconcile()
-        }
         print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
         return Unmanaged.passRetained(dissenter)
@@ -223,8 +191,8 @@ class DiskMounter: ObservableObject {
 
   /// Runs once per app launch, shortly after the Disk Arbitration session
   /// starts: unmounts blocked volumes the OS mounted before MountMate was
-  /// running (boot-time mounts happen before login items launch), and syncs
-  /// the boot-time /etc/fstab rules with the blocked-volumes list.
+  /// running. Mount approval callbacks cannot run before a user-session app
+  /// launches, so this is best-effort cleanup for volumes mounted at login.
   private func scheduleStartupMaintenance() {
     DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
       guard let self, self.session != nil, !self.hasPerformedStartupMaintenance else { return }
@@ -233,24 +201,17 @@ class DiskMounter: ObservableObject {
       // Snapshot the main-thread-bound lists before doing the diskutil work
       // on a background queue.
       let blockedInfos = PersistenceManager.shared.blockedVolumes
-      let keepAliveIDs = Set(PersistenceManager.shared.keepAliveVolumes.map(\.id))
-      PersistenceManager.shared.reconcileBlockedFstabEntries(blockedInfos: blockedInfos)
-      self.unmountBlockedVolumes(blockedInfos, keepAliveIDs: keepAliveIDs)
+      self.unmountBlockedVolumes(blockedInfos)
     }
   }
 
   /// Unmounts blocked volumes that are already mounted — typically because
-  /// the OS mounted them during boot, before MountMate could dissent. A few
-  /// retries absorb transient business (Spotlight indexing right after
-  /// boot). Never forces: a persistently busy volume is left mounted.
-  private func unmountBlockedVolumes(
-    _ blockedInfos: [ManagedVolumeInfo], keepAliveIDs: Set<String>
-  ) {
+  /// the OS mounted them before MountMate's user-session callback was active.
+  /// A few retries absorb transient busyness (Spotlight indexing right after
+  /// login). Never forces: a persistently busy volume is left mounted.
+  private func unmountBlockedVolumes(_ blockedInfos: [ManagedVolumeInfo]) {
     DispatchQueue.global(qos: .utility).async {
       for info in blockedInfos {
-        // Keep-alive expresses an explicit wish to have the volume mounted;
-        // never fight it, even if the volume is also blocked.
-        guard !keepAliveIDs.contains(info.id) else { continue }
         guard
           let volumeUUID = PersistenceManager.normalizedSystemVolumeUUID(info.volumeUUID)
         else { continue }
@@ -261,8 +222,13 @@ class DiskMounter: ObservableObject {
           let data = infoResult.stdout.data(using: .utf8),
           let plist = try? PropertyListSerialization.propertyList(
             from: data, options: [], format: nil) as? [String: Any],
-          plist["MountPoint"] != nil,
-          let device = plist["DeviceIdentifier"] as? String
+          let device = plist["DeviceIdentifier"] as? String,
+          let mountPoint = plist["MountPoint"] as? String
+        else { continue }
+
+        let trimmedMountPoint = mountPoint.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedMountPoint.isEmpty,
+          trimmedMountPoint.caseInsensitiveCompare("Not Mounted") != .orderedSame
         else { continue }
 
         for attempt in 1...3 {
@@ -270,6 +236,10 @@ class DiskMounter: ObservableObject {
             executable: "/usr/sbin/diskutil", arguments: ["unmount", device])
           if result.succeeded {
             print("🚫 Unmounted blocked volume “\(info.name)” after startup.")
+            break
+          }
+          if Self.isAlreadyUnmounted(result) {
+            print("ℹ️ Blocked volume “\(info.name)” was already unmounted.")
             break
           }
           print(
@@ -283,10 +253,17 @@ class DiskMounter: ObservableObject {
     }
   }
 
+  private static func isAlreadyUnmounted(_ result: ProcessResult) -> Bool {
+    let output = "\(result.stdout)\n\(result.stderr)".lowercased()
+    return output.contains("already unmounted") || output.contains("not mounted")
+  }
+
   private func stopDiskArbitration() {
     guard let session = session else { return }
     DASessionSetDispatchQueue(session, nil)
-    dissentedAutoMounts.removeAll()
+    manualMountApprovalLock.lock()
+    manualMountApprovals.removeAll()
+    manualMountApprovalLock.unlock()
     self.session = nil
   }
 }

@@ -486,6 +486,7 @@ class KeepAliveManager: ObservableObject {
     let candidateVolumes = disks.flatMap(\.allVolumes).filter { volume in
       guard let compositeId = volume.compositeId else { return false }
       return keepAliveVolumes.contains { $0.id == compositeId }
+        && !PersistenceManager.shared.isVolumeBlocked(volume)
     }
 
     for volume in candidateVolumes {
@@ -501,7 +502,8 @@ class KeepAliveManager: ObservableObject {
       group.enter()
       print("🔄 Keep-alive: attempting to remount volume \(volume.name).")
       // Silent mount: transient reconnect failures must not pop error dialogs.
-      DriveManager.shared.mount(volume: volume, allowsErrorAlerts: false)
+      DriveManager.shared.mount(
+        volume: volume, allowsErrorAlerts: false, isUserInitiated: false)
       // `mount` refreshes the disk list when it finishes; give it a moment to
       // settle before recording the result.
       DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in

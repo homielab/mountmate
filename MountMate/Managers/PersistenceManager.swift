@@ -20,23 +20,7 @@ class PersistenceManager: ObservableObject {
   @Published var networkShares: [NetworkShare]
   @Published var customMountPoints: [VolumeCustomMountPoint]
 
-  /// Volume UUIDs (uppercased) that currently have a boot-time "noauto" rule
-  /// in /etc/fstab. While the rule is in place, diskarbitrationd never
-  /// attempts the auto-mount itself, so any mount request that still reaches
-  /// the DiskArbitration approval callback is a deliberate manual mount.
-  @Published private(set) var fstabBlockedVolumeUUIDs: Set<String> = []
-
   static let mountMateFstabPrefix = "# MountMate custom mount:"
-  static let mountMateBlockPrefix = "# MountMate block:"
-
-  /// Serializes every /etc/fstab read-modify-write cycle so concurrent block,
-  /// unblock and reconcile actions cannot interleave their installs.
-  private let fstabQueue = DispatchQueue(label: "com.homielab.mountmate.fstab")
-  private var isFstabReconcilePending = false
-  /// Set when a scheduled fstab update fails (e.g. the admin prompt is
-  /// cancelled) so background reconciles stop re-prompting until the next
-  /// explicit user action or app launch.
-  private var fstabAdminDeclinedThisSession = false
 
   private init() {
     self.protectedVolumes = Self.load(from: protectedVolumesKey)
@@ -45,8 +29,6 @@ class PersistenceManager: ObservableObject {
     self.keepAliveVolumes = Self.load(from: keepAliveVolumesKey)
     self.networkShares = Self.load(from: networkSharesKey)
     self.customMountPoints = Self.load(from: customMountPointsKey)
-    self.fstabBlockedVolumeUUIDs = Self.managedFstabVolumeUUIDs(
-      kinds: [Self.mountMateBlockPrefix], in: Self.readSystemFstabContents())
   }
 
   // MARK: - Actions
@@ -106,14 +88,22 @@ class PersistenceManager: ObservableObject {
     guard !blockedVolumes.contains(where: { $0.id == info.id }) else { return true }
     blockedVolumes.append(info)
     saveBlockedVolumes()
-    installBlockedFstabEntry(for: volume, info: info)
+
+    // Auto-reconnect conflicts with an explicit request to keep this volume
+    // unmounted. DiskMounter enforces the block through Disk Arbitration while
+    // MountMate is running, so do not leave a reconnect target behind.
+    if let compositeId = volume.compositeId,
+      keepAliveVolumes.contains(where: { $0.id == compositeId })
+    {
+      keepAliveVolumes.removeAll { $0.id == compositeId }
+      saveKeepAliveVolumes()
+    }
     return true
   }
 
   func unblock(info: ManagedVolumeInfo) {
     blockedVolumes.removeAll { $0.id == info.id }
     saveBlockedVolumes()
-    removeBlockedFstabEntry(for: info)
   }
 
   @discardableResult
@@ -339,196 +329,7 @@ class PersistenceManager: ObservableObject {
     }
   }
 
-  // MARK: - Boot-Time Auto-Mount Blocking (fstab)
-
-  /// The DiskArbitration approval callback only exists while MountMate runs,
-  /// but diskarbitrationd mounts volumes during boot, before login items
-  /// launch. This section persists each blocked volume as a "noauto" rule in
-  /// /etc/fstab so macOS itself skips the auto-mount at startup.
-  ///
-  /// All writes are best-effort: when the admin prompt is cancelled the
-  /// runtime block still applies for the current session, only the boot-time
-  /// persistence is missing.
-
-  /// Installs the boot-time "noauto" rule for a newly blocked volume. Runs on
-  /// a background queue; failures are surfaced through the global error alert.
-  private func installBlockedFstabEntry(for volume: Volume, info: ManagedVolumeInfo) {
-    guard let volumeUUID = Self.normalizedSystemVolumeUUID(info.volumeUUID) else {
-      print(
-        "ℹ️ Volume “\(volume.name)” has no stable UUID; auto-mount blocking applies only while MountMate is running."
-      )
-      return
-    }
-
-    // User-initiated: always try once, even if a background reconcile was
-    // previously declined.
-    fstabAdminDeclinedThisSession = false
-
-    let deviceIdentifier = volume.deviceIdentifier
-    let fallbackFileSystemType = volume.fileSystemType
-    let volumeName = volume.name
-    let identifier = info.id
-
-    fstabQueue.async { [weak self] in
-      guard let self, !self.fstabAdminDeclinedThisSession else { return }
-      do {
-        let contents = try self.loadSystemFstabContents()
-        let presentUUIDs = Self.managedFstabVolumeUUIDs(
-          kinds: [Self.mountMateBlockPrefix], in: contents)
-        if presentUUIDs.contains(volumeUUID) {
-          self.refreshFstabBlockedUUIDs(from: contents)
-          return
-        }
-        guard
-          let fileSystemType = Self.fstabFileSystemType(
-            plist: self.diskInfo(for: deviceIdentifier), fallback: fallbackFileSystemType)
-        else {
-          print(
-            "⚠️ Could not determine the filesystem type of “\(volumeName)”; skipping its boot-time block rule."
-          )
-          return
-        }
-
-        // A block rule supersedes any other MountMate rule for this volume.
-        let withoutManagedRules = Self.removingManagedFstabEntries(
-          volumeUUID: volumeUUID, kinds: nil, from: contents)
-        var normalized = Self.trimmedFstabContents(withoutManagedRules)
-        if !normalized.isEmpty {
-          normalized += "\n"
-        }
-        normalized += Self.blockedFstabEntry(
-          volumeUUID: volumeUUID, fileSystemType: fileSystemType, identifier: identifier)
-
-        try self.installSystemFstabContents(normalized)
-        self.refreshFstabBlockedUUIDs(from: normalized)
-        print("✅ Installed boot-time block rule for “\(volumeName)” in /etc/fstab.")
-      } catch {
-        self.fstabAdminDeclinedThisSession = true
-        self.handleFstabRuleError(error)
-      }
-    }
-  }
-
-  /// Removes the boot-time "noauto" rule of an unblocked volume. Runs on a
-  /// background queue; failures are surfaced through the global error alert.
-  private func removeBlockedFstabEntry(for info: ManagedVolumeInfo) {
-    guard let volumeUUID = Self.normalizedSystemVolumeUUID(info.volumeUUID) else { return }
-
-    // User-initiated: always try once, even if a background reconcile was
-    // previously declined.
-    fstabAdminDeclinedThisSession = false
-
-    fstabQueue.async { [weak self] in
-      guard let self, !self.fstabAdminDeclinedThisSession else { return }
-      do {
-        let contents = try self.loadSystemFstabContents()
-        let presentUUIDs = Self.managedFstabVolumeUUIDs(
-          kinds: [Self.mountMateBlockPrefix], in: contents)
-        guard presentUUIDs.contains(volumeUUID) else {
-          self.refreshFstabBlockedUUIDs(from: contents)
-          return
-        }
-
-        let updated = Self.removingManagedFstabEntries(
-          volumeUUID: volumeUUID, kinds: [Self.mountMateBlockPrefix], from: contents)
-        try self.installSystemFstabContents(updated)
-        self.refreshFstabBlockedUUIDs(from: updated)
-        print("✅ Removed boot-time block rule from /etc/fstab.")
-      } catch {
-        self.fstabAdminDeclinedThisSession = true
-        self.handleFstabRuleError(error)
-      }
-    }
-  }
-
-  /// Schedules a coalesced boot-rule reconcile a few seconds out. Called when
-  /// a blocked volume's auto-mount was just dissented — the volume is
-  /// connected at that moment, so its missing rule can be installed.
-  func scheduleBlockedFstabReconcile() {
-    DispatchQueue.main.async { [weak self] in
-      guard let self, !self.isFstabReconcilePending else { return }
-      self.isFstabReconcilePending = true
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-        guard let self else { return }
-        self.isFstabReconcilePending = false
-        self.reconcileBlockedFstabEntries(blockedInfos: self.blockedVolumes)
-      }
-    }
-  }
-
-  /// Syncs /etc/fstab with the blocked-volumes list: installs "noauto" rules
-  /// for blocked volumes that are currently connected and lack one, and
-  /// removes rules for volumes that are no longer blocked.
-  ///
-  /// `blockedInfos` must be snapshotted on the main thread by the caller.
-  func reconcileBlockedFstabEntries(blockedInfos: [ManagedVolumeInfo]) {
-    fstabQueue.async { [weak self] in
-      guard let self, !self.fstabAdminDeclinedThisSession else { return }
-      do {
-        let contents = try self.loadSystemFstabContents()
-        let presentUUIDs = Self.managedFstabVolumeUUIDs(
-          kinds: [Self.mountMateBlockPrefix], in: contents)
-        let desiredUUIDs = Set(
-          blockedInfos.compactMap { Self.normalizedSystemVolumeUUID($0.volumeUUID) })
-        let staleUUIDs = presentUUIDs.subtracting(desiredUUIDs)
-
-        var additions: [(uuid: String, fileSystemType: String, identifier: String)] = []
-        for info in blockedInfos {
-          guard let uuid = Self.normalizedSystemVolumeUUID(info.volumeUUID),
-            !presentUUIDs.contains(uuid)
-          else { continue }
-          guard let fileSystemType = self.fstabFileSystemType(forVolumeUUID: info.volumeUUID)
-          else {
-            print(
-              "ℹ️ No boot-time block rule for “\(info.name)” yet: the volume is not connected right now. The rule will be installed the next time it tries to auto-mount."
-            )
-            continue
-          }
-          additions.append((uuid, fileSystemType, info.id))
-        }
-
-        guard !staleUUIDs.isEmpty || !additions.isEmpty else {
-          self.refreshFstabBlockedUUIDs(from: contents)
-          return
-        }
-
-        var updated = contents
-        for uuid in staleUUIDs {
-          updated = Self.removingManagedFstabEntries(
-            volumeUUID: uuid, kinds: [Self.mountMateBlockPrefix], from: updated)
-        }
-        for addition in additions {
-          // A block rule supersedes any other MountMate rule for this volume.
-          updated = Self.removingManagedFstabEntries(
-            volumeUUID: addition.uuid, kinds: nil, from: updated)
-          var normalized = Self.trimmedFstabContents(updated)
-          if !normalized.isEmpty {
-            normalized += "\n"
-          }
-          normalized += Self.blockedFstabEntry(
-            volumeUUID: addition.uuid, fileSystemType: addition.fileSystemType,
-            identifier: addition.identifier)
-          updated = normalized
-        }
-
-        try self.installSystemFstabContents(updated)
-        self.refreshFstabBlockedUUIDs(from: updated)
-        print("✅ Boot-time block rules in /etc/fstab are up to date.")
-      } catch {
-        self.fstabAdminDeclinedThisSession = true
-        self.handleFstabRuleError(error)
-      }
-    }
-  }
-
-  /// The /etc/fstab rule line pair for a blocked volume. `none` as the mount
-  /// point and `noauto` make diskarbitrationd skip the volume at boot while
-  /// leaving manual mounts untouched.
-  static func blockedFstabEntry(
-    volumeUUID: String, fileSystemType: String, identifier: String
-  ) -> String {
-    "\(mountMateBlockPrefix) \(identifier)\nUUID=\(volumeUUID) none \(fileSystemType) rw,noauto\n"
-  }
+  // MARK: - Volume Helpers
 
   /// Normalizes a volume identifier into an uppercased UUID string, or nil
   /// when the identifier is not a UUID (e.g. a fallback device name such as
@@ -536,27 +337,6 @@ class PersistenceManager: ObservableObject {
   static func normalizedSystemVolumeUUID(_ raw: String) -> String? {
     guard let uuid = UUID(uuidString: raw) else { return nil }
     return uuid.uuidString
-  }
-
-  private func refreshFstabBlockedUUIDs(from contents: String) {
-    let uuids = Self.managedFstabVolumeUUIDs(kinds: [Self.mountMateBlockPrefix], in: contents)
-    DispatchQueue.main.async { [weak self] in
-      self?.fstabBlockedVolumeUUIDs = uuids
-    }
-  }
-
-  private func handleFstabRuleError(_ error: Error) {
-    print("⚠️ Failed to update the /etc/fstab block rule: \(error.localizedDescription)")
-    let message = error.localizedDescription
-    DispatchQueue.main.async {
-      DriveManager.shared.userActionError = AppAlert(
-        title: NSLocalizedString("System Mount Rule Not Updated", comment: "Alert title"),
-        message: String(
-          format: NSLocalizedString(
-            "System Mount Rule Update Failed", comment: "Alert message"),
-          message),
-        kind: .basic)
-    }
   }
 
   // MARK: - Helper Checkers
@@ -591,13 +371,6 @@ class PersistenceManager: ObservableObject {
   private func resolvedFstabFileSystemType(for volume: Volume) -> String? {
     let plist = diskInfo(for: volume.deviceIdentifier)
     return Self.fstabFileSystemType(plist: plist, fallback: volume.fileSystemType)
-  }
-
-  /// Resolves the filesystem type for a volume UUID by asking diskutil.
-  /// Returns nil when the volume is not currently connected or its type
-  /// cannot be determined.
-  private func fstabFileSystemType(forVolumeUUID volumeUUID: String) -> String? {
-    Self.fstabFileSystemType(plist: diskInfo(for: volumeUUID), fallback: nil)
   }
 
   private func diskInfo(for deviceIdentifier: String) -> [String: Any]? {
@@ -645,13 +418,6 @@ class PersistenceManager: ObservableObject {
     return normalized.isEmpty ? nil : normalized
   }
 
-  private static func readSystemFstabContents() -> String {
-    guard let data = FileManager.default.contents(atPath: "/etc/fstab"),
-      let contents = String(data: data, encoding: .utf8)
-    else { return "" }
-    return contents
-  }
-
   private func loadSystemFstabContents() throws -> String {
     let path = "/etc/fstab"
     guard FileManager.default.fileExists(atPath: path) else { return "" }
@@ -692,27 +458,23 @@ class PersistenceManager: ObservableObject {
 
   private func removingManagedFstabEntry(from contents: String, for volume: Volume) -> String {
     guard let volumeUUID = volumeUUIDForSystemMount(for: volume) else { return contents }
-    return Self.removingManagedFstabEntries(
-      volumeUUID: volumeUUID, kinds: [Self.mountMateFstabPrefix], from: contents)
+    return Self.removingManagedFstabEntries(volumeUUID: volumeUUID, from: contents)
   }
 
-  /// Removes MountMate-managed comment+entry pairs from `contents`.
-  ///
-  /// A pair is removed when its entry line addresses `volumeUUID` and, when
-  /// `kinds` is non-nil, its comment belongs to one of those managed kinds.
-  /// Matching by UUID (rather than by the comment's identifier) keeps removal
-  /// working even when the volume's last-known identifiers have changed.
-  static func removingManagedFstabEntries(
-    volumeUUID: String, kinds: Set<String>?, from contents: String
+  /// Removes a MountMate-managed custom mount entry for a volume.
+  /// Matching by UUID keeps removal working even when the volume's last-known
+  /// identifiers have changed.
+  private static func removingManagedFstabEntries(
+    volumeUUID: String, from contents: String
   ) -> String {
     let lines = contents.components(separatedBy: .newlines)
     var filtered: [String] = []
     var index = 0
 
     while index < lines.count {
-      if let kind = managedFstabKind(of: lines[index]), index + 1 < lines.count,
-        entryAddressesUUID(lines[index + 1], volumeUUID),
-        kinds == nil || kinds!.contains(kind)
+      if lines[index].trimmingCharacters(in: .whitespaces).hasPrefix(mountMateFstabPrefix),
+        index + 1 < lines.count,
+        entryAddressesUUID(lines[index + 1], volumeUUID)
       {
         index += 2
         continue
@@ -724,44 +486,11 @@ class PersistenceManager: ObservableObject {
     return trimmedFstabContents(filtered.joined(separator: "\n"))
   }
 
-  private static func managedFstabKind(of line: String) -> String? {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
-    if trimmed.hasPrefix(mountMateFstabPrefix) { return mountMateFstabPrefix }
-    if trimmed.hasPrefix(mountMateBlockPrefix) { return mountMateBlockPrefix }
-    return nil
-  }
-
   private static func entryAddressesUUID(_ line: String, _ volumeUUID: String) -> Bool {
     let trimmed = line.trimmingCharacters(in: .whitespaces)
     guard trimmed.hasPrefix("UUID=") else { return false }
     let uuid = trimmed.dropFirst("UUID=".count).prefix { !$0.isWhitespace }
     return uuid.lowercased() == volumeUUID.lowercased()
-  }
-
-  /// Volume UUIDs (uppercased) addressed by the managed entries of `kinds`.
-  static func managedFstabVolumeUUIDs(kinds: Set<String>, in contents: String) -> Set<String> {
-    let lines = contents.components(separatedBy: .newlines)
-    var uuids: Set<String> = []
-    var index = 0
-
-    while index < lines.count {
-      if let kind = managedFstabKind(of: lines[index]), kinds.contains(kind),
-        index + 1 < lines.count
-      {
-        let entry = lines[index + 1].trimmingCharacters(in: .whitespaces)
-        if entry.hasPrefix("UUID=") {
-          let uuid = entry.dropFirst("UUID=".count).prefix { !$0.isWhitespace }
-          if !uuid.isEmpty {
-            uuids.insert(String(uuid).uppercased())
-          }
-        }
-        index += 2
-        continue
-      }
-      index += 1
-    }
-
-    return uuids
   }
 
   private func installSystemFstabContents(_ contents: String) throws {
@@ -782,8 +511,12 @@ class PersistenceManager: ObservableObject {
     if normalizedContents.isEmpty {
       command = "/bin/rm -f /etc/fstab"
     } else {
+      // Do not use `install` here. On recent macOS versions it stages the
+      // destination in /etc and atomically replaces /etc/fstab with rename(2),
+      // which can be rejected even after administrator authentication. Writing
+      // the existing file in place avoids that protected-directory rename.
       command =
-        "/usr/bin/install -m 644 -o root -g wheel \(temporaryURL.path.shellQuoted) /etc/fstab"
+        "/bin/cat \(temporaryURL.path.shellQuoted) > /etc/fstab && /bin/chmod 644 /etc/fstab && /usr/sbin/chown root:wheel /etc/fstab"
     }
 
     let script = "do shell script \(command.appleScriptStringLiteral) with administrator privileges"

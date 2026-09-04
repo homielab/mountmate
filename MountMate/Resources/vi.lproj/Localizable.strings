@@ -98,7 +98,7 @@
 "Don't Auto-Mount This Volume" = "Không tự động gắn phân vùng này";
 "Blocked from Auto-Mounting" = "Bị chặn tự động gắn";
 "No Volumes Blocked from Auto-Mounting" = "Không có phân vùng nào bị chặn tự động gắn";
-"Right-click a volume to prevent it from mounting automatically when connected." = "Nhấp chuột phải vào một phân vùng để ngăn nó tự động gắn khi kết nối.";
+"Right-click a volume to prevent it from mounting automatically while MountMate is running." = "Nhấp chuột phải vào một phân vùng để ngăn phân vùng đó tự động gắn kết khi MountMate đang chạy.";
 
 // MARK: - Alerts & Errors
 //=============================================

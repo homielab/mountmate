@@ -98,7 +98,7 @@
 "Don't Auto-Mount This Volume" = "Не монтировать этот том автоматически";
 "Blocked from Auto-Mounting" = "Заблокированные от автоподключения";
 "No Volumes Blocked from Auto-Mounting" = "Нет томов, заблокированных от автоподключения";
-"Right-click a volume to prevent it from mounting automatically when connected." = "Щёлкните правой кнопкой на томе, чтобы запретить его автоматическое монтирование при подключении.";
+"Right-click a volume to prevent it from mounting automatically while MountMate is running." = "Щёлкните правой кнопкой на томе, чтобы запретить его автоматическое монтирование, пока MountMate запущен.";
 
 // MARK: - Alerts & Errors
 //=============================================
