@@ -28,8 +28,7 @@ cask "mountmate" do
   version "$VERSION"
   sha256 "$SHA256"
 
-  url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg",
-      verified: "github.com/homielab/mountmate/"
+  url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
   name "MountMate"
   desc "Menubar app to easily manage external drives"
   homepage "https://homielab.com/en/page/mountmate"
