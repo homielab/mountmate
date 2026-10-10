@@ -159,12 +159,12 @@ class DriveManager: ObservableObject {
     }
     DispatchQueue.main.async { self.isUnmountingAll = true }
 
-    DispatchQueue.global(qos: .userInitiated).async {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       for drive in drivesToUnmount {
         _ = runProcess(
           executable: "/usr/sbin/diskutil", arguments: ["unmount", drive.deviceIdentifier])
       }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
         self?.refreshDrives(qos: .userInitiated)
       }
     }
@@ -181,7 +181,7 @@ class DriveManager: ObservableObject {
 
     guard !volumesToMount.isEmpty else { return }
 
-    DispatchQueue.global(qos: .userInitiated).async {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       for volume in volumesToMount {
         KeepAliveManager.shared.resume(volume: volume)
         let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
@@ -189,7 +189,7 @@ class DriveManager: ObservableObject {
         _ = runProcess(
           executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
       }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
         self?.refreshDrives(qos: .userInitiated)
       }
     }
