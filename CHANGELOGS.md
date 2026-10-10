@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## 5.20
 
+### Changed
+
+- **Unmounting a Disk Image Ejects It** ([#72](https://github.com/homielab/mountmate/issues/72)): Unmounting the last volume of a disk image (DMG) now ejects the image too, like Finder does, so it no longer stays in the "Disk Images" list.
+
 ### Fixed
 
 - **Critical: Data Loss on Network Shares** ([#71](https://github.com/homielab/mountmate/issues/71)): A failed mount attempt could delete the contents of a network share that was already mounted at the same path. This happened when two mounts for the same share ran at once (for example, mount at login, wake, or a network change with Keep Alive). MountMate no longer deletes anything inside a mount point: after a failed mount it only removes the folder it created, and only if that folder is empty and not mounted. Only one mount per share can run at a time now.

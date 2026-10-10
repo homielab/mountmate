@@ -386,10 +386,27 @@ class DriveManager: ObservableObject {
           self.handleDiskUtilError(
             errMsg, for: volume.name, volume: volume, operation: .unmount)
           self.busyVolumeIdentifier = nil
+        } else if let image = self.diskImageToDetach(afterUnmounting: volume) {
+          // Match Finder: once the last volume of a disk image is unmounted,
+          // detach the image so it no longer lingers in the list (#72).
+          self.eject(disk: image)
+          return
         }
         self.refreshDrives(qos: .userInitiated)
       }
     }
+  }
+
+  /// The disk image containing `volume`, if no other volume on it is still
+  /// mounted. Returns nil for real disks, which stay attached after unmount.
+  private func diskImageToDetach(afterUnmounting volume: Volume) -> PhysicalDisk? {
+    guard
+      let disk = (physicalDisks ?? []).first(where: {
+        $0.type == .diskImage && $0.allVolumes.contains { $0.id == volume.id }
+      })
+    else { return nil }
+    let othersMounted = disk.allVolumes.contains { $0.id != volume.id && $0.isMounted }
+    return othersMounted ? nil : disk
   }
 
   func remount(volume: Volume) {
