@@ -19,6 +19,14 @@ struct MainView: View {
     (driveManager.physicalDisks ?? []).filter { $0.type == .diskImage && $0.hasVisibleContent }
   }
 
+  /// Pinned volumes from the visible disks, in pin order.
+  private var pinnedVolumes: [Volume] {
+    let pins = persistence.pinnedVolumeIDs
+    guard !pins.isEmpty else { return [] }
+    let volumes = (internalDisks + externalDisks + diskImages).flatMap(\.allVolumes)
+    return pins.compactMap { id in volumes.first { $0.compositeId == id } }
+  }
+
   private var hasVisibleDisks: Bool {
     !internalDisks.isEmpty || !externalDisks.isEmpty || !diskImages.isEmpty
       || !persistence.networkShares.isEmpty || !networkManager.manuallyConnectedShares.isEmpty
@@ -38,6 +46,7 @@ struct MainView: View {
         noDrivesView
       } else {
         DriveListView(
+          pinnedVolumes: pinnedVolumes,
           internalDisks: internalDisks,
           externalDisks: externalDisks,
           diskImages: diskImages,

@@ -269,3 +269,6 @@
 "Custom Mount Point Volume Blocked" = "该卷宗已被禁止自动挂载，请先解除阻止，再为其指定自定义挂载点。";
 "System Mount Rule Not Updated" = "系统挂载规则未更新";
 "System Mount Rule Update Failed" = "MountMate 无法更新 /etc/fstab 中的系统挂载规则。重启后，自动挂载阻止可能不会按预期生效。\n\n详细信息：\n%@";
+"Pinned" = "已置顶";
+"Pin to Top" = "置顶";
+"Unpin" = "取消置顶";

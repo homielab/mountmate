@@ -269,3 +269,6 @@
 "Custom Mount Point Volume Blocked" = "Ce volume est bloqué pour le montage automatique. Débloquez-le avant de lui attribuer un point de montage personnalisé.";
 "System Mount Rule Not Updated" = "Règle de montage système non mise à jour";
 "System Mount Rule Update Failed" = "MountMate n'a pas pu mettre à jour la règle de montage système dans /etc/fstab. Le blocage du montage automatique pourrait ne pas se comporter comme prévu après un redémarrage.\n\nDétails :\n%@";
+"Pinned" = "Épinglés";
+"Pin to Top" = "Épingler en haut";
+"Unpin" = "Désépingler";

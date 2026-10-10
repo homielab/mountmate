@@ -19,6 +19,30 @@ class PersistenceManager: ObservableObject {
   @Published var keepAliveVolumes: [ManagedVolumeInfo]
   @Published var networkShares: [NetworkShare]
   @Published var customMountPoints: [VolumeCustomMountPoint]
+  /// Volumes pinned to the top of the menu bar list, in the order they were
+  /// pinned. Stored by composite ID so pins survive reconnecting the drive.
+  @Published var pinnedVolumeIDs: [String] =
+    UserDefaults.standard.stringArray(forKey: "pinnedVolumeIDs") ?? []
+  {
+    didSet { UserDefaults.standard.set(pinnedVolumeIDs, forKey: "pinnedVolumeIDs") }
+  }
+
+  func isPinned(_ volume: Volume) -> Bool {
+    guard let id = volume.compositeId else { return false }
+    return pinnedVolumeIDs.contains(id)
+  }
+
+  /// Returns false when the volume has no stable identifier to pin by.
+  @discardableResult
+  func setPinned(_ pinned: Bool, volume: Volume) -> Bool {
+    guard let id = volume.compositeId else { return false }
+    if pinned {
+      if !pinnedVolumeIDs.contains(id) { pinnedVolumeIDs.append(id) }
+    } else {
+      pinnedVolumeIDs.removeAll { $0 == id }
+    }
+    return true
+  }
 
   static let mountMateFstabPrefix = "# MountMate custom mount:"
 

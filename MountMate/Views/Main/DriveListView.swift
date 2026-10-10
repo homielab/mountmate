@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct DriveListView: View {
+  let pinnedVolumes: [Volume]
   let internalDisks: [PhysicalDisk]
   let externalDisks: [PhysicalDisk]
   let diskImages: [PhysicalDisk]
@@ -12,6 +13,15 @@ struct DriveListView: View {
 
   var body: some View {
     List {
+      if !pinnedVolumes.isEmpty {
+        Section(header: Label("Pinned", systemImage: "pin.fill")) {
+          ForEach(pinnedVolumes) { volume in
+            VolumeRowView(
+              volume: volume,
+              customMountPointEditor: customMountPointEditor)
+          }
+        }
+      }
       if !internalDisks.isEmpty {
         Section(header: Label("Internal Disks", systemImage: "internaldrive")) {
           ForEach(internalDisks) { disk in

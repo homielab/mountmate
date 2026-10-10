@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Pin Volumes to Top**: Right-click any volume and choose "Pin to Top" to show it in a new "Pinned" section at the top of the list, in both normal view and "Show Only Volumes". Pins are remembered when the drive is reconnected.
 - **Allow Other Apps to Mount Blocked Disks**: A new option in Settings → General. When it's on, blocking only stops a disk from mounting automatically when it's plugged in or at login. Apps such as backup tools (e.g. Carbon Copy Cloner) can still mount blocked disks when they need them, without quitting MountMate.
 
 ### Changed

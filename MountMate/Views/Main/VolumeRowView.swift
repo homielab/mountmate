@@ -260,6 +260,21 @@ struct VolumeRowView: View {
     }
 
     Divider()
+    if persistence.isPinned(volume) {
+      Button {
+        persistence.setPinned(false, volume: volume)
+      } label: {
+        Label("Unpin", systemImage: "pin.slash")
+      }
+    } else {
+      Button {
+        if !persistence.setPinned(true, volume: volume) {
+          showPersistenceError(for: volume)
+        }
+      } label: {
+        Label("Pin to Top", systemImage: "pin")
+      }
+    }
     if isKeepAlive {
       Button {
         if !persistence.setKeepAlive(false, volume: volume) {
