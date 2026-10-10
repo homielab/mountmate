@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Free Space on Volumes**: Volume rows now show free space as well as used and total, e.g. "120 GB used / 500 GB (380 GB free)". APFS volumes show the free space of their container, so you can see at a glance how much room is left, including in "Show Only Volumes".
 - **Unmounting a Disk Image Ejects It** ([#72](https://github.com/homielab/mountmate/issues/72)): Unmounting the last volume of a disk image (DMG) now ejects the image too, like Finder does, so it no longer stays in the "Disk Images" list.
 
 ### Fixed

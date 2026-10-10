@@ -69,7 +69,19 @@ struct VolumeRowView: View {
               .foregroundStyle(currentVolume.isMounted ? .primary : .secondary)
 
             if currentVolume.isMounted {
-              if let total = currentVolume.totalSize, let used = currentVolume.usedSpace {
+              if let total = currentVolume.totalSize, let used = currentVolume.usedSpace,
+                let free = currentVolume.freeSpace
+              {
+                // APFS volumes share their container's free space, so this is
+                // the space actually available to write to this volume.
+                Text(
+                  String(
+                    format: NSLocalizedString(
+                      "DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
+                    used, total, free))
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              } else if let total = currentVolume.totalSize, let used = currentVolume.usedSpace {
                 Text(String(format: "%@ / %@", used, total))
                   .font(.caption)
                   .foregroundStyle(.secondary)
