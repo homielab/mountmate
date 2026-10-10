@@ -21,19 +21,18 @@ jobs:
       contents: write # commit the version bump, move the tag, publish the release
 
     steps:
-      - name: Checkout main
+      - name: Checkout tag
         uses: actions/checkout@v6
         with:
-          ref: main
           fetch-depth: 0
 
       - name: Check tag is on main
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          git fetch --force --tags origin
-          if [[ "$(git rev-parse "${TAG}^{commit}")" != "$(git rev-parse HEAD)" ]]; then
-            echo "::error::${TAG} must point to the latest commit on main. Tag main's HEAD and push again."
+          git fetch --force origin main
+          if ! git merge-base --is-ancestor "${TAG}^{commit}" origin/main; then
+            echo "::error::${TAG} must point to a commit on main."
             exit 1
           fi
 
@@ -103,10 +102,11 @@ jobs:
 
       # Everything below runs only after a successful build.
 
-      - name: Commit version bump, appcast and cask; move tag to release commit
+      # The tag is left where it was pushed (GitHub rejects tag rewrites from
+      # the workflow). The version bump, appcast and cask go onto main.
+      - name: Commit version bump, appcast and cask to main
         env:
           TAG: ${{ steps.version.outputs.TAG }}
-          VERSION: ${{ steps.version.outputs.VERSION }}
           BUILD: ${{ steps.version.outputs.BUILD }}
         run: |
           git config user.name 'github-actions[bot]'
@@ -114,14 +114,25 @@ jobs:
           git add MountMate.xcodeproj/project.pbxproj docs/appcast.xml Casks/mountmate.rb CHANGELOGS.md
           if git diff --cached --quiet; then
             echo "Nothing to commit."
-          else
-            git commit -m "release ${TAG} (${BUILD})"
-            git push origin HEAD:main
+            exit 0
           fi
-          # Point the tag at the commit that matches the shipped build.
-          # (Pushes made with GITHUB_TOKEN do not re-trigger this workflow.)
-          git tag -f -a "${TAG}" -m "MountMate ${VERSION} (${BUILD})"
-          git push -f origin "refs/tags/${TAG}"
+          git commit -m "release ${TAG} (${BUILD})"
+          RELEASE_COMMIT="$(git rev-parse HEAD)"
+
+          # Apply on top of the latest main (it may have moved since the tag).
+          git fetch origin main
+          git checkout -B release-main origin/main
+          if ! git cherry-pick "${RELEASE_COMMIT}"; then
+            if git diff --quiet && git diff --cached --quiet; then
+              echo "main already has these changes."
+              git cherry-pick --skip
+              exit 0
+            fi
+            echo "::error::Could not apply the release commit on main (conflict). Update main by hand."
+            git cherry-pick --abort
+            exit 1
+          fi
+          git push origin HEAD:main
 
       - name: Publish GitHub Release
         env:
