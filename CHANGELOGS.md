@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - **Critical: Data Loss on Network Shares** ([#68](https://github.com/homielab/mountmate/issues/68), [#71](https://github.com/homielab/mountmate/issues/71)): A failed mount attempt could delete the contents of a network share that was already mounted at the same path. This happened when two mounts for the same share ran at once (for example, mount at login, wake, or a network change with Keep Alive). MountMate no longer deletes anything inside a mount point: after a failed mount it only removes the folder it created, and only if that folder is empty and not mounted. Only one mount per share can run at a time now.
+- **Ejecting a Sleeping Disk** ([#70](https://github.com/homielab/mountmate/issues/70)): Ejecting a disk that had spun down to sleep no longer shows a warning and leaves the disk unmounted but not ejected. MountMate now waits for the disk to wake and retries once.
 
 ---
 

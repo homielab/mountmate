@@ -203,12 +203,23 @@ class DriveManager: ObservableObject {
       // physical device, while unmountDisk safely unmounts every volume in the
       // set and produces the same Finder-visible result.
       let ejectArgs = disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
-      let result = runProcess(executable: "/usr/sbin/diskutil", arguments: ejectArgs)
+      // A sleeping (spun-down) disk has to wake before it can be ejected,
+      // which can take well over the default 15s. The first attempt often
+      // unmounts the volumes but fails the eject while the drive spins up,
+      // so allow more time and retry once before reporting an error (#70).
+      let ejectTimeout: TimeInterval = 60
+      var result = runProcess(
+        executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
+      if !result.succeeded && !result.timedOut && !Self.isBusyError(result.stderr) {
+        Thread.sleep(forTimeInterval: 2)
+        result = runProcess(
+          executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
+      }
       DispatchQueue.main.async {
         if !result.succeeded {
           let errMsg =
             result.timedOut
-            ? "The operation timed out after 15 seconds."
+            ? "The operation timed out after \(Int(ejectTimeout)) seconds."
             : (result.stderr.isEmpty
               ? "diskutil exited with code \(result.exitCode ?? -1)." : result.stderr)
           self.handleDiskUtilError(
@@ -244,6 +255,15 @@ class DriveManager: ObservableObject {
         self.refreshDrives(qos: .userInitiated)
       }
     }
+  }
+
+  /// True when diskutil refused because something is using the disk; retrying
+  /// will not help and the user should get the Force Eject prompt right away.
+  private static func isBusyError(_ stderr: String) -> Bool {
+    let lower = stderr.lowercased()
+    return lower.contains("busy") || lower.contains("in use")
+      || lower.contains("dissented by pid")
+      || lower.contains("at least one volume could not be unmounted")
   }
 
   func forceUnmount(volume: Volume) {
