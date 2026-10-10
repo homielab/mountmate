@@ -42,13 +42,19 @@ fi
 BUILD="$((BASE_BUILD + 1))"
 
 # --- Release notes from CHANGELOGS.md ---
+# Use "## <version>"; if missing, use "## Unreleased" and rename it to the
+# version (committed with the release).
+if ! grep -qxF "## ${VERSION}" "$CHANGELOG" && grep -qxF "## Unreleased" "$CHANGELOG"; then
+  perl -pi -e "s/^## Unreleased\$/## ${VERSION}/ && \$done++ if !\$done" "$CHANGELOG"
+  echo "📝 Renamed \"## Unreleased\" to \"## ${VERSION}\" in ${CHANGELOG}"
+fi
 NOTES_BODY="$(awk -v ver="$VERSION" '
   $0 == "## " ver { found = 1; next }
   found && (/^## / || /^---/) { exit }
   found { print }
 ' "$CHANGELOG" | sed -e '/./,$!d')"   # drop leading blank lines
 if [[ -z "${NOTES_BODY//[[:space:]]/}" ]]; then
-  echo "❌ No \"## ${VERSION}\" section in ${CHANGELOG}. Add the release notes first." >&2
+  echo "❌ No \"## ${VERSION}\" or \"## Unreleased\" section in ${CHANGELOG}. Add the release notes first." >&2
   exit 1
 fi
 {

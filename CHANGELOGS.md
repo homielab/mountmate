@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 6.0
+
+### Changed
+
+- **Faster, Smoother Menu**: The drive list only redraws when something actually changed, refreshes at high priority when you open the menu, and picks up newly plugged-in drives faster.
+- **No More Freezes When Mounting Shares**: Mounting a network share no longer blocks the menu, even when the server is slow or unreachable. "Open in Finder" on a share is instant.
+- **Faster Mount All / Unmount All**: Volumes are now mounted and unmounted in parallel, and the list updates as soon as they finish.
+- **Lighter Network Share Checks**: Network share status is refreshed on mount events and when you open the menu, instead of after every disk refresh.
+- **Lower Background Usage**: The Keep Alive timer no longer does any work when nothing is set to keep alive, and lets macOS group its wake-ups to save energy.
+
+### Fixed
+
+- **Saved Passwords for Encrypted Volumes**: Locked APFS volumes now unlock automatically with the password saved in Keychain. The password you type is always the one used, and a wrong or outdated password asks again instead of showing an unknown error.
+- **Unlocking No Longer Freezes the Menu**: Unlocking an encrypted volume now runs in the background.
+- **Mount All / Unmount All Failures Are Reported**: If a volume can't be mounted or unmounted (for example because it's in use), an alert now names it instead of failing silently.
+
+---
+
 ## 5.20
 
 ### Added
