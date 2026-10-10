@@ -235,6 +235,8 @@ class KeepAliveManager: ObservableObject {
     let timer = Timer(timeInterval: retryInterval, repeats: true) { [weak self] _ in
       self?.sweepNow()
     }
+    // Let macOS coalesce this with other wake-ups; exact timing doesn't matter.
+    timer.tolerance = retryInterval * 0.1
     RunLoop.main.add(timer, forMode: .common)
     sweepTimer = timer
   }
@@ -434,10 +436,19 @@ class KeepAliveManager: ObservableObject {
   /// it reads are main-thread bound, and `isSweeping` serializes sweeps.
   private func sweep() {
     guard isEnabled, !isSweeping else { return }
+    // Nothing to keep alive: skip the `/sbin/mount` scan entirely so the
+    // periodic timer costs nothing for most users.
+    guard !keepAliveShares.isEmpty || !PersistenceManager.shared.keepAliveVolumes.isEmpty
+    else { return }
     isSweeping = true
 
     let group = DispatchGroup()
+    // Hold the group open until the status refresh has run and the reconnect
+    // work has been queued, so `isSweeping` can't clear early and let a
+    // second sweep overlap this one.
+    group.enter()
     NetworkMountManager.shared.refreshMountStatus { [weak self] in
+      defer { group.leave() }
       guard let self else { return }
       self.reconnectShares(group: group)
       self.reconnectVolumes(group: group)
