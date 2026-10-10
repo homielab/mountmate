@@ -274,3 +274,4 @@
 "Unpin" = "Désépingler";
 "Could not unmount: %@" = "Impossible de démonter : %@";
 "Could not mount: %@" = "Impossible de monter : %@";
+"That password didn’t work. Enter the password to unlock “%@”" = "Ce mot de passe n’a pas fonctionné. Saisissez le mot de passe pour déverrouiller « %@ »";

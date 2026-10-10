@@ -274,3 +274,4 @@
 "Unpin" = "Открепить";
 "Could not unmount: %@" = "Не удалось отмонтировать: %@";
 "Could not mount: %@" = "Не удалось подключить: %@";
+"That password didn’t work. Enter the password to unlock “%@”" = "Пароль не подошёл. Введите пароль, чтобы разблокировать «%@»";

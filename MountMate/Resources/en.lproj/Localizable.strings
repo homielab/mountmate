@@ -278,3 +278,4 @@
 "Unpin" = "Unpin";
 "Could not unmount: %@" = "Could not unmount: %@";
 "Could not mount: %@" = "Could not mount: %@";
+"That password didn’t work. Enter the password to unlock “%@”" = "That password didn’t work. Enter the password to unlock “%@”";

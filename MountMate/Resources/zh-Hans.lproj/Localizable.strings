@@ -274,3 +274,4 @@
 "Unpin" = "取消置顶";
 "Could not unmount: %@" = "无法卸载：%@";
 "Could not mount: %@" = "无法挂载：%@";
+"That password didn’t work. Enter the password to unlock “%@”" = "该密码无效。请输入密码以解锁“%@”";

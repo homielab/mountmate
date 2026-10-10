@@ -274,3 +274,4 @@
 "Unpin" = "Bỏ ghim";
 "Could not unmount: %@" = "Không thể tháo: %@";
 "Could not mount: %@" = "Không thể gắn: %@";
+"That password didn’t work. Enter the password to unlock “%@”" = "Mật khẩu không đúng. Nhập mật khẩu để mở khóa “%@”";
