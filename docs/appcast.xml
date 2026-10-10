@@ -4,11 +4,11 @@
         <title>MountMate</title>
         <item>
             <title>6.0</title>
-            <pubDate>Sat, 10 Oct 2026 19:32:09 +0000</pubDate>
+            <pubDate>Sat, 10 Oct 2026 19:40:36 +0000</pubDate>
             <sparkle:version>38</sparkle:version>
             <sparkle:shortVersionString>6.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.0/MountMate_6.0.zip" length="3891925" type="application/octet-stream" sparkle:edSignature="kCsvG7fKAuofC/29QDpWAIysB72LaW8VTwP/N+OnGVy6FvMjehOobUfGZxxXdQGGVFc6TqUx3NA3hZg/wECCBw=="/>
+            <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.0/MountMate_6.0.zip" length="3891735" type="application/octet-stream" sparkle:edSignature="BczWrOuDEJdhUaNhM8PmIplIfrAZ6xfqINhlp41+RnHAh5TwJxNWhGpz8ksCpL6rEJfaX22nunYhbRKZ2K8KAg=="/>
         </item>
     </channel>
 </rss>
