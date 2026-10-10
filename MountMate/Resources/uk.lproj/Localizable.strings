@@ -64,6 +64,8 @@
 "Behavior" = "Поведінка";
 "Start MountMate at Login" = "Запускати MountMate при вході";
 "Block USB Auto-Mount" = "Блокувати автопідключення USB";
+"Allow Other Apps to Mount Blocked Disks" = "Дозволити іншим програмам підключати заблоковані диски";
+"Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Заблоковані диски не підключаються автоматично лише під час під'єднання або входу в систему. Програми, наприклад засоби резервного копіювання, як і раніше можуть підключати їх за потреби.";
 "Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
 
 // Shortcuts & Language Section

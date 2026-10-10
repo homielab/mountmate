@@ -13,7 +13,24 @@ class DiskMounter: ObservableObject {
     }
   }
 
+  /// When on, blocking applies only to the automatic mount macOS performs
+  /// right after a disk appears. Mounts requested later by other apps
+  /// (e.g. a backup tool such as Carbon Copy Cloner, Finder, Disk Utility)
+  /// are allowed.
+  @Published var allowRequestedMounts: Bool = UserDefaults.standard.bool(
+    forKey: "allowRequestedMounts")
+  {
+    didSet { UserDefaults.standard.set(allowRequestedMounts, forKey: "allowRequestedMounts") }
+  }
+
+  /// How long after a disk appears a mount is treated as macOS's automatic
+  /// mount rather than a request from an app.
+  private static let autoMountWindow: TimeInterval = 15
+
   private var session: DASession?
+  /// When each mountable volume (by BSD name) was last seen appearing.
+  private var diskAppearances: [String: Date] = [:]
+  private let diskAppearancesLock = NSLock()
   private var manualMountApprovals: [String: Date] = [:]
   private let manualMountApprovalLock = NSLock()
   private var cancellables = Set<AnyCancellable>()
@@ -86,6 +103,35 @@ class DiskMounter: ObservableObject {
       }
     }
     return false
+  }
+
+  private func recordAppearance(of bsdName: String?) {
+    guard let key = bsdName?.lowercased() else { return }
+    diskAppearancesLock.lock()
+    diskAppearances[key] = Date()
+    diskAppearancesLock.unlock()
+  }
+
+  private func forgetAppearance(of bsdName: String?) {
+    guard let key = bsdName?.lowercased() else { return }
+    diskAppearancesLock.lock()
+    diskAppearances.removeValue(forKey: key)
+    diskAppearancesLock.unlock()
+  }
+
+  /// True when this mount looks like macOS auto-mounting a disk that just
+  /// appeared. A disk with no recorded appearance is treated as new (and
+  /// recorded now), so callback ordering can never let an auto-mount through.
+  private func isAutomaticMount(bsdName: String?) -> Bool {
+    guard let key = bsdName?.lowercased() else { return true }
+    let now = Date()
+    diskAppearancesLock.lock()
+    defer { diskAppearancesLock.unlock() }
+    guard let appeared = diskAppearances[key] else {
+      diskAppearances[key] = now
+      return true
+    }
+    return now.timeIntervalSince(appeared) < Self.autoMountWindow
   }
 
   private func startDiskArbitration() {
@@ -172,6 +218,11 @@ class DiskMounter: ObservableObject {
         }
       }
 
+      if shouldBlock && this.allowRequestedMounts && !this.isAutomaticMount(bsdName: bsdName) {
+        print("✅ Allowing requested mount of blocked volume \(bsdName ?? "unknown volume").")
+        return nil
+      }
+
       if shouldBlock {
         print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
@@ -182,7 +233,20 @@ class DiskMounter: ObservableObject {
       return nil
     }
 
+    let appearedCallback: DADiskAppearedCallback = { disk, context in
+      guard let context = context else { return }
+      let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
+      this.recordAppearance(of: DADiskGetBSDName(disk).map { String(cString: $0) })
+    }
+    let disappearedCallback: DADiskDisappearedCallback = { disk, context in
+      guard let context = context else { return }
+      let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
+      this.forgetAppearance(of: DADiskGetBSDName(disk).map { String(cString: $0) })
+    }
+
     let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]
+    DARegisterDiskAppearedCallback(session, matching as CFDictionary, appearedCallback, context)
+    DARegisterDiskDisappearedCallback(session, matching as CFDictionary, disappearedCallback, context)
     DARegisterDiskMountApprovalCallback(session, matching as CFDictionary, mountCallback, context)
     DASessionSetDispatchQueue(session, DispatchQueue.main)
 
@@ -264,6 +328,9 @@ class DiskMounter: ObservableObject {
     manualMountApprovalLock.lock()
     manualMountApprovals.removeAll()
     manualMountApprovalLock.unlock()
+    diskAppearancesLock.lock()
+    diskAppearances.removeAll()
+    diskAppearancesLock.unlock()
     self.session = nil
   }
 }

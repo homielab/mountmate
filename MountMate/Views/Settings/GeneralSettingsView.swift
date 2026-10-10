@@ -94,6 +94,12 @@ struct GeneralSettingsView: View {
         Toggle(isOn: $diskMounter.blockUSBAutoMount) {
           Label("Block USB Auto-Mount", systemImage: "hand.raised.slash")
         }
+        Toggle(isOn: $diskMounter.allowRequestedMounts) {
+          Label("Allow Other Apps to Mount Blocked Disks", systemImage: "app.badge.checkmark")
+        }
+        .help(
+          "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed."
+        )
         Toggle(isOn: $ejectOnSleepEnabled) {
           Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
         }

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## 5.20
 
+### Added
+
+- **Allow Other Apps to Mount Blocked Disks**: A new option in Settings → General. When it's on, blocking only stops a disk from mounting automatically when it's plugged in or at login. Apps such as backup tools (e.g. Carbon Copy Cloner) can still mount blocked disks when they need them, without quitting MountMate.
+
 ### Changed
 
 - **Unmounting a Disk Image Ejects It** ([#72](https://github.com/homielab/mountmate/issues/72)): Unmounting the last volume of a disk image (DMG) now ejects the image too, like Finder does, so it no longer stays in the "Disk Images" list.

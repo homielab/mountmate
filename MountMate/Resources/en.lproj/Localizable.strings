@@ -64,6 +64,8 @@
 "Behavior" = "Behavior";
 "Start MountMate at Login" = "Start MountMate at Login";
 "Block USB Auto-Mount" = "Block USB Auto-Mount";
+"Allow Other Apps to Mount Blocked Disks" = "Allow Other Apps to Mount Blocked Disks";
+"Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed.";
 "Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
 
 // Shortcuts & Language Section

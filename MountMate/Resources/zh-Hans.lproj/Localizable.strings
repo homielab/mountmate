@@ -64,6 +64,8 @@
 "Behavior" = "行为";
 "Start MountMate at Login" = "登录时启动 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自动挂载";
+"Allow Other Apps to Mount Blocked Disks" = "允许其他应用挂载已阻止的磁盘";
+"Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁盘仅在插入或登录时不会自动挂载。备份工具等应用仍可在需要时挂载它们。";
 "Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
 
 // Shortcuts & Language Section
