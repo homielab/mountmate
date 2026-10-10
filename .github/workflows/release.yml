@@ -151,3 +151,13 @@ jobs:
               --notes-file RELEASE_NOTES.md \
               --verify-tag --latest
           fi
+
+  # Publish the website (with the new appcast) only after the release and its
+  # downloads exist, so Sparkle never offers an update that can't download.
+  pages:
+    needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
