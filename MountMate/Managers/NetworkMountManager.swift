@@ -60,6 +60,8 @@ class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
 
   @Published var mountedShareIDs: Set<UUID> = []
+  /// Where each saved share is currently mounted, from the last status refresh.
+  private(set) var mountPointsByShareID: [UUID: String] = [:]
   @Published var manuallyConnectedShares: [NetworkShare] = []
   @Published var isUnmountingManualShares = false
 
@@ -94,6 +96,7 @@ class NetworkMountManager: ObservableObject {
 
       DispatchQueue.main.async {
         self.mountedShareIDs = parsedData.mountedUUIDs
+        self.mountPointsByShareID = parsedData.mountPoints
         self.manuallyConnectedShares = parsedData.manualShares
         completion?()
       }
@@ -121,9 +124,10 @@ class NetworkMountManager: ObservableObject {
   }
 
   private func parseMountedShares(from mountOutput: String) -> (
-    mountedUUIDs: Set<UUID>, manualShares: [NetworkShare]
+    mountedUUIDs: Set<UUID>, manualShares: [NetworkShare], mountPoints: [UUID: String]
   ) {
     var mountedUUIDs = Set<UUID>()
+    var mountPoints = [UUID: String]()
     var currentManualShareMountPoints = Set<String>()
     var manualShares = [NetworkShare]()
 
@@ -135,6 +139,9 @@ class NetworkMountManager: ObservableObject {
     for mountedShare in mountedShares {
       if let savedShare = shares.first(where: { mountedShare.matches($0) }) {
         mountedUUIDs.insert(savedShare.id)
+        if mountPoints[savedShare.id] == nil {
+          mountPoints[savedShare.id] = mountedShare.mountPoint
+        }
       } else {
         // It's a manually connected share
         currentManualShareMountPoints.insert(mountedShare.mountPoint)
@@ -195,7 +202,7 @@ class NetworkMountManager: ObservableObject {
       currentManualShareMountPoints.contains($0.key)
     }
 
-    return (mountedUUIDs, manualShares)
+    return (mountedUUIDs, manualShares, mountPoints)
   }
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
@@ -213,28 +220,39 @@ class NetworkMountManager: ObservableObject {
       self.mountLock.lock()
       let waiters = self.pendingMountCompletions.removeValue(forKey: share.id) ?? []
       self.mountLock.unlock()
-      waiters.forEach { $0(success, error) }
+      DispatchQueue.main.async { waiters.forEach { $0(success, error) } }
     }
-
-    let mountPoint = configuredMountPoint(for: share)
-
-    let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
 
     // An explicit (or automatic) mount clears any user-intent suppression and
     // retry state so keep-alive tracking restarts cleanly.
     KeepAliveManager.shared.resume(shareID: share.id)
 
+    // Everything below can block: `/sbin/mount`, and stat()/file checks on a
+    // mount point whose server is unreachable can hang for seconds. Keep it
+    // all off the main thread so the menu never freezes.
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self else { return }
+      self.performMount(share: share, finish: finish)
+    }
+  }
+
+  /// Blocking part of `mount(share:completion:)`. Must not run on the main
+  /// thread. `finish` delivers its result on the main thread.
+  private func performMount(share: NetworkShare, finish: @escaping (Bool, String?) -> Void) {
+    let mountPoint = configuredMountPoint(for: share)
+    let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
+
     // Check if already mounted (either at our target path or elsewhere)
     if let existingMount = findExistingMountPoint(for: share) {
       print("Share \(share.name) is already mounted at \(existingMount)")
-      self.refreshMountStatus()
+      refreshMountStatus()
       finish(true, nil)
       return
     }
 
     // Also check our specific target path just in case
     if isMounted(at: mountPoint) {
-      self.refreshMountStatus()
+      refreshMountStatus()
       finish(true, nil)
       return
     }
@@ -270,49 +288,41 @@ class NetworkMountManager: ObservableObject {
 
     let (executable, arguments) = mountCommand(
       for: share, url: url.absoluteString, mountPoint: mountPoint)
+    let result = runProcess(executable: executable, arguments: arguments)
 
-    DispatchQueue.global(qos: .userInitiated).async {
-      let result = runProcess(executable: executable, arguments: arguments)
+    guard !result.succeeded else {
+      refreshMountStatus { finish(true, nil) }
+      return
+    }
 
-      DispatchQueue.main.async {
-        if !result.succeeded {
-          // Remove the mount point only if we created it and it is still a
-          // plain empty directory. NEVER use FileManager.removeItem here: it
-          // is recursive, and if another mount landed on this path in the
-          // meantime (mount_smbfs then fails with "busy"/"file exists"), it
-          // deletes the contents of the live network share (issue #71).
-          // rmdir(2) only removes an empty directory and refuses mount points.
-          if createdMountPoint && !self.isMounted(at: mountPoint) {
-            _ = rmdir(mountPoint)
-          }
+    // Remove the mount point only if we created it and it is still a plain
+    // empty directory. NEVER use FileManager.removeItem here: it is
+    // recursive, and if another mount landed on this path in the meantime
+    // (mount_smbfs then fails with "busy"/"file exists"), it deletes the
+    // contents of the live network share (issue #71). rmdir(2) only removes
+    // an empty directory and refuses mount points.
+    if createdMountPoint && !isMounted(at: mountPoint) {
+      _ = rmdir(mountPoint)
+    }
 
-          let rawError =
-            result.stderr.isEmpty
-            ? "\(executable) exited with code \(result.exitCode ?? -1)."
-            : result.stderr
-          let sanitized = self.sanitizeError(rawError)
-          // Detect permission-related mount failures
-          let lower = sanitized.lowercased()
-          if lower.contains("permission denied") || lower.contains("operation not permitted")
-            || lower.contains("not owner")
-          {
-            self.refreshMountStatus {
-              finish(
-                false,
-                "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
-              )
-            }
-          } else {
-            self.refreshMountStatus {
-              finish(false, sanitized)
-            }
-          }
-        } else {
-          self.refreshMountStatus {
-            finish(true, nil)
-          }
-        }
+    let rawError =
+      result.stderr.isEmpty
+      ? "\(executable) exited with code \(result.exitCode ?? -1)."
+      : result.stderr
+    let sanitized = sanitizeError(rawError)
+    // Detect permission-related mount failures
+    let lower = sanitized.lowercased()
+    if lower.contains("permission denied") || lower.contains("operation not permitted")
+      || lower.contains("not owner")
+    {
+      refreshMountStatus {
+        finish(
+          false,
+          "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
+        )
       }
+    } else {
+      refreshMountStatus { finish(false, sanitized) }
     }
   }
 
@@ -450,10 +460,11 @@ class NetworkMountManager: ObservableObject {
     return mountedShareIDs.contains(share.id)
   }
 
+  /// Where the share is (or will be) mounted. Uses the cached mount table from
+  /// the last status refresh so it is safe to call from UI code.
   func getMountPoint(for share: NetworkShare) -> String {
-    // If it's already mounted somewhere, return that path
-    if let existingPath = findExistingMountPoint(for: share) {
-      return existingPath
+    if let mountedPath = mountPointsByShareID[share.id] {
+      return mountedPath
     }
 
     return configuredMountPoint(for: share)
