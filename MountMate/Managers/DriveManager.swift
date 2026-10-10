@@ -37,6 +37,12 @@ class DriveManager: ObservableObject {
   // MARK: - Public Actions
 
   func refreshDrives(qos: DispatchQoS.QoSClass = .background) {
+    // The in-progress flags are only touched on the main thread; callers on
+    // background queues (keep-alive, mount completions) hop over first.
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { self.refreshDrives(qos: qos) }
+      return
+    }
     if isFetchInProgress {
       needsFollowupRefresh = true
       return
@@ -44,7 +50,7 @@ class DriveManager: ObservableObject {
     isFetchInProgress = true
 
     if physicalDisks != nil {
-      DispatchQueue.main.async { self.isRefreshing = true }
+      isRefreshing = true
     }
 
     DispatchQueue.global(qos: qos).async { [weak self] in
@@ -84,7 +90,11 @@ class DriveManager: ObservableObject {
   private func updateState(with disks: [PhysicalDisk]) {
     DispatchQueue.main.async {
       self.refreshRetryCount = 0
-      self.physicalDisks = disks
+      // Publishing re-renders the whole list; skip it when nothing changed
+      // (most refreshes after mount/unmount notifications or popover opens).
+      if self.physicalDisks != disks {
+        self.physicalDisks = disks
+      }
       self.isFetchInProgress = false
       self.isRefreshing = false
       self.refreshError = nil
@@ -1016,7 +1026,9 @@ class DriveManager: ObservableObject {
 
   @objc private func handleDiskNotification(notification: NSNotification) {
     refreshDebounceTimer?.invalidate()
-    refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) {
+    // Short debounce: coalesces bursts (a disk with several volumes posts one
+    // notification per volume) without making plug-ins feel slow.
+    refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) {
       [weak self] _ in
       if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
         print(

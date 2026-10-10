@@ -113,7 +113,7 @@ struct APFSContainer: Identifiable, Hashable {
   var volumes: [Volume]
 }
 
-struct PhysicalDisk: Identifiable {
+struct PhysicalDisk: Identifiable, Equatable {
   let id: String  // deviceIdentifier
   let diskUUID: String?
   let connectionType: String
