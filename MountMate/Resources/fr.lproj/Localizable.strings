@@ -272,3 +272,5 @@
 "Pinned" = "Épinglés";
 "Pin to Top" = "Épingler en haut";
 "Unpin" = "Désépingler";
+"Could not unmount: %@" = "Impossible de démonter : %@";
+"Could not mount: %@" = "Impossible de monter : %@";

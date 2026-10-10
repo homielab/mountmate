@@ -23,6 +23,7 @@ struct ErrorBannerView: View {
       Button(action: {
         driveManager.refreshError = nil
         driveManager.refreshDrives(qos: .userInitiated)
+        NetworkMountManager.shared.refreshMountStatus()
       }) {
         Image(systemName: "arrow.clockwise")
           .foregroundStyle(.white)

@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import AppKit
 import Foundation
 
 /// A network mount reported by `/sbin/mount`, independent of protocol.
@@ -74,9 +75,29 @@ class NetworkMountManager: ObservableObject {
   private var pendingMountCompletions: [UUID: [(Bool, String?) -> Void]] = [:]
   private let mountLock = NSLock()
 
+  private var workspaceObservers: [NSObjectProtocol] = []
+  private var mountEventDebounce: DispatchWorkItem?
+
   private init() {
     // Initial check
     refreshMountStatus()
+
+    // Refresh share status on mount/unmount events (debounced so a burst of
+    // events runs `/sbin/mount` once), instead of on every disk refresh.
+    let center = NSWorkspace.shared.notificationCenter
+    for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification] {
+      workspaceObservers.append(
+        center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+          self?.scheduleMountEventRefresh()
+        })
+    }
+  }
+
+  private func scheduleMountEventRefresh() {
+    mountEventDebounce?.cancel()
+    let work = DispatchWorkItem { [weak self] in self?.refreshMountStatus() }
+    mountEventDebounce = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
   }
 
   func refreshMountStatus(completion: (() -> Void)? = nil) {

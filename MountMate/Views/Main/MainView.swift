@@ -68,6 +68,7 @@ struct MainView: View {
       // The user is looking at the list right now, so don't refresh at
       // background priority.
       driveManager.refreshDrives(qos: .userInitiated)
+      networkManager.refreshMountStatus()
     }
   }
 

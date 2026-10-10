@@ -272,3 +272,5 @@
 "Pinned" = "已置顶";
 "Pin to Top" = "置顶";
 "Unpin" = "取消置顶";
+"Could not unmount: %@" = "无法卸载：%@";
+"Could not mount: %@" = "无法挂载：%@";

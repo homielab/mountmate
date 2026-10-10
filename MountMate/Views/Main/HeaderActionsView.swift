@@ -96,7 +96,10 @@ struct HeaderActionsView: View {
         }
 
         // Refresh Button
-        Button(action: { driveManager.refreshDrives(qos: .userInitiated) }) {
+        Button(action: {
+          driveManager.refreshDrives(qos: .userInitiated)
+          NetworkMountManager.shared.refreshMountStatus()
+        }) {
           Group {
             if driveManager.isRefreshing {
               ProgressView().controlSize(.small)

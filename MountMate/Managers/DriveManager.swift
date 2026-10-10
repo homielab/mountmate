@@ -108,8 +108,6 @@ class DriveManager: ObservableObject {
         self.isUnmountingAll = false
       }
 
-      // Also refresh network shares whenever we get a disk event/refresh
-      NetworkMountManager.shared.refreshMountStatus()
     }
   }
 
@@ -157,7 +155,9 @@ class DriveManager: ObservableObject {
   /// - Parameter suppressReconnect: `false` when the unmount is not a user
   ///   decision (e.g. the unmount-all-on-sleep action) so that keep-alive
   ///   targets are reconnected on the next wake or sweep.
-  func unmountAllDrives(suppressReconnect: Bool = true) {
+  /// - Parameter reportFailures: show an alert naming volumes that could not
+  ///   be unmounted. Off for automatic actions nobody is watching (sleep).
+  func unmountAllDrives(suppressReconnect: Bool = true, reportFailures: Bool = true) {
     let drivesToUnmount = (self.physicalDisks ?? [])
       .filter(\.isRemovable)
       .flatMap(\.allVolumes)
@@ -170,12 +170,21 @@ class DriveManager: ObservableObject {
     DispatchQueue.main.async { self.isUnmountingAll = true }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      for drive in drivesToUnmount {
-        _ = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["unmount", drive.deviceIdentifier])
+      let failures = Self.runConcurrently(drivesToUnmount) { volume in
+        runProcess(
+          executable: "/usr/sbin/diskutil", arguments: ["unmount", volume.deviceIdentifier]
+        ).succeeded
       }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-        self?.refreshDrives(qos: .userInitiated)
+      DispatchQueue.main.async {
+        guard let self else { return }
+        if reportFailures {
+          self.reportBulkFailures(
+            failures,
+            title: NSLocalizedString("Unmount Failed", comment: "Alert title"),
+            format: NSLocalizedString(
+              "Could not unmount: %@", comment: "Bulk unmount failure; list of volume names"))
+        }
+        self.refreshDrives(qos: .userInitiated)
       }
     }
   }
@@ -191,18 +200,56 @@ class DriveManager: ObservableObject {
 
     guard !volumesToMount.isEmpty else { return }
 
+    for volume in volumesToMount {
+      KeepAliveManager.shared.resume(volume: volume)
+      // Lets the mount through MountMate's own auto-mount block.
+      let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
+      NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+    }
+
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      for volume in volumesToMount {
-        KeepAliveManager.shared.resume(volume: volume)
-        let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
-        NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-        _ = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+      let failures = Self.runConcurrently(volumesToMount) { volume in
+        runProcess(
+          executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier]
+        ).succeeded
       }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-        self?.refreshDrives(qos: .userInitiated)
+      DispatchQueue.main.async {
+        guard let self else { return }
+        self.reportBulkFailures(
+          failures,
+          title: NSLocalizedString("Mount Failed", comment: "Alert title"),
+          format: NSLocalizedString(
+            "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
+        self.refreshDrives(qos: .userInitiated)
       }
     }
+  }
+
+  /// Runs `operation` for every volume in parallel (at most one per CPU core)
+  /// and returns the volumes it failed for, in the original order. Blocks
+  /// until all are done; call off the main thread.
+  private static func runConcurrently(
+    _ volumes: [Volume], operation: (Volume) -> Bool
+  ) -> [Volume] {
+    final class Results: @unchecked Sendable {
+      private let lock = NSLock()
+      private var succeeded: [Bool]
+      init(count: Int) { succeeded = Array(repeating: false, count: count) }
+      func set(_ index: Int, _ ok: Bool) { lock.withLock { succeeded[index] = ok } }
+      var values: [Bool] { lock.withLock { succeeded } }
+    }
+    let results = Results(count: volumes.count)
+    DispatchQueue.concurrentPerform(iterations: volumes.count) { index in
+      results.set(index, operation(volumes[index]))
+    }
+    return zip(volumes, results.values).filter { !$0.1 }.map(\.0)
+  }
+
+  private func reportBulkFailures(_ failures: [Volume], title: String, format: String) {
+    guard !failures.isEmpty else { return }
+    let names = failures.map(\.name).joined(separator: ", ")
+    userActionError = AppAlert(
+      title: title, message: String(format: format, names), kind: .basic)
   }
 
   func eject(disk: PhysicalDisk) {

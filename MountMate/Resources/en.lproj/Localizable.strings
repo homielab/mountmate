@@ -276,3 +276,5 @@
 "Pinned" = "Pinned";
 "Pin to Top" = "Pin to Top";
 "Unpin" = "Unpin";
+"Could not unmount: %@" = "Could not unmount: %@";
+"Could not mount: %@" = "Could not mount: %@";

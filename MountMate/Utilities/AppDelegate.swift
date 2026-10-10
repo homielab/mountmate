@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       print("System will sleep. Ejecting all user volumes.")
       // The unmount is not a user decision — keep-alive targets reconnect on
       // wake, so pass suppressReconnect: false.
-      DriveManager.shared.unmountAllDrives(suppressReconnect: false)
+      DriveManager.shared.unmountAllDrives(suppressReconnect: false, reportFailures: false)
     }
   }
 

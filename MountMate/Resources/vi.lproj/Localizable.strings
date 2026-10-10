@@ -272,3 +272,5 @@
 "Pinned" = "Đã ghim";
 "Pin to Top" = "Ghim lên đầu";
 "Unpin" = "Bỏ ghim";
+"Could not unmount: %@" = "Không thể tháo: %@";
+"Could not mount: %@" = "Không thể gắn: %@";
