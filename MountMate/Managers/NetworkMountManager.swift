@@ -65,6 +65,13 @@ class NetworkMountManager: ObservableObject {
 
   private var manualSharesDictionary: [String: NetworkShare] = [:]
 
+  /// Completions waiting on an in-flight mount, keyed by share ID. Login
+  /// auto-mount, keep-alive sweeps (launch, wake, network change) and manual
+  /// clicks can all ask for the same share at once; only one mount_* process
+  /// may run per share, the rest piggyback on its result.
+  private var pendingMountCompletions: [UUID: [(Bool, String?) -> Void]] = [:]
+  private let mountLock = NSLock()
+
   private init() {
     // Initial check
     refreshMountStatus()
@@ -192,6 +199,23 @@ class NetworkMountManager: ObservableObject {
   }
 
   func mount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
+    mountLock.lock()
+    if pendingMountCompletions[share.id] != nil {
+      pendingMountCompletions[share.id]?.append(completion)
+      mountLock.unlock()
+      return
+    }
+    pendingMountCompletions[share.id] = [completion]
+    mountLock.unlock()
+
+    let finish: (Bool, String?) -> Void = { [weak self] success, error in
+      guard let self else { return }
+      self.mountLock.lock()
+      let waiters = self.pendingMountCompletions.removeValue(forKey: share.id) ?? []
+      self.mountLock.unlock()
+      waiters.forEach { $0(success, error) }
+    }
+
     let mountPoint = configuredMountPoint(for: share)
 
     let password = KeychainManager.shared.load(account: share.id.uuidString) ?? ""
@@ -204,41 +228,43 @@ class NetworkMountManager: ObservableObject {
     if let existingMount = findExistingMountPoint(for: share) {
       print("Share \(share.name) is already mounted at \(existingMount)")
       self.refreshMountStatus()
-      completion(true, nil)
+      finish(true, nil)
       return
     }
 
     // Also check our specific target path just in case
     if isMounted(at: mountPoint) {
       self.refreshMountStatus()
-      completion(true, nil)
+      finish(true, nil)
       return
     }
 
     // Let's try creating the directory first.
+    var createdMountPoint = false
     do {
       if !FileManager.default.fileExists(atPath: mountPoint) {
         try FileManager.default.createDirectory(
           atPath: mountPoint, withIntermediateDirectories: true)
+        createdMountPoint = true
       }
     } catch {
       let nsError = error as NSError
       if nsError.domain == NSCocoaErrorDomain
         && (nsError.code == NSFileWriteNoPermissionError || nsError.code == NSFileNoSuchFileError)
       {
-        completion(
+        finish(
           false,
           "Cannot create mount point at \"\(mountPoint)\".\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
         )
       } else {
-        completion(
+        finish(
           false, "Failed to create mount point at \"\(mountPoint)\": \(error.localizedDescription)")
       }
       return
     }
 
     guard let url = connectionURL(for: share, password: password) else {
-      completion(false, "Invalid share configuration")
+      finish(false, "Invalid share configuration")
       return
     }
 
@@ -250,8 +276,15 @@ class NetworkMountManager: ObservableObject {
 
       DispatchQueue.main.async {
         if !result.succeeded {
-          // Cleanup mount point if empty
-          try? FileManager.default.removeItem(atPath: mountPoint)
+          // Remove the mount point only if we created it and it is still a
+          // plain empty directory. NEVER use FileManager.removeItem here: it
+          // is recursive, and if another mount landed on this path in the
+          // meantime (mount_smbfs then fails with "busy"/"file exists"), it
+          // deletes the contents of the live network share (issue #71).
+          // rmdir(2) only removes an empty directory and refuses mount points.
+          if createdMountPoint && !self.isMounted(at: mountPoint) {
+            _ = rmdir(mountPoint)
+          }
 
           let rawError =
             result.stderr.isEmpty
@@ -264,19 +297,19 @@ class NetworkMountManager: ObservableObject {
             || lower.contains("not owner")
           {
             self.refreshMountStatus {
-              completion(
+              finish(
                 false,
                 "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
               )
             }
           } else {
             self.refreshMountStatus {
-              completion(false, sanitized)
+              finish(false, sanitized)
             }
           }
         } else {
           self.refreshMountStatus {
-            completion(true, nil)
+            finish(true, nil)
           }
         }
       }
