@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- **Accessibility Prompt in Settings**: The "Accessibility Permission Required" alert no longer appears every time Settings opens. Settings now shows an inline status that updates by itself when access is granted, keyboard shortcuts start working right away without restarting MountMate, and there is a tip for the case where access looks enabled but doesn't work after an update.
+
+---
+
 ## 6.0
 
 ### Changed

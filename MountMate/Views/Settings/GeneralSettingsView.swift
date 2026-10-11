@@ -44,6 +44,7 @@ struct GeneralSettingsView: View {
 
   @State private var showRestartAlert = false
   @State private var showAccessibilityAlert = false
+  @State private var accessibilityGranted = HotkeyManager.checkAccessibilityPermissions()
   @State private var recordingShortcut: HotkeyAction?
   @State private var showShortcutConflictAlert = false
   @State private var shortcutConflictMessage = ""
@@ -148,9 +149,30 @@ struct GeneralSettingsView: View {
           Label("Enable Keyboard Shortcuts", systemImage: "keyboard")
         }
         .onChange(of: hotkeysEnabled) { enabled in
-          if enabled {
-            checkAccessibilityPermission()
+          refreshAccessibilityStatus()
+          // Only an explicit "turn on" asks; opening Settings never does.
+          if enabled && !accessibilityGranted {
+            showAccessibilityAlert = true
           }
+        }
+
+        if hotkeysEnabled && !accessibilityGranted {
+          VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+              Text("Accessibility access is required for keyboard shortcuts.")
+              Spacer()
+              Button("Open System Settings") { openAccessibilitySettings() }
+                .controlSize(.small)
+            }
+            Text(
+              "Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          }
+          .padding(.vertical, 2)
         }
 
         if hotkeysEnabled {
@@ -210,8 +232,15 @@ struct GeneralSettingsView: View {
     }
     .formStyle(.grouped)
     .padding(.horizontal)
-    .onAppear {
-      checkAccessibilityPermission()
+    .onAppear { refreshAccessibilityStatus() }
+    // Pick up a permission change made in System Settings without reopening
+    // this window: on returning to the app, and every few seconds while
+    // shortcuts are on but not yet allowed.
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) {
+      _ in refreshAccessibilityStatus()
+    }
+    .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
+      if hotkeysEnabled && !accessibilityGranted { refreshAccessibilityStatus() }
     }
 
     .alert("Restart Required", isPresented: $showRestartAlert) {
@@ -221,13 +250,7 @@ struct GeneralSettingsView: View {
       Text("Please restart MountMate for the language change to take effect.")
     }
     .alert("Accessibility Permission Required", isPresented: $showAccessibilityAlert) {
-      Button("Open System Settings") {
-        if let url = URL(
-          string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-        {
-          NSWorkspace.shared.open(url)
-        }
-      }
+      Button("Open System Settings") { openAccessibilitySettings() }
       Button("Later", role: .cancel) {}
     } message: {
       Text(
@@ -241,9 +264,29 @@ struct GeneralSettingsView: View {
     }
   }
 
-  private func checkAccessibilityPermission() {
-    guard hotkeysEnabled, !HotkeyManager.checkAccessibilityPermissions() else { return }
-    showAccessibilityAlert = true
+  /// Re-reads the Accessibility permission. When it has just been granted,
+  /// starts the shortcut listener so shortcuts work without a relaunch.
+  private func refreshAccessibilityStatus() {
+    let granted = HotkeyManager.checkAccessibilityPermissions()
+    guard granted != accessibilityGranted else { return }
+    accessibilityGranted = granted
+    if granted {
+      showAccessibilityAlert = false
+      if hotkeysEnabled && recordingShortcut == nil {
+        hotkeyManager.startListening()
+      }
+    }
+  }
+
+  private func openAccessibilitySettings() {
+    // Registers this exact build in the Accessibility list (so the user only
+    // has to flip the switch), then opens the pane.
+    HotkeyManager.requestAccessibilityPermission()
+    if let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+    {
+      NSWorkspace.shared.open(url)
+    }
   }
 
   private func shortcutRow(description: LocalizedStringKey, action: HotkeyAction) -> some View {

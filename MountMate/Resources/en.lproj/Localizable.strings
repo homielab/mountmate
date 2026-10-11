@@ -279,3 +279,5 @@
 "Could not unmount: %@" = "Could not unmount: %@";
 "Could not mount: %@" = "Could not mount: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "That password didn’t work. Enter the password to unlock “%@”";
+"Accessibility access is required for keyboard shortcuts." = "Accessibility access is required for keyboard shortcuts.";
+"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update.";

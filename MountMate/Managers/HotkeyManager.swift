@@ -314,6 +314,14 @@ class HotkeyManager: ObservableObject {
     AXIsProcessTrustedWithOptions(nil)
   }
 
+  /// Adds the running build to System Settings → Accessibility (and shows the
+  /// system prompt) if it isn't trusted yet. Only call from a user action.
+  @discardableResult
+  static func requestAccessibilityPermission() -> Bool {
+    let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+    return AXIsProcessTrustedWithOptions(options)
+  }
+
   // MARK: - Listening
 
   func startListening() {

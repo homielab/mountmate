@@ -275,3 +275,5 @@
 "Could not unmount: %@" = "Не вдалося відмонтувати: %@";
 "Could not mount: %@" = "Не вдалося підключити: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Пароль не підійшов. Введіть пароль, щоб розблокувати «%@»";
+"Accessibility access is required for keyboard shortcuts." = "Для сполучень клавіш потрібен доступ до Універсального доступу.";
+"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Вже ввімкнено? Видаліть MountMate зі списку кнопкою «–», потім додайте знову. Це може знадобитися після оновлення.";

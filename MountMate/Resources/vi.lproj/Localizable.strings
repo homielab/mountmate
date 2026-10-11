@@ -275,3 +275,5 @@
 "Could not unmount: %@" = "Không thể tháo: %@";
 "Could not mount: %@" = "Không thể gắn: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Mật khẩu không đúng. Nhập mật khẩu để mở khóa “%@”";
+"Accessibility access is required for keyboard shortcuts." = "Phím tắt cần quyền Trợ năng.";
+"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Đã bật rồi? Xóa MountMate khỏi danh sách bằng nút –, rồi thêm lại. Việc này có thể cần sau khi cập nhật.";

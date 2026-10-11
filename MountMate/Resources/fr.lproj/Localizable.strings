@@ -275,3 +275,5 @@
 "Could not unmount: %@" = "Impossible de démonter : %@";
 "Could not mount: %@" = "Impossible de monter : %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Ce mot de passe n’a pas fonctionné. Saisissez le mot de passe pour déverrouiller « %@ »";
+"Accessibility access is required for keyboard shortcuts." = "L’accès Accessibilité est requis pour les raccourcis clavier.";
+"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Déjà activé ? Retirez MountMate de la liste avec le bouton –, puis ajoutez-le à nouveau. Cela peut être nécessaire après une mise à jour.";

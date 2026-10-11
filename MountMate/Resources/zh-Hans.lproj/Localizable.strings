@@ -275,3 +275,5 @@
 "Could not unmount: %@" = "无法卸载：%@";
 "Could not mount: %@" = "无法挂载：%@";
 "That password didn’t work. Enter the password to unlock “%@”" = "该密码无效。请输入密码以解锁“%@”";
+"Accessibility access is required for keyboard shortcuts." = "键盘快捷键需要辅助功能权限。";
+"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "已经启用？请用“–”按钮将 MountMate 从列表中移除，然后重新添加。更新后可能需要这样做。";
