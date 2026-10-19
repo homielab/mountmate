@@ -269,6 +269,17 @@
 "System Mount Rule Not Updated" = "Системное правило монтирования не обновлено";
 "System Mount Rule Update Failed" = "MountMate не удалось обновить системное правило монтирования в /etc/fstab. После перезагрузки блокировка автоматического монтирования может работать не так, как ожидается.\n\nПодробности:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate необходимо обновить системные правила подключения (/etc/fstab).";
+"“%@” is now blocked at startup." = "«%@» теперь блокируется при запуске.";
+"%d disks are now blocked at startup." = "Дисков, блокируемых при запуске: %d.";
+"Startup block removed." = "Блокировка при запуске снята.";
+"Block at Startup is off. All startup rules were removed." = "Блокировка при запуске выключена. Все правила запуска удалены.";
+"Startup blocking updated." = "Блокировка при запуске обновлена.";
+"Block at Startup is on. Blocked disks get their startup rule the next time they're connected." = "Блокировка при запуске включена. Заблокированные диски получат правило при следующем подключении.";
+"“%@” will mount at its default location again." = "«%@» снова будет подключаться в стандартное место.";
+"“%@” will now mount at %@." = "«%@» теперь будет подключаться в %@.";
+"Updating startup rules…" = "Обновление правил запуска…";
+"Blocked at startup: %d disk(s)." = "Блокируется при запуске: %d диск(ов).";
+"No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "Пока ни у одного диска нет правила запуска. Заблокированные диски получат его при следующем подключении.";
 "Administrator Password Needed" = "Требуется пароль администратора";
 "The password was incorrect. Try again." = "Неверный пароль. Попробуйте ещё раз.";
 "Incorrect administrator password." = "Неверный пароль администратора.";

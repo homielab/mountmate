@@ -269,6 +269,17 @@
 "System Mount Rule Not Updated" = "Chưa cập nhật quy tắc gắn kết hệ thống";
 "System Mount Rule Update Failed" = "MountMate không thể cập nhật quy tắc gắn kết hệ thống trong /etc/fstab. Sau khi khởi động lại, việc chặn tự động gắn kết có thể không hoạt động như mong đợi.\n\nChi tiết:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate cần cập nhật quy tắc gắn kết hệ thống (/etc/fstab).";
+"“%@” is now blocked at startup." = "“%@” giờ đã bị chặn khi khởi động.";
+"%d disks are now blocked at startup." = "%d ổ đĩa giờ đã bị chặn khi khởi động.";
+"Startup block removed." = "Đã gỡ chặn khi khởi động.";
+"Block at Startup is off. All startup rules were removed." = "Đã tắt Chặn khi khởi động. Mọi quy tắc khởi động đã được xoá.";
+"Startup blocking updated." = "Đã cập nhật chặn khi khởi động.";
+"Block at Startup is on. Blocked disks get their startup rule the next time they're connected." = "Đã bật Chặn khi khởi động. Ổ đĩa bị chặn sẽ được thêm quy tắc vào lần kết nối tiếp theo.";
+"“%@” will mount at its default location again." = "“%@” sẽ được gắn lại ở vị trí mặc định.";
+"“%@” will now mount at %@." = "“%@” giờ sẽ được gắn tại %@.";
+"Updating startup rules…" = "Đang cập nhật quy tắc khởi động…";
+"Blocked at startup: %d disk(s)." = "Bị chặn khi khởi động: %d ổ đĩa.";
+"No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "Chưa có ổ đĩa nào có quy tắc khởi động. Ổ đĩa bị chặn sẽ được thêm quy tắc vào lần kết nối tiếp theo.";
 "Administrator Password Needed" = "Cần mật khẩu quản trị";
 "The password was incorrect. Try again." = "Mật khẩu không đúng. Hãy thử lại.";
 "Incorrect administrator password." = "Mật khẩu quản trị không đúng.";

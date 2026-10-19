@@ -85,6 +85,36 @@ struct GeneralSettingsView: View {
     }
   }
 
+  /// One line under "Also Block at Startup" saying what is in effect, so the
+  /// user can see the result after the password prompt closes.
+  @ViewBuilder private var startupBlockStatus: some View {
+    if persistence.isUpdatingStartupRules {
+      HStack(spacing: 6) {
+        ProgressView().controlSize(.small)
+        Text("Updating startup rules…")
+      }
+      .font(.caption)
+      .foregroundStyle(.secondary)
+    } else if persistence.blockAtStartup {
+      if persistence.startupRuleCount > 0 {
+        Label(
+          String(
+            format: NSLocalizedString(
+              "Blocked at startup: %d disk(s).", comment: "Startup rule count in Settings"),
+            persistence.startupRuleCount),
+          systemImage: "checkmark.circle.fill"
+        )
+        .font(.caption)
+        .foregroundStyle(.green)
+      } else {
+        Text("No disk has a startup rule yet. Blocked disks get one the next time they're connected.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+  }
+
   var body: some View {
     Form {
       Section {
@@ -136,6 +166,7 @@ struct GeneralSettingsView: View {
         .help(
           "Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected."
         )
+        startupBlockStatus
         Toggle(isOn: $ejectOnSleepEnabled) {
           Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
         }

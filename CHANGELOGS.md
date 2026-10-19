@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **Clear Confirmation After Entering Your Password**: After you enter your administrator password, a short confirmation now appears at the top of the screen, for example "“Backup” is now blocked at startup." It shows when turning Block at Startup on or off, blocking or unblocking a disk with it on, and saving or removing a custom mount point. It appears even if MountMate's menu has closed. Settings also shows the progress and how many disks are blocked at startup, right under the option.
+
+---
+
 ## 6.2.1
 
 ### Fixed

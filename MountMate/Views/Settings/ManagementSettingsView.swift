@@ -122,6 +122,11 @@ struct ManagementSettingsView: View {
       removingCustomMountPointIDs.remove(info.id)
       switch result {
       case .success:
+        FeedbackHUD.show(
+          String(
+            format: NSLocalizedString(
+              "“%@” will mount at its default location again.",
+              comment: "Custom mount point removed"), info.name))
         // Like the editor: remount a connected, mounted volume so it moves
         // back to the default location now.
         if let volume = (DriveManager.shared.physicalDisks ?? []).flatMap(\.allVolumes)

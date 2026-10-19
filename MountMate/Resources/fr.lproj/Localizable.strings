@@ -269,6 +269,17 @@
 "System Mount Rule Not Updated" = "Règle de montage système non mise à jour";
 "System Mount Rule Update Failed" = "MountMate n'a pas pu mettre à jour la règle de montage système dans /etc/fstab. Le blocage du montage automatique pourrait ne pas se comporter comme prévu après un redémarrage.\n\nDétails :\n%@";
 "System Mount Rule Admin Prompt" = "MountMate doit mettre à jour les règles de montage du système (/etc/fstab).";
+"“%@” is now blocked at startup." = "« %@ » est maintenant bloqué au démarrage.";
+"%d disks are now blocked at startup." = "%d disques sont maintenant bloqués au démarrage.";
+"Startup block removed." = "Blocage au démarrage supprimé.";
+"Block at Startup is off. All startup rules were removed." = "Le blocage au démarrage est désactivé. Toutes les règles de démarrage ont été supprimées.";
+"Startup blocking updated." = "Blocage au démarrage mis à jour.";
+"Block at Startup is on. Blocked disks get their startup rule the next time they're connected." = "Le blocage au démarrage est activé. Les disques bloqués recevront leur règle à leur prochaine connexion.";
+"“%@” will mount at its default location again." = "« %@ » sera de nouveau monté à son emplacement par défaut.";
+"“%@” will now mount at %@." = "« %@ » sera désormais monté dans %@.";
+"Updating startup rules…" = "Mise à jour des règles de démarrage…";
+"Blocked at startup: %d disk(s)." = "Bloqués au démarrage : %d disque(s).";
+"No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "Aucun disque n’a encore de règle de démarrage. Les disques bloqués en recevront une à leur prochaine connexion.";
 "Administrator Password Needed" = "Mot de passe administrateur requis";
 "The password was incorrect. Try again." = "Le mot de passe est incorrect. Réessayez.";
 "Incorrect administrator password." = "Mot de passe administrateur incorrect.";

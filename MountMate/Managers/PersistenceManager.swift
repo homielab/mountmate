@@ -60,6 +60,12 @@ class PersistenceManager: ObservableObject {
   @Published private(set) var blockAtStartup: Bool = UserDefaults.standard.bool(
     forKey: "blockAtStartup")
 
+  /// True while a user-initiated startup-rule update is running (including
+  /// while the password prompt is up). Shown as a spinner in Settings.
+  @Published private(set) var isUpdatingStartupRules = false
+  /// Number of MountMate startup-block rules currently in /etc/fstab.
+  @Published private(set) var startupRuleCount = 0
+
   /// Volume UUIDs (uppercased) that currently have a MountMate startup-block
   /// rule in /etc/fstab. Main thread only. Not @Published: no view shows it,
   /// and publishing would redraw every observer of this manager.
@@ -515,7 +521,7 @@ class PersistenceManager: ObservableObject {
 
     // Cancelling the password prompt here just turns the toggle back, with
     // no alert: the user saw the toggle and chose not to continue.
-    reconcileStartupBlockRules(userInitiated: true, silentOnCancel: true) {
+    reconcileStartupBlockRules(userInitiated: true, silentOnCancel: true, fromToggle: true) {
       [weak self] succeeded in
       // Only roll back if the user has not changed the setting again since.
       guard let self, !succeeded, self.blockAtStartup == enabled else { return }
@@ -561,10 +567,17 @@ class PersistenceManager: ObservableObject {
   ///     administrator prompt (the caller reports the failure itself).
   ///   - completion: Called on the main thread with false if the update failed.
   func reconcileStartupBlockRules(
-    userInitiated: Bool, silentOnCancel: Bool = false, completion: ((Bool) -> Void)? = nil
+    userInitiated: Bool, silentOnCancel: Bool = false, fromToggle: Bool = false,
+    completion: ((Bool) -> Void)? = nil
   ) {
+    if userInitiated { isUpdatingStartupRules = true }
     fstabQueue.async { [weak self] in
       guard let self else { return }
+      defer {
+        if userInitiated {
+          DispatchQueue.main.async { self.isUpdatingStartupRules = false }
+        }
+      }
       if userInitiated {
         self.backgroundFstabUpdateDeclined = false
       } else if self.backgroundFstabUpdateDeclined {
@@ -581,8 +594,13 @@ class PersistenceManager: ObservableObject {
       }
 
       do {
-        try self.applyStartupBlockRules(
+        let change = try self.applyStartupBlockRules(
           enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: 2)
+        if userInitiated, let message = Self.feedbackMessage(
+          for: change, enabled: enabled, fromToggle: fromToggle)
+        {
+          FeedbackHUD.show(message)
+        }
         DispatchQueue.main.async { completion?(true) }
       } catch {
         if userInitiated {
@@ -604,9 +622,55 @@ class PersistenceManager: ObservableObject {
   /// One read-compute-write cycle of `reconcileStartupBlockRules`. Runs on
   /// `fstabQueue`. Retries when /etc/fstab changed between the read and the
   /// privileged write (e.g. a custom mount point was saved meanwhile).
+  /// What one startup-rule update changed in /etc/fstab.
+  struct StartupRuleChange {
+    var addedNames: [String] = []
+    var removedCount = 0
+    /// Rules present after the update.
+    var ruleCount = 0
+    var wroteFile: Bool { !addedNames.isEmpty || removedCount > 0 }
+  }
+
+  /// The confirmation shown after a user-initiated update, or nil when there
+  /// is nothing worth saying.
+  static func feedbackMessage(
+    for change: StartupRuleChange, enabled: Bool, fromToggle: Bool
+  ) -> String? {
+    if change.wroteFile {
+      if change.removedCount == 0, change.addedNames.count == 1 {
+        return String(
+          format: NSLocalizedString(
+            "“%@” is now blocked at startup.", comment: "Startup rule added for one disk"),
+          change.addedNames[0])
+      }
+      if change.removedCount == 0 {
+        return String(
+          format: NSLocalizedString(
+            "%d disks are now blocked at startup.", comment: "Startup rules added for several disks"),
+          change.addedNames.count)
+      }
+      if change.addedNames.isEmpty {
+        return enabled
+          ? NSLocalizedString("Startup block removed.", comment: "Startup rule removed")
+          : NSLocalizedString(
+            "Block at Startup is off. All startup rules were removed.",
+            comment: "Startup blocking turned off")
+      }
+      return NSLocalizedString("Startup blocking updated.", comment: "Startup rules changed")
+    }
+    // Turned on, but no blocked disk is connected to read its format from.
+    if fromToggle, enabled, change.ruleCount == 0 {
+      return NSLocalizedString(
+        "Block at Startup is on. Blocked disks get their startup rule the next time they're connected.",
+        comment: "Startup blocking on, nothing to write yet")
+    }
+    return nil
+  }
+
+  @discardableResult
   private func applyStartupBlockRules(
     enabled: Bool, blockedInfos: [ManagedVolumeInfo], attemptsLeft: Int
-  ) throws {
+  ) throws -> StartupRuleChange {
     do {
       let snapshot = try self.loadSystemFstabSnapshot()
       let contents = snapshot.contents
@@ -643,7 +707,7 @@ class PersistenceManager: ObservableObject {
 
       guard !stale.isEmpty || !additions.isEmpty else {
         self.refreshFstabBlockedUUIDs(from: contents)
-        return
+        return StartupRuleChange(ruleCount: present.count)
       }
 
       var updated = contents
@@ -662,12 +726,15 @@ class PersistenceManager: ObservableObject {
       self.refreshFstabBlockedUUIDs(from: updated)
       print(
         "✅ Startup block rules updated (\(additions.count) added, \(stale.count) removed).")
+      return StartupRuleChange(
+        addedNames: additions.map(\.info.name), removedCount: stale.count,
+        ruleCount: present.count - stale.count + additions.count)
     } catch let error as NSError
       where error.domain == "MountMate" && error.code == Self.fstabChangedErrorCode
         && attemptsLeft > 1
     {
       print("ℹ️ /etc/fstab changed during the update; retrying with the new contents.")
-      try applyStartupBlockRules(
+      return try applyStartupBlockRules(
         enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: attemptsLeft - 1)
     }
   }
@@ -786,6 +853,7 @@ class PersistenceManager: ObservableObject {
     let uuids = Self.managedFstabVolumeUUIDs(kinds: [Self.mountMateBlockPrefix], in: contents)
     DispatchQueue.main.async { [weak self] in
       self?.fstabBlockedVolumeUUIDs = uuids
+      if self?.startupRuleCount != uuids.count { self?.startupRuleCount = uuids.count }
     }
   }
 

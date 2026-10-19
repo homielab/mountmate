@@ -273,6 +273,17 @@
 "System Mount Rule Not Updated" = "System Mount Rule Not Updated";
 "System Mount Rule Update Failed" = "MountMate could not update the system mount rule in /etc/fstab. Auto-mount blocking may not behave as expected after a restart.\n\nDetails:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate needs to update the system mount rules (/etc/fstab).";
+"“%@” is now blocked at startup." = "“%@” is now blocked at startup.";
+"%d disks are now blocked at startup." = "%d disks are now blocked at startup.";
+"Startup block removed." = "Startup block removed.";
+"Block at Startup is off. All startup rules were removed." = "Block at Startup is off. All startup rules were removed.";
+"Startup blocking updated." = "Startup blocking updated.";
+"Block at Startup is on. Blocked disks get their startup rule the next time they're connected." = "Block at Startup is on. Blocked disks get their startup rule the next time they're connected.";
+"“%@” will mount at its default location again." = "“%@” will mount at its default location again.";
+"“%@” will now mount at %@." = "“%@” will now mount at %@.";
+"Updating startup rules…" = "Updating startup rules…";
+"Blocked at startup: %d disk(s)." = "Blocked at startup: %d disk(s).";
+"No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "No disk has a startup rule yet. Blocked disks get one the next time they're connected.";
 "Administrator Password Needed" = "Administrator Password Needed";
 "The password was incorrect. Try again." = "The password was incorrect. Try again.";
 "Incorrect administrator password." = "Incorrect administrator password.";

@@ -269,6 +269,17 @@
 "System Mount Rule Not Updated" = "系统挂载规则未更新";
 "System Mount Rule Update Failed" = "MountMate 无法更新 /etc/fstab 中的系统挂载规则。重启后，自动挂载阻止可能不会按预期生效。\n\n详细信息：\n%@";
 "System Mount Rule Admin Prompt" = "MountMate 需要更新系统挂载规则（/etc/fstab）。";
+"“%@” is now blocked at startup." = "“%@”现在会在启动时被阻止。";
+"%d disks are now blocked at startup." = "现在有 %d 个磁盘会在启动时被阻止。";
+"Startup block removed." = "已移除启动时阻止。";
+"Block at Startup is off. All startup rules were removed." = "启动时阻止已关闭，所有启动规则已移除。";
+"Startup blocking updated." = "启动时阻止已更新。";
+"Block at Startup is on. Blocked disks get their startup rule the next time they're connected." = "启动时阻止已开启。已阻止的磁盘会在下次连接时获得启动规则。";
+"“%@” will mount at its default location again." = "“%@”将重新挂载到默认位置。";
+"“%@” will now mount at %@." = "“%@”现在将挂载到 %@。";
+"Updating startup rules…" = "正在更新启动规则…";
+"Blocked at startup: %d disk(s)." = "启动时阻止：%d 个磁盘。";
+"No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "还没有磁盘有启动规则。已阻止的磁盘会在下次连接时获得规则。";
 "Administrator Password Needed" = "需要管理员密码";
 "The password was incorrect. Try again." = "密码不正确，请重试。";
 "Incorrect administrator password." = "管理员密码不正确。";

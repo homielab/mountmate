@@ -256,4 +256,35 @@ final class BlockedFstabRuleTests: XCTestCase {
       contents + "\n")
     XCTAssertTrue(PersistenceManager.hasOtherFstabEntry(volumeUUID: "BBBB-2222", in: contents))
   }
+
+  // MARK: - feedbackMessage
+
+  private typealias Change = PersistenceManager.StartupRuleChange
+
+  func testFeedbackNamesTheSingleDiskThatWasBlocked() {
+    let message = PersistenceManager.feedbackMessage(
+      for: Change(addedNames: ["Backup"], removedCount: 0, ruleCount: 1),
+      enabled: true, fromToggle: false)
+    XCTAssertNotNil(message)
+    XCTAssertTrue(message!.contains("Backup"))
+  }
+
+  func testFeedbackForTurningOffMentionsRemoval() {
+    XCTAssertNotNil(
+      PersistenceManager.feedbackMessage(
+        for: Change(addedNames: [], removedCount: 2, ruleCount: 0),
+        enabled: false, fromToggle: true))
+  }
+
+  func testToggleOnWithNothingToWriteStillConfirms() {
+    XCTAssertNotNil(
+      PersistenceManager.feedbackMessage(
+        for: Change(ruleCount: 0), enabled: true, fromToggle: true))
+  }
+
+  func testNoFeedbackWhenNothingChangedOutsideTheToggle() {
+    XCTAssertNil(
+      PersistenceManager.feedbackMessage(
+        for: Change(ruleCount: 1), enabled: true, fromToggle: false))
+  }
 }

@@ -168,7 +168,12 @@ struct InlineCustomMountPointEditor: View {
       // An empty path means "use the default location": remove the rule.
       editorState.savingVolumeIDs.insert(volume.id)
       persistence.removeCustomMountPoint(for: volume) { [rowID, volume] result in
-        Self.finishUpdate(result, volume: volume, rowID: rowID)
+        Self.finishUpdate(
+          result, volume: volume, rowID: rowID,
+          successMessage: String(
+            format: NSLocalizedString(
+              "“%@” will mount at its default location again.",
+              comment: "Custom mount point removed"), volume.name))
       }
       return
     }
@@ -228,7 +233,12 @@ struct InlineCustomMountPointEditor: View {
     guard let path = editorState.pendingSavePath, !isSaving else { return }
     editorState.savingVolumeIDs.insert(volume.id)
     persistence.applyCustomMountPoint(path, for: volume) { [rowID, volume] result in
-      Self.finishUpdate(result, volume: volume, rowID: rowID)
+      Self.finishUpdate(
+        result, volume: volume, rowID: rowID,
+        successMessage: String(
+          format: NSLocalizedString(
+            "“%@” will now mount at %@.", comment: "Custom mount point saved"),
+          volume.name, (path as NSString).abbreviatingWithTildeInPath))
     }
   }
 
@@ -236,7 +246,8 @@ struct InlineCustomMountPointEditor: View {
   /// working only with shared objects: the editor may have been closed, or
   /// reopened for another row, while the password prompt was up.
   private static func finishUpdate(
-    _ result: PersistenceManager.CustomMountPointUpdateResult, volume: Volume, rowID: String
+    _ result: PersistenceManager.CustomMountPointUpdateResult, volume: Volume, rowID: String,
+    successMessage: String
   ) {
     let editorState = CustomMountPointEditorState.shared
     let driveManager = DriveManager.shared
@@ -245,6 +256,7 @@ struct InlineCustomMountPointEditor: View {
 
     switch result {
     case .success:
+      FeedbackHUD.show(successMessage)
       // Remount so the new location takes effect, using the volume's
       // current state rather than the one from when Save was clicked.
       let currentVolume =
