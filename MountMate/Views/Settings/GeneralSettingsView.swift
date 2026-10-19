@@ -8,6 +8,7 @@ struct GeneralSettingsView: View {
   @EnvironmentObject var updaterViewModel: UpdaterController
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @ObservedObject private var hotkeyManager = HotkeyManager.shared
+  @ObservedObject private var persistence = PersistenceManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
@@ -100,6 +101,16 @@ struct GeneralSettingsView: View {
         }
         .help(
           "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed."
+        )
+        Toggle(
+          isOn: Binding(
+            get: { persistence.blockAtStartup },
+            set: { persistence.setBlockAtStartup($0) })
+        ) {
+          Label("Also Block at Startup (Requires Admin Password)", systemImage: "power")
+        }
+        .help(
+          "Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected."
         )
         Toggle(isOn: $ejectOnSleepEnabled) {
           Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")

@@ -65,6 +65,8 @@
 "Start MountMate at Login" = "登录时启动 MountMate";
 "Block USB Auto-Mount" = "阻止 USB 自动挂载";
 "Allow Other Apps to Mount Blocked Disks" = "允许其他应用挂载已阻止的磁盘";
+"Also Block at Startup (Requires Admin Password)" = "启动时也阻止（需要管理员密码）";
+"Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected." = "为每个已阻止的磁盘添加系统规则（/etc/fstab），使 macOS 在启动时不会挂载它，即使 MountMate 尚未打开。你仍可手动挂载。规则会在磁盘连接时添加。";
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁盘仅在插入或登录时不会自动挂载。备份工具等应用仍可在需要时挂载它们。";
 "Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
 
@@ -269,6 +271,7 @@
 "Custom Mount Point Volume Blocked" = "该卷宗已被禁止自动挂载，请先解除阻止，再为其指定自定义挂载点。";
 "System Mount Rule Not Updated" = "系统挂载规则未更新";
 "System Mount Rule Update Failed" = "MountMate 无法更新 /etc/fstab 中的系统挂载规则。重启后，自动挂载阻止可能不会按预期生效。\n\n详细信息：\n%@";
+"System Mount Rule Admin Prompt" = "MountMate 需要更新系统挂载规则（/etc/fstab）。";
 "Pinned" = "已置顶";
 "Pin to Top" = "置顶";
 "Unpin" = "取消置顶";

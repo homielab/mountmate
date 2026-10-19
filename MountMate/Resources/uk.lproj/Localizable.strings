@@ -65,6 +65,8 @@
 "Start MountMate at Login" = "Запускати MountMate при вході";
 "Block USB Auto-Mount" = "Блокувати автопідключення USB";
 "Allow Other Apps to Mount Blocked Disks" = "Дозволити іншим програмам підключати заблоковані диски";
+"Also Block at Startup (Requires Admin Password)" = "Блокувати й під час запуску (потрібен пароль адміністратора)";
+"Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected." = "Додає системне правило (/etc/fstab) для кожного заблокованого диска, щоб macOS не підключала його під час запуску, навіть до відкриття MountMate. Ви все одно можете підключити його вручну. Правила додаються, коли диск під'єднано.";
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Заблоковані диски не підключаються автоматично лише під час під'єднання або входу в систему. Програми, наприклад засоби резервного копіювання, як і раніше можуть підключати їх за потреби.";
 "Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
 
@@ -269,6 +271,7 @@
 "Custom Mount Point Volume Blocked" = "Цей том заблоковано для автоматичного монтування. Розблокуйте його, перш ніж призначати користувацьку точку монтування.";
 "System Mount Rule Not Updated" = "Системне правило монтування не оновлено";
 "System Mount Rule Update Failed" = "MountMate не вдалося оновити системне правило монтування в /etc/fstab. Після перезавантаження блокування автоматичного монтування може працювати не так, як очікується.\n\nПодробиці:\n%@";
+"System Mount Rule Admin Prompt" = "MountMate потрібно оновити системні правила підключення (/etc/fstab).";
 "Pinned" = "Закріплені";
 "Pin to Top" = "Закріпити вгорі";
 "Unpin" = "Відкріпити";
