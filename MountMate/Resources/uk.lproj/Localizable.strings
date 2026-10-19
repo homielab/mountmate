@@ -75,7 +75,6 @@
 "Enable Keyboard Shortcuts" = "Увімкнути клавіатурні скорочення";
 "Unmount All Volumes" = "Відмонтувати всі томи";
 "Mount All Volumes" = "Підключити всі томи";
-"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Натисніть скорочення, щоб записати нову комбінацію клавіш. Деякі комбінації можуть бути зарезервовані macOS або іншою програмою.";
 "Press Shortcut…" = "Натисніть комбінацію клавіш…";
 "Keyboard Shortcut" = "Клавіатурне скорочення";
 "Shortcut Already Assigned" = "Скорочення вже призначено";
@@ -121,7 +120,6 @@
 "“%@” is locked" = "«%@» заблоковано";
 "Full Disk Access Recommended" = "Рекомендується повний доступ до дисків";
 "Action Failed" = "Операція не вдалася";
-"Accessibility Permission Required" = "Потрібен дозвіл доступності";
 "Restart Required" = "Потрібно перезапустити";
 
 // Buttons
@@ -163,7 +161,6 @@
 // App Lifecycle
 "Loading Disks..." = "Завантаження дисків...";
 "Please restart MountMate for the language change to take effect." = "Будь ласка, перезапустіть MountMate, щоб зміни мови набрали силу.";
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Щоб використовувати клавіатурні скорочення, надайте MountMate доступ до спеціальних можливостей у Системних налаштуваннях → Конфіденційність і безпека → Спеціальні можливості.";
 
 
 // MARK: - Network Shares
@@ -278,5 +275,69 @@
 "Could not unmount: %@" = "Не вдалося відмонтувати: %@";
 "Could not mount: %@" = "Не вдалося підключити: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Пароль не підійшов. Введіть пароль, щоб розблокувати «%@»";
-"Accessibility access is required for keyboard shortcuts." = "Для сполучень клавіш потрібен доступ до Універсального доступу.";
-"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Вже ввімкнено? Видаліть MountMate зі списку кнопкою «–», потім додайте знову. Це може знадобитися після оновлення.";
+
+
+// MARK: - Settings Lists, Shortcuts & Errors (6.1.1)
+//=============================================
+
+"APFS Container • %@" = "Контейнер APFS • %@";
+"Administrator Prompt Cancelled" = "Запит пароля адміністратора було скасовано.";
+"Allow MountMate in Login Items to start it at login." = "Дозвольте MountMate в об’єктах входу, щоб він запускався під час входу в систему.";
+"Custom Mount Points" = "Власні точки монтування";
+"Disk: %@" = "Диск: %@";
+"Kept Mounted Volumes" = "Томи, що тримаються підключеними";
+"Mount “%@”" = "Підключити «%@»";
+"No Custom Mount Points" = "Немає власних точок монтування";
+"No Pinned Volumes" = "Немає закріплених томів";
+"No Volumes Kept Mounted" = "Немає томів, що тримаються підключеними";
+"Open Login Items" = "Відкрити об’єкти входу";
+"Pinned Volumes" = "Закріплені томи";
+"Remove “%@”" = "Видалити «%@»";
+"Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password." = "Клацніть том правою кнопкою та виберіть «Власна точка монтування…», щоб монтувати його у вибрану теку. Видалення запису також видаляє його системне правило монтування (/etc/fstab) і може потребувати пароля адміністратора.";
+"Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops." = "Клацніть том правою кнопкою та виберіть «Тримати підключеним (авто)», щоб він автоматично підключався знову після від’єднання.";
+"Right-click a volume and choose “Pin to Top” to list it first." = "Клацніть том правою кнопкою та виберіть «Закріпити вгорі», щоб він показувався першим.";
+"Saving…" = "Збереження…";
+"System Default" = "Як у системі";
+"System Mount Rule Changed During Update" = "Файл /etc/fstab було змінено іншим процесом під час оновлення. Спробуйте ще раз.";
+"This shortcut is used by another app. Choose a different one." = "Це сполучення клавіш використовує інша програма. Виберіть інше.";
+"Unmount “%@”" = "Відмонтувати «%@»";
+"Version %@ (%@)" = "Версія %@ (%@)";
+"Vol: %@" = "Том: %@";
+"Volume Not Connected" = "Том не під’єднано";
+"Import Mounted" = "Імпортувати підключені";
+"Import SMB shares that are currently mounted in Finder" = "Імпортувати SMB-ресурси, підключені зараз у Finder";
+"Imported %d mounted share(s). Add credentials by editing each share." = "Імпортовано підключених ресурсів: %d. Додайте облікові дані, відредагувавши кожен ресурс.";
+"No mounted SMB shares were found." = "Підключених SMB-ресурсів не знайдено.";
+"Those mounted shares are already in MountMate." = "Ці підключені ресурси вже є в MountMate.";
+"Access to the share “%@” was denied by the server." = "Сервер відмовив у доступі до ресурсу «%@».";
+"Another volume is already mounted at “%@”." = "У «%@» вже підключено інший том.";
+"Authentication failed for “%@”. Check the username and password." = "Не вдалося автентифікуватися для «%@». Перевірте ім’я користувача та пароль.";
+"Could Not Save Share" = "Не вдалося зберегти ресурс";
+"Could not connect to the server “%@”. Check that it is turned on and reachable from this network." = "Не вдалося під’єднатися до сервера «%@». Переконайтеся, що він увімкнений і доступний із цієї мережі.";
+"Could not mount “%@” (error %d)." = "Не вдалося підключити «%@» (помилка %d).";
+"Could not mount “%@”: %@ (error %d)." = "Не вдалося підключити «%@»: %@ (помилка %d).";
+"Could not read storage details." = "Не вдалося прочитати відомості про сховище.";
+"Delete “%@”?" = "Видалити «%@»?";
+"MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate не вдалося прочитати збережений пароль для «%@» зі в’язки ключів (помилка %d).";
+"MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate не вдалося видалити збережений пароль зі в’язки ключів (помилка %d).";
+"MountMate could not save the password to the Keychain (error %d)." = "MountMate не вдалося зберегти пароль у в’язці ключів (помилка %d).";
+"Mounting “%@” timed out. Check that the server is reachable and try again." = "Час очікування підключення «%@» вичерпано. Переконайтеся, що сервер доступний, і спробуйте ще раз.";
+"The display name cannot be “.” or “..”." = "Відображуване ім’я не може бути «.» або «..».";
+"The display name cannot contain “/”." = "Відображуване ім’я не може містити «/».";
+"The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point." = "Точка монтування «%@» вже використовується ресурсом «%@». Виберіть інше відображуване ім’я або власну точку монтування.";
+"The operation timed out after %d seconds." = "Час очікування операції вичерпано через %d с.";
+"The share will be removed from MountMate, along with its saved password." = "Ресурс буде видалено з MountMate разом зі збереженим паролем.";
+"The share will be unmounted and removed from MountMate, along with its saved password." = "Ресурс буде відмонтовано та видалено з MountMate разом зі збереженим паролем.";
+"The share “%@” was not found on the server “%@”." = "Ресурс «%@» не знайдено на сервері «%@».";
+"This share is already saved as “%@”." = "Цей ресурс уже збережено як «%@».";
+"Unmounting “%@” timed out." = "Час очікування відмонтування «%@» вичерпано.";
+"diskutil exited with code %d." = "diskutil завершився з кодом %d.";
+"“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Неможливо підключити «%@» у «%@», оскільки там уже підключено інший ресурс (%@).";
+"Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app." = "Натисніть на сполучення клавіш, щоб записати нове. Воно має містити ⌘ або ⌃. Деякі сполучення можуть бути зарезервовані macOS або іншою програмою.";
+"This shortcut needs ⌘ or ⌃. Click it to record a new one." = "Це сполучення має містити ⌘ або ⌃. Натисніть на нього, щоб записати нове.";
+"System Mount Rule Update Cancelled" = "MountMate не оновив правило запуску в /etc/fstab, оскільки запит пароля адміністратора було скасовано. Доки його не оновлено, macOS може застосовувати старе правило під час запуску.";
+"A previous connection attempt to “%@” is still in progress." = "Попередня спроба під’єднання до «%@» ще триває.";
+"MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment." = "MountMate не вдалося визначити, чи є «%@» зовнішнім диском, тому його не було вилучено. Спробуйте ще раз за мить.";
+"Remove Anyway" = "Все одно видалити";
+"“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "Не вдалося відмонтувати «%@», тому він залишається підключеним. Його все одно можна видалити з MountMate — файли на ресурсі не змінюються.\n\n%@";
+"“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "«%@» уже під’єднано, ймовірно під іншим іменем сервера (наприклад, у Finder). Від’єднайте його там і спробуйте ще раз.";

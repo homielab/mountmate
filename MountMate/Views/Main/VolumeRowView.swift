@@ -2,26 +2,75 @@
 
 import SwiftUI
 
-struct VolumeRowView: View {
-  let volume: Volume
-  @ObservedObject var customMountPointEditor: CustomMountPointEditorState
-  @EnvironmentObject var manager: DriveManager
-  @ObservedObject private var persistence = PersistenceManager.shared
-  @ObservedObject private var keepAliveManager = KeepAliveManager.shared
-  @State private var isHovering = false
-  private var currentVolume: Volume {
-    (manager.physicalDisks ?? []).flatMap(\.allVolumes).first(where: { $0.id == volume.id })
-      ?? volume
+/// Where a volume row is listed. A pinned volume appears twice (under
+/// Pinned and under its disk); the context keeps the two rows apart.
+enum VolumeRowContext: String {
+  case pinned
+  case disk
+}
+
+/// A volume's settings-derived row state.
+struct VolumeRowState: Equatable {
+  var isPinned = false
+  var isKeepAlive = false
+  var isReconnecting = false
+  var customMountPoint: String?
+}
+
+/// Row state for the whole list, computed once per list render by
+/// `DriveListView`. Rows get plain values instead of each observing
+/// PersistenceManager, KeepAliveManager, DriveManager and the editor, so a
+/// change only redraws the rows whose values actually changed.
+struct VolumeListState: Equatable {
+  var rowStates: [String: VolumeRowState] = [:]
+  /// `DriveManager.busyVolumeIDs`: volumes with a mount/unmount in flight.
+  var busyVolumeIDs: Set<String> = []
+  var expandedEditorRowID: String?
+
+  func rowState(for volume: Volume) -> VolumeRowState {
+    rowStates[volume.id] ?? VolumeRowState()
   }
 
-  private var isLoading: Bool { manager.busyVolumeIdentifier == volume.id }
-  private var customMountPoint: String? {
-    persistence.customMountPoint(for: currentVolume)?.mountPoint
+  func isEditorExpanded(for volume: Volume, context: VolumeRowContext) -> Bool {
+    expandedEditorRowID == VolumeRowView.editorRowID(for: volume, context: context)
   }
-  private var isKeepAlive: Bool { persistence.isVolumeKeepAlive(currentVolume) }
-  private var isCustomMountPointExpanded: Bool {
-    customMountPointEditor.expandedVolumeID == currentVolume.id
+}
+
+struct VolumeRowView: View {
+  /// The current volume: the parent builds rows from the latest disk list.
+  let volume: Volume
+  let context: VolumeRowContext
+  let state: VolumeRowState
+  let isLoading: Bool
+  let isCustomMountPointExpanded: Bool
+  /// Not observed: only the open editor needs to redraw while typing.
+  let customMountPointEditor: CustomMountPointEditorState
+  @State private var isHovering = false
+
+  // Used for actions only.
+  private var manager: DriveManager { DriveManager.shared }
+  private var persistence: PersistenceManager { PersistenceManager.shared }
+
+  init(
+    volume: Volume, context: VolumeRowContext, listState: VolumeListState,
+    customMountPointEditor: CustomMountPointEditorState
+  ) {
+    self.volume = volume
+    self.context = context
+    self.state = listState.rowState(for: volume)
+    self.isLoading = listState.busyVolumeIDs.contains(volume.id)
+    self.isCustomMountPointExpanded = listState.isEditorExpanded(for: volume, context: context)
+    self.customMountPointEditor = customMountPointEditor
   }
+
+  static func editorRowID(for volume: Volume, context: VolumeRowContext) -> String {
+    "\(context.rawValue):\(volume.id)"
+  }
+
+  private var editorRowID: String { Self.editorRowID(for: volume, context: context) }
+  private var currentVolume: Volume { volume }
+  private var customMountPoint: String? { state.customMountPoint }
+  private var isKeepAlive: Bool { state.isKeepAlive }
 
   private func usageColor(for percentage: Double) -> Color {
     if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
@@ -49,9 +98,7 @@ struct VolumeRowView: View {
                 progress: percentage, color: usageColor(for: percentage),
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
-            } else if keepAliveManager.reconnectingVolumeIDs.contains(
-              currentVolume.compositeId ?? "")
-            {
+            } else if state.isReconnecting {
               ProgressView()
                 .controlSize(.mini)
                 .help(
@@ -91,9 +138,7 @@ struct VolumeRowView: View {
                   .foregroundStyle(.secondary)
               }
             } else {
-              if keepAliveManager.reconnectingVolumeIDs.contains(
-                currentVolume.compositeId ?? "")
-              {
+              if state.isReconnecting {
                 Text("Reconnecting…")
                   .font(.caption)
                   .foregroundStyle(.secondary)
@@ -168,6 +213,17 @@ struct VolumeRowView: View {
             ? NSLocalizedString("Unmount", comment: "Unmount volume tooltip")
             : NSLocalizedString("Mount", comment: "Mount volume tooltip")
         )
+        .accessibilityLabel(
+          currentVolume.isMounted
+            ? String(
+              format: NSLocalizedString(
+                "Unmount “%@”", comment: "Accessibility label of a volume's unmount button"),
+              currentVolume.name)
+            : String(
+              format: NSLocalizedString(
+                "Mount “%@”", comment: "Accessibility label of a volume's mount button"),
+              currentVolume.name)
+        )
         .padding(.leading, 8)
       }
       .padding(.vertical, 4)
@@ -189,6 +245,7 @@ struct VolumeRowView: View {
       if isCustomMountPointExpanded {
         InlineCustomMountPointEditor(
           volume: volume,
+          rowID: editorRowID,
           editorState: customMountPointEditor,
           onClose: {
             customMountPointEditor.collapse()
@@ -260,7 +317,7 @@ struct VolumeRowView: View {
     }
 
     Divider()
-    if persistence.isPinned(volume) {
+    if state.isPinned {
       Button {
         persistence.setPinned(false, volume: volume)
       } label: {
@@ -302,7 +359,7 @@ struct VolumeRowView: View {
     }
     Button {
       syncEditorStateFromPersistence()
-      customMountPointEditor.expandedVolumeID = isCustomMountPointExpanded ? nil : volume.id
+      customMountPointEditor.expandedRowID = isCustomMountPointExpanded ? nil : editorRowID
     } label: {
       Label(
         NSLocalizedString(

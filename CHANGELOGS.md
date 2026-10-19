@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **Keyboard Shortcuts No Longer Need Accessibility Permission**: Global shortcuts now use system hot keys. MountMate no longer asks for Accessibility access, holding the keys runs the action once, and if another app already uses a shortcut, Settings tells you. A MountMate shortcut now takes priority over the same shortcut in other apps, so shortcuts must include ⌘ or ⌃. A saved shortcut without them is turned off, and Settings asks you to record a new one.
+- **Safer Network Share Passwords**: SMB and AFP shares are now mounted through macOS's network file system framework, so passwords no longer appear in the system process list or in logs. Shares without a username still sign in with your Mac's saved credentials (or as guest).
+- **More Room for Slow Disks**: Mount and unmount now wait up to 30 seconds (was 15) before giving up, so spinning-up hard drives have time to respond.
+- **Manage More in Settings**: New lists for volumes kept mounted, pinned volumes and custom mount points, so you can remove entries for disks that are no longer connected.
+
+### Fixed
+
+- **Network Share Reconnects**: Keep-alive now waits longer between failed reconnect attempts instead of retrying every few seconds, which could lock accounts on servers with lockout policies and wasted battery.
+- **Shares With the Same Name**: Two shares with the same name on different servers no longer share a mount folder. Mounting one no longer reports success when the other is mounted, and ejecting one no longer unmounts the other. Imported shares get unique names.
+- **Server Matching**: A share on "nas" is no longer confused with one on "nas2" or "nas.backup.lan".
+- **Ejecting Shares**: Ejecting a share could be undone by a reconnect running at the same moment. Ejecting a share that was renamed or mounted by Finder now works.
+- **Network Changes**: Connecting or disconnecting a VPN no longer remounts every share. Shares are remounted only when the network they used goes away.
+- **Keychain Passwords**: A failed save no longer deletes the saved password, a password that can't be read no longer mounts with an empty one, and clearing the password field now removes the saved password.
+- **Internal Disks Shown as External**: If macOS was slow to answer, an internal disk could appear with an Eject button and be included in Unmount All and Unmount on Sleep. It now keeps its last known type.
+- **Unmount on Sleep**: The Mac now waits (up to 20 seconds) for disks to unmount before going to sleep.
+- **Stuck Spinners**: Several volumes can now show progress at the same time, and a spinner no longer disappears while an operation is still running or stays after a failed refresh.
+- **Frozen Drive List**: A stuck USB or network volume can no longer stop the drive list from updating.
+- **Custom Mount Points**: Saving or removing a custom mount point no longer freezes MountMate while the password prompt is open. Cancelling the prompt no longer shows an error. The editor no longer opens twice for pinned volumes.
+- **Volumes Without a UUID**: Settings for a volume without a unique ID could be applied to a different volume that later used the same device name. Such volumes can no longer be blocked, pinned or ignored by mistake.
+- **Saved Settings**: One unreadable entry no longer erases a whole saved list (for example all network shares). A backup is kept.
+- **Block USB Auto-Mount**: Now also detects USB drives and SD cards formatted as APFS.
+- **Blocking a Mounted Volume**: Blocking a volume while MountMate is running no longer unmounts it unexpectedly.
+- **Encrypted Volumes**: "That password didn't work" now only appears when the password was actually wrong.
+- **Mount Errors Show Sooner**: A disk that can't be mounted (for example an unsupported format) now reports the error right away instead of after a 15-second retry.
+- **Launch at Login**: Now registers correctly, and Settings tells you when macOS needs your approval in Login Items.
+- **Language Setting**: Choosing "Later" after changing the language now keeps the change. Traditional Chinese is detected correctly.
+- **Network Share Settings**: Server addresses pasted with `smb://` are cleaned up, duplicates are detected, and deleting a share asks first and unmounts it (with "Remove Anyway" if the server can't be reached).
+- **Ignoring Windows and Linux Partitions**: Partitions without a volume UUID (such as Microsoft Reserved or BitLocker) can be ignored reliably, and existing ignore settings for them are kept.
+- **Translations**: Several messages that were only in English are now translated.
+
+---
+
 ## 6.1
 
 ### Added

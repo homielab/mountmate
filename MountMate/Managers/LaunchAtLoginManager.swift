@@ -6,27 +6,48 @@ import ServiceManagement
 class LaunchAtLoginManager: ObservableObject {
   @Published var isEnabled: Bool {
     didSet {
-      guard isEnabled != oldValue else { return }
+      guard !isApplyingSystemState, isEnabled != oldValue else { return }
       updateLoginItemStatus()
     }
   }
 
-  private let service: SMAppService
+  /// The login item is registered but the user still has to allow it in
+  /// System Settings → General → Login Items.
+  @Published private(set) var requiresApproval = false
+
+  private let service = SMAppService.mainApp
+  /// Set while `isEnabled` mirrors the system state, so that does not
+  /// register or unregister the login item.
+  private var isApplyingSystemState = false
 
   init() {
-    self.service = SMAppService()
+    // Always read the actual system state, not UserDefaults.
+    let status = service.status
+    self.isEnabled = Self.isOn(status)
+    self.requiresApproval = status == .requiresApproval
+  }
 
-    // Always read the actual system state, not UserDefaults
-    if #available(macOS 13.0, *) {
-      let status = SMAppService().status
-      self.isEnabled = (status == .enabled)
-    } else {
-      self.isEnabled = UserDefaults.standard.bool(forKey: "launchAtLoginEnabled")
-    }
+  /// A login item waiting for approval counts as on: it is registered and
+  /// starts at login once allowed.
+  private static func isOn(_ status: SMAppService.Status) -> Bool {
+    status == .enabled || status == .requiresApproval
+  }
+
+  /// Re-reads the system state, e.g. after the user returns from System
+  /// Settings.
+  func refreshStatus() {
+    let status = service.status
+    isApplyingSystemState = true
+    isEnabled = Self.isOn(status)
+    isApplyingSystemState = false
+    requiresApproval = status == .requiresApproval
+  }
+
+  func openLoginItemsSettings() {
+    SMAppService.openSystemSettingsLoginItems()
   }
 
   private func updateLoginItemStatus() {
-    guard #available(macOS 13.0, *) else { return }
     do {
       if isEnabled {
         try service.register()
@@ -35,11 +56,11 @@ class LaunchAtLoginManager: ObservableObject {
       }
     } catch {
       print("Failed to update login item status: \(error)")
-      // Revert to actual system state on failure
-      DispatchQueue.main.async {
-        let actualStatus = self.service.status
-        self.isEnabled = (actualStatus == .enabled)
-      }
+    }
+    // Reflect the actual state: on failure this reverts the toggle, and a
+    // successful registration may still need the user's approval.
+    DispatchQueue.main.async {
+      self.refreshStatus()
     }
   }
 }

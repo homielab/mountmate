@@ -30,6 +30,7 @@ struct ErrorBannerView: View {
       }
       .buttonStyle(.plain)
       .help("Retry")
+      .accessibilityLabel(Text("Retry"))
     }
     .padding(10)
     .background(Color.orange)

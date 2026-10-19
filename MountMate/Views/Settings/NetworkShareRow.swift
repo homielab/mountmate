@@ -5,9 +5,13 @@ import SwiftUI
 struct NetworkShareRow: View {
   let share: NetworkShare
   let onEdit: () -> Void
-  let onError: (String) -> Void
+  /// Reports a failed action as (alert title, message).
+  let onError: (_ title: String, _ message: String) -> Void
   @ObservedObject private var networkManager = NetworkMountManager.shared
   @State private var isWorking = false
+  @State private var isConfirmingDelete = false
+  /// Set when unmounting before a delete failed: offers "Remove Anyway".
+  @State private var deleteUnmountError: String?
 
   private var isMounted: Bool {
     networkManager.mountedShareIDs.contains(share.id)
@@ -79,6 +83,7 @@ struct NetworkShareRow: View {
           }
           .buttonStyle(.borderless)
           .help("Open in Finder")
+          .accessibilityLabel(Text("Open in Finder"))
         }
 
         // Mount / Unmount action button
@@ -88,14 +93,14 @@ struct NetworkShareRow: View {
             NetworkMountManager.shared.unmount(share: share) { success, error in
               isWorking = false
               if !success, let error = error {
-                onError(error)
+                onError(NSLocalizedString("Unmount Failed", comment: "Alert title"), error)
               }
             }
           } else {
             NetworkMountManager.shared.mount(share: share) { success, error in
               isWorking = false
               if !success, let error = error {
-                onError(error)
+                onError(NSLocalizedString("Mount Failed", comment: "Alert title"), error)
               }
             }
           }
@@ -111,26 +116,101 @@ struct NetworkShareRow: View {
         .disabled(isWorking)
         .buttonStyle(.borderless)
         .help(isMounted ? "Unmount Share" : "Mount Share")
+        .accessibilityLabel(isMounted ? Text("Unmount Share") : Text("Mount Share"))
 
         Button(action: onEdit) {
           Image(systemName: "pencil")
         }
         .buttonStyle(.borderless)
         .help("Edit Share")
+        .accessibilityLabel(Text("Edit Share"))
 
         Button(
           role: .destructive,
           action: {
-            PersistenceManager.shared.removeNetworkShare(share)
+            isConfirmingDelete = true
           }
         ) {
           Image(systemName: "trash")
             .foregroundStyle(.red.opacity(0.8))
         }
         .buttonStyle(.borderless)
+        .disabled(isWorking)
         .help("Delete Share")
+        .accessibilityLabel(Text("Delete Share"))
       }
     }
     .padding(.vertical, 4)
+    .confirmationDialog(
+      String(
+        format: NSLocalizedString("Delete “%@”?", comment: "Delete network share confirmation"),
+        share.name),
+      isPresented: $isConfirmingDelete
+    ) {
+      Button("Delete Share", role: .destructive) {
+        deleteShare()
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      if isMounted {
+        Text(
+          NSLocalizedString(
+            "The share will be unmounted and removed from MountMate, along with its saved password.",
+            comment: "Delete network share confirmation"))
+      } else {
+        Text(
+          NSLocalizedString(
+            "The share will be removed from MountMate, along with its saved password.",
+            comment: "Delete network share confirmation"))
+      }
+    }
+    .alert(
+      NSLocalizedString("Unmount Failed", comment: "Alert title"),
+      isPresented: Binding(
+        get: { deleteUnmountError != nil },
+        set: { if !$0 { deleteUnmountError = nil } })
+    ) {
+      Button(
+        NSLocalizedString("Remove Anyway", comment: "Remove a network share that could not be unmounted"),
+        role: .destructive
+      ) {
+        // Only forgets the share in MountMate; never touches its files.
+        removeShare()
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text(
+        String(
+          format: NSLocalizedString(
+            "“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@",
+            comment: "Remove Anyway alert message"),
+          share.name, deleteUnmountError ?? ""))
+    }
+  }
+
+  /// Removes the share from MountMate (never touches its files).
+  private func removeShare() {
+    NetworkMountManager.shared.forgetAdoption(forShareID: share.id)
+    PersistenceManager.shared.removeNetworkShare(share)
+  }
+
+  /// Deletes the share, unmounting it first if it is mounted. If the unmount
+  /// fails, the user can remove the share anyway (it then stays mounted).
+  private func deleteShare() {
+    guard isMounted else {
+      removeShare()
+      return
+    }
+    isWorking = true
+    NetworkMountManager.shared.unmount(share: share) { success, error in
+      isWorking = false
+      if success {
+        removeShare()
+      } else {
+        // E.g. the server is gone and umount fails: still let the user
+        // remove the share from MountMate.
+        deleteUnmountError = error ?? ""
+      }
+    }
   }
 }

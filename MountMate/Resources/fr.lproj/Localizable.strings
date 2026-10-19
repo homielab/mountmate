@@ -75,7 +75,6 @@
 "Enable Keyboard Shortcuts" = "Activer les raccourcis clavier";
 "Unmount All Volumes" = "Démonter tous les volumes";
 "Mount All Volumes" = "Monter tous les volumes";
-"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Cliquez sur un raccourci pour enregistrer une nouvelle combinaison de touches. Certains raccourcis peuvent être réservés par macOS ou une autre application.";
 "Press Shortcut…" = "Appuyez sur le raccourci…";
 "Keyboard Shortcut" = "Raccourci clavier";
 "Shortcut Already Assigned" = "Raccourci déjà attribué";
@@ -121,7 +120,6 @@
 "“%@” is locked" = "« %@ » est verrouillé";
 "Full Disk Access Recommended" = "Accès complet au disque recommandé";
 "Action Failed" = "Échec de l'action";
-"Accessibility Permission Required" = "Permission Accessibilité requise";
 "Restart Required" = "Redémarrage requis";
 
 // Buttons
@@ -163,7 +161,6 @@
 // App Lifecycle
 "Loading Disks..." = "Chargement des disques...";
 "Please restart MountMate for the language change to take effect." = "Veuillez redémarrer MountMate pour que le changement de langue prenne effet.";
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Pour utiliser les raccourcis clavier, veuillez accorder à MountMate l'accès d'accessibilité dans Réglages Système → Confidentialité et sécurité → Accessibilité.";
 
 
 // MARK: - Network Shares
@@ -278,5 +275,69 @@
 "Could not unmount: %@" = "Impossible de démonter : %@";
 "Could not mount: %@" = "Impossible de monter : %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Ce mot de passe n’a pas fonctionné. Saisissez le mot de passe pour déverrouiller « %@ »";
-"Accessibility access is required for keyboard shortcuts." = "L’accès Accessibilité est requis pour les raccourcis clavier.";
-"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Déjà activé ? Retirez MountMate de la liste avec le bouton –, puis ajoutez-le à nouveau. Cela peut être nécessaire après une mise à jour.";
+
+
+// MARK: - Settings Lists, Shortcuts & Errors (6.1.1)
+//=============================================
+
+"APFS Container • %@" = "Conteneur APFS • %@";
+"Administrator Prompt Cancelled" = "La demande du mot de passe administrateur a été annulée.";
+"Allow MountMate in Login Items to start it at login." = "Autorisez MountMate dans les Éléments de connexion pour qu’il s’ouvre à la connexion.";
+"Custom Mount Points" = "Points de montage personnalisés";
+"Disk: %@" = "Disque : %@";
+"Kept Mounted Volumes" = "Volumes maintenus montés";
+"Mount “%@”" = "Monter « %@ »";
+"No Custom Mount Points" = "Aucun point de montage personnalisé";
+"No Pinned Volumes" = "Aucun volume épinglé";
+"No Volumes Kept Mounted" = "Aucun volume maintenu monté";
+"Open Login Items" = "Ouvrir les Éléments de connexion";
+"Pinned Volumes" = "Volumes épinglés";
+"Remove “%@”" = "Retirer « %@ »";
+"Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password." = "Cliquez avec le bouton droit sur un volume et choisissez « Point de montage personnalisé… » pour le monter dans le dossier de votre choix. Retirer une entrée supprime aussi sa règle de montage système (/etc/fstab) et peut demander votre mot de passe administrateur.";
+"Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops." = "Cliquez avec le bouton droit sur un volume et choisissez « Maintenir monté (reconnexion auto) » pour le remonter automatiquement s’il se déconnecte.";
+"Right-click a volume and choose “Pin to Top” to list it first." = "Cliquez avec le bouton droit sur un volume et choisissez « Épingler en haut » pour l’afficher en premier.";
+"Saving…" = "Enregistrement…";
+"System Default" = "Langue du système";
+"System Mount Rule Changed During Update" = "/etc/fstab a été modifié par un autre processus pendant la mise à jour. Veuillez réessayer.";
+"This shortcut is used by another app. Choose a different one." = "Ce raccourci est utilisé par une autre app. Choisissez-en un autre.";
+"Unmount “%@”" = "Démonter « %@ »";
+"Version %@ (%@)" = "Version %@ (%@)";
+"Vol: %@" = "Vol : %@";
+"Volume Not Connected" = "Volume non connecté";
+"Import Mounted" = "Importer les montés";
+"Import SMB shares that are currently mounted in Finder" = "Importer les partages SMB actuellement montés dans le Finder";
+"Imported %d mounted share(s). Add credentials by editing each share." = "%d partage(s) monté(s) importé(s). Ajoutez les identifiants en modifiant chaque partage.";
+"No mounted SMB shares were found." = "Aucun partage SMB monté n’a été trouvé.";
+"Those mounted shares are already in MountMate." = "Ces partages montés sont déjà dans MountMate.";
+"Access to the share “%@” was denied by the server." = "Le serveur a refusé l’accès au partage « %@ ».";
+"Another volume is already mounted at “%@”." = "Un autre volume est déjà monté sur « %@ ».";
+"Authentication failed for “%@”. Check the username and password." = "Échec de l’authentification pour « %@ ». Vérifiez le nom d’utilisateur et le mot de passe.";
+"Could Not Save Share" = "Impossible d’enregistrer le partage";
+"Could not connect to the server “%@”. Check that it is turned on and reachable from this network." = "Impossible de se connecter au serveur « %@ ». Vérifiez qu’il est allumé et accessible depuis ce réseau.";
+"Could not mount “%@” (error %d)." = "Impossible de monter « %@ » (erreur %d).";
+"Could not mount “%@”: %@ (error %d)." = "Impossible de monter « %@ » : %@ (erreur %d).";
+"Could not read storage details." = "Impossible de lire les détails du stockage.";
+"Delete “%@”?" = "Supprimer « %@ » ?";
+"MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate n’a pas pu lire le mot de passe enregistré pour « %@ » dans le trousseau (erreur %d).";
+"MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate n’a pas pu supprimer le mot de passe enregistré du trousseau (erreur %d).";
+"MountMate could not save the password to the Keychain (error %d)." = "MountMate n’a pas pu enregistrer le mot de passe dans le trousseau (erreur %d).";
+"Mounting “%@” timed out. Check that the server is reachable and try again." = "Le montage de « %@ » a expiré. Vérifiez que le serveur est accessible et réessayez.";
+"The display name cannot be “.” or “..”." = "Le nom d’affichage ne peut pas être « . » ou « .. ».";
+"The display name cannot contain “/”." = "Le nom d’affichage ne peut pas contenir « / ».";
+"The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point." = "Le point de montage « %@ » est déjà utilisé par le partage « %@ ». Choisissez un autre nom d’affichage ou point de montage personnalisé.";
+"The operation timed out after %d seconds." = "L’opération a expiré après %d secondes.";
+"The share will be removed from MountMate, along with its saved password." = "Le partage sera retiré de MountMate, ainsi que son mot de passe enregistré.";
+"The share will be unmounted and removed from MountMate, along with its saved password." = "Le partage sera démonté et retiré de MountMate, ainsi que son mot de passe enregistré.";
+"The share “%@” was not found on the server “%@”." = "Le partage « %@ » est introuvable sur le serveur « %@ ».";
+"This share is already saved as “%@”." = "Ce partage est déjà enregistré sous « %@ ».";
+"Unmounting “%@” timed out." = "Le démontage de « %@ » a expiré.";
+"diskutil exited with code %d." = "diskutil s’est terminé avec le code %d.";
+"“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Impossible de monter « %@ » sur « %@ », car un autre partage (%@) y est déjà monté.";
+"Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app." = "Cliquez sur un raccourci pour enregistrer une nouvelle combinaison de touches. Elle doit inclure ⌘ ou ⌃. Certains raccourcis peuvent être réservés par macOS ou une autre app.";
+"This shortcut needs ⌘ or ⌃. Click it to record a new one." = "Ce raccourci doit inclure ⌘ ou ⌃. Cliquez dessus pour en enregistrer un nouveau.";
+"System Mount Rule Update Cancelled" = "MountMate n’a pas mis à jour la règle de démarrage dans /etc/fstab, car la demande du mot de passe administrateur a été annulée. Tant qu’elle n’est pas mise à jour, macOS peut encore utiliser l’ancienne règle au démarrage.";
+"A previous connection attempt to “%@” is still in progress." = "Une tentative de connexion précédente à « %@ » est toujours en cours.";
+"MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment." = "MountMate n’a pas pu déterminer si « %@ » est un disque externe ; il n’a donc pas été éjecté. Réessayez dans un instant.";
+"Remove Anyway" = "Retirer quand même";
+"“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "Impossible de démonter « %@ » ; il reste donc monté. Vous pouvez quand même le retirer de MountMate ; aucun fichier du partage n’est modifié.\n\n%@";
+"“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "« %@ » est déjà connecté, probablement sous un autre nom de serveur (par exemple dans le Finder). Déconnectez-le à cet endroit et réessayez.";

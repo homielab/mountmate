@@ -75,7 +75,6 @@
 "Enable Keyboard Shortcuts" = "啟用鍵盤快捷鍵";
 "Unmount All Volumes" = "卸載所有磁碟卷";
 "Mount All Volumes" = "掛載所有磁碟卷";
-"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "按一下快速鍵以錄製新的按鍵組合。某些快速鍵可能已被 macOS 或其他 App 保留。";
 "Press Shortcut…" = "按下快速鍵…";
 "Keyboard Shortcut" = "鍵盤快速鍵";
 "Shortcut Already Assigned" = "快速鍵已指派";
@@ -121,7 +120,6 @@
 "“%@” is locked" = "「%@」已被鎖定";
 "Full Disk Access Recommended" = "建議授予完整磁碟存取權限";
 "Action Failed" = "操作失敗";
-"Accessibility Permission Required" = "需要輔助使用權限";
 "Restart Required" = "需要重新啟動";
 
 // Buttons
@@ -163,7 +161,6 @@
 // App Lifecycle
 "Loading Disks..." = "正在載入磁碟...";
 "Please restart MountMate for the language change to take effect." = "請重新啟動 MountMate 以使語言變更生效。";
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "要使用鍵盤快速鍵，請在系統設定 → 隱私與安全性 → 輔助使用 中為 MountMate 開啟輔助使用權限。";
 
 
 // MARK: - Network Shares
@@ -278,5 +275,69 @@
 "Could not unmount: %@" = "無法卸載：%@";
 "Could not mount: %@" = "無法掛載：%@";
 "That password didn’t work. Enter the password to unlock “%@”" = "該密碼無效。請輸入密碼以解鎖「%@」";
-"Accessibility access is required for keyboard shortcuts." = "鍵盤快捷鍵需要輔助使用權限。";
-"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "已經啟用？請用「–」按鈕將 MountMate 從列表中移除，然後重新加入。更新後可能需要這樣做。";
+
+
+// MARK: - Settings Lists, Shortcuts & Errors (6.1.1)
+//=============================================
+
+"APFS Container • %@" = "APFS 容器 • %@";
+"Administrator Prompt Cancelled" = "已取消管理者密碼提示。";
+"Allow MountMate in Login Items to start it at login." = "請在「登入項目」中允許 MountMate，以便在登入時啟動。";
+"Custom Mount Points" = "自訂掛載點";
+"Disk: %@" = "磁碟：%@";
+"Kept Mounted Volumes" = "保持掛載的磁碟卷";
+"Mount “%@”" = "掛載「%@」";
+"No Custom Mount Points" = "目前沒有自訂掛載點";
+"No Pinned Volumes" = "目前沒有置頂的磁碟卷";
+"No Volumes Kept Mounted" = "目前沒有保持掛載的磁碟卷";
+"Open Login Items" = "開啟登入項目";
+"Pinned Volumes" = "置頂的磁碟卷";
+"Remove “%@”" = "移除「%@」";
+"Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password." = "在磁碟卷上按右鍵並選擇「自訂掛載點…」，即可將其掛載到你選擇的檔案夾。移除項目也會移除其系統掛載規則（/etc/fstab），可能需要輸入管理者密碼。";
+"Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops." = "在磁碟卷上按右鍵並選擇「保持掛載（自動重連）」，即可在其中斷時自動重新掛載。";
+"Right-click a volume and choose “Pin to Top” to list it first." = "在磁碟卷上按右鍵並選擇「置頂」，即可將其顯示在最前面。";
+"Saving…" = "正在儲存…";
+"System Default" = "系統預設";
+"System Mount Rule Changed During Update" = "更新期間 /etc/fstab 被其他程序修改。請再試一次。";
+"This shortcut is used by another app. Choose a different one." = "此快速鍵已被其他 App 使用。請選擇其他快速鍵。";
+"Unmount “%@”" = "卸載「%@」";
+"Version %@ (%@)" = "版本 %@ (%@)";
+"Vol: %@" = "磁碟卷：%@";
+"Volume Not Connected" = "磁碟卷未連接";
+"Import Mounted" = "匯入已掛載項目";
+"Import SMB shares that are currently mounted in Finder" = "匯入目前在 Finder 中掛載的 SMB 共享";
+"Imported %d mounted share(s). Add credentials by editing each share." = "已匯入 %d 個已掛載的共享。請編輯每個共享以加入憑證。";
+"No mounted SMB shares were found." = "找不到已掛載的 SMB 共享。";
+"Those mounted shares are already in MountMate." = "這些已掛載的共享已在 MountMate 中。";
+"Access to the share “%@” was denied by the server." = "伺服器拒絕存取共享「%@」。";
+"Another volume is already mounted at “%@”." = "另一個磁碟卷已掛載在「%@」。";
+"Authentication failed for “%@”. Check the username and password." = "「%@」認證失敗。請檢查使用者名稱和密碼。";
+"Could Not Save Share" = "無法儲存共享";
+"Could not connect to the server “%@”. Check that it is turned on and reachable from this network." = "無法連線到伺服器「%@」。請檢查它是否已開啟並可從此網路存取。";
+"Could not mount “%@” (error %d)." = "無法掛載「%@」（錯誤 %d）。";
+"Could not mount “%@”: %@ (error %d)." = "無法掛載「%@」：%@（錯誤 %d）。";
+"Could not read storage details." = "無法讀取儲存空間詳細資訊。";
+"Delete “%@”?" = "刪除「%@」？";
+"MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate 無法從鑰匙圈讀取「%@」的已儲存密碼（錯誤 %d）。";
+"MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate 無法從鑰匙圈移除已儲存的密碼（錯誤 %d）。";
+"MountMate could not save the password to the Keychain (error %d)." = "MountMate 無法將密碼儲存到鑰匙圈（錯誤 %d）。";
+"Mounting “%@” timed out. Check that the server is reachable and try again." = "掛載「%@」逾時。請檢查伺服器是否可存取，然後再試一次。";
+"The display name cannot be “.” or “..”." = "顯示名稱不能是「.」或「..」。";
+"The display name cannot contain “/”." = "顯示名稱不能包含「/」。";
+"The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point." = "掛載點「%@」已被共享「%@」使用。請選擇其他顯示名稱或自訂掛載點。";
+"The operation timed out after %d seconds." = "操作在 %d 秒後逾時。";
+"The share will be removed from MountMate, along with its saved password." = "此共享及其已儲存的密碼將從 MountMate 中移除。";
+"The share will be unmounted and removed from MountMate, along with its saved password." = "此共享將被卸載，並與其已儲存的密碼一起從 MountMate 中移除。";
+"The share “%@” was not found on the server “%@”." = "在伺服器「%2$@」上找不到共享「%1$@」。";
+"This share is already saved as “%@”." = "此共享已儲存為「%@」。";
+"Unmounting “%@” timed out." = "卸載「%@」逾時。";
+"diskutil exited with code %d." = "diskutil 已結束，代碼為 %d。";
+"“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "無法將「%@」掛載到「%@」，因為另一個共享（%@）已掛載在那裡。";
+"Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app." = "點按快速鍵以錄製新的組合鍵。組合鍵必須包含 ⌘ 或 ⌃。某些快速鍵可能已被 macOS 或其他 App 保留。";
+"This shortcut needs ⌘ or ⌃. Click it to record a new one." = "此快速鍵需要包含 ⌘ 或 ⌃。點按它以錄製新的快速鍵。";
+"System Mount Rule Update Cancelled" = "由於已取消管理者密碼提示，MountMate 未更新 /etc/fstab 中的啟動規則。在更新之前，macOS 啟動時可能仍會使用舊規則。";
+"A previous connection attempt to “%@” is still in progress." = "之前連線到「%@」的嘗試仍在進行中。";
+"MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment." = "MountMate 無法確定「%@」是否為外接磁碟，因此未將其退出。請稍後再試。";
+"Remove Anyway" = "仍要移除";
+"“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "無法卸載「%@」，因此它仍保持掛載。你仍可將其從 MountMate 中移除；共享上的檔案不會受到影響。\n\n%@";
+"“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "「%@」已連線，可能使用了不同的伺服器名稱（例如在 Finder 中）。請在那裡中斷連線後再試一次。";

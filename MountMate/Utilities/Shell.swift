@@ -88,11 +88,20 @@ func runProcess(
   let qosClass: DispatchQoS.QoSClass = (currentQoS == .unspecified) ? .userInitiated : currentQoS
 
   // Write stdin after launch so large input cannot block before the child is
-  // alive and reading. Broken-pipe errors are expected when the child exits.
+  // alive and reading. If the child exits before reading everything, the
+  // write fails with EPIPE; without F_SETNOSIGPIPE it would instead raise
+  // SIGPIPE, which terminates the whole app.
   if let data = input, let pipe = inputPipe {
+    let writeHandle = pipe.fileHandleForWriting
+    _ = fcntl(writeHandle.fileDescriptor, F_SETNOSIGPIPE, 1)
     DispatchQueue.global(qos: qosClass).async {
-      try? pipe.fileHandleForWriting.write(contentsOf: data)
-      try? pipe.fileHandleForWriting.close()
+      do {
+        try writeHandle.write(contentsOf: data)
+      } catch {
+        // Expected when the child exits early; its exit status reports why.
+        print("⚠️ Could not write stdin to \(executable): \(error.localizedDescription)")
+      }
+      try? writeHandle.close()
     }
   }
 
@@ -136,14 +145,14 @@ func runProcess(
   if timedOut {
     let termination = forcedTermination ? "SIGKILL" : "SIGTERM"
     print(
-      "❌ PROCESS TIMEOUT: \(executable) \(arguments.joined(separator: " ")) | elapsed=\(String(format: "%.1f", elapsed))s | processRunning=\(processWasRunning) | termination=\(termination) | stdout=\(stdoutData.count)B | stderr=\(stderrData.count)B"
+      "❌ PROCESS TIMEOUT: \(executable) \(redactedArguments(arguments).joined(separator: " ")) | elapsed=\(String(format: "%.1f", elapsed))s | processRunning=\(processWasRunning) | termination=\(termination) | stdout=\(stdoutData.count)B | stderr=\(stderrData.count)B"
     )
     return ProcessResult(stdout: stdout, stderr: stderr, exitCode: nil, timedOut: true)
   }
 
   if elapsed > 3.0 {
     print(
-      "⏱️ PROCESS SLOW: \(executable) \(arguments.joined(separator: " ")) | \(String(format: "%.2f", elapsed))s | stdout: \(stdoutData.count)B stderr: \(stderrData.count)B"
+      "⏱️ PROCESS SLOW: \(executable) \(redactedArguments(arguments).joined(separator: " ")) | \(String(format: "%.2f", elapsed))s | stdout: \(stdoutData.count)B stderr: \(stderrData.count)B"
     )
   }
 
@@ -152,6 +161,41 @@ func runProcess(
     stderr: stderr,
     exitCode: task.terminationStatus,
     timedOut: false)
+}
+
+// MARK: - Log Redaction
+
+/// Flags whose following argument is a secret.
+private let secretArgumentFlags: Set<String> = [
+  "-passphrase", "-password", "--password", "-oldpassphrase", "-newpassphrase", "-pass",
+]
+
+/// Matches the password in URL user info: `scheme://user:password@host` and
+/// the scheme-less `//user:password@host` form used by mount_smbfs.
+/// Group 1 keeps everything up to and including the colon.
+private let urlPasswordRegex = try! NSRegularExpression(
+  pattern: "((?:[A-Za-z][A-Za-z0-9+.\\-]*:)?//[^/@:\\s]*:)[^/@\\s]*@")
+
+/// `arguments` with secrets replaced by `***`, for logging. Command lines can
+/// carry network share passwords (`smb://user:pass@server/share`) or
+/// passphrases given after a flag; those must never reach the console log.
+func redactedArguments(_ arguments: [String]) -> [String] {
+  var redacted: [String] = []
+  redacted.reserveCapacity(arguments.count)
+  var previousWasSecretFlag = false
+  for argument in arguments {
+    if previousWasSecretFlag {
+      redacted.append("***")
+      previousWasSecretFlag = false
+      continue
+    }
+    previousWasSecretFlag = secretArgumentFlags.contains(argument.lowercased())
+    let range = NSRange(argument.startIndex..., in: argument)
+    redacted.append(
+      urlPasswordRegex.stringByReplacingMatches(
+        in: argument, range: range, withTemplate: "$1***@"))
+  }
+  return redacted
 }
 
 extension String {

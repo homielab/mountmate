@@ -50,10 +50,10 @@ struct NetworkSharesSettingsView: View {
           ForEach(persistence.networkShares) { share in
             NetworkShareRow(
               share: share, onEdit: { editingShare = share },
-              onError: { error in
-                errorAlert = AppAlert(
-                  title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,
-                  kind: .basic)
+              onError: { title, message in
+                // The row supplies the title matching the failed action
+                // (mount or unmount).
+                errorAlert = AppAlert(title: title, message: message, kind: .basic)
               })
           }
         }

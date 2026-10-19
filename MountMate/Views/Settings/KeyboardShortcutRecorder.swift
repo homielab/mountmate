@@ -83,12 +83,14 @@ final class ShortcutRecorderButton: NSButton {
     }
 
     let modifiers = event.modifierFlags.intersection(HotkeyShortcut.modifierMask)
-    guard !modifiers.isEmpty else {
+    let shortcut = HotkeyShortcut(keyCode: event.keyCode, modifiers: modifiers)
+    // Global shortcuts must include ⌘ or ⌃ (see `isSafeAsGlobalHotKey`).
+    guard shortcut.isSafeAsGlobalHotKey else {
       NSSound.beep()
       return
     }
 
-    onShortcut?(HotkeyShortcut(keyCode: event.keyCode, modifiers: modifiers))
+    onShortcut?(shortcut)
     onRecordingChanged?(false)
   }
 

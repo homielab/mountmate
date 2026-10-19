@@ -197,25 +197,70 @@ struct HotkeyShortcut: Equatable {
   }
 }
 
-enum HotkeyAction: Equatable {
+enum HotkeyAction: Hashable, CaseIterable {
   case unmountAll
   case mountAll
+
+  /// Carbon hot key ID (EventHotKeyID.id).
+  fileprivate var hotKeyID: UInt32 {
+    switch self {
+    case .unmountAll: return 1
+    case .mountAll: return 2
+    }
+  }
+
+  fileprivate init?(hotKeyID: UInt32) {
+    guard let action = Self.allCases.first(where: { $0.hotKeyID == hotKeyID }) else {
+      return nil
+    }
+    self = action
+  }
+}
+
+extension HotkeyShortcut {
+  /// Carbon hot keys take the keystroke away from every other app, so a
+  /// shortcut must include ⌘ or ⌃. Without them (e.g. ⌥E or ⇧A) it would
+  /// block typing characters such as "é" or "A" everywhere.
+  var isSafeAsGlobalHotKey: Bool {
+    !modifiers.isDisjoint(with: [.command, .control])
+  }
+
+  /// The modifiers in Carbon's format, for `RegisterEventHotKey`.
+  var carbonModifiers: UInt32 {
+    var flags: UInt32 = 0
+    if modifiers.contains(.command) { flags |= UInt32(cmdKey) }
+    if modifiers.contains(.option) { flags |= UInt32(optionKey) }
+    if modifiers.contains(.control) { flags |= UInt32(controlKey) }
+    if modifiers.contains(.shift) { flags |= UInt32(shiftKey) }
+    return flags
+  }
 }
 
 // MARK: - Hotkey Manager
 
 /// Manages global keyboard shortcuts for mounting and unmounting volumes.
-/// Uses NSEvent's global monitor to listen for key events system-wide.
-/// Note: Requires Accessibility permissions in System Preferences > Privacy & Security > Accessibility
+///
+/// Uses Carbon hot keys (`RegisterEventHotKey`): they need no Accessibility
+/// permission, and the system delivers a registered combination only to
+/// MountMate, so it no longer also reaches the frontmost app.
 class HotkeyManager: ObservableObject {
   static let shared = HotkeyManager()
+
+  /// Signature of MountMate's hot keys ("MMHK").
+  fileprivate static let hotKeySignature: OSType = 0x4D4D_484B
 
   @Published private(set) var unmountShortcut: HotkeyShortcut
   @Published private(set) var mountShortcut: HotkeyShortcut
   @Published var isListening = false
+  /// Actions whose shortcut could not be registered while listening,
+  /// usually because another app already uses the combination.
+  @Published private(set) var unavailableShortcuts: Set<HotkeyAction> = []
 
-  private var globalMonitor: Any?
-  private var localMonitor: Any?
+  private var hotKeyRefs: [HotkeyAction: EventHotKeyRef] = [:]
+  private var eventHandlerRef: EventHandlerRef?
+  /// Hot keys currently held down. Used to ignore auto-repeat, so holding a
+  /// shortcut runs its action once.
+  private var pressedActions: Set<HotkeyAction> = []
   private var cancellables = Set<AnyCancellable>()
 
   private init() {
@@ -232,12 +277,17 @@ class HotkeyManager: ObservableObject {
 
   deinit {
     stopListening()
+    if let eventHandlerRef {
+      RemoveEventHandler(eventHandlerRef)
+    }
   }
 
   // MARK: - Setup
 
   private func setupObserver() {
+    // Also fires right away with the current value.
     UserDefaults.standard.publisher(for: \.hotkeysEnabled)
+      .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [weak self] enabled in
         if enabled {
@@ -247,20 +297,6 @@ class HotkeyManager: ObservableObject {
         }
       }
       .store(in: &cancellables)
-
-    // Retry after the user returns from System Settings where they may have
-    // granted Accessibility access.
-    NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in
-        guard UserDefaults.standard.bool(forKey: "hotkeysEnabled") else { return }
-        self?.startListening()
-      }
-      .store(in: &cancellables)
-
-    if UserDefaults.standard.bool(forKey: "hotkeysEnabled") {
-      startListening()
-    }
   }
 
   private static func loadShortcut(
@@ -307,47 +343,44 @@ class HotkeyManager: ObservableObject {
     startListening()
   }
 
-  // MARK: - Accessibility Check
-
-  /// Check if the app has accessibility permissions without displaying a prompt.
-  static func checkAccessibilityPermissions() -> Bool {
-    AXIsProcessTrustedWithOptions(nil)
-  }
-
-  /// Adds the running build to System Settings → Accessibility (and shows the
-  /// system prompt) if it isn't trusted yet. Only call from a user action.
-  @discardableResult
-  static func requestAccessibilityPermission() -> Bool {
-    let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-    return AXIsProcessTrustedWithOptions(options)
-  }
-
   // MARK: - Listening
 
+  /// Registers both shortcuts. Main thread only.
   func startListening() {
-    guard globalMonitor == nil else { return }
+    guard !isListening else { return }
+    installEventHandlerIfNeeded()
 
-    // Startup checks must remain silent. The settings UI handles the explicit
-    // user prompt when shortcuts are enabled without Accessibility access.
-    guard HotkeyManager.checkAccessibilityPermissions() else {
-      isListening = false
-      #if DEBUG
-        print("HotkeyManager: Accessibility permissions are not granted")
-      #endif
-      return
-    }
-
-    globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-      self?.handleKeyEvent(event)
-    }
-
-    localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-      if self?.handleKeyEvent(event) == true {
-        return nil  // Consume the event
+    var failed: Set<HotkeyAction> = []
+    for action in HotkeyAction.allCases {
+      let combination = self.shortcut(for: action)
+      // Shortcuts saved by older versions may lack ⌘/⌃. Settings asks the
+      // user to record a new one; never register them.
+      guard combination.isSafeAsGlobalHotKey else {
+        print(
+          "⚠️ HotkeyManager: Not registering \(combination.displayString); it needs ⌘ or ⌃.")
+        continue
       }
-      return event  // Pass through
+      var ref: EventHotKeyRef?
+      // Exclusive, so a combination another app already registered fails
+      // here (and is reported in Settings) instead of silently not firing.
+      let status = RegisterEventHotKey(
+        UInt32(combination.keyCode),
+        combination.carbonModifiers,
+        EventHotKeyID(signature: Self.hotKeySignature, id: action.hotKeyID),
+        GetApplicationEventTarget(),
+        OptionBits(kEventHotKeyExclusive),
+        &ref)
+      if status == noErr, let ref {
+        hotKeyRefs[action] = ref
+      } else {
+        failed.insert(action)
+        print(
+          "⚠️ HotkeyManager: Could not register \(combination.displayString) (status \(status)); it may be used by another app."
+        )
+      }
     }
 
+    unavailableShortcuts = failed
     isListening = true
     #if DEBUG
       print(
@@ -356,55 +389,83 @@ class HotkeyManager: ObservableObject {
     #endif
   }
 
+  /// Unregisters both shortcuts. Main thread only.
   func stopListening() {
-    if let monitor = globalMonitor {
-      NSEvent.removeMonitor(monitor)
-      globalMonitor = nil
+    for ref in hotKeyRefs.values {
+      UnregisterEventHotKey(ref)
     }
-
-    if let monitor = localMonitor {
-      NSEvent.removeMonitor(monitor)
-      localMonitor = nil
-    }
-
+    hotKeyRefs.removeAll()
+    pressedActions.removeAll()
+    unavailableShortcuts = []
     isListening = false
     #if DEBUG
       print("HotkeyManager: Stopped listening for global hotkeys")
     #endif
   }
 
+  private func installEventHandlerIfNeeded() {
+    guard eventHandlerRef == nil else { return }
+    var eventTypes = [
+      EventTypeSpec(
+        eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+      EventTypeSpec(
+        eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased)),
+    ]
+    let status = InstallEventHandler(
+      GetApplicationEventTarget(), hotKeyEventHandler, 2, &eventTypes, nil,
+      &eventHandlerRef)
+    if status != noErr {
+      print("⚠️ HotkeyManager: Could not install the hot key handler (status \(status)).")
+    }
+  }
+
   // MARK: - Event Handling
 
-  @discardableResult
-  private func handleKeyEvent(_ event: NSEvent) -> Bool {
-    if matches(event, shortcut: unmountShortcut) {
+  /// Called on the main thread for MountMate's hot key events.
+  fileprivate func handleHotKey(_ action: HotkeyAction, pressed: Bool) {
+    guard pressed else {
+      pressedActions.remove(action)
+      return
+    }
+    // Still held: an auto-repeat of the same press.
+    guard pressedActions.insert(action).inserted else { return }
+
+    switch action {
+    case .unmountAll:
       #if DEBUG
         print("HotkeyManager: Triggered Unmount All (\(unmountShortcut.displayString))")
       #endif
-      DispatchQueue.main.async {
-        DriveManager.shared.unmountAllDrives()
-      }
-      return true
-    }
-
-    if matches(event, shortcut: mountShortcut) {
+      DriveManager.shared.unmountAllDrives()
+    case .mountAll:
       #if DEBUG
         print("HotkeyManager: Triggered Mount All (\(mountShortcut.displayString))")
       #endif
-      DispatchQueue.main.async {
-        DriveManager.shared.mountAllVolumes()
-      }
-      return true
+      DriveManager.shared.mountAllVolumes()
     }
-
-    return false
   }
+}
 
-  private func matches(_ event: NSEvent, shortcut: HotkeyShortcut) -> Bool {
-    guard event.keyCode == shortcut.keyCode else { return false }
-    let modifiers = event.modifierFlags.intersection(HotkeyShortcut.modifierMask)
-    return modifiers == shortcut.modifiers
-  }
+/// Carbon event handler for hot key presses and releases. A C function
+/// pointer, so it cannot capture context; it forwards to the shared manager.
+private let hotKeyEventHandler: EventHandlerUPP = { _, event, _ in
+  guard let event else { return OSStatus(eventNotHandledErr) }
+
+  var hotKeyID = EventHotKeyID()
+  let status = GetEventParameter(
+    event,
+    EventParamName(kEventParamDirectObject),
+    EventParamType(typeEventHotKeyID),
+    nil,
+    MemoryLayout<EventHotKeyID>.size,
+    nil,
+    &hotKeyID)
+  guard status == noErr, hotKeyID.signature == HotkeyManager.hotKeySignature,
+    let action = HotkeyAction(hotKeyID: hotKeyID.id)
+  else { return OSStatus(eventNotHandledErr) }
+
+  let pressed = GetEventKind(event) == UInt32(kEventHotKeyPressed)
+  HotkeyManager.shared.handleHotKey(action, pressed: pressed)
+  return noErr
 }
 
 // MARK: - UserDefaults Extension

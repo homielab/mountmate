@@ -2,9 +2,23 @@
 
 import AppKit
 import Combine
+import IOKit.pwr_mgt
+
+// IOKit's message constants are function-like C macros
+// (iokit_common_msg(...)) that Swift does not import.
+private let kIOMessageCanSystemSleepValue: UInt32 = 0xE000_0270
+private let kIOMessageSystemWillSleepValue: UInt32 = 0xE000_0280
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var cancellables = Set<AnyCancellable>()
+
+  // IOKit system power registration (see setupSleepObserver).
+  private var powerRootPort: io_connect_t = 0
+  private var powerNotifyPort: IONotificationPortRef?
+  private var powerNotifier: io_object_t = 0
+  /// Longest the app delays sleep while unmounting. macOS waits at most 30s
+  /// for an answer to kIOMessageSystemWillSleep before sleeping anyway.
+  private static let sleepUnmountTimeout: TimeInterval = 20
 
   // MARK: - Application Lifecycle
 
@@ -31,23 +45,95 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       .store(in: &cancellables)
   }
 
+  func applicationWillTerminate(_ notification: Notification) {
+    if powerNotifier != 0 {
+      IODeregisterForSystemPower(&powerNotifier)
+      powerNotifier = 0
+    }
+    if let port = powerNotifyPort {
+      IONotificationPortSetDispatchQueue(port, nil)
+      IONotificationPortDestroy(port)
+      powerNotifyPort = nil
+    }
+    if powerRootPort != 0 {
+      IOServiceClose(powerRootPort)
+      powerRootPort = 0
+    }
+  }
+
+  /// Registers for IOKit system power notifications. Unlike
+  /// NSWorkspace.willSleepNotification, kIOMessageSystemWillSleep lets the
+  /// app hold off sleep until IOAllowPowerChange is called, so the
+  /// "Unmount All Disks on Sleep" unmounts can finish before the disks lose
+  /// power.
   private func setupSleepObserver() {
-    NSWorkspace.shared.notificationCenter.addObserver(
-      self,
-      selector: #selector(systemWillSleep),
-      name: NSWorkspace.willSleepNotification,
-      object: nil
-    )
+    let refcon = Unmanaged.passUnretained(self).toOpaque()
+    let callback: IOServiceInterestCallback = { refcon, _, messageType, messageArgument in
+      guard let refcon else { return }
+      let delegate = Unmanaged<AppDelegate>.fromOpaque(refcon).takeUnretainedValue()
+      delegate.handlePowerMessage(messageType, notificationID: Int(bitPattern: messageArgument))
+    }
+    var notifyPort: IONotificationPortRef?
+    let rootPort = IORegisterForSystemPower(refcon, &notifyPort, callback, &powerNotifier)
+    guard rootPort != 0, let notifyPort else {
+      // Fall back to the old notification: it cannot delay sleep, but the
+      // unmounts still start.
+      print("❌ IORegisterForSystemPower failed; using NSWorkspace sleep notification.")
+      NSWorkspace.shared.notificationCenter.addObserver(
+        self, selector: #selector(systemWillSleep), name: NSWorkspace.willSleepNotification,
+        object: nil)
+      return
+    }
+    powerRootPort = rootPort
+    powerNotifyPort = notifyPort
+    // Deliver on the main queue: DriveManager state is main-thread only.
+    IONotificationPortSetDispatchQueue(notifyPort, DispatchQueue.main)
   }
 
   // MARK: - Actions
 
+  /// Fallback used only when IOKit power registration failed.
   @objc private func systemWillSleep(_ notification: Notification) {
-    if UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") {
+    guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else { return }
+    print("System will sleep. Ejecting all user volumes.")
+    DriveManager.shared.unmountAllDrives(suppressReconnect: false, reportFailures: false)
+  }
+
+  /// Main thread. Every kIOMessageCanSystemSleep / kIOMessageSystemWillSleep
+  /// must be answered with exactly one IOAllowPowerChange.
+  private func handlePowerMessage(_ messageType: UInt32, notificationID: Int) {
+    switch messageType {
+    case kIOMessageCanSystemSleepValue:
+      // Idle sleep request: never veto it.
+      IOAllowPowerChange(powerRootPort, notificationID)
+
+    case kIOMessageSystemWillSleepValue:
+      guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else {
+        IOAllowPowerChange(powerRootPort, notificationID)
+        return
+      }
       print("System will sleep. Ejecting all user volumes.")
+      let rootPort = powerRootPort
+      // Both the completion and the cap below call this on the main thread;
+      // the flag makes the second call a no-op.
+      var hasAllowed = false
+      let allowSleep: () -> Void = {
+        guard !hasAllowed else { return }
+        hasAllowed = true
+        IOAllowPowerChange(rootPort, notificationID)
+      }
+      // Cap the delay: a hung unmount must not keep the Mac awake.
+      DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepUnmountTimeout) {
+        if !hasAllowed { print("⚠️ Unmount on sleep still running; allowing sleep anyway.") }
+        allowSleep()
+      }
       // The unmount is not a user decision — keep-alive targets reconnect on
       // wake, so pass suppressReconnect: false.
-      DriveManager.shared.unmountAllDrives(suppressReconnect: false, reportFailures: false)
+      DriveManager.shared.unmountAllDrives(
+        suppressReconnect: false, reportFailures: false, completion: allowSleep)
+
+    default:
+      break
     }
   }
 

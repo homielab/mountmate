@@ -75,7 +75,6 @@
 "Enable Keyboard Shortcuts" = "Enable Keyboard Shortcuts";
 "Unmount All Volumes" = "Unmount All Volumes";
 "Mount All Volumes" = "Mount All Volumes";
-"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app.";
 "Press Shortcut…" = "Press Shortcut…";
 "Keyboard Shortcut" = "Keyboard Shortcut";
 "Shortcut Already Assigned" = "Shortcut Already Assigned";
@@ -121,7 +120,6 @@
 "“%@” is locked" = "“%@” is locked";
 "Full Disk Access Recommended" = "Full Disk Access Recommended";
 "Action Failed" = "Action Failed";
-"Accessibility Permission Required" = "Accessibility Permission Required";
 "Restart Required" = "Restart Required";
 
 // Buttons
@@ -163,7 +161,6 @@
 // App Lifecycle
 "Loading Disks..." = "Loading Disks...";
 "Please restart MountMate for the language change to take effect." = "Please restart MountMate for the language change to take effect.";
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility.";
 
 
 // MARK: - Network Shares
@@ -282,5 +279,65 @@
 "Could not unmount: %@" = "Could not unmount: %@";
 "Could not mount: %@" = "Could not mount: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "That password didn’t work. Enter the password to unlock “%@”";
-"Accessibility access is required for keyboard shortcuts." = "Accessibility access is required for keyboard shortcuts.";
-"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update.";
+
+
+// MARK: - Settings Lists, Shortcuts & Errors (6.1.1)
+//=============================================
+
+"APFS Container • %@" = "APFS Container • %@";
+"Administrator Prompt Cancelled" = "The administrator password prompt was cancelled.";
+"Allow MountMate in Login Items to start it at login." = "Allow MountMate in Login Items to start it at login.";
+"Custom Mount Points" = "Custom Mount Points";
+"Disk: %@" = "Disk: %@";
+"Kept Mounted Volumes" = "Kept Mounted Volumes";
+"Mount “%@”" = "Mount “%@”";
+"No Custom Mount Points" = "No Custom Mount Points";
+"No Pinned Volumes" = "No Pinned Volumes";
+"No Volumes Kept Mounted" = "No Volumes Kept Mounted";
+"Open Login Items" = "Open Login Items";
+"Pinned Volumes" = "Pinned Volumes";
+"Remove “%@”" = "Remove “%@”";
+"Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password." = "Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password.";
+"Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops." = "Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops.";
+"Right-click a volume and choose “Pin to Top” to list it first." = "Right-click a volume and choose “Pin to Top” to list it first.";
+"Saving…" = "Saving…";
+"System Default" = "System Default";
+"System Mount Rule Changed During Update" = "/etc/fstab was changed by another process during the update. Please try again.";
+"This shortcut is used by another app. Choose a different one." = "This shortcut is used by another app. Choose a different one.";
+"Unmount “%@”" = "Unmount “%@”";
+"Version %@ (%@)" = "Version %@ (%@)";
+"Vol: %@" = "Vol: %@";
+"Volume Not Connected" = "Volume Not Connected";
+"Access to the share “%@” was denied by the server." = "Access to the share “%@” was denied by the server.";
+"Another volume is already mounted at “%@”." = "Another volume is already mounted at “%@”.";
+"Authentication failed for “%@”. Check the username and password." = "Authentication failed for “%@”. Check the username and password.";
+"Could Not Save Share" = "Could Not Save Share";
+"Could not connect to the server “%@”. Check that it is turned on and reachable from this network." = "Could not connect to the server “%@”. Check that it is turned on and reachable from this network.";
+"Could not mount “%@” (error %d)." = "Could not mount “%@” (error %d).";
+"Could not mount “%@”: %@ (error %d)." = "Could not mount “%@”: %@ (error %d).";
+"Could not read storage details." = "Could not read storage details.";
+"Delete “%@”?" = "Delete “%@”?";
+"MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate could not read the saved password for “%@” from the Keychain (error %d).";
+"MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate could not remove the saved password from the Keychain (error %d).";
+"MountMate could not save the password to the Keychain (error %d)." = "MountMate could not save the password to the Keychain (error %d).";
+"Mounting “%@” timed out. Check that the server is reachable and try again." = "Mounting “%@” timed out. Check that the server is reachable and try again.";
+"The display name cannot be “.” or “..”." = "The display name cannot be “.” or “..”.";
+"The display name cannot contain “/”." = "The display name cannot contain “/”.";
+"The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point." = "The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point.";
+"The operation timed out after %d seconds." = "The operation timed out after %d seconds.";
+"The share will be removed from MountMate, along with its saved password." = "The share will be removed from MountMate, along with its saved password.";
+"The share will be unmounted and removed from MountMate, along with its saved password." = "The share will be unmounted and removed from MountMate, along with its saved password.";
+"The share “%@” was not found on the server “%@”." = "The share “%@” was not found on the server “%@”.";
+"This share is already saved as “%@”." = "This share is already saved as “%@”.";
+"Unmounting “%@” timed out." = "Unmounting “%@” timed out.";
+"diskutil exited with code %d." = "diskutil exited with code %d.";
+"“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there.";
+"Reconnects automatically when the share drops" = "Reconnects automatically when the share drops";
+"Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app." = "Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app.";
+"This shortcut needs ⌘ or ⌃. Click it to record a new one." = "This shortcut needs ⌘ or ⌃. Click it to record a new one.";
+"System Mount Rule Update Cancelled" = "MountMate did not update the startup rule in /etc/fstab because the administrator password prompt was cancelled. Until it is updated, macOS may still use the old rule when it starts up.";
+"A previous connection attempt to “%@” is still in progress." = "A previous connection attempt to “%@” is still in progress.";
+"MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment." = "MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment.";
+"Remove Anyway" = "Remove Anyway";
+"“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@";
+"“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again.";

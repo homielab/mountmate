@@ -5,9 +5,9 @@ import SwiftUI
 struct HeaderActionsView: View {
   @EnvironmentObject var driveManager: DriveManager
 
+  /// Matches exactly what unmountAllDrives() acts on (removable disks only).
   private var canUnmountAll: Bool {
-    (driveManager.physicalDisks ?? []).flatMap(\.allVolumes)
-      .contains { $0.isMounted && $0.category == .user && !$0.isProtected }
+    !driveManager.unmountAllCandidates.isEmpty
   }
 
   var body: some View {

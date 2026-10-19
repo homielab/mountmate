@@ -44,6 +44,12 @@ class PersistenceManager: ObservableObject {
     return true
   }
 
+  /// Removes a pin by its stored composite ID, e.g. from Settings for a
+  /// volume that is not connected.
+  func unpin(id: String) {
+    pinnedVolumeIDs.removeAll { $0 == id }
+  }
+
   static let mountMateFstabPrefix = "# MountMate custom mount:"
   static let mountMateBlockPrefix = "# MountMate block:"
 
@@ -73,14 +79,44 @@ class PersistenceManager: ObservableObject {
   }
 
   private init() {
-    self.protectedVolumes = Self.load(from: protectedVolumesKey)
-    self.ignoredVolumes = Self.load(from: ignoredVolumesKey)
-    self.blockedVolumes = Self.load(from: blockedVolumesKey)
-    self.keepAliveVolumes = Self.load(from: keepAliveVolumesKey)
+    self.protectedVolumes = Self.droppingNonUUIDEntries(Self.load(from: protectedVolumesKey))
+    self.ignoredVolumes = Self.migratedIgnoredEntries(Self.load(from: ignoredVolumesKey))
+    self.blockedVolumes = Self.droppingNonUUIDEntries(Self.load(from: blockedVolumesKey))
+    self.keepAliveVolumes = Self.droppingNonUUIDEntries(Self.load(from: keepAliveVolumesKey))
     self.networkShares = Self.load(from: networkSharesKey)
     self.customMountPoints = Self.load(from: customMountPointsKey)
     self.fstabBlockedVolumeUUIDs = Self.managedFstabVolumeUUIDs(
       kinds: [Self.mountMateBlockPrefix], in: Self.readSystemFstabContents())
+    // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
+    // do not run in init, so this only takes effect with the next pin change.
+    self.pinnedVolumeIDs = pinnedVolumeIDs.filter {
+      Self.normalizedSystemVolumeUUID(String($0.suffix(36))) != nil
+    }
+  }
+
+  /// Volumes without a volume UUID used to be saved under their BSD device
+  /// name (e.g. "NONE-disk4s1"), so whichever volume later got that device
+  /// name inherited the setting. `Volume.compositeId` is now nil for such
+  /// volumes, so these entries can never match again; drop them on load.
+  /// They disappear from storage with the next save of the list.
+  private static func droppingNonUUIDEntries(_ infos: [ManagedVolumeInfo]) -> [ManagedVolumeInfo]
+  {
+    infos.filter { normalizedSystemVolumeUUID($0.volumeUUID) != nil }
+  }
+
+  /// The ignore list may keep partitions without a volume UUID, keyed by
+  /// their partition DiskUUID (see `Volume.ignoreIdentifier`). Old entries
+  /// "<partition DiskUUID>-diskXsY" are moved to "<DiskUUID>-<DiskUUID>";
+  /// entries with neither UUID ("NONE-diskXsY") are dropped. Idempotent, and
+  /// stored with the next save of the list.
+  static func migratedIgnoredEntries(_ infos: [ManagedVolumeInfo]) -> [ManagedVolumeInfo] {
+    var seen = Set<String>()
+    return infos.compactMap { info -> ManagedVolumeInfo? in
+      if normalizedSystemVolumeUUID(info.volumeUUID) != nil { return info }
+      guard let partitionUUID = Volume.partitionIgnoreUUID(info.diskUUID) else { return nil }
+      return ManagedVolumeInfo(volumeUUID: partitionUUID, diskUUID: partitionUUID, name: info.name)
+    }
+    .filter { seen.insert($0.id).inserted }
   }
 
   // MARK: - Actions
@@ -101,7 +137,7 @@ class PersistenceManager: ObservableObject {
 
   @discardableResult
   func ignore(volume: Volume) -> Bool {
-    guard let info = volume.managedVolumeInfo else { return false }
+    guard let info = volume.ignoreVolumeInfo else { return false }
     guard !ignoredVolumes.contains(where: { $0.id == info.id }) else { return true }
     ignoredVolumes.append(info)
     saveIgnoredVolumes()
@@ -109,17 +145,8 @@ class PersistenceManager: ObservableObject {
   }
 
   func ignore(disk: PhysicalDisk) {
-    let infos =
-      disk.partitions.compactMap { volume -> ManagedVolumeInfo? in
-        guard let diskUUID = volume.diskUUID else { return nil }
-        return ManagedVolumeInfo(
-          volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
-      }
-      + disk.containers.flatMap { $0.volumes }.compactMap { volume -> ManagedVolumeInfo? in
-        guard let diskUUID = volume.diskUUID else { return nil }
-        return ManagedVolumeInfo(
-          volumeUUID: volume.id, diskUUID: diskUUID, name: volume.name)
-      }
+    // Same identity scheme as ignoring a single volume.
+    let infos = disk.allVolumes.compactMap(\.ignoreVolumeInfo)
 
     for info in infos {
       if !ignoredVolumes.contains(where: { $0.id == info.id }) {
@@ -207,7 +234,11 @@ class PersistenceManager: ObservableObject {
   func addNetworkSharesIfNeeded(_ shares: [NetworkShare]) -> Int {
     var addedCount = 0
 
-    for share in shares where !containsNetworkShare(matching: share) {
+    for var share in shares where !containsNetworkShare(matching: share) {
+      // The default mount folder is ~/mountmate/<name>, so two imported shares
+      // with the same name (e.g. "public" on two servers) would collide.
+      share.name = Self.uniqueShareName(
+        share.name, existing: networkShares.map(\.name))
       networkShares.append(share)
       addedCount += 1
     }
@@ -216,6 +247,16 @@ class PersistenceManager: ObservableObject {
       saveNetworkShares()
     }
     return addedCount
+  }
+
+  /// `name`, or "name (2)", "name (3)"… — the first one not already used
+  /// (case-insensitively) by `existing`.
+  static func uniqueShareName(_ name: String, existing: [String]) -> String {
+    let taken = Set(existing.map { $0.lowercased() })
+    guard taken.contains(name.lowercased()) else { return name }
+    var index = 2
+    while taken.contains("\(name) (\(index))".lowercased()) { index += 1 }
+    return "\(name) (\(index))"
   }
 
   func containsNetworkShare(matching share: NetworkShare) -> Bool {
@@ -254,115 +295,182 @@ class PersistenceManager: ObservableObject {
   }
 
   func customMountPoint(for volume: Volume) -> VolumeCustomMountPoint? {
-    customMountPoints.first { $0.id == stableIdentifier(for: volume) }
+    // Custom mount points are /etc/fstab rules addressed by volume UUID, so
+    // only volumes with a real UUID can have one.
+    guard volume.stableVolumeUUID != nil else { return nil }
+    let identifier = stableIdentifier(for: volume)
+    return customMountPoints.first { $0.id == identifier }
   }
 
-  func applyCustomMountPoint(_ mountPoint: String, selectedURL: URL?, for volume: Volume) -> String?
-  {
+  /// Outcome of an asynchronous custom mount point update.
+  enum CustomMountPointUpdateResult: Equatable {
+    case success
+    /// The user dismissed the administrator password prompt; nothing changed.
+    case cancelled
+    /// A localized message to show to the user.
+    case failure(String)
+  }
+
+  /// Adds or replaces the volume's custom mount point: writes its /etc/fstab
+  /// rule (which may show the administrator password prompt), then saves it
+  /// in MountMate's list.
+  ///
+  /// The `diskutil` lookup and the privileged write run on `fstabQueue`, so
+  /// the UI never waits for the password prompt, and the update is
+  /// serialized with startup-block reconciles. Call on the main thread;
+  /// `completion` is called on the main thread.
+  func applyCustomMountPoint(
+    _ mountPoint: String, for volume: Volume,
+    completion: @escaping (CustomMountPointUpdateResult) -> Void
+  ) {
     guard !isVolumeBlocked(volume) else {
-      return NSLocalizedString(
-        "Custom Mount Point Volume Blocked",
-        comment: "Custom mount point blocked-volume error")
+      completion(
+        .failure(
+          NSLocalizedString(
+            "Custom Mount Point Volume Blocked",
+            comment: "Custom mount point blocked-volume error")))
+      return
     }
     guard let volumeUUID = volumeUUIDForSystemMount(for: volume) else {
-      return NSLocalizedString(
-        "Custom Mount Point Requires UUID",
-        comment: "Custom mount point system configuration error")
-    }
-    guard let fileSystemType = resolvedFstabFileSystemType(for: volume) else {
-      return NSLocalizedString(
-        "Custom Mount Point Unsupported File System",
-        comment: "Custom mount point system configuration error")
+      completion(
+        .failure(
+          NSLocalizedString(
+            "Custom Mount Point Requires UUID",
+            comment: "Custom mount point system configuration error")))
+      return
     }
 
-    do {
-      let snapshot = try loadSystemFstabSnapshot()
-      let currentContents = snapshot.contents
-      let updatedContents = try updatedFstabContents(
-        from: currentContents,
-        for: volume,
-        volumeUUID: volumeUUID,
-        mountPoint: mountPoint,
-        fileSystemType: fileSystemType
-      )
-
-      if updatedContents != currentContents {
-        try installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
+    fstabQueue.async {
+      guard let fileSystemType = self.resolvedFstabFileSystemType(for: volume) else {
+        DispatchQueue.main.async {
+          completion(
+            .failure(
+              NSLocalizedString(
+                "Custom Mount Point Unsupported File System",
+                comment: "Custom mount point system configuration error")))
+        }
+        return
       }
 
-      if let selectedURL, selectedURL.path == mountPoint {
-        saveCustomMountPoint(url: selectedURL, for: volume)
-      } else {
-        saveCustomMountPoint(mountPoint, for: volume)
+      do {
+        let snapshot = try self.loadSystemFstabSnapshot()
+        let currentContents = snapshot.contents
+        let updatedContents = try self.updatedFstabContents(
+          from: currentContents,
+          for: volume,
+          volumeUUID: volumeUUID,
+          mountPoint: mountPoint,
+          fileSystemType: fileSystemType
+        )
+
+        // The volume may have been blocked while this job waited in the
+        // queue (e.g. behind another password prompt). Read the current
+        // state, as reconcile does. (Safe: main never waits on fstabQueue.)
+        let isBlockedNow = DispatchQueue.main.sync { self.isVolumeBlocked(volume) }
+        guard !isBlockedNow else {
+          DispatchQueue.main.async {
+            completion(
+              .failure(
+                NSLocalizedString(
+                  "Custom Mount Point Volume Blocked",
+                  comment: "Custom mount point blocked-volume error")))
+          }
+          return
+        }
+
+        if updatedContents != currentContents {
+          try self.installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
+        }
+
+        DispatchQueue.main.async {
+          self.saveCustomMountPoint(mountPoint, for: volume)
+          completion(.success)
+        }
+      } catch {
+        let result = Self.customMountPointUpdateResult(for: error)
+        DispatchQueue.main.async { completion(result) }
       }
-      return nil
-    } catch {
-      return String(
+    }
+  }
+
+  /// Removes the volume's custom mount point: its /etc/fstab rule (which
+  /// may show the administrator password prompt) and its saved entry. Runs
+  /// like `applyCustomMountPoint`. Call on the main thread; `completion` is
+  /// called on the main thread.
+  func removeCustomMountPoint(
+    for volume: Volume, completion: @escaping (CustomMountPointUpdateResult) -> Void
+  ) {
+    removeCustomMountPoint(
+      volumeUUID: volumeUUIDForSystemMount(for: volume),
+      entryID: stableIdentifier(for: volume),
+      completion: completion)
+  }
+
+  /// Same as `removeCustomMountPoint(for:completion:)`, from the saved entry
+  /// alone, so entries of volumes that are not connected can be removed too.
+  func removeCustomMountPoint(
+    info: VolumeCustomMountPoint, completion: @escaping (CustomMountPointUpdateResult) -> Void
+  ) {
+    removeCustomMountPoint(
+      volumeUUID: Self.normalizedSystemVolumeUUID(info.volumeUUID) != nil ? info.volumeUUID : nil,
+      entryID: info.id,
+      completion: completion)
+  }
+
+  /// - Parameters:
+  ///   - volumeUUID: The UUID the /etc/fstab rule addresses, or nil when the
+  ///     volume has none (then it cannot have a rule, and only the saved
+  ///     entry is removed).
+  ///   - entryID: The `VolumeCustomMountPoint.id` of the saved entry.
+  private func removeCustomMountPoint(
+    volumeUUID: String?, entryID: String,
+    completion: @escaping (CustomMountPointUpdateResult) -> Void
+  ) {
+    fstabQueue.async {
+      do {
+        if let volumeUUID {
+          let snapshot = try self.loadSystemFstabSnapshot()
+          let currentContents = snapshot.contents
+          let updatedContents = Self.removingManagedFstabEntries(
+            volumeUUID: volumeUUID, kinds: [Self.mountMateFstabPrefix], from: currentContents)
+
+          if updatedContents != currentContents {
+            try self.installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
+          }
+        }
+
+        DispatchQueue.main.async {
+          self.customMountPoints.removeAll { $0.id == entryID }
+          self.saveCustomMountPoints()
+          completion(.success)
+        }
+      } catch {
+        let result = Self.customMountPointUpdateResult(for: error)
+        DispatchQueue.main.async { completion(result) }
+      }
+    }
+  }
+
+  private static func customMountPointUpdateResult(for error: Error)
+    -> CustomMountPointUpdateResult
+  {
+    if isAdminPromptCancellation(error) { return .cancelled }
+    return .failure(
+      String(
         format: NSLocalizedString(
           "Custom Mount Point System Save Error",
           comment: "Custom mount point system configuration error"),
-        error.localizedDescription)
-    }
+        error.localizedDescription))
   }
 
-  func saveCustomMountPoint(_ mountPoint: String, for volume: Volume) {
-    saveCustomMountPoint(mountPoint, bookmarkData: nil, for: volume)
-  }
-
-  func saveCustomMountPoint(url: URL, for volume: Volume) {
-    let bookmarkData = try? url.bookmarkData(
-      options: [.withSecurityScope],
-      includingResourceValuesForKeys: nil,
-      relativeTo: nil
-    )
-    saveCustomMountPoint(url.path, bookmarkData: bookmarkData, for: volume)
-  }
-
-  func resolveCustomMountPointURL(for volume: Volume) -> URL? {
-    guard let info = customMountPoint(for: volume) else { return nil }
-    guard let bookmarkData = info.bookmarkData else {
-      return URL(fileURLWithPath: info.mountPoint)
-    }
-
-    var isStale = false
-    if let resolvedURL = try? URL(
-      resolvingBookmarkData: bookmarkData,
-      options: [.withSecurityScope],
-      relativeTo: nil,
-      bookmarkDataIsStale: &isStale
-    ) {
-      if isStale {
-        saveCustomMountPoint(url: resolvedURL, for: volume)
-      }
-      return resolvedURL
-    }
-
-    return URL(fileURLWithPath: info.mountPoint)
-  }
-
-  @discardableResult
-  func withAccessToCustomMountPoint<T>(for volume: Volume, _ body: (URL) throws -> T) rethrows -> T?
-  {
-    guard let url = resolveCustomMountPointURL(for: volume) else { return nil }
-    let scoped = url.startAccessingSecurityScopedResource()
-    defer {
-      if scoped {
-        url.stopAccessingSecurityScopedResource()
-      }
-    }
-    return try body(url)
-  }
-
-  private func saveCustomMountPoint(
-    _ mountPoint: String, bookmarkData: Data?, for volume: Volume
-  ) {
+  /// Main thread only.
+  private func saveCustomMountPoint(_ mountPoint: String, for volume: Volume) {
     let identifier = stableIdentifier(for: volume)
     let info = VolumeCustomMountPoint(
       volumeUUID: volume.id,
       backingDiskIdentifier: backingDiskIdentifier(for: volume),
       name: volume.name,
-      mountPoint: mountPoint,
-      bookmarkData: bookmarkData
+      mountPoint: mountPoint
     )
 
     if let index = customMountPoints.firstIndex(where: { $0.id == identifier }) {
@@ -371,32 +479,6 @@ class PersistenceManager: ObservableObject {
       customMountPoints.append(info)
     }
     saveCustomMountPoints()
-  }
-
-  func clearCustomMountPoint(for volume: Volume) {
-    customMountPoints.removeAll { $0.id == stableIdentifier(for: volume) }
-    saveCustomMountPoints()
-  }
-
-  func removeCustomMountPoint(for volume: Volume) -> String? {
-    do {
-      let snapshot = try loadSystemFstabSnapshot()
-      let currentContents = snapshot.contents
-      let updatedContents = removingManagedFstabEntry(from: currentContents, for: volume)
-
-      if updatedContents != currentContents {
-        try installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
-      }
-
-      clearCustomMountPoint(for: volume)
-      return nil
-    } catch {
-      return String(
-        format: NSLocalizedString(
-          "Custom Mount Point System Save Error",
-          comment: "Custom mount point system configuration error"),
-        error.localizedDescription)
-    }
   }
 
   // MARK: - Volume Helpers
@@ -431,7 +513,10 @@ class PersistenceManager: ObservableObject {
     blockAtStartup = enabled
     UserDefaults.standard.set(enabled, forKey: "blockAtStartup")
 
-    reconcileStartupBlockRules(userInitiated: true) { [weak self] succeeded in
+    // Cancelling the password prompt here just turns the toggle back, with
+    // no alert: the user saw the toggle and chose not to continue.
+    reconcileStartupBlockRules(userInitiated: true, silentOnCancel: true) {
+      [weak self] succeeded in
       // Only roll back if the user has not changed the setting again since.
       guard let self, !succeeded, self.blockAtStartup == enabled else { return }
       self.blockAtStartup = previous
@@ -472,9 +557,11 @@ class PersistenceManager: ObservableObject {
   /// - Parameters:
   ///   - userInitiated: Explicit user actions always try, even after an
   ///     earlier admin prompt was cancelled; background reconciles do not.
+  ///   - silentOnCancel: Show no alert when the user cancels the
+  ///     administrator prompt (the caller reports the failure itself).
   ///   - completion: Called on the main thread with false if the update failed.
   func reconcileStartupBlockRules(
-    userInitiated: Bool, completion: ((Bool) -> Void)? = nil
+    userInitiated: Bool, silentOnCancel: Bool = false, completion: ((Bool) -> Void)? = nil
   ) {
     fstabQueue.async { [weak self] in
       guard let self else { return }
@@ -499,7 +586,9 @@ class PersistenceManager: ObservableObject {
         DispatchQueue.main.async { completion?(true) }
       } catch {
         if userInitiated {
-          self.handleStartupBlockError(error)
+          if !(silentOnCancel && Self.isAdminPromptCancellation(error)) {
+            self.handleStartupBlockError(error)
+          }
         } else {
           // No alert for updates the user did not just ask for.
           self.backgroundFstabUpdateDeclined = true
@@ -702,14 +791,20 @@ class PersistenceManager: ObservableObject {
 
   private func handleStartupBlockError(_ error: Error) {
     print("⚠️ Failed to update startup block rules in /etc/fstab: \(error.localizedDescription)")
-    let message = error.localizedDescription
+    // A cancelled password prompt is not an error; say plainly what it means.
+    let message =
+      Self.isAdminPromptCancellation(error)
+      ? NSLocalizedString(
+        "System Mount Rule Update Cancelled",
+        comment: "Alert message when the admin prompt for a startup block rule was cancelled")
+      : String(
+        format: NSLocalizedString(
+          "System Mount Rule Update Failed", comment: "Alert message"),
+        error.localizedDescription)
     DispatchQueue.main.async {
       DriveManager.shared.userActionError = AppAlert(
         title: NSLocalizedString("System Mount Rule Not Updated", comment: "Alert title"),
-        message: String(
-          format: NSLocalizedString(
-            "System Mount Rule Update Failed", comment: "Alert message"),
-          message),
+        message: message,
         kind: .basic)
     }
   }
@@ -722,8 +817,8 @@ class PersistenceManager: ObservableObject {
   }
 
   func isVolumeIgnored(_ volume: Volume) -> Bool {
-    guard let compositeId = volume.compositeId else { return false }
-    return ignoredVolumes.contains { $0.id == compositeId }
+    guard let ignoreID = volume.ignoreIdentifier else { return false }
+    return ignoredVolumes.contains { $0.id == ignoreID }
   }
 
   func isVolumeBlocked(_ volume: Volume) -> Bool {
@@ -740,7 +835,7 @@ class PersistenceManager: ObservableObject {
   }
 
   private func volumeUUIDForSystemMount(for volume: Volume) -> String? {
-    volume.id == volume.deviceIdentifier ? nil : volume.id
+    volume.stableVolumeUUID
   }
 
   private func resolvedFstabFileSystemType(for volume: Volume) -> String? {
@@ -965,6 +1060,8 @@ class PersistenceManager: ObservableObject {
   }
 
   private static let fstabChangedErrorCode = 3
+  /// The user dismissed the administrator password prompt.
+  private static let adminPromptCancelledErrorCode = 4
   private static let fstabChangedMarker = "MOUNTMATE_FSTAB_CHANGED"
 
   /// Writes /etc/fstab with administrator privileges.
@@ -1023,8 +1120,21 @@ class PersistenceManager: ObservableObject {
         domain: "MountMate",
         code: Self.fstabChangedErrorCode,
         userInfo: [
-          NSLocalizedDescriptionKey:
-            "/etc/fstab was changed by another process during the update. Please try again."
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "System Mount Rule Changed During Update",
+            comment: "Error when /etc/fstab changed while MountMate was updating it")
+        ])
+    }
+    // osascript reports a dismissed password prompt as
+    // "execution error: User canceled. (-128)". Never show that raw text.
+    if !result.succeeded && result.stderr.contains("(-128)") {
+      throw NSError(
+        domain: "MountMate",
+        code: Self.adminPromptCancelledErrorCode,
+        userInfo: [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "Administrator Prompt Cancelled",
+            comment: "Error when the administrator password prompt was cancelled")
         ])
     }
     if !result.succeeded {
@@ -1039,6 +1149,12 @@ class PersistenceManager: ObservableObject {
         code: 2,
         userInfo: [NSLocalizedDescriptionKey: error])
     }
+  }
+
+  /// True when `error` means the user dismissed the administrator prompt.
+  static func isAdminPromptCancellation(_ error: Error) -> Bool {
+    let nsError = error as NSError
+    return nsError.domain == "MountMate" && nsError.code == adminPromptCancelledErrorCode
   }
 
   private func managedFstabComment(for volume: Volume) -> String {
@@ -1079,11 +1195,73 @@ class PersistenceManager: ObservableObject {
       UserDefaults.standard.set(data, forKey: key)
     }
   }
-  private static func load<T: Codable>(from key: String) -> [T] {
-    if let data = UserDefaults.standard.data(forKey: key) {
-      return (try? JSONDecoder().decode([T].self, from: data)) ?? []
+
+  /// Loads a saved list. Elements are decoded one by one, so a single entry
+  /// that cannot be read (e.g. written by a newer version) does not empty the
+  /// whole list. When anything is skipped, the raw data is backed up first,
+  /// because the next save overwrites it with the readable entries only.
+  static func load<T: Codable>(from key: String, defaults: UserDefaults = .standard) -> [T] {
+    guard let data = defaults.data(forKey: key) else { return [] }
+    let result = decodeLossyArray(T.self, from: data)
+    if result.hadFailures {
+      print(
+        "⚠️ Some saved entries for \(key) could not be read and were skipped (\(result.elements.count) kept)."
+      )
+      backUpUndecodableData(data, forKey: key, defaults: defaults)
     }
-    return []
+    return result.elements
+  }
+
+  struct LossyDecodeResult<Element> {
+    var elements: [Element]
+    /// True when at least one element, or the whole payload, could not be
+    /// decoded.
+    var hadFailures: Bool
+  }
+
+  /// Decodes each element on its own; a nil `value` marks an element that
+  /// failed. (Its decoder still consumes the element, so decoding continues
+  /// with the next one.)
+  private struct LossyElement<Element: Decodable>: Decodable {
+    let value: Element?
+
+    init(from decoder: Decoder) throws {
+      value = try? Element(from: decoder)
+    }
+  }
+
+  /// Decodes a JSON array, skipping elements that fail to decode. A payload
+  /// that is not a JSON array at all yields no elements and `hadFailures`.
+  static func decodeLossyArray<Element: Decodable>(
+    _ type: Element.Type, from data: Data
+  ) -> LossyDecodeResult<Element> {
+    guard let wrapped = try? JSONDecoder().decode([LossyElement<Element>].self, from: data) else {
+      return LossyDecodeResult(elements: [], hadFailures: true)
+    }
+    let elements = wrapped.compactMap(\.value)
+    return LossyDecodeResult(elements: elements, hadFailures: elements.count != wrapped.count)
+  }
+
+  /// Stores `data` under "<key>_backup_<unix timestamp>". At most one backup
+  /// per key per app version, so a list that keeps failing to decode on
+  /// every launch does not pile up copies.
+  static func backUpUndecodableData(
+    _ data: Data, forKey key: String, defaults: UserDefaults = .standard,
+    appVersion: String = PersistenceManager.currentAppVersion, now: Date = Date()
+  ) {
+    let markerKey = "\(key)_backupVersion"
+    guard defaults.string(forKey: markerKey) != appVersion else { return }
+    let backupKey = "\(key)_backup_\(Int(now.timeIntervalSince1970))"
+    defaults.set(data, forKey: backupKey)
+    defaults.set(appVersion, forKey: markerKey)
+    print("ℹ️ Backed up the unreadable data of \(key) to \(backupKey).")
+  }
+
+  static var currentAppVersion: String {
+    let info = Bundle.main.infoDictionary
+    let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+    let build = info?["CFBundleVersion"] as? String ?? "?"
+    return "\(version) (\(build))"
   }
 
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }

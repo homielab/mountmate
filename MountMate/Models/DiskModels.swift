@@ -93,18 +93,54 @@ struct Volume: Identifiable, Hashable {
 
   var storageError: String?
 
+  /// The volume's UUID, or nil when the volume has none. DriveManager
+  /// falls back to the BSD device identifier (e.g. "disk4s1") for `id`,
+  /// which another volume can get later, so it must never be used to save
+  /// per-volume settings.
+  var stableVolumeUUID: String? {
+    guard id != deviceIdentifier, UUID(uuidString: id) != nil else { return nil }
+    return id
+  }
+
+  /// Key for per-volume settings (block, ignore, protect, pin, keep alive):
+  /// "<disk UUID or NONE>-<volume UUID>". Nil when the volume has no UUID.
+  /// DiskMounter builds the same key from Disk Arbitration descriptions.
   var compositeId: String? {
-    let dUUID = diskUUID ?? "NONE"
-    return "\(dUUID)-\(id)"
+    guard let volumeUUID = stableVolumeUUID else { return nil }
+    return "\(diskUUID ?? "NONE")-\(volumeUUID)"
   }
 
   var managedVolumeInfo: ManagedVolumeInfo? {
-    guard compositeId != nil else { return nil }
+    guard let volumeUUID = stableVolumeUUID else { return nil }
     return ManagedVolumeInfo(
-      volumeUUID: id,
+      volumeUUID: volumeUUID,
       diskUUID: diskUUID ?? "NONE",
       name: name
     )
+  }
+
+  /// Key for the ignore (hide) list only. Same as `compositeId`, except that
+  /// a partition without a volume UUID (Microsoft Reserved, BitLocker,
+  /// Linux, swap…) is identified by its partition DiskUUID, which is stable:
+  /// "<DiskUUID>-<DiskUUID>". Hiding the wrong partition is harmless enough
+  /// for this; settings that act on a volume (block, protect, pin, keep
+  /// alive) stay volume-UUID-only.
+  var ignoreIdentifier: String? {
+    ignoreVolumeInfo?.id
+  }
+
+  /// The entry `PersistenceManager.ignore(volume:)` saves; see
+  /// `ignoreIdentifier`.
+  var ignoreVolumeInfo: ManagedVolumeInfo? {
+    if let managedVolumeInfo { return managedVolumeInfo }
+    guard let partitionUUID = Self.partitionIgnoreUUID(diskUUID) else { return nil }
+    return ManagedVolumeInfo(volumeUUID: partitionUUID, diskUUID: partitionUUID, name: name)
+  }
+
+  /// `diskUUID` when it is a real UUID (kept as stored), else nil.
+  static func partitionIgnoreUUID(_ diskUUID: String?) -> String? {
+    guard let diskUUID, UUID(uuidString: diskUUID) != nil else { return nil }
+    return diskUUID
   }
 }
 

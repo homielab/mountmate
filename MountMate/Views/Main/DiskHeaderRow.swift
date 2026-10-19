@@ -8,6 +8,12 @@ struct DiskHeaderRow: View {
   @EnvironmentObject var manager: DriveManager
   @State private var isHovering = false
 
+  /// Internal disks offer no eject. A disk whose type could not be
+  /// determined still shows Eject; DriveManager explains why it refuses.
+  private var canEject: Bool {
+    disk.type != .internalDisk || manager.unverifiedDiskIDs.contains(disk.id)
+  }
+
   var body: some View {
     HStack(spacing: 0) {
       // Toggle Chevron & Icon
@@ -74,15 +80,15 @@ struct DiskHeaderRow: View {
           for volume in disk.allVolumes { PersistenceManager.shared.ignore(volume: volume) }
           manager.refreshDrives(qos: .userInitiated)
         }
-        if disk.type != .internalDisk {
+        if canEject {
           Button("Eject") { manager.eject(disk: disk) }
         }
       }
 
       Spacer()
 
-      if disk.type != .internalDisk {
-        let isEjecting = manager.busyEjectingIdentifier == disk.id
+      if canEject {
+        let isEjecting = manager.isEjecting(disk.id)
         Button(action: { manager.eject(disk: disk) }) {
           Image(systemName: "eject.fill")
             .opacity(isEjecting ? 0 : 1)

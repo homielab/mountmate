@@ -36,7 +36,7 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// Whether user credentials can be embedded in the mount URL.
+  /// Whether the protocol uses a username and password (passed to NetFS).
   var supportsUserCredentials: Bool {
     switch self {
     case .smb, .afp: return true

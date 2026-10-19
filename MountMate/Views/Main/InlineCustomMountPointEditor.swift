@@ -4,10 +4,17 @@ import SwiftUI
 
 struct InlineCustomMountPointEditor: View {
   let volume: Volume
+  /// `VolumeRowView.editorRowID` of the row showing this editor.
+  let rowID: String
   @EnvironmentObject private var driveManager: DriveManager
-  @ObservedObject private var persistence = PersistenceManager.shared
+  // Only used for actions; observing it would redraw on every list change.
+  private let persistence = PersistenceManager.shared
   @ObservedObject var editorState: CustomMountPointEditorState
   let onClose: () -> Void
+
+  /// True while this volume's /etc/fstab update (and its password prompt)
+  /// runs, started from this row or from the volume's other (pinned) row.
+  private var isSaving: Bool { editorState.savingVolumeIDs.contains(volume.id) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -20,6 +27,7 @@ struct InlineCustomMountPointEditor: View {
             comment: "Custom mount point path placeholder"))
       )
       .textFieldStyle(.roundedBorder)
+      .disabled(isSaving)
 
       HStack(spacing: 8) {
         Button(NSLocalizedString("Choose Folder", comment: "Choose folder button")) {
@@ -32,13 +40,13 @@ struct InlineCustomMountPointEditor: View {
           editorState.mountPointPath = ""
           editorState.inlineError = nil
           editorState.pendingSavePath = nil
-          editorState.selectedFolderURL = nil
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
 
         Spacer()
       }
+      .disabled(isSaving)
 
       Text(
         NSLocalizedString(
@@ -66,11 +74,19 @@ struct InlineCustomMountPointEditor: View {
 
         Spacer()
 
+        if isSaving {
+          ProgressView()
+            .controlSize(.small)
+            .accessibilityLabel(
+              NSLocalizedString("Saving…", comment: "Custom mount point save in progress"))
+        }
+
         Button(NSLocalizedString("Save", comment: "Save button")) {
           save()
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.small)
+        .disabled(isSaving)
       }
     }
     .padding(12)
@@ -131,7 +147,6 @@ struct InlineCustomMountPointEditor: View {
       }
       guard response == .OK else { return }
       editorState.mountPointPath = panel.url?.path ?? editorState.mountPointPath
-      editorState.selectedFolderURL = panel.url
       editorState.inlineError = nil
     }
 
@@ -143,20 +158,18 @@ struct InlineCustomMountPointEditor: View {
   }
 
   private func save() {
+    guard !isSaving else { return }
     editorState.inlineError = nil
 
     let normalizedPath = driveManager.normalizedMountPointPath(editorState.mountPointPath)
     editorState.mountPointPath = normalizedPath
 
     guard !normalizedPath.isEmpty else {
-      if let error = persistence.removeCustomMountPoint(for: volume) {
-        editorState.inlineError = error
-        return
+      // An empty path means "use the default location": remove the rule.
+      editorState.savingVolumeIDs.insert(volume.id)
+      persistence.removeCustomMountPoint(for: volume) { [rowID, volume] result in
+        Self.finishUpdate(result, volume: volume, rowID: rowID)
       }
-      if volume.isMounted {
-        driveManager.remount(volume: volume)
-      }
-      onClose()
       return
     }
 
@@ -170,9 +183,6 @@ struct InlineCustomMountPointEditor: View {
     do {
       let directoryState = try driveManager.inspectDirectory(at: normalizedPath)
       editorState.pendingSavePath = normalizedPath
-      if editorState.selectedFolderURL?.path != normalizedPath {
-        editorState.selectedFolderURL = nil
-      }
 
       if !directoryState.exists {
         editorState.showCreateDirectoryAlert = true
@@ -215,18 +225,49 @@ struct InlineCustomMountPointEditor: View {
   }
 
   private func commitPendingSave() {
-    guard let path = editorState.pendingSavePath else { return }
-    let selectedFolderURL =
-      editorState.selectedFolderURL?.path == path ? editorState.selectedFolderURL : nil
-    if let error = persistence.applyCustomMountPoint(
-      path, selectedURL: selectedFolderURL, for: volume)
-    {
-      editorState.inlineError = error
-      return
+    guard let path = editorState.pendingSavePath, !isSaving else { return }
+    editorState.savingVolumeIDs.insert(volume.id)
+    persistence.applyCustomMountPoint(path, for: volume) { [rowID, volume] result in
+      Self.finishUpdate(result, volume: volume, rowID: rowID)
     }
-    if volume.isMounted {
-      driveManager.remount(volume: volume)
+  }
+
+  /// Runs on the main thread when a save or removal finishes. Static and
+  /// working only with shared objects: the editor may have been closed, or
+  /// reopened for another row, while the password prompt was up.
+  private static func finishUpdate(
+    _ result: PersistenceManager.CustomMountPointUpdateResult, volume: Volume, rowID: String
+  ) {
+    let editorState = CustomMountPointEditorState.shared
+    let driveManager = DriveManager.shared
+    editorState.savingVolumeIDs.remove(volume.id)
+    let isStillOpen = editorState.expandedRowID == rowID
+
+    switch result {
+    case .success:
+      // Remount so the new location takes effect, using the volume's
+      // current state rather than the one from when Save was clicked.
+      let currentVolume =
+        (driveManager.physicalDisks ?? []).flatMap(\.allVolumes).first { $0.id == volume.id }
+      if let currentVolume, currentVolume.isMounted {
+        driveManager.remount(volume: currentVolume)
+      }
+      if isStillOpen {
+        editorState.collapse()
+      }
+    case .cancelled:
+      // The user dismissed the password prompt: nothing changed, and the
+      // editor stays open with their input.
+      break
+    case .failure(let message):
+      if isStillOpen {
+        editorState.inlineError = message
+      } else {
+        driveManager.userActionError = AppAlert(
+          title: NSLocalizedString("Custom Mount Point", comment: "Alert title"),
+          message: message,
+          kind: .basic)
+      }
     }
-    onClose()
   }
 }

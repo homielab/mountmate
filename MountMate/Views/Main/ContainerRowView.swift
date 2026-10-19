@@ -12,7 +12,11 @@ struct ContainerRowView: View {
         .frame(width: 24, alignment: .center)
         .padding(.trailing, 4)
 
-      Text("APFS Container • \(container.id)")
+      Text(
+        String(
+          format: NSLocalizedString(
+            "APFS Container • %@", comment: "APFS container row; %@ is its device name"),
+          container.id))
         .font(.subheadline)
         .bold()
         .foregroundStyle(.secondary)

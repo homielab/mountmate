@@ -3,6 +3,7 @@
 import Combine
 import DiskArbitration
 import Foundation
+import IOKit
 
 class DiskMounter: ObservableObject {
   @Published var blockUSBAutoMount: Bool = UserDefaults.standard.bool(forKey: "blockUSBAutoMount")
@@ -37,6 +38,13 @@ class DiskMounter: ObservableObject {
   /// Guards the launch-time cleanup so it runs once per app launch even when
   /// the session is restarted.
   private var hasPerformedStartupMaintenance = false
+  /// When this object was created, i.e. app launch.
+  private let createdAt = Date()
+  /// The startup sweep only runs for a session started this soon after
+  /// launch. A session started later (the user blocks their first volume or
+  /// turns on the USB block mid-session) must not sweep, or it would unmount
+  /// volumes the user just chose to block.
+  private static let startupSweepWindow: TimeInterval = 30
 
   init() {
     NotificationCenter.default.addObserver(
@@ -211,32 +219,13 @@ class DiskMounter: ObservableObject {
       // decided shouldBlock, so a missing startup rule can be added for it.
       var blockedByList = false
 
-      // Global USB block.
-      // kDADiskDescriptionDeviceProtocolKey ("DADeviceProtocol") is rarely
-      // populated at the volume level. The reliable key is "BusProtocol",
-      // which lives in the whole-disk description. Walk up to the whole disk
-      // and read its description when the volume-level one lacks bus info.
-      if this.blockUSBAutoMount {
-        // Try the volume-level description first.
-        var busProtocol = description["BusProtocol"] as? String
-
-        // Fall back to the whole-disk (parent) description if not present.
-        if busProtocol == nil, let wholeDisk = DADiskCopyWholeDisk(disk) {
-          if let parentDesc = DADiskCopyDescription(wholeDisk) {
-            let parentDict = parentDesc as! [String: Any]
-            busProtocol = parentDict["BusProtocol"] as? String
-          }
-        }
-
-        // Block USB drives and SD cards. "BusProtocol" values observed on
-        // macOS include "USB", "SD", "Bluetooth", "Thunderbolt", etc.
-        // The feature is named "Block USB Auto-Mount" so scope to USB/SD.
-        if let proto = busProtocol,
-          proto.caseInsensitiveCompare("USB") == .orderedSame
-            || proto.caseInsensitiveCompare("SD") == .orderedSame
-        {
-          shouldBlock = true
-        }
+      // Global USB block. The feature is named "Block USB Auto-Mount", so
+      // it is scoped to USB drives and SD cards.
+      if this.blockUSBAutoMount,
+        let proto = DiskMounter.busProtocol(of: disk, description: description),
+        DiskMounter.isUSBOrSDProtocol(proto)
+      {
+        shouldBlock = true
       }
 
       if let volUUID = volumeUUIDString {
@@ -289,11 +278,61 @@ class DiskMounter: ObservableObject {
     scheduleStartupMaintenance()
   }
 
+  /// Bus protocol of the physical device behind `disk` (e.g. "USB", "SD",
+  /// "Secure Digital", "SATA", "PCI-Express", "Thunderbolt"), or nil when
+  /// unknown. Runs inside the mount approval callback, so it only reads Disk
+  /// Arbitration descriptions and the in-kernel IORegistry (microseconds);
+  /// it never spawns diskutil.
+  fileprivate static func busProtocol(of disk: DADisk, description: [String: Any]) -> String? {
+    let protocolKey = kDADiskDescriptionDeviceProtocolKey as String
+    // 1. The volume's own description ("BusProtocol" kept for older systems).
+    if let proto = description[protocolKey] as? String ?? description["BusProtocol"] as? String {
+      return proto
+    }
+    // 2. The whole disk's description.
+    if let wholeDisk = DADiskCopyWholeDisk(disk),
+      let wholeDescription = DADiskCopyDescription(wholeDisk) as? [String: Any],
+      let proto = wholeDescription[protocolKey] as? String
+        ?? wholeDescription["BusProtocol"] as? String
+    {
+      return proto
+    }
+    // 3. APFS volumes live on a synthesized container disk whose
+    //    descriptions carry no bus information. Walk up the IORegistry from
+    //    the volume's media, through the APFS container and its physical
+    //    store, to the storage device and read its "Protocol
+    //    Characteristics" (where DADeviceProtocol comes from).
+    let media = DADiskCopyIOMedia(disk)
+    guard media != IO_OBJECT_NULL else { return nil }
+    defer { IOObjectRelease(media) }
+    guard
+      let characteristics = IORegistryEntrySearchCFProperty(
+        media, kIOServicePlane, "Protocol Characteristics" as CFString, kCFAllocatorDefault,
+        IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents))
+        as? [String: Any]
+    else { return nil }
+    return characteristics["Physical Interconnect"] as? String
+  }
+
+  /// "USB", "SD" or "Secure Digital", ignoring case.
+  fileprivate static func isUSBOrSDProtocol(_ proto: String) -> Bool {
+    let value = proto.trimmingCharacters(in: .whitespaces)
+    return ["USB", "SD", "Secure Digital"].contains {
+      value.caseInsensitiveCompare($0) == .orderedSame
+    }
+  }
+
   /// Runs once per app launch, shortly after the Disk Arbitration session
   /// starts: unmounts blocked volumes the OS mounted before MountMate was
   /// running. Mount approval callbacks cannot run before a user-session app
   /// launches, so this is best-effort cleanup for volumes mounted at login.
+  /// Skipped for sessions started later than `startupSweepWindow`.
   private func scheduleStartupMaintenance() {
+    guard !hasPerformedStartupMaintenance else { return }
+    guard Date().timeIntervalSince(createdAt) < Self.startupSweepWindow else {
+      hasPerformedStartupMaintenance = true
+      return
+    }
     DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
       guard let self, self.session != nil, !self.hasPerformedStartupMaintenance else { return }
       self.hasPerformedStartupMaintenance = true

@@ -7,7 +7,9 @@ struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
   @ObservedObject var persistence = PersistenceManager.shared
   @ObservedObject var networkManager = NetworkMountManager.shared
-  @ObservedObject private var customMountPointEditor = CustomMountPointEditorState.shared
+  // Not observed: the list mirrors the editor state it needs, so typing in
+  // the editor does not redraw this view.
+  private let customMountPointEditor = CustomMountPointEditorState.shared
 
   private var internalDisks: [PhysicalDisk] {
     (driveManager.physicalDisks ?? []).filter { $0.type == .internalDisk && $0.hasVisibleContent }

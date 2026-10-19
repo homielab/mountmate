@@ -7,45 +7,80 @@ class KeychainManager {
   static let shared = KeychainManager()
   private let serviceName = "com.homielab.mountmate"
 
-  private init() {}
-
-  func save(password: String, for account: String) -> OSStatus {
-    let data = password.data(using: .utf8)!
-    let query: [String: Any] = [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: serviceName,
-      kSecAttrAccount as String: account,
-      kSecValueData as String: data,
-    ]
-
-    SecItemDelete(query as CFDictionary)
-    return SecItemAdd(query as CFDictionary, nil)
+  /// Outcome of reading a password, distinguishing "nothing saved" from a
+  /// real failure (locked keychain, denied access, …).
+  enum ReadResult {
+    case found(String)
+    case notFound
+    case failed(OSStatus)
   }
 
-  func load(account: String) -> String? {
-    let query: [String: Any] = [
+  private init() {}
+
+  private func baseQuery(account: String) -> [String: Any] {
+    [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: serviceName,
       kSecAttrAccount as String: account,
-      kSecReturnData as String: true,
-      kSecMatchLimit as String: kSecMatchLimitOne,
     ]
+  }
+
+  /// Saves (creates or replaces) the password for `account`.
+  ///
+  /// Updates the existing item in place and only adds a new one when none
+  /// exists, so a failure can never lose the previously saved password (the
+  /// old delete-then-add did when the add failed).
+  ///
+  /// - Returns: `errSecSuccess` on success, otherwise the Keychain error.
+  @discardableResult
+  func save(password: String, for account: String) -> OSStatus {
+    let data = Data(password.utf8)
+    let query = baseQuery(account: account)
+
+    let updateStatus = SecItemUpdate(
+      query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+    guard updateStatus == errSecItemNotFound else { return updateStatus }
+
+    var addQuery = query
+    addQuery[kSecValueData as String] = data
+    return SecItemAdd(addQuery as CFDictionary, nil)
+  }
+
+  /// Reads the password for `account`.
+  func read(account: String) -> ReadResult {
+    var query = baseQuery(account: account)
+    query[kSecReturnData as String] = true
+    query[kSecMatchLimit as String] = kSecMatchLimitOne
 
     var dataTypeRef: AnyObject?
     let status = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
 
-    if status == errSecSuccess, let data = dataTypeRef as? Data {
-      return String(data: data, encoding: .utf8)
+    switch status {
+    case errSecSuccess:
+      guard let data = dataTypeRef as? Data, let password = String(data: data, encoding: .utf8)
+      else { return .failed(errSecDecode) }
+      return .found(password)
+    case errSecItemNotFound:
+      return .notFound
+    default:
+      return .failed(status)
+    }
+  }
+
+  /// Convenience for callers that treat any failure as "no password".
+  func load(account: String) -> String? {
+    if case .found(let password) = read(account: account) {
+      return password
     }
     return nil
   }
 
-  func delete(account: String) {
-    let query: [String: Any] = [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: serviceName,
-      kSecAttrAccount as String: account,
-    ]
-    SecItemDelete(query as CFDictionary)
+  /// Deletes the password for `account`.
+  ///
+  /// - Returns: `errSecSuccess`, `errSecItemNotFound` when nothing was saved,
+  ///   or another Keychain error.
+  @discardableResult
+  func delete(account: String) -> OSStatus {
+    SecItemDelete(baseQuery(account: account) as CFDictionary)
   }
 }

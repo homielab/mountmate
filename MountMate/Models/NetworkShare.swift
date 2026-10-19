@@ -54,3 +54,43 @@ struct NetworkShare: Identifiable, Codable, Hashable {
     customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
   }
 }
+
+// MARK: - Input Cleanup & Validation
+
+extension NetworkShare {
+  /// Cleans up a server address typed or pasted by the user: trims
+  /// whitespace and drops a leading `smb://`, `afp://` or `nfs://` and any
+  /// trailing slashes.
+  static func cleanedServerInput(_ raw: String) -> String {
+    var server = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    for scheme in ShareProtocol.allCases.map({ "\($0.urlScheme)://" }) {
+      if server.lowercased().hasPrefix(scheme) {
+        server = String(server.dropFirst(scheme.count))
+        break
+      }
+    }
+    while server.hasSuffix("/") { server.removeLast() }
+    return server.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  /// Why `name` cannot be used as a display name, or nil if it can. Without
+  /// a custom mount point the name is the mount folder under ~/mountmate, so
+  /// it must be a single path component.
+  static func displayNameValidationError(_ name: String) -> String? {
+    if name.contains("/") {
+      return NSLocalizedString(
+        "The display name cannot contain “/”.", comment: "Network share validation error")
+    }
+    if name == "." || name == ".." {
+      return NSLocalizedString(
+        "The display name cannot be “.” or “..”.", comment: "Network share validation error")
+    }
+    return nil
+  }
+
+  /// Whether both shares connect to the same protocol, server and share path.
+  func hasSameEndpoint(as other: NetworkShare) -> Bool {
+    shareProtocol == other.shareProtocol
+      && MountedNetworkShare.endpoint(for: self) == MountedNetworkShare.endpoint(for: other)
+  }
+}

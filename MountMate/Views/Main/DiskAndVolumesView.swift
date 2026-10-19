@@ -4,9 +4,9 @@ import SwiftUI
 
 struct DiskAndVolumesView: View {
   let disk: PhysicalDisk
-  @ObservedObject var customMountPointEditor: CustomMountPointEditorState
+  let listState: VolumeListState
+  let customMountPointEditor: CustomMountPointEditorState
   @State private var isExpanded = true
-  @EnvironmentObject var manager: DriveManager
   @AppStorage("showOnlyVolumes") private var showOnlyVolumes = false
 
   private var visibleContainers: [APFSContainer] {
@@ -22,6 +22,8 @@ struct DiskAndVolumesView: View {
         ForEach(disk.partitions) { partition in
           VolumeRowView(
             volume: partition,
+            context: .disk,
+            listState: listState,
             customMountPointEditor: customMountPointEditor
           )
           .padding(.leading, showOnlyVolumes ? 0 : 24)
@@ -33,6 +35,8 @@ struct DiskAndVolumesView: View {
           ForEach(container.volumes) { volume in
             VolumeRowView(
               volume: volume,
+              context: .disk,
+              listState: listState,
               customMountPointEditor: customMountPointEditor
             )
             .padding(.leading, showOnlyVolumes ? 0 : 48)
@@ -40,7 +44,9 @@ struct DiskAndVolumesView: View {
         }
       }
     }
-    .onReceive(manager.driveExpansionSubject) { expanded in
+    // Not an @EnvironmentObject: observing DriveManager here would redraw
+    // every disk on any of its changes, and only this subject is needed.
+    .onReceive(DriveManager.shared.driveExpansionSubject) { expanded in
       withAnimation {
         self.isExpanded = expanded
       }

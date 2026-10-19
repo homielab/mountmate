@@ -58,17 +58,60 @@ final class NetworkShareCodableTests: XCTestCase {
       name: "Exports", server: "192.168.1.10", sharePath: "exports/public",
       username: "", mountAtLogin: false, shareProtocol: .nfs)
 
-    let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share, password: ""))
+    let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share))
     XCTAssertEqual(url.absoluteString, "nfs://192.168.1.10/exports/public")
   }
 
-  func testAFPURLIncludesCredentials() throws {
-    let share = NetworkShare(
-      name: "Time Capsule", server: "tc.local", sharePath: "Data", username: "admin",
-      mountAtLogin: false, shareProtocol: .afp)
+  func testConnectionURLNeverEmbedsCredentials() throws {
+    // Credentials go to NetFS separately; a URL must never carry them (they
+    // used to end up in mount_smbfs/mount_afp arguments, visible via `ps`).
+    for shareProtocol in [ShareProtocol.smb, .afp] {
+      let share = NetworkShare(
+        name: "Time Capsule", server: "tc.local", sharePath: "Data", username: "admin",
+        mountAtLogin: false, shareProtocol: shareProtocol)
 
+      let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share))
+      XCTAssertEqual(url.absoluteString, "\(shareProtocol.urlScheme)://tc.local/Data")
+      XCTAssertNil(url.user)
+      XCTAssertNil(url.password)
+    }
+  }
+
+  func testDomainUserGoesIntoURLWithoutPassword() throws {
+    let share = NetworkShare(
+      name: "Projects", server: "fs.corp.example", sharePath: "projects", username: "")
     let url = try XCTUnwrap(
-      NetworkMountManager.shared.connectionURL(for: share, password: "s3cret"))
-    XCTAssertTrue(url.absoluteString.hasPrefix("afp://admin:s3cret@tc.local/Data"))
+      NetworkMountManager.shared.connectionURL(for: share, user: "CORP;alice"))
+    XCTAssertEqual(url.user, "CORP;alice")
+    XCTAssertNil(url.password)
+    XCTAssertEqual(url.host, "fs.corp.example")
+    XCTAssertEqual(url.path, "/projects")
+  }
+
+  func testCleanedServerInputStripsWhitespaceAndScheme() {
+    XCTAssertEqual(NetworkShare.cleanedServerInput("  nas.local \n"), "nas.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("smb://nas.local/"), "nas.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("AFP://tc.local"), "tc.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("nfs://10.0.0.2"), "10.0.0.2")
+  }
+
+  func testDisplayNameValidation() {
+    XCTAssertNil(NetworkShare.displayNameValidationError("Media"))
+    XCTAssertNil(NetworkShare.displayNameValidationError("My Share (2)"))
+    XCTAssertNotNil(NetworkShare.displayNameValidationError("a/b"))
+    XCTAssertNotNil(NetworkShare.displayNameValidationError("../Desktop"))
+    XCTAssertNotNil(NetworkShare.displayNameValidationError("."))
+    XCTAssertNotNil(NetworkShare.displayNameValidationError(".."))
+  }
+
+  func testSameEndpointIgnoresCaseSlashesAndScheme() {
+    let a = NetworkShare(name: "A", server: "NAS.local", sharePath: "/Media/", username: "")
+    let b = NetworkShare(name: "B", server: "nas.local", sharePath: "media", username: "me")
+    let c = NetworkShare(name: "C", server: "nas2.local", sharePath: "media", username: "")
+    let d = NetworkShare(
+      name: "D", server: "nas.local", sharePath: "media", username: "", shareProtocol: .afp)
+    XCTAssertTrue(a.hasSameEndpoint(as: b))
+    XCTAssertFalse(a.hasSameEndpoint(as: c))
+    XCTAssertFalse(a.hasSameEndpoint(as: d))
   }
 }

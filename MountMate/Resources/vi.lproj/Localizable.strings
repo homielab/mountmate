@@ -75,7 +75,6 @@
 "Enable Keyboard Shortcuts" = "Bật phím tắt";
 "Unmount All Volumes" = "Tháo tất cả phân vùng";
 "Mount All Volumes" = "Gắn tất cả phân vùng";
-"Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app." = "Bấm vào phím tắt để ghi lại tổ hợp phím mới. Một số phím tắt có thể được macOS hoặc ứng dụng khác sử dụng.";
 "Press Shortcut…" = "Nhấn phím tắt…";
 "Keyboard Shortcut" = "Phím tắt";
 "Shortcut Already Assigned" = "Phím tắt đã được gán";
@@ -121,7 +120,6 @@
 "“%@” is locked" = "“%@” đã bị khoá";
 "Full Disk Access Recommended" = "Nên cấp quyền Truy cập Toàn bộ Đĩa";
 "Action Failed" = "Thao tác thất bại";
-"Accessibility Permission Required" = "Cần quyền Trợ năng";
 "Restart Required" = "Cần khởi động lại";
 
 // Buttons
@@ -163,7 +161,6 @@
 // App Lifecycle
 "Loading Disks..." = "Đang tải ổ đĩa...";
 "Please restart MountMate for the language change to take effect." = "Vui lòng khởi động lại MountMate để thay đổi ngôn ngữ có hiệu lực.";
-"To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility." = "Để sử dụng phím tắt, vui lòng cấp MountMate quyền Accessibility trong Cài đặt Hệ thống → Quyền riêng tư & Bảo mật → Trợ năng.";
 
 
 // MARK: - Network Shares
@@ -278,5 +275,69 @@
 "Could not unmount: %@" = "Không thể tháo: %@";
 "Could not mount: %@" = "Không thể gắn: %@";
 "That password didn’t work. Enter the password to unlock “%@”" = "Mật khẩu không đúng. Nhập mật khẩu để mở khóa “%@”";
-"Accessibility access is required for keyboard shortcuts." = "Phím tắt cần quyền Trợ năng.";
-"Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update." = "Đã bật rồi? Xóa MountMate khỏi danh sách bằng nút –, rồi thêm lại. Việc này có thể cần sau khi cập nhật.";
+
+
+// MARK: - Settings Lists, Shortcuts & Errors (6.1.1)
+//=============================================
+
+"APFS Container • %@" = "Vùng chứa APFS • %@";
+"Administrator Prompt Cancelled" = "Yêu cầu nhập mật khẩu quản trị viên đã bị hủy.";
+"Allow MountMate in Login Items to start it at login." = "Hãy cho phép MountMate trong Mục đăng nhập để ứng dụng khởi động khi đăng nhập.";
+"Custom Mount Points" = "Điểm gắn tùy chỉnh";
+"Disk: %@" = "Ổ đĩa: %@";
+"Kept Mounted Volumes" = "Phân vùng được giữ gắn kết";
+"Mount “%@”" = "Gắn “%@”";
+"No Custom Mount Points" = "Không có điểm gắn tùy chỉnh";
+"No Pinned Volumes" = "Không có phân vùng được ghim";
+"No Volumes Kept Mounted" = "Không có phân vùng được giữ gắn kết";
+"Open Login Items" = "Mở Mục đăng nhập";
+"Pinned Volumes" = "Phân vùng đã ghim";
+"Remove “%@”" = "Xóa “%@”";
+"Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password." = "Nhấp chuột phải vào một phân vùng và chọn “Điểm gắn tùy chỉnh…” để gắn nó vào thư mục bạn chọn. Xóa một mục cũng xóa quy tắc gắn hệ thống của mục đó (/etc/fstab) và có thể yêu cầu mật khẩu quản trị viên.";
+"Right-click a volume and choose “Keep Mounted (Auto-Reconnect)” to remount it automatically when it drops." = "Nhấp chuột phải vào một phân vùng và chọn “Giữ gắn kết (tự động)” để tự động gắn lại khi nó bị ngắt.";
+"Right-click a volume and choose “Pin to Top” to list it first." = "Nhấp chuột phải vào một phân vùng và chọn “Ghim lên đầu” để hiển thị nó đầu tiên.";
+"Saving…" = "Đang lưu…";
+"System Default" = "Mặc định hệ thống";
+"System Mount Rule Changed During Update" = "/etc/fstab đã bị một tiến trình khác thay đổi trong lúc cập nhật. Vui lòng thử lại.";
+"This shortcut is used by another app. Choose a different one." = "Phím tắt này đang được ứng dụng khác sử dụng. Hãy chọn phím tắt khác.";
+"Unmount “%@”" = "Tháo “%@”";
+"Version %@ (%@)" = "Phiên bản %@ (%@)";
+"Vol: %@" = "Phân vùng: %@";
+"Volume Not Connected" = "Phân vùng chưa kết nối";
+"Import Mounted" = "Nhập ổ đang gắn";
+"Import SMB shares that are currently mounted in Finder" = "Nhập các thư mục chia sẻ SMB đang được gắn trong Finder";
+"Imported %d mounted share(s). Add credentials by editing each share." = "Đã nhập %d thư mục chia sẻ đang gắn. Hãy thêm thông tin đăng nhập bằng cách sửa từng thư mục chia sẻ.";
+"No mounted SMB shares were found." = "Không tìm thấy thư mục chia sẻ SMB nào đang được gắn.";
+"Those mounted shares are already in MountMate." = "Các thư mục chia sẻ đang gắn này đã có trong MountMate.";
+"Access to the share “%@” was denied by the server." = "Máy chủ đã từ chối truy cập vào thư mục chia sẻ “%@”.";
+"Another volume is already mounted at “%@”." = "Một phân vùng khác đã được gắn tại “%@”.";
+"Authentication failed for “%@”. Check the username and password." = "Xác thực cho “%@” thất bại. Hãy kiểm tra tên người dùng và mật khẩu.";
+"Could Not Save Share" = "Không thể lưu thư mục chia sẻ";
+"Could not connect to the server “%@”. Check that it is turned on and reachable from this network." = "Không thể kết nối tới máy chủ “%@”. Hãy kiểm tra máy chủ đang bật và có thể truy cập từ mạng này.";
+"Could not mount “%@” (error %d)." = "Không thể gắn “%@” (lỗi %d).";
+"Could not mount “%@”: %@ (error %d)." = "Không thể gắn “%@”: %@ (lỗi %d).";
+"Could not read storage details." = "Không thể đọc thông tin dung lượng.";
+"Delete “%@”?" = "Xóa “%@”?";
+"MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate không thể đọc mật khẩu đã lưu cho “%@” từ Chuỗi khóa (lỗi %d).";
+"MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate không thể xóa mật khẩu đã lưu khỏi Chuỗi khóa (lỗi %d).";
+"MountMate could not save the password to the Keychain (error %d)." = "MountMate không thể lưu mật khẩu vào Chuỗi khóa (lỗi %d).";
+"Mounting “%@” timed out. Check that the server is reachable and try again." = "Gắn “%@” đã hết thời gian chờ. Hãy kiểm tra máy chủ có thể truy cập và thử lại.";
+"The display name cannot be “.” or “..”." = "Tên hiển thị không được là “.” hoặc “..”.";
+"The display name cannot contain “/”." = "Tên hiển thị không được chứa “/”.";
+"The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point." = "Điểm gắn “%@” đã được thư mục chia sẻ “%@” sử dụng. Hãy chọn tên hiển thị hoặc điểm gắn tùy chỉnh khác.";
+"The operation timed out after %d seconds." = "Thao tác đã hết thời gian chờ sau %d giây.";
+"The share will be removed from MountMate, along with its saved password." = "Thư mục chia sẻ sẽ bị xóa khỏi MountMate cùng với mật khẩu đã lưu.";
+"The share will be unmounted and removed from MountMate, along with its saved password." = "Thư mục chia sẻ sẽ được tháo và xóa khỏi MountMate cùng với mật khẩu đã lưu.";
+"The share “%@” was not found on the server “%@”." = "Không tìm thấy thư mục chia sẻ “%@” trên máy chủ “%@”.";
+"This share is already saved as “%@”." = "Thư mục chia sẻ này đã được lưu với tên “%@”.";
+"Unmounting “%@” timed out." = "Tháo “%@” đã hết thời gian chờ.";
+"diskutil exited with code %d." = "diskutil đã thoát với mã %d.";
+"“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Không thể gắn “%@” tại “%@” vì một thư mục chia sẻ khác (%@) đã được gắn ở đó.";
+"Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app." = "Nhấp vào một phím tắt để ghi tổ hợp phím mới. Tổ hợp phải có ⌘ hoặc ⌃. Một số phím tắt có thể đã được macOS hoặc ứng dụng khác dành riêng.";
+"This shortcut needs ⌘ or ⌃. Click it to record a new one." = "Phím tắt này cần có ⌘ hoặc ⌃. Nhấp vào để ghi phím tắt mới.";
+"System Mount Rule Update Cancelled" = "MountMate chưa cập nhật quy tắc khởi động trong /etc/fstab vì yêu cầu nhập mật khẩu quản trị viên đã bị hủy. Cho đến khi được cập nhật, macOS vẫn có thể dùng quy tắc cũ khi khởi động.";
+"A previous connection attempt to “%@” is still in progress." = "Lần thử kết nối trước tới “%@” vẫn đang diễn ra.";
+"MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment." = "MountMate không thể xác định “%@” có phải ổ đĩa ngoài hay không nên chưa đẩy ra. Hãy thử lại sau giây lát.";
+"Remove Anyway" = "Vẫn xóa";
+"“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "Không thể tháo “%@” nên nó vẫn được gắn. Bạn vẫn có thể xóa nó khỏi MountMate; không tệp nào trên thư mục chia sẻ bị ảnh hưởng.\n\n%@";
+"“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "“%@” đã được kết nối, có thể dưới tên máy chủ khác (ví dụ trong Finder). Hãy ngắt kết nối ở đó rồi thử lại.";

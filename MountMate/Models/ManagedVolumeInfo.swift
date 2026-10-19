@@ -17,7 +17,9 @@ struct VolumeCustomMountPoint: Codable, Hashable, Identifiable {
   let backingDiskIdentifier: String
   let name: String
   var mountPoint: String
-  var bookmarkData: Data?
+  /// No longer written or read (security-scoped bookmarks were never used).
+  /// Kept so entries saved by older versions still decode.
+  var bookmarkData: Data? = nil
 
   var id: String {
     "\(backingDiskIdentifier)-\(volumeUUID)"

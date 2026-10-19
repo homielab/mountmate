@@ -111,8 +111,19 @@ class KeepAliveManager: ObservableObject {
   private var pathMonitor: NWPathMonitor?
   private let pathMonitorQueue = DispatchQueue(label: "com.homielab.mountmate.pathmonitor")
   private var cancellables = Set<AnyCancellable>()
+  /// Main thread only.
   private var isSweeping = false
-  private var currentInterfaceName: String?
+  /// Incremented for every sweep so a late completion (or the watchdog) of
+  /// an older sweep never resets `isSweeping` for a newer one. Main only.
+  private var sweepGeneration = 0
+  /// Upper bound for one sweep. Mounts have their own timeouts, but if some
+  /// completion still never arrives, `isSweeping` must not stay stuck (which
+  /// would silently disable keep-alive for the rest of the session).
+  private static let sweepWatchdogInterval: TimeInterval = 180
+
+  /// The non-tunnel interface network paths were last routed through.
+  /// Main thread only.
+  private var currentInterface: InterfaceSnapshot?
 
   private init() {
     let defaults = UserDefaults.standard
@@ -195,8 +206,18 @@ class KeepAliveManager: ObservableObject {
     }
   }
 
+  /// Lifts the suppression only (retry state untouched). Used when a user
+  /// unmount that suppressed the share up front fails, so the share is still
+  /// mounted and must stay protected by keep-alive.
+  func unsuppress(shareID: UUID) {
+    suppressionLock.lock()
+    suppressedShareIDs.remove(shareID)
+    suppressionLock.unlock()
+  }
+
   /// Called when the user mounts a share again — clears any suppression and
-  /// retry state so keep-alive tracking restarts cleanly.
+  /// retry state so keep-alive tracking restarts cleanly. Automatic mounts
+  /// must NOT call this, or the backoff never accumulates.
   func resume(shareID: UUID) {
     suppressionLock.lock()
     suppressedShareIDs.remove(shareID)
@@ -220,10 +241,32 @@ class KeepAliveManager: ObservableObject {
 
   /// Runs a reconnect sweep immediately (e.g. after wake, network recovery,
   /// or a manual "Reconnect now" action).
-  func sweepNow() {
+  ///
+  /// - Parameter resetBackoff: make every target due right away. Used after
+  ///   wake and network recovery: failures from before (e.g. away from the
+  ///   server's network) must not delay reconnecting by up to 8× the
+  ///   interval now that the server may be reachable again.
+  func sweepNow(resetBackoff: Bool = false) {
     DispatchQueue.main.async { [weak self] in
+      if resetBackoff {
+        self?.clearBackoffDelays()
+      }
       self?.sweep()
     }
+  }
+
+  /// Clears every pending backoff delay. Attempt counts are kept, so a
+  /// target that keeps failing backs off again from where it was.
+  private func clearBackoffDelays() {
+    func dueNow(_ state: RetryState) -> RetryState {
+      var state = state
+      state.nextFireDate = nil
+      return state
+    }
+    retryStateLock.lock()
+    shareRetryState = shareRetryState.mapValues(dueNow)
+    volumeRetryState = volumeRetryState.mapValues(dueNow)
+    retryStateLock.unlock()
   }
 
   // MARK: - Scheduling
@@ -251,7 +294,7 @@ class KeepAliveManager: ObservableObject {
     print("☀️ System woke from sleep. Scheduling keep-alive reconnect sweep.")
     // Give the network stack a moment to re-establish connectivity.
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-      self?.sweepNow()
+      self?.sweepNow(resetBackoff: true)
     }
   }
 
@@ -261,54 +304,103 @@ class KeepAliveManager: ObservableObject {
     let monitor = NWPathMonitor()
     pathMonitor = monitor
     monitor.pathUpdateHandler = { [weak self] path in
-      self?.handlePathUpdate(path)
+      // NWPathMonitor calls back on its own queue; the settings, share list
+      // and interface tracking used below are main-thread state.
+      DispatchQueue.main.async {
+        self?.handlePathUpdate(path)
+      }
     }
     monitor.start(queue: pathMonitorQueue)
   }
 
-  /// Only touched from `pathMonitorQueue`.
+  /// A physical (non-tunnel) network interface.
+  struct InterfaceSnapshot: Equatable {
+    let name: String
+    let type: NWInterface.InterfaceType
+  }
+
+  /// The path's physical interfaces in path order, ignoring VPN tunnels
+  /// (utun, ipsec — reported as `.other`) and loopback, whose coming and
+  /// going says nothing about how the shares' server is reached.
+  static func physicalInterfaces(of path: NWPath) -> [InterfaceSnapshot] {
+    path.availableInterfaces
+      .filter { [.wifi, .wiredEthernet, .cellular].contains($0.type) }
+      .map { InterfaceSnapshot(name: $0.name, type: $0.type) }
+  }
+
+  /// Whether mounted shares should be remounted after a path update: only
+  /// when the interface they were reached through is gone, or the primary
+  /// physical interface changed kind (e.g. Wi-Fi → Ethernet). Changes that
+  /// only add, remove or reorder tunnel/loopback interfaces never qualify.
+  static func shouldRemountShares(
+    previous: InterfaceSnapshot?, current: InterfaceSnapshot?, available: [InterfaceSnapshot]
+  ) -> Bool {
+    // First observation, or recovering from "no network": the reconnect
+    // sweep handles that.
+    guard let previous, let current else { return false }
+    if !available.contains(where: { $0.name == previous.name }) { return true }
+    return current.type != previous.type
+  }
+
+  /// Main thread only.
   private func handlePathUpdate(_ path: NWPath) {
     guard isEnabled else { return }
 
     if path.status == .satisfied {
       // NWPath does not document interface ordering, but in practice the
       // first entry is the primary interface the path is routed through.
-      let interfaceName = path.availableInterfaces.first?.name
-      let interfaceChanged = currentInterfaceName != nil && interfaceName != currentInterfaceName
-      currentInterfaceName = interfaceName
+      let available = Self.physicalInterfaces(of: path)
+      let interface = available.first
+      let interfaceChanged = Self.shouldRemountShares(
+        previous: currentInterface, current: interface, available: available)
+      // Back online (or on another network): earlier failures say nothing
+      // about reachability now, so retry everything right away.
+      let networkChanged = currentInterface == nil || interfaceChanged
+      currentInterface = interface
 
       if interfaceChanged && remountOnNetworkChange {
-        print("📶 Network interface changed (→ \(interfaceName ?? "?")). Remounting shares.")
+        print("📶 Network interface changed (→ \(interface?.name ?? "?")). Remounting shares.")
         remountSharesForInterfaceChange()
       } else {
         print("📶 Network became available. Running keep-alive reconnect sweep.")
-        sweepNow()
+        sweepNow(resetBackoff: networkChanged)
       }
     } else {
-      currentInterfaceName = nil
+      currentInterface = nil
       print("📴 Network unavailable. Waiting for recovery before reconnecting mounts.")
     }
   }
 
   /// Re-establishes active share mounts through the new primary interface.
+  /// Main thread only.
   private func remountSharesForInterfaceChange() {
     let shares = keepAliveShares
-    for share in shares {
-      guard !isSuppressed(shareID: share.id) else { continue }
-      NetworkMountManager.shared.refreshMountStatus { [weak self] in
-        guard let self else { return }
+    guard !shares.isEmpty else { return }
+    // One mount-table refresh for all shares (not one per share).
+    NetworkMountManager.shared.refreshMountStatus { [weak self] in
+      guard let self else { return }
+      var needsSweep = false
+      for share in shares {
+        guard !self.isSuppressed(shareID: share.id) else { continue }
         guard NetworkMountManager.shared.isMounted(share: share) else {
           // Not mounted right now — the regular sweep will reconnect it.
-          self.sweepNow()
-          return
+          needsSweep = true
+          continue
         }
-        DispatchQueue.main.async { [weak self] in
-          self?.reconnectingShareIDs.insert(share.id)
+        if !self.reconnectingShareIDs.contains(share.id) {
+          self.reconnectingShareIDs.insert(share.id)
         }
-        NetworkMountManager.shared.forceRemount(share: share) { [weak self] in
-          self?.recordResult(shareID: share.id, success: true)
-          print("🔁 Remounted \(share.name) through the new network interface.")
+        NetworkMountManager.shared.forceRemount(share: share) { [weak self] success in
+          self?.recordResult(shareID: share.id, success: success)
+          if success {
+            print("🔁 Remounted \(share.name) through the new network interface.")
+          } else {
+            print("🔁 Could not remount \(share.name) through the new network interface.")
+          }
         }
+      }
+      if needsSweep {
+        self.sweepNow(resetBackoff: true)
       }
     }
   }
@@ -341,7 +433,8 @@ class KeepAliveManager: ObservableObject {
     }
   }
 
-  private func isSuppressed(shareID: UUID) -> Bool {
+  /// Whether the user unmounted this share on purpose in this session.
+  func isSuppressed(shareID: UUID) -> Bool {
     suppressionLock.withLock { suppressedShareIDs.contains(shareID) }
   }
 
@@ -351,7 +444,8 @@ class KeepAliveManager: ObservableObject {
 
   // MARK: - Retry Bookkeeping
 
-  private func recordAttempt(shareID: UUID) {
+  /// Internal (not private) for unit tests.
+  func recordAttempt(shareID: UUID) {
     retryStateLock.lock()
     var state = shareRetryState[shareID] ?? RetryState()
     state.attempt += 1
@@ -369,17 +463,34 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
   }
 
+  /// Number of consecutive failed attempts recorded for a share. For tests.
+  func retryAttempt(forShareID shareID: UUID) -> Int {
+    retryStateLock.withLock { shareRetryState[shareID]?.attempt ?? 0 }
+  }
+
+  /// When the share may next be retried (nil: right away). For tests.
+  func nextRetryDate(forShareID shareID: UUID) -> Date? {
+    retryStateLock.withLock { shareRetryState[shareID]?.nextFireDate }
+  }
+
   private func recordResult(shareID: UUID, success: Bool) {
+    // A share the user ejected in the meantime is not "reconnecting".
+    let clear = success || isSuppressed(shareID: shareID)
     retryStateLock.lock()
-    if success {
+    if clear {
       shareRetryState.removeValue(forKey: shareID)
     }
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
-      if success {
-        self?.reconnectingShareIDs.remove(shareID)
-      } else {
-        self?.reconnectingShareIDs.insert(shareID)
+      guard let self else { return }
+      // Every mutation of an @Published property re-renders its observers,
+      // even when it changes nothing, and this runs for each healthy target
+      // on every tick: only touch the set when membership really changes.
+      let isReconnecting = self.reconnectingShareIDs.contains(shareID)
+      if clear, isReconnecting {
+        self.reconnectingShareIDs.remove(shareID)
+      } else if !clear, !isReconnecting {
+        self.reconnectingShareIDs.insert(shareID)
       }
     }
   }
@@ -391,10 +502,13 @@ class KeepAliveManager: ObservableObject {
     }
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
-      if success {
-        self?.reconnectingVolumeIDs.remove(volumeID)
-      } else {
-        self?.reconnectingVolumeIDs.insert(volumeID)
+      guard let self else { return }
+      // Only publish real changes (see recordResult(shareID:success:)).
+      let isReconnecting = self.reconnectingVolumeIDs.contains(volumeID)
+      if success, isReconnecting {
+        self.reconnectingVolumeIDs.remove(volumeID)
+      } else if !success, !isReconnecting {
+        self.reconnectingVolumeIDs.insert(volumeID)
       }
     }
   }
@@ -438,24 +552,41 @@ class KeepAliveManager: ObservableObject {
     guard isEnabled, !isSweeping else { return }
     // Nothing to keep alive: skip the `/sbin/mount` scan entirely so the
     // periodic timer costs nothing for most users.
-    guard !keepAliveShares.isEmpty || !PersistenceManager.shared.keepAliveVolumes.isEmpty
+    let hasShareTargets = !keepAliveShares.isEmpty
+    guard hasShareTargets || !PersistenceManager.shared.keepAliveVolumes.isEmpty
     else { return }
     isSweeping = true
+    sweepGeneration &+= 1
+    let generation = sweepGeneration
 
     let group = DispatchGroup()
-    // Hold the group open until the status refresh has run and the reconnect
-    // work has been queued, so `isSweeping` can't clear early and let a
-    // second sweep overlap this one.
-    group.enter()
-    NetworkMountManager.shared.refreshMountStatus { [weak self] in
-      defer { group.leave() }
-      guard let self else { return }
-      self.reconnectShares(group: group)
-      self.reconnectVolumes(group: group)
+    if hasShareTargets {
+      // Hold the group open until the status refresh has run and the
+      // reconnect work has been queued, so `isSweeping` can't clear early
+      // and let a second sweep overlap this one.
+      group.enter()
+      NetworkMountManager.shared.refreshMountStatus { [weak self] in
+        defer { group.leave() }
+        guard let self else { return }
+        self.reconnectShares(group: group)
+        self.reconnectVolumes(group: group)
+      }
+    } else {
+      // Only volumes to keep alive: the network mount table isn't needed.
+      reconnectVolumes(group: group)
     }
 
     group.notify(queue: .main) { [weak self] in
-      self?.isSweeping = false
+      guard let self, self.sweepGeneration == generation else { return }
+      self.isSweeping = false
+    }
+
+    // Watchdog: never let one stuck completion block all future sweeps.
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.sweepWatchdogInterval) {
+      [weak self] in
+      guard let self, self.isSweeping, self.sweepGeneration == generation else { return }
+      print("⚠️ Keep-alive sweep did not finish in time; allowing new sweeps.")
+      self.isSweeping = false
     }
   }
 
@@ -477,12 +608,15 @@ class KeepAliveManager: ObservableObject {
       recordAttempt(shareID: share.id)
       group.enter()
       print("🔄 Keep-alive: attempting to remount network share \(share.name).")
-      NetworkMountManager.shared.mount(share: share) { [weak self] success, error in
+      // Not user-initiated: keeps the backoff state just recorded and any
+      // user suppression intact.
+      NetworkMountManager.shared.mount(share: share, userInitiated: false) {
+        [weak self] success, error in
         self?.recordResult(shareID: share.id, success: success)
-        if let error {
-          print("🔄 Keep-alive remount failed for \(share.name): \(error)")
-        } else {
+        if success {
           print("🔄 Keep-alive remounted \(share.name).")
+        } else {
+          print("🔄 Keep-alive remount failed for \(share.name): \(error ?? "skipped")")
         }
         group.leave()
       }

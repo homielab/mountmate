@@ -2,13 +2,14 @@
 
 import SwiftUI
 
-struct ManagementSectionView: View {
+/// A titled list of saved entries with an empty state and a footer.
+struct ManagementSectionView<Item: Identifiable & Equatable, Row: View>: View {
   let title: LocalizedStringKey
   let iconName: String
-  let items: [ManagedVolumeInfo]
+  let items: [Item]
   let emptyStateText: LocalizedStringKey
   let footer: LocalizedStringKey
-  let onDelete: (ManagedVolumeInfo) -> Void
+  @ViewBuilder let row: (Item) -> Row
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
@@ -16,6 +17,7 @@ struct ManagementSectionView: View {
         Image(systemName: iconName)
           .font(.headline)
           .foregroundStyle(.blue)
+          .accessibilityHidden(true)
         Text(title)
           .font(.headline)
       }
@@ -27,6 +29,7 @@ struct ManagementSectionView: View {
           Image(systemName: "checkmark.circle")
             .font(.title3)
             .foregroundStyle(.secondary.opacity(0.6))
+            .accessibilityHidden(true)
           Text(emptyStateText)
             .font(.subheadline)
             .foregroundStyle(.secondary)
@@ -35,9 +38,9 @@ struct ManagementSectionView: View {
         .padding(.vertical, 8)
       } else {
         VStack(spacing: 8) {
-          ForEach(items) { info in
-            ManagedVolumeRow(info: info, onDelete: { onDelete(info) })
-            if info != items.last {
+          ForEach(items) { item in
+            row(item)
+            if item != items.last {
               Divider()
             }
           }
@@ -58,48 +61,94 @@ struct ManagementSectionView: View {
   }
 }
 
-struct ManagedVolumeRow: View {
-  let info: ManagedVolumeInfo
+extension ManagementSectionView where Item == ManagedVolumeInfo, Row == ManagedVolumeRow {
+  /// A section of `ManagedVolumeInfo` entries with a remove button each.
+  init(
+    title: LocalizedStringKey, iconName: String, items: [ManagedVolumeInfo],
+    emptyStateText: LocalizedStringKey, footer: LocalizedStringKey,
+    onDelete: @escaping (ManagedVolumeInfo) -> Void
+  ) {
+    self.init(
+      title: title, iconName: iconName, items: items, emptyStateText: emptyStateText,
+      footer: footer,
+      row: { info in ManagedVolumeRow(info: info, onDelete: { onDelete(info) }) })
+  }
+}
+
+/// One saved entry: an icon, a name, monospaced details and a remove button.
+struct ManagedEntryRow: View {
+  let name: String
+  var iconName = "internaldrive"
+  let details: [String]
+  var isRemoving = false
   let onDelete: () -> Void
 
   var body: some View {
     HStack(spacing: 12) {
-      Image(systemName: "internaldrive")
+      Image(systemName: iconName)
         .font(.title2)
         .foregroundStyle(.secondary)
+        .accessibilityHidden(true)
 
       VStack(alignment: .leading, spacing: 2) {
-        Text(info.name)
+        Text(name)
           .font(.body)
           .bold()
 
         HStack(spacing: 8) {
-          Text("Vol: \(info.volumeUUID)")
-            .font(.system(.caption2, design: .monospaced))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.middle)
-
-          Text("Disk: \(info.diskUUID)")
-            .font(.system(.caption2, design: .monospaced))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.middle)
+          ForEach(details, id: \.self) { detail in
+            Text(detail)
+              .font(.system(.caption2, design: .monospaced))
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .truncationMode(.middle)
+          }
         }
       }
 
       Spacer()
 
-      Button(role: .destructive) {
-        onDelete()
-        DriveManager.shared.refreshDrives(qos: .userInitiated)
-      } label: {
-        Image(systemName: "trash")
-          .foregroundStyle(.red.opacity(0.8))
+      if isRemoving {
+        ProgressView()
+          .controlSize(.small)
+      } else {
+        Button(role: .destructive) {
+          onDelete()
+        } label: {
+          Image(systemName: "trash")
+            .foregroundStyle(.red.opacity(0.8))
+        }
+        .buttonStyle(.borderless)
+        .help(NSLocalizedString("Remove", comment: "Remove saved entry button"))
+        .accessibilityLabel(
+          String(
+            format: NSLocalizedString(
+              "Remove “%@”", comment: "Accessibility label of a saved entry's remove button"),
+            name))
       }
-      .buttonStyle(.borderless)
-      .help("Remove")
     }
     .padding(.vertical, 4)
+  }
+}
+
+struct ManagedVolumeRow: View {
+  let info: ManagedVolumeInfo
+  let onDelete: () -> Void
+
+  var body: some View {
+    ManagedEntryRow(
+      name: info.name,
+      details: [
+        String(
+          format: NSLocalizedString("Vol: %@", comment: "Saved volume's volume UUID"),
+          info.volumeUUID),
+        String(
+          format: NSLocalizedString("Disk: %@", comment: "Saved volume's disk UUID"),
+          info.diskUUID),
+      ],
+      onDelete: {
+        onDelete()
+        DriveManager.shared.refreshDrives(qos: .userInitiated)
+      })
   }
 }

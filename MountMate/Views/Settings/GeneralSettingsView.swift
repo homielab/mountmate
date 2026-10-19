@@ -16,36 +16,46 @@ struct GeneralSettingsView: View {
   @AppStorage("hotkeysEnabled") private var hotkeysEnabled = false
   @AppStorage("showCountInMenuBar") private var showCountInMenuBar = false
 
-  @State private var selectedLanguage: String = {
+  /// Picker tag for "follow the system language" (no app-specific override).
+  static let systemLanguageTag = "system"
+
+  /// Language prefixes in match order. Ordered, so the specific Chinese
+  /// variants are checked before the bare "zh" fallback.
+  private static let languageMatchers: [(prefix: String, code: String)] = [
+    ("zh-Hant", "zh-Hant"),
+    ("zh-TW", "zh-Hant"),
+    ("zh-HK", "zh-Hant"),
+    ("zh-MO", "zh-Hant"),
+    ("zh-Hans", "zh-Hans"),
+    ("zh", "zh-Hans"),
+    ("fr", "fr"),
+    ("uk", "uk"),
+    ("vi", "vi"),
+    ("ru", "ru"),
+    ("en", "en"),
+  ]
+
+  /// The language MountMate is set to: the app's own AppleLanguages
+  /// override, or `systemLanguageTag` when it has none. (Reading
+  /// UserDefaults.standard would also return the system-wide list.)
+  private static func currentLanguageSelection() -> String {
     guard
-      let preferredLanguages = UserDefaults.standard.array(forKey: "AppleLanguages")
-        as? [String],
-      let firstLanguage = preferredLanguages.first
-    else { return "en" }
+      let bundleID = Bundle.main.bundleIdentifier,
+      let languages = UserDefaults.standard.persistentDomain(forName: bundleID)?[
+        "AppleLanguages"] as? [String],
+      let firstLanguage = languages.first
+    else { return systemLanguageTag }
 
-    let languagePrefixes: [String: String] = [
-      "fr": "fr",
-      "uk": "uk",
-      "vi": "vi",
-      "ru": "ru",
-      "zh-Hant": "zh-Hant",
-      "zh-TW": "zh-Hant",
-      "zh-HK": "zh-Hant",
-      "zh-MO": "zh-Hant",
-      "zh": "zh-Hans",
-    ]
-
-    for (prefix, code) in languagePrefixes {
-      if firstLanguage.starts(with: prefix) {
-        return code
-      }
+    for matcher in languageMatchers
+    where firstLanguage == matcher.prefix || firstLanguage.hasPrefix(matcher.prefix + "-") {
+      return matcher.code
     }
     return "en"
-  }()
+  }
+
+  @State private var selectedLanguage: String = GeneralSettingsView.currentLanguageSelection()
 
   @State private var showRestartAlert = false
-  @State private var showAccessibilityAlert = false
-  @State private var accessibilityGranted = HotkeyManager.checkAccessibilityPermissions()
   @State private var recordingShortcut: HotkeyAction?
   @State private var showShortcutConflictAlert = false
   @State private var shortcutConflictMessage = ""
@@ -55,7 +65,9 @@ struct GeneralSettingsView: View {
       Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
       ?? "N/A"
     let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
-    return "Version \(version) (\(build))"
+    return String(
+      format: NSLocalizedString("Version %@ (%@)", comment: "App version and build number"),
+      version, build)
   }
 
   static func retryIntervalLabel(_ interval: Double) -> String {
@@ -92,6 +104,18 @@ struct GeneralSettingsView: View {
       Section {
         Toggle(isOn: $launchManager.isEnabled) {
           Label("Start MountMate at Login", systemImage: "arrow.right.circle")
+        }
+        if launchManager.requiresApproval {
+          HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+              .foregroundStyle(.orange)
+              .accessibilityHidden(true)
+            Text("Allow MountMate in Login Items to start it at login.")
+              .font(.caption)
+            Spacer()
+            Button("Open Login Items") { launchManager.openLoginItemsSettings() }
+              .controlSize(.small)
+          }
         }
         Toggle(isOn: $diskMounter.blockUSBAutoMount) {
           Label("Block USB Auto-Mount", systemImage: "hand.raised.slash")
@@ -159,39 +183,13 @@ struct GeneralSettingsView: View {
         Toggle(isOn: $hotkeysEnabled) {
           Label("Enable Keyboard Shortcuts", systemImage: "keyboard")
         }
-        .onChange(of: hotkeysEnabled) { enabled in
-          refreshAccessibilityStatus()
-          // Only an explicit "turn on" asks; opening Settings never does.
-          if enabled && !accessibilityGranted {
-            showAccessibilityAlert = true
-          }
-        }
-
-        if hotkeysEnabled && !accessibilityGranted {
-          VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-              Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-              Text("Accessibility access is required for keyboard shortcuts.")
-              Spacer()
-              Button("Open System Settings") { openAccessibilitySettings() }
-                .controlSize(.small)
-            }
-            Text(
-              "Already enabled? Remove MountMate from the list with the – button, then add it again. This can be needed after an update."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-          }
-          .padding(.vertical, 2)
-        }
 
         if hotkeysEnabled {
           VStack(alignment: .leading, spacing: 8) {
             shortcutRow(description: "Unmount All Volumes", action: .unmountAll)
             shortcutRow(description: "Mount All Volumes", action: .mountAll)
             Text(
-              "Click a shortcut to record a new key combination. Some shortcuts may be reserved by macOS or another app."
+              "Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -200,6 +198,7 @@ struct GeneralSettingsView: View {
         }
 
         Picker(selection: $selectedLanguage) {
+          Text("System Default").tag(Self.systemLanguageTag)
           Text("English").tag("en")
           Text("Français").tag("fr")
           Text("Українська").tag("uk")
@@ -211,7 +210,16 @@ struct GeneralSettingsView: View {
           Label("Language", systemImage: "globe")
         }
         .pickerStyle(.menu)
-        .onChange(of: selectedLanguage) { _ in showRestartAlert = true }
+        .onChange(of: selectedLanguage) { newLanguage in  // macOS 13-compatible form
+          // Save right away, so the choice also applies when the user
+          // restarts later instead of choosing "Restart Now".
+          if newLanguage == Self.systemLanguageTag {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+          } else {
+            UserDefaults.standard.set([newLanguage], forKey: "AppleLanguages")
+          }
+          showRestartAlert = true
+        }
       } header: {
         Label("Shortcuts & Language", systemImage: "slider.horizontal.below.rectangle")
       }
@@ -231,6 +239,7 @@ struct GeneralSettingsView: View {
         Button(action: { updaterViewModel.checkForUpdates() }) {
           Label("Check for Updates...", systemImage: "arrow.down.circle.fill")
         }
+        .disabled(!updaterViewModel.canCheckForUpdates)
       } header: {
         Label("About & Updates", systemImage: "info.circle")
       }
@@ -243,15 +252,10 @@ struct GeneralSettingsView: View {
     }
     .formStyle(.grouped)
     .padding(.horizontal)
-    .onAppear { refreshAccessibilityStatus() }
-    // Pick up a permission change made in System Settings without reopening
-    // this window: on returning to the app, and every few seconds while
-    // shortcuts are on but not yet allowed.
+    // Pick up a Login Items approval made in System Settings.
+    .onAppear { launchManager.refreshStatus() }
     .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) {
-      _ in refreshAccessibilityStatus()
-    }
-    .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
-      if hotkeysEnabled && !accessibilityGranted { refreshAccessibilityStatus() }
+      _ in launchManager.refreshStatus()
     }
 
     .alert("Restart Required", isPresented: $showRestartAlert) {
@@ -260,14 +264,6 @@ struct GeneralSettingsView: View {
     } message: {
       Text("Please restart MountMate for the language change to take effect.")
     }
-    .alert("Accessibility Permission Required", isPresented: $showAccessibilityAlert) {
-      Button("Open System Settings") { openAccessibilitySettings() }
-      Button("Later", role: .cancel) {}
-    } message: {
-      Text(
-        "To use keyboard shortcuts, please grant MountMate Accessibility access in System Settings → Privacy & Security → Accessibility."
-      )
-    }
     .alert("Shortcut Already Assigned", isPresented: $showShortcutConflictAlert) {
       Button("OK", role: .cancel) {}
     } message: {
@@ -275,49 +271,45 @@ struct GeneralSettingsView: View {
     }
   }
 
-  /// Re-reads the Accessibility permission. When it has just been granted,
-  /// starts the shortcut listener so shortcuts work without a relaunch.
-  private func refreshAccessibilityStatus() {
-    let granted = HotkeyManager.checkAccessibilityPermissions()
-    guard granted != accessibilityGranted else { return }
-    accessibilityGranted = granted
-    if granted {
-      showAccessibilityAlert = false
-      if hotkeysEnabled && recordingShortcut == nil {
-        hotkeyManager.startListening()
+  private func shortcutRow(description: LocalizedStringKey, action: HotkeyAction) -> some View {
+    VStack(alignment: .trailing, spacing: 4) {
+      HStack(spacing: 8) {
+        Text(description)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        Spacer(minLength: 8)
+        KeyboardShortcutRecorder(
+          shortcut: Binding(
+            get: { hotkeyManager.shortcut(for: action) },
+            set: { updateShortcut($0, for: action) }
+          ),
+          isRecording: Binding(
+            get: { recordingShortcut == action },
+            set: { setRecording($0, for: action) }
+          )
+        )
+        .frame(width: 150, height: 26)
+      }
+      if recordingShortcut == nil {
+        if !hotkeyManager.shortcut(for: action).isSafeAsGlobalHotKey {
+          // Saved by an older version; not registered (see HotkeyManager).
+          shortcutWarning("This shortcut needs ⌘ or ⌃. Click it to record a new one.")
+        } else if hotkeyManager.unavailableShortcuts.contains(action) {
+          // Registration fails when another app already uses the combination.
+          shortcutWarning("This shortcut is used by another app. Choose a different one.")
+        }
       }
     }
   }
 
-  private func openAccessibilitySettings() {
-    // Registers this exact build in the Accessibility list (so the user only
-    // has to flip the switch), then opens the pane.
-    HotkeyManager.requestAccessibilityPermission()
-    if let url = URL(
-      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-    {
-      NSWorkspace.shared.open(url)
+  private func shortcutWarning(_ message: LocalizedStringKey) -> some View {
+    HStack(spacing: 4) {
+      Image(systemName: "exclamationmark.triangle.fill")
+        .foregroundStyle(.orange)
+        .accessibilityHidden(true)
+      Text(message)
     }
-  }
-
-  private func shortcutRow(description: LocalizedStringKey, action: HotkeyAction) -> some View {
-    HStack(spacing: 8) {
-      Text(description)
-        .font(.caption)
-        .foregroundStyle(.secondary)
-      Spacer(minLength: 8)
-      KeyboardShortcutRecorder(
-        shortcut: Binding(
-          get: { hotkeyManager.shortcut(for: action) },
-          set: { updateShortcut($0, for: action) }
-        ),
-        isRecording: Binding(
-          get: { recordingShortcut == action },
-          set: { setRecording($0, for: action) }
-        )
-      )
-      .frame(width: 150, height: 26)
-    }
+    .font(.caption)
   }
 
   private func setRecording(_ recording: Bool, for action: HotkeyAction) {
@@ -344,14 +336,17 @@ struct GeneralSettingsView: View {
     recordingShortcut = nil
   }
 
+  /// The language is already saved (see the picker's onChange).
   private func relaunchApp() {
-    UserDefaults.standard.set([selectedLanguage], forKey: "AppleLanguages")
-    let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
-    let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
     let task = Process()
-    task.launchPath = "/usr/bin/open"
-    task.arguments = ["-n", path]
-    task.launch()
-    NSApplication.shared.terminate(self)
+    task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    task.arguments = ["-n", Bundle.main.bundlePath]
+    do {
+      try task.run()
+    } catch {
+      print("⚠️ Could not relaunch MountMate: \(error.localizedDescription)")
+      return
+    }
+    NSApplication.shared.terminate(nil)
   }
 }
