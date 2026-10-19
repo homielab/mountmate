@@ -41,6 +41,8 @@ class DiskMounter: ObservableObject {
   init() {
     NotificationCenter.default.addObserver(
       self, selector: #selector(handleWillMount), name: .willManuallyMount, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(handleDidFinishMount), name: .didFinishManualMount, object: nil)
 
     PersistenceManager.shared.$blockedVolumes
       .receive(on: DispatchQueue.main)
@@ -48,6 +50,12 @@ class DiskMounter: ObservableObject {
       .store(in: &cancellables)
 
     updateSessionState()
+
+    // Independent of the Disk Arbitration session, which is off when nothing
+    // is blocked but a leftover startup rule may still need removing.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+      PersistenceManager.shared.reconcileStartupBlockRulesAtLaunch()
+    }
   }
 
   deinit {
@@ -69,13 +77,20 @@ class DiskMounter: ObservableObject {
       !identifier.isEmpty
     else { return }
 
+    // Disk Arbitration only asks for approval after it has probed the disk,
+    // which can take well over 5 seconds while a sleeping hard drive spins
+    // up. A shorter window made MountMate dissent its own mount of blocked
+    // volumes on slow disks ("Volume on diskXsY failed to mount"). The
+    // approval is still single-use and is withdrawn as soon as the mount
+    // finishes (didFinishManualMount); this is only an upper bound.
     let key = identifier.lowercased()
-    let expiration = Date().addingTimeInterval(5.0)
+    let lifetime = Self.manualMountApprovalLifetime
+    let expiration = Date().addingTimeInterval(lifetime)
     manualMountApprovalLock.lock()
     manualMountApprovals[key] = expiration
     manualMountApprovalLock.unlock()
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + lifetime) { [weak self] in
       guard let self else { return }
       self.manualMountApprovalLock.lock()
       if self.manualMountApprovals[key] == expiration {
@@ -83,6 +98,17 @@ class DiskMounter: ObservableObject {
       }
       self.manualMountApprovalLock.unlock()
     }
+  }
+
+  private static let manualMountApprovalLifetime: TimeInterval = 60
+
+  @objc private func handleDidFinishMount(notification: Notification) {
+    guard let identifier = notification.userInfo?["deviceIdentifier"] as? String,
+      !identifier.isEmpty
+    else { return }
+    manualMountApprovalLock.lock()
+    manualMountApprovals.removeValue(forKey: identifier.lowercased())
+    manualMountApprovalLock.unlock()
   }
 
   private func consumeManualMountApproval(
@@ -181,6 +207,9 @@ class DiskMounter: ObservableObject {
       }
 
       var shouldBlock = false
+      // True when the per-volume blocked list (not the global USB/SD block)
+      // decided shouldBlock, so a missing startup rule can be added for it.
+      var blockedByList = false
 
       // Global USB block.
       // kDADiskDescriptionDeviceProtocolKey ("DADeviceProtocol") is rarely
@@ -215,6 +244,7 @@ class DiskMounter: ObservableObject {
         let compositeId = "\(dUUID)-\(volUUID)"
         if PersistenceManager.shared.blockedVolumes.contains(where: { $0.id == compositeId }) {
           shouldBlock = true
+          blockedByList = true
         }
       }
 
@@ -224,6 +254,12 @@ class DiskMounter: ObservableObject {
       }
 
       if shouldBlock {
+        if blockedByList {
+          // The volume is connected but macOS still tried to auto-mount it,
+          // so it has no startup rule yet. Add one (when "Block at Startup"
+          // is on) so the next boot never gets this far.
+          PersistenceManager.shared.scheduleStartupBlockReconcile()
+        }
         print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
         return Unmanaged.passRetained(dissenter)

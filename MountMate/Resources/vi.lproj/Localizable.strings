@@ -65,6 +65,8 @@
 "Start MountMate at Login" = "Khởi động cùng máy";
 "Block USB Auto-Mount" = "Chặn tự động gắn USB";
 "Allow Other Apps to Mount Blocked Disks" = "Cho phép ứng dụng khác gắn ổ đĩa bị chặn";
+"Also Block at Startup (Requires Admin Password)" = "Chặn cả khi khởi động (cần mật khẩu quản trị)";
+"Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected." = "Thêm quy tắc hệ thống (/etc/fstab) cho từng ổ đĩa bị chặn để macOS không bao giờ gắn ổ đó khi khởi động, kể cả trước khi MountMate mở. Bạn vẫn có thể tự gắn ổ đĩa. Quy tắc được thêm khi ổ đĩa đang được kết nối.";
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Ổ đĩa bị chặn chỉ không tự động gắn khi cắm vào hoặc khi đăng nhập. Các ứng dụng như công cụ sao lưu vẫn có thể gắn chúng khi cần.";
 "Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
 
@@ -269,6 +271,7 @@
 "Custom Mount Point Volume Blocked" = "Volume này đã bị chặn tự động gắn kết. Hãy bỏ chặn trước khi chỉ định điểm gắn kết tùy chỉnh.";
 "System Mount Rule Not Updated" = "Chưa cập nhật quy tắc gắn kết hệ thống";
 "System Mount Rule Update Failed" = "MountMate không thể cập nhật quy tắc gắn kết hệ thống trong /etc/fstab. Sau khi khởi động lại, việc chặn tự động gắn kết có thể không hoạt động như mong đợi.\n\nChi tiết:\n%@";
+"System Mount Rule Admin Prompt" = "MountMate cần cập nhật quy tắc gắn kết hệ thống (/etc/fstab).";
 "Pinned" = "Đã ghim";
 "Pin to Top" = "Ghim lên đầu";
 "Unpin" = "Bỏ ghim";

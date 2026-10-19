@@ -65,6 +65,8 @@
 "Start MountMate at Login" = "Start MountMate at Login";
 "Block USB Auto-Mount" = "Block USB Auto-Mount";
 "Allow Other Apps to Mount Blocked Disks" = "Allow Other Apps to Mount Blocked Disks";
+"Also Block at Startup (Requires Admin Password)" = "Also Block at Startup (Requires Admin Password)";
+"Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected." = "Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected.";
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed.";
 "Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
 
@@ -273,6 +275,7 @@
 "Custom Mount Point Volume Blocked" = "This volume is blocked from auto-mounting. Unblock it before assigning a custom mount point.";
 "System Mount Rule Not Updated" = "System Mount Rule Not Updated";
 "System Mount Rule Update Failed" = "MountMate could not update the system mount rule in /etc/fstab. Auto-mount blocking may not behave as expected after a restart.\n\nDetails:\n%@";
+"System Mount Rule Admin Prompt" = "MountMate needs to update the system mount rules (/etc/fstab).";
 "Pinned" = "Pinned";
 "Pin to Top" = "Pin to Top";
 "Unpin" = "Unpin";

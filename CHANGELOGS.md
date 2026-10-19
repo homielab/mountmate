@@ -4,8 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Block Disks at Startup**: A new option in Settings → General, "Also Block at Startup (Requires Admin Password)". When it's on, blocked disks are also written to `/etc/fstab` as `noauto` rules, so macOS never mounts them at startup, even before MountMate opens. Previously a blocked disk connected at boot was mounted by macOS and then unmounted by MountMate. You can still mount a blocked disk yourself from MountMate or Disk Utility. Rules are added while the disk is connected (one admin password prompt), removed when you unblock the disk, and all removed when you turn the option off. For safety, startup blocking is never applied to macOS system volumes or to volumes on the startup disk's APFS container, and it supports APFS, Mac OS Extended, ExFAT and FAT disks only. NTFS disks and disks that use third-party drivers stay blocked only while MountMate is running.
+
 ### Fixed
 
+- **Mounting Blocked Volumes on Slow Disks**: Clicking Mount on a blocked volume could fail with "Volume on diskXsY failed to mount" when the disk was asleep and took more than a few seconds to spin up. MountMate now keeps its own mount request approved until the mount finishes.
 - **Accessibility Prompt in Settings**: The "Accessibility Permission Required" alert no longer appears every time Settings opens. Settings now shows an inline status that updates by itself when access is granted, keyboard shortcuts start working right away without restarting MountMate, and there is a tip for the case where access looks enabled but doesn't work after an update.
 
 ---

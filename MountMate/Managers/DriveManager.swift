@@ -364,6 +364,9 @@ class DriveManager: ObservableObject {
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(
         executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+      if isUserInitiated {
+        Self.postDidFinishManualMount(volume)
+      }
 
       if !result.timedOut, !result.stderr.isEmpty,
         result.stderr.lowercased().contains("failed to mount")
@@ -380,12 +383,21 @@ class DriveManager: ObservableObject {
           }
           let retryResult = runProcess(
             executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier])
+          if isUserInitiated {
+            Self.postDidFinishManualMount(volume)
+          }
           self.handleMountResult(retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts)
         }
       } else {
         self.handleMountResult(result, for: volume, allowsErrorAlerts: allowsErrorAlerts)
       }
     }
+  }
+
+  private static func postDidFinishManualMount(_ volume: Volume) {
+    NotificationCenter.default.post(
+      name: .didFinishManualMount, object: nil,
+      userInfo: ["deviceIdentifier": volume.deviceIdentifier])
   }
 
   private func handleMountResult(
