@@ -269,6 +269,10 @@
 "System Mount Rule Not Updated" = "Règle de montage système non mise à jour";
 "System Mount Rule Update Failed" = "MountMate n'a pas pu mettre à jour la règle de montage système dans /etc/fstab. Le blocage du montage automatique pourrait ne pas se comporter comme prévu après un redémarrage.\n\nDétails :\n%@";
 "System Mount Rule Admin Prompt" = "MountMate doit mettre à jour les règles de montage du système (/etc/fstab).";
+"Administrator Password Needed" = "Mot de passe administrateur requis";
+"The password was incorrect. Try again." = "Le mot de passe est incorrect. Réessayez.";
+"Incorrect administrator password." = "Mot de passe administrateur incorrect.";
+"System Mount Rule Blocked By macOS" = "macOS n’a pas autorisé MountMate à modifier /etc/fstab. Vous pouvez ajouter la règle vous-même dans le Terminal avec « sudo vifs ».";
 "Pinned" = "Épinglés";
 "Pin to Top" = "Épingler en haut";
 "Unpin" = "Désépingler";

@@ -269,6 +269,10 @@
 "System Mount Rule Not Updated" = "系统挂载规则未更新";
 "System Mount Rule Update Failed" = "MountMate 无法更新 /etc/fstab 中的系统挂载规则。重启后，自动挂载阻止可能不会按预期生效。\n\n详细信息：\n%@";
 "System Mount Rule Admin Prompt" = "MountMate 需要更新系统挂载规则（/etc/fstab）。";
+"Administrator Password Needed" = "需要管理员密码";
+"The password was incorrect. Try again." = "密码不正确，请重试。";
+"Incorrect administrator password." = "管理员密码不正确。";
+"System Mount Rule Blocked By macOS" = "macOS 不允许 MountMate 修改 /etc/fstab。你可以在“终端”中使用“sudo vifs”自行添加规则。";
 "Pinned" = "已置顶";
 "Pin to Top" = "置顶";
 "Unpin" = "取消置顶";

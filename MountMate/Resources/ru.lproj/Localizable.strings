@@ -269,6 +269,10 @@
 "System Mount Rule Not Updated" = "Системное правило монтирования не обновлено";
 "System Mount Rule Update Failed" = "MountMate не удалось обновить системное правило монтирования в /etc/fstab. После перезагрузки блокировка автоматического монтирования может работать не так, как ожидается.\n\nПодробности:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate необходимо обновить системные правила подключения (/etc/fstab).";
+"Administrator Password Needed" = "Требуется пароль администратора";
+"The password was incorrect. Try again." = "Неверный пароль. Попробуйте ещё раз.";
+"Incorrect administrator password." = "Неверный пароль администратора.";
+"System Mount Rule Blocked By macOS" = "macOS не разрешила MountMate изменить /etc/fstab. Вы можете добавить правило вручную в Терминале командой «sudo vifs».";
 "Pinned" = "Закреплённые";
 "Pin to Top" = "Закрепить вверху";
 "Unpin" = "Открепить";

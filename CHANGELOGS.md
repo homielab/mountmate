@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- **Block at Startup on macOS 27** ([#73](https://github.com/homielab/mountmate/issues/73)): Turning on "Also Block at Startup", or saving a custom mount point, failed on macOS 27 with "/etc/fstab: Operation not permitted", even after entering the administrator password. macOS 27 no longer lets the system password prompt that MountMate used change /etc/fstab. On macOS 27 and later, MountMate now asks for your administrator password itself and makes the change with `sudo`. Your password is only used for that change and is never stored. If macOS still refuses, MountMate tells you how to add the rule yourself in Terminal.
+
+---
+
 ## 6.2
 
 ### Changed

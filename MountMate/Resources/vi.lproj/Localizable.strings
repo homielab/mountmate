@@ -269,6 +269,10 @@
 "System Mount Rule Not Updated" = "Chưa cập nhật quy tắc gắn kết hệ thống";
 "System Mount Rule Update Failed" = "MountMate không thể cập nhật quy tắc gắn kết hệ thống trong /etc/fstab. Sau khi khởi động lại, việc chặn tự động gắn kết có thể không hoạt động như mong đợi.\n\nChi tiết:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate cần cập nhật quy tắc gắn kết hệ thống (/etc/fstab).";
+"Administrator Password Needed" = "Cần mật khẩu quản trị";
+"The password was incorrect. Try again." = "Mật khẩu không đúng. Hãy thử lại.";
+"Incorrect administrator password." = "Mật khẩu quản trị không đúng.";
+"System Mount Rule Blocked By macOS" = "macOS không cho phép MountMate thay đổi /etc/fstab. Bạn có thể tự thêm quy tắc trong Terminal bằng lệnh “sudo vifs”.";
 "Pinned" = "Đã ghim";
 "Pin to Top" = "Ghim lên đầu";
 "Unpin" = "Bỏ ghim";

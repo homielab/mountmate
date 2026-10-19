@@ -1109,12 +1109,7 @@ class PersistenceManager: ObservableObject {
 
     let prompt = NSLocalizedString(
       "System Mount Rule Admin Prompt", comment: "Administrator password prompt for /etc/fstab")
-    let script =
-      "do shell script \(command.appleScriptStringLiteral) with prompt \(prompt.appleScriptStringLiteral) with administrator privileges"
-    let result = runProcess(
-      executable: "/usr/bin/osascript",
-      arguments: ["-e", script],
-      timeout: 300)
+    let result = PrivilegedShell.run(command, prompt: prompt)
     if !result.succeeded && result.stderr.contains(Self.fstabChangedMarker) {
       throw NSError(
         domain: "MountMate",
@@ -1135,6 +1130,18 @@ class PersistenceManager: ObservableObject {
           NSLocalizedDescriptionKey: NSLocalizedString(
             "Administrator Prompt Cancelled",
             comment: "Error when the administrator password prompt was cancelled")
+        ])
+    }
+    // Still refused by macOS even through sudo: say so plainly and point to
+    // the manual way instead of showing the raw shell error.
+    if !result.succeeded && result.stderr.contains("Operation not permitted") {
+      throw NSError(
+        domain: "MountMate",
+        code: 2,
+        userInfo: [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "System Mount Rule Blocked By macOS",
+            comment: "Error when macOS refuses to let MountMate change /etc/fstab")
         ])
     }
     if !result.succeeded {

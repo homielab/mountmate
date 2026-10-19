@@ -273,6 +273,10 @@
 "System Mount Rule Not Updated" = "System Mount Rule Not Updated";
 "System Mount Rule Update Failed" = "MountMate could not update the system mount rule in /etc/fstab. Auto-mount blocking may not behave as expected after a restart.\n\nDetails:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate needs to update the system mount rules (/etc/fstab).";
+"Administrator Password Needed" = "Administrator Password Needed";
+"The password was incorrect. Try again." = "The password was incorrect. Try again.";
+"Incorrect administrator password." = "Incorrect administrator password.";
+"System Mount Rule Blocked By macOS" = "macOS didn't allow MountMate to change /etc/fstab. You can add the rule yourself in Terminal with “sudo vifs”.";
 "Pinned" = "Pinned";
 "Pin to Top" = "Pin to Top";
 "Unpin" = "Unpin";
