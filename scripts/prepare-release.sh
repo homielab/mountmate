@@ -34,10 +34,23 @@ PREVIOUS_TAG="$(git tag --list 'v*' | grep -Fxv "$TAG" \
 # --- Build number ---
 CURRENT_VERSION="$(read_setting MARKETING_VERSION < "$PBXPROJ")"
 CURRENT_BUILD="$(read_setting CURRENT_PROJECT_VERSION < "$PBXPROJ")"
+# The release workflow commits each version bump to main but leaves the tag on
+# the commit before the bump, so the previous tag alone can lag one release
+# behind (6.2 once got 6.1's build number and Sparkle didn't offer it to 6.1
+# users). Use the highest build seen anywhere: the project, the previous tag,
+# and every build already published in the appcast.
+BASE_BUILD="$CURRENT_BUILD"
 if [[ -n "$PREVIOUS_TAG" ]]; then
-  BASE_BUILD="$(git show "${PREVIOUS_TAG}:${PBXPROJ}" | read_setting CURRENT_PROJECT_VERSION)"
-else
-  BASE_BUILD="$CURRENT_BUILD"
+  TAG_BUILD="$(git show "${PREVIOUS_TAG}:${PBXPROJ}" | read_setting CURRENT_PROJECT_VERSION)"
+  (( TAG_BUILD > BASE_BUILD )) && BASE_BUILD="$TAG_BUILD"
+fi
+APPCAST="docs/appcast.xml"
+if [[ -f "$APPCAST" ]]; then
+  PUBLISHED_BUILD="$(grep -o '<sparkle:version>[0-9]*</sparkle:version>' "$APPCAST" \
+    | grep -o '[0-9][0-9]*' | sort -n | tail -1 || true)"
+  if [[ -n "$PUBLISHED_BUILD" ]] && (( PUBLISHED_BUILD > BASE_BUILD )); then
+    BASE_BUILD="$PUBLISHED_BUILD"
+  fi
 fi
 BUILD="$((BASE_BUILD + 1))"
 
