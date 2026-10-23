@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Space Used on Network Shares** ([#76](https://github.com/homielab/mountmate/issues/76)): Mounted SMB, AFP and NFS shares now show how much space is used and free, with the same usage ring as local drives. If the server is slow or doesn't report its space, the share just shows "Mounted" as before.
 - **Hide EFI Partitions**: A new option in Settings → General → Display hides EFI system partitions from the disk list.
 
 ---

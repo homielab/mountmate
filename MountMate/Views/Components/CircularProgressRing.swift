@@ -7,6 +7,11 @@ struct CircularProgressRing: View {
   let color: Color
   let lineWidth: CGFloat
 
+  static func usageColor(for percentage: Double) -> Color {
+    if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
+    return .accentColor
+  }
+
   var body: some View {
     ZStack {
       Circle()

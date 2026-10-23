@@ -14,7 +14,22 @@ struct NetworkShareMainRow: View {
     isManual || networkManager.mountedShareIDs.contains(share.id)
   }
 
+  private var usage: ShareUsage? {
+    isMounted ? networkManager.usageByShareID[share.id] : nil
+  }
+
   private var statusText: String {
+    if let usage {
+      let formatter = ByteCountFormatter()
+      formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
+      formatter.countStyle = .file
+      return String(
+        format: NSLocalizedString(
+          "DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
+        formatter.string(fromByteCount: usage.usedBytes),
+        formatter.string(fromByteCount: usage.totalBytes),
+        formatter.string(fromByteCount: usage.freeBytes))
+    }
     if isMounted { return NSLocalizedString("Mounted", comment: "Status") }
     if keepAliveManager.reconnectingShareIDs.contains(share.id) {
       return NSLocalizedString("Reconnecting…", comment: "Keep-alive reconnect status")
@@ -26,15 +41,26 @@ struct NetworkShareMainRow: View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
         HStack {
-          ZStack(alignment: .bottomTrailing) {
+          ZStack {
             Image(systemName: "server.rack")
               .font(.body)
               .foregroundStyle(isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
+              .overlay(alignment: .bottomTrailing) {
+                if usage == nil {
+                  Circle()
+                    .fill(isMounted ? Color.green : Color.secondary.opacity(0.4))
+                    .frame(width: 6, height: 6)
+                    .offset(x: 2, y: 2)
+                }
+              }
 
-            Circle()
-              .fill(isMounted ? Color.green : Color.secondary.opacity(0.4))
-              .frame(width: 6, height: 6)
-              .offset(x: 2, y: 2)
+            if let usage {
+              CircularProgressRing(
+                progress: usage.percentage,
+                color: CircularProgressRing.usageColor(for: usage.percentage),
+                lineWidth: 3.0
+              ).frame(width: 26, height: 26)
+            }
           }
           .frame(width: 24, alignment: .center)
           .padding(.trailing, 8)

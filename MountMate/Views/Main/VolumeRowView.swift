@@ -72,11 +72,6 @@ struct VolumeRowView: View {
   private var customMountPoint: String? { state.customMountPoint }
   private var isKeepAlive: Bool { state.isKeepAlive }
 
-  private func usageColor(for percentage: Double) -> Color {
-    if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
-    return .accentColor
-  }
-
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
@@ -95,7 +90,7 @@ struct VolumeRowView: View {
                 .help(error)
             } else if currentVolume.isMounted, let percentage = currentVolume.usagePercentage {
               CircularProgressRing(
-                progress: percentage, color: usageColor(for: percentage),
+                progress: percentage, color: CircularProgressRing.usageColor(for: percentage),
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
             } else if state.isReconnecting {

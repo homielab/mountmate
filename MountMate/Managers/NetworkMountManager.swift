@@ -156,6 +156,14 @@ struct MountedNetworkShare {
   }
 }
 
+struct ShareUsage: Equatable {
+  let totalBytes: Int64
+  let freeBytes: Int64
+
+  var usedBytes: Int64 { max(0, totalBytes - freeBytes) }
+  var percentage: Double { min(1, Double(usedBytes) / Double(totalBytes)) }
+}
+
 class NetworkMountManager: ObservableObject {
   static let shared = NetworkMountManager()
 
@@ -163,6 +171,8 @@ class NetworkMountManager: ObservableObject {
   /// Where each saved (and manually connected) share is currently mounted,
   /// from the last status refresh. Main thread only.
   private(set) var mountPointsByShareID: [UUID: String] = [:]
+  /// Total and free bytes of each mounted share, from the last status refresh.
+  @Published private(set) var usageByShareID: [UUID: ShareUsage] = [:]
   @Published var manuallyConnectedShares: [NetworkShare] = []
   @Published var isUnmountingManualShares = false
 
@@ -265,6 +275,35 @@ class NetworkMountManager: ObservableObject {
         self.manuallyConnectedShares = parsedData.manualShares
       }
       completion?()
+    }
+
+    // Usage is read after completion so a slow server never delays mounts or
+    // keep-alive sweeps. statfs each share in parallel: an unreachable server
+    // costs one timeout, not one per share.
+    let mounts = Array(parsedData.mountPoints)
+    var results = [DriveManager.FileSystemUsageResult?](repeating: nil, count: mounts.count)
+    let lock = NSLock()
+    DispatchQueue.concurrentPerform(iterations: mounts.count) { index in
+      let result = DriveManager.fileSystemUsage(atPath: mounts[index].value)
+      lock.withLock { results[index] = result }
+    }
+
+    DispatchQueue.main.async {
+      var usage = [UUID: ShareUsage]()
+      for (index, mount) in mounts.enumerated() {
+        switch results[index] {
+        case .usage(let total, let free) where total > 0:
+          usage[mount.key] = ShareUsage(totalBytes: total, freeBytes: free)
+        case .timedOut:
+          // Keep the last known value while the server is slow to answer.
+          usage[mount.key] = self.usageByShareID[mount.key]
+        default:
+          break
+        }
+      }
+      if self.usageByShareID != usage {
+        self.usageByShareID = usage
+      }
     }
   }
 

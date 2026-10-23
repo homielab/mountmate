@@ -1546,7 +1546,7 @@ class DriveManager: ObservableObject {
   private static let statfsQueue = DispatchQueue(
     label: "com.homielab.mountmate.statfs", qos: .utility, attributes: .concurrent)
 
-  private enum FileSystemUsageResult {
+  enum FileSystemUsageResult {
     case usage(total: Int64, free: Int64)
     /// No answer within the timeout (or still blocked from an earlier call).
     case timedOut
@@ -1555,7 +1555,7 @@ class DriveManager: ObservableObject {
 
   /// Total and available bytes of the file system mounted at `path`. Never
   /// blocks the caller for longer than `timeout`.
-  private static func fileSystemUsage(atPath path: String, timeout: TimeInterval = 2)
+  static func fileSystemUsage(atPath path: String, timeout: TimeInterval = 2)
     -> FileSystemUsageResult
   {
     let started = statfsLock.withLock { statfsInFlight.insert(path).inserted }
