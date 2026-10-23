@@ -59,6 +59,7 @@
 "Show Count in Menu Bar" = "在菜单栏显示数量";
 "Show Internal Disks" = "显示内置磁盘";
 "Show Only Volumes" = "仅显示卷宗";
+"Hide EFI Partitions" = "隐藏 EFI 分区";
 
 // Behavior Section
 "Behavior" = "行为";

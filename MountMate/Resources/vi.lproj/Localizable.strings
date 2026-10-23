@@ -59,6 +59,7 @@
 "Show Count in Menu Bar" = "Hiển thị số lượng trên thanh menu";
 "Show Internal Disks" = "Hiển thị ổ đĩa trong";
 "Show Only Volumes" = "Chỉ hiển thị phân vùng";
+"Hide EFI Partitions" = "Ẩn phân vùng EFI";
 
 // Behavior Section
 "Behavior" = "Hành vi";

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- **Hide EFI Partitions**: A new option in Settings → General → Display hides EFI system partitions from the disk list.
+
+---
+
 ## 6.2.2
 
 ### Changed

@@ -59,6 +59,7 @@
 "Show Count in Menu Bar" = "Показувати кількість у рядку меню";
 "Show Internal Disks" = "Показувати внутрішні диски";
 "Show Only Volumes" = "Показувати лише томи";
+"Hide EFI Partitions" = "Приховувати розділи EFI";
 
 // Behavior Section
 "Behavior" = "Поведінка";

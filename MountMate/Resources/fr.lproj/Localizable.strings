@@ -59,6 +59,7 @@
 "Show Count in Menu Bar" = "Afficher le compteur dans la barre de menus";
 "Show Internal Disks" = "Afficher les disques internes";
 "Show Only Volumes" = "Afficher uniquement les volumes";
+"Hide EFI Partitions" = "Masquer les partitions EFI";
 
 // Behavior Section
 "Behavior" = "Comportement";

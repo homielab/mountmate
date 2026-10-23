@@ -59,6 +59,7 @@
 "Show Count in Menu Bar" = "Show Count in Menu Bar";
 "Show Internal Disks" = "Show Internal Disks";
 "Show Only Volumes" = "Show Only Volumes";
+"Hide EFI Partitions" = "Hide EFI Partitions";
 
 // Behavior Section
 "Behavior" = "Behavior";

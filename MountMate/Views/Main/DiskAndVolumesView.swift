@@ -8,6 +8,11 @@ struct DiskAndVolumesView: View {
   let customMountPointEditor: CustomMountPointEditorState
   @State private var isExpanded = true
   @AppStorage("showOnlyVolumes") private var showOnlyVolumes = false
+  @AppStorage("hideEFIPartitions") private var hideEFIPartitions = false
+
+  private var visiblePartitions: [Volume] {
+    hideEFIPartitions ? disk.partitions.filter { $0.category != .system } : disk.partitions
+  }
 
   private var visibleContainers: [APFSContainer] {
     disk.containers.filter { !$0.volumes.isEmpty }
@@ -19,7 +24,7 @@ struct DiskAndVolumesView: View {
         DiskHeaderRow(disk: disk, isExpanded: $isExpanded)
       }
       if isExpanded || showOnlyVolumes {
-        ForEach(disk.partitions) { partition in
+        ForEach(visiblePartitions) { partition in
           VolumeRowView(
             volume: partition,
             context: .disk,
