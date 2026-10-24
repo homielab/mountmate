@@ -182,28 +182,23 @@ class DiskMounter: ObservableObject {
       let bsdName = DADiskGetBSDName(disk).map({ String(cString: $0) })
 
       guard let desc = DADiskCopyDescription(disk) else { return nil }
-      let description = desc as! [String: Any]
-
-      // Approve non-physical media (disk images).
-      if let model = description[kDADiskDescriptionDeviceModelKey as String] as? String,
-        model == "Disk Image"
-      {
+      guard let description = desc as? [String: Any] else {
+        // An unexpected description type must never block the mount.
+        print(
+          "⚠️ Unexpected Disk Arbitration description; approving mount of \(bsdName ?? "unknown volume")."
+        )
         return nil
       }
 
-      // Specific volume is in the blocked list.
-      let rawVolumeUUID = description[kDADiskDescriptionVolumeUUIDKey as String]
-      let rawDiskUUID = description[kDADiskDescriptionMediaUUIDKey as String]
-
-      var volumeUUIDString: String?
-      var diskUUIDString: String?
-
-      if let volCF = rawVolumeUUID as CFTypeRef?, CFGetTypeID(volCF) == CFUUIDGetTypeID() {
-        volumeUUIDString = CFUUIDCreateString(nil, (volCF as! CFUUID)) as String
+      // Approve non-physical media (disk images).
+      if DiskMounter.isDiskImage(description) {
+        return nil
       }
-      if let diskCF = rawDiskUUID as CFTypeRef?, CFGetTypeID(diskCF) == CFUUIDGetTypeID() {
-        diskUUIDString = CFUUIDCreateString(nil, (diskCF as! CFUUID)) as String
-      }
+
+      let volumeUUIDString = DiskMounter.uuidString(
+        description[kDADiskDescriptionVolumeUUIDKey as String])
+      let diskUUIDString = DiskMounter.uuidString(
+        description[kDADiskDescriptionMediaUUIDKey as String])
 
       // Only mount requests explicitly initiated by MountMate bypass the
       // runtime block. Disk Arbitration does not identify the source of a
@@ -276,6 +271,25 @@ class DiskMounter: ObservableObject {
     DASessionSetDispatchQueue(session, DispatchQueue.main)
 
     scheduleStartupMaintenance()
+  }
+
+  /// True when the description says the media is a disk image ("Disk Image"
+  /// model), which is never blocked. Missing or mistyped keys count as a
+  /// physical disk.
+  static func isDiskImage(_ description: [String: Any]) -> Bool {
+    guard let model = description[kDADiskDescriptionDeviceModelKey as String] as? String else {
+      return false
+    }
+    return model == "Disk Image"
+  }
+
+  /// String form of a Disk Arbitration UUID field (a CFUUID), or nil when the
+  /// value is missing or not the expected CF type.
+  static func uuidString(_ value: Any?) -> String? {
+    guard let cfValue = value as CFTypeRef?, CFGetTypeID(cfValue) == CFUUIDGetTypeID() else {
+      return nil
+    }
+    return CFUUIDCreateString(nil, unsafeBitCast(cfValue, to: CFUUID.self)) as String
   }
 
   /// Bus protocol of the physical device behind `disk` (e.g. "USB", "SD",

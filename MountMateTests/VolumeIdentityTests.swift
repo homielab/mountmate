@@ -79,4 +79,27 @@ final class VolumeIdentityTests: XCTestCase {
       migrated.map(\.id), ["\(diskUUID)-\(volumeUUID)", "\(diskUUID)-\(diskUUID)"])
     XCTAssertEqual(PersistenceManager.migratedIgnoredEntries(migrated), migrated)
   }
+
+  // MARK: - Disk Arbitration description fields
+
+  func testUUIDStringReadsCFUUIDValue() {
+    let cfUUID = CFUUIDCreateFromString(nil, volumeUUID as CFString)!
+    XCTAssertEqual(DiskMounter.uuidString(cfUUID), volumeUUID)
+  }
+
+  func testUUIDStringReturnsNilForMissingOrWrongType() {
+    XCTAssertNil(DiskMounter.uuidString(nil))
+    // A description field of an unexpected CF type must not crash.
+    XCTAssertNil(DiskMounter.uuidString(volumeUUID as CFString))
+    XCTAssertNil(DiskMounter.uuidString(42))
+  }
+
+  func testDiskImageDetection() {
+    let modelKey = kDADiskDescriptionDeviceModelKey as String
+    XCTAssertTrue(DiskMounter.isDiskImage([modelKey: "Disk Image"]))
+    XCTAssertFalse(DiskMounter.isDiskImage([modelKey: "Vendor USB Drive"]))
+    // A description missing the model key counts as a physical disk.
+    XCTAssertFalse(DiskMounter.isDiskImage(["SomeOtherKey": "Disk Image"]))
+    XCTAssertFalse(DiskMounter.isDiskImage([modelKey: 42]))
+  }
 }
