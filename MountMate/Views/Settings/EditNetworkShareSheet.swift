@@ -316,7 +316,8 @@ struct EditNetworkShareSheet: View {
     if !password.isEmpty {
       // Unchanged: skip the write (and any Keychain prompt it could cause).
       guard password != loadedPassword else { return nil }
-      let status = KeychainManager.shared.save(password: password, for: account)
+      let status = KeychainManager.shared.save(
+        password: password, for: account, name: share.name, kind: .networkShare)
       guard status == errSecSuccess else {
         return String(
           format: NSLocalizedString(

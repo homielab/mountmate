@@ -359,3 +359,8 @@
 "Remove Anyway" = "仍要移除";
 "“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "無法卸載「%@」，因此它仍保持掛載。你仍可將其從 MountMate 中移除；共享上的檔案不會受到影響。\n\n%@";
 "“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "「%@」已連線，可能使用了不同的伺服器名稱（例如在 Finder 中）。請在那裡中斷連線後再試一次。";
+
+/* APFS saved password */
+"Forget Saved Password" = "忘記已儲存的密碼";
+"Password Not Saved" = "密碼未儲存";
+"“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "「%@」已解鎖，但 MountMate 無法將其密碼儲存到鑰匙圈（錯誤 %d）。";

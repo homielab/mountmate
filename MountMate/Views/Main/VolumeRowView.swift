@@ -15,6 +15,8 @@ struct VolumeRowState: Equatable {
   var isKeepAlive = false
   var isReconnecting = false
   var customMountPoint: String?
+  /// A password for this (APFS) volume is saved in the Keychain.
+  var hasSavedPassword = false
 }
 
 /// Row state for the whole list, computed once per list render by
@@ -351,6 +353,16 @@ struct VolumeRowView: View {
       }
     } label: {
       Label("Don't Auto-Mount This Volume", systemImage: "hand.raised")
+    }
+    if state.hasSavedPassword {
+      Button {
+        manager.forgetSavedPassword(for: volume)
+      } label: {
+        Label(
+          NSLocalizedString(
+            "Forget Saved Password", comment: "Volume context menu: delete the saved APFS password"),
+          systemImage: "key.slash")
+      }
     }
     Button {
       syncEditorStateFromPersistence()

@@ -42,6 +42,7 @@ struct DriveListView: View {
   /// Row state of every listed volume, computed once per render.
   private var listState: VolumeListState {
     let reconnecting = keepAliveManager.reconnectingVolumeIDs
+    let savedPasswords = manager.volumeIDsWithSavedPassword
     var rowStates: [String: VolumeRowState] = [:]
     // Pinned volumes come from these disks too.
     for volume in (internalDisks + externalDisks + diskImages).flatMap(\.allVolumes) {
@@ -49,7 +50,8 @@ struct DriveListView: View {
         isPinned: persistence.isPinned(volume),
         isKeepAlive: persistence.isVolumeKeepAlive(volume),
         isReconnecting: volume.compositeId.map { reconnecting.contains($0) } ?? false,
-        customMountPoint: persistence.customMountPoint(for: volume)?.mountPoint)
+        customMountPoint: persistence.customMountPoint(for: volume)?.mountPoint,
+        hasSavedPassword: savedPasswords.contains(volume.id))
     }
     return VolumeListState(
       rowStates: rowStates,

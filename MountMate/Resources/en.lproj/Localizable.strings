@@ -359,3 +359,8 @@
 "Remove Anyway" = "Remove Anyway";
 "“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@" = "“%@” could not be unmounted, so it stays mounted. You can still remove it from MountMate; no files on the share are touched.\n\n%@";
 "“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again." = "“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again.";
+
+/* APFS saved password */
+"Forget Saved Password" = "Forget Saved Password";
+"Password Not Saved" = "Password Not Saved";
+"“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d).";

@@ -4,13 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
+
 ### Changed
 
+- Passwords MountMate saves in the Keychain are now labeled "MountMate – <volume or share name>" with the kind "APFS volume" or "Network share", so they are easy to find in Keychain Access. Passwords saved by earlier versions keep working and get the label the next time they are saved.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
 
 ### Fixed
 
+- "Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.
 - Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
 - Custom mount points whose path contains control characters (like line breaks) are rejected with a clear message instead of being written into the root-managed /etc/fstab, where a break could forge extra rule lines; every rule field (path, volume UUID, file-system type, identifiers) is now validated before anything is staged.
 - The staged copies of /etc/fstab are checked against their SHA-256 digest by the privileged shell before use, so a swap in the temporary directory aborts the update instead of writing foreign content.
