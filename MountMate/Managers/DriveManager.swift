@@ -452,23 +452,6 @@ class DriveManager: ObservableObject {
       title: title, message: String(format: format, names), kind: .basic)
   }
 
-  /// User-facing description of a failed diskutil run.
-  private static func failureMessage(for result: ProcessResult, timeout: TimeInterval) -> String {
-    if result.timedOut {
-      return String(
-        format: NSLocalizedString(
-          "The operation timed out after %d seconds.",
-          comment: "Disk operation error; number of seconds"), Int32(timeout))
-    }
-    if result.stderr.isEmpty {
-      return String(
-        format: NSLocalizedString(
-          "diskutil exited with code %d.", comment: "Disk operation error; process exit code"),
-        result.exitCode ?? -1)
-    }
-    return result.stderr
-  }
-
   func eject(disk: PhysicalDisk) {
     // Nothing could confirm what this disk is (it may be the internal
     // disk). Never refuse silently. Disk images are never internal.
@@ -506,7 +489,7 @@ class DriveManager: ObservableObject {
         if !result.succeeded {
           self.setEjecting(disk.id, false)
           self.handleDiskUtilError(
-            Self.failureMessage(for: result, timeout: ejectTimeout),
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout),
             for: disk.name ?? disk.id, disk: disk, operation: .eject)
           self.refreshDrives(qos: .userInitiated)
         } else {
@@ -533,7 +516,7 @@ class DriveManager: ObservableObject {
         if !result.succeeded {
           self.setEjecting(disk.id, false)
           self.handleDiskUtilError(
-            Self.failureMessage(for: result, timeout: timeout),
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: timeout),
             for: disk.name ?? disk.id, disk: disk, operation: .eject)
           self.refreshDrives(qos: .userInitiated)
         } else {
@@ -563,7 +546,7 @@ class DriveManager: ObservableObject {
         if !result.succeeded {
           self.setBusy(volume.id, false)
           self.handleDiskUtilError(
-            Self.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
             for: volume.name, volume: volume, operation: .unmount)
           self.refreshDrives(qos: .userInitiated)
         } else {
@@ -669,7 +652,7 @@ class DriveManager: ObservableObject {
       self.setBusy(volume.id, false)
       if allowsErrorAlerts {
         self.handleDiskUtilError(
-          Self.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+          DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
           for: volume.name, volume: volume, operation: .mount)
       }
       self.refreshDrives(qos: .userInitiated)
@@ -704,17 +687,6 @@ class DriveManager: ObservableObject {
       self.performUnlock(volume: volume, passphrase: saved, isSavedPassword: true)
     }
     return true
-  }
-
-  /// True when `diskutil apfs unlockVolume` rejected the passphrase itself
-  /// (as opposed to a timeout or any other failure).
-  private static func isWrongPassphrase(_ result: ProcessResult) -> Bool {
-    guard !result.timedOut else { return false }
-    let output = "\(result.stdout)\n\(result.stderr)".lowercased()
-    if output.contains("-69749") || output.contains("-69808") { return true }
-    return (output.contains("passphrase") || output.contains("password"))
-      && (output.contains("incorrect") || output.contains("invalid")
-        || output.contains("wrong") || output.contains("not valid"))
   }
 
   /// Saves the passphrase the user asked to remember, but only once it has
@@ -754,7 +726,7 @@ class DriveManager: ObservableObject {
         return
       }
       self.setBusy(volume.id, false)
-      let wrongPassphrase = Self.isWrongPassphrase(result)
+      let wrongPassphrase = DiskUtilErrorClassifier.isWrongPassphrase(result)
       if wrongPassphrase || (isSavedPassword && !result.timedOut) {
         // A mistyped password, or a saved one that failed: ask again instead
         // of showing a generic error. "That password didn't work" only when
@@ -765,7 +737,7 @@ class DriveManager: ObservableObject {
         self.presentUnlockPrompt(for: volume, passwordFailed: wrongPassphrase)
       } else {
         self.handleDiskUtilError(
-          Self.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+          DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
           for: volume.name, volume: volume, operation: .mount)
       }
       self.refreshDrives(qos: .userInitiated)
@@ -829,7 +801,7 @@ class DriveManager: ObservableObject {
         if !result.succeeded {
           self.setBusy(volume.id, false)
           self.handleDiskUtilError(
-            Self.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
             for: volume.name, volume: volume, operation: .unmount)
           self.refreshDrives(qos: .userInitiated)
         } else if let image = self.diskImageToDetach(afterUnmounting: volume) {
@@ -903,7 +875,7 @@ class DriveManager: ObservableObject {
           KeepAliveManager.shared.resume(volume: volume)
           self.setBusy(volume.id, false)
           self.handleDiskUtilError(
-            Self.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
             for: volume.name, volume: volume, operation: .unmount)
           self.refreshDrives(qos: .userInitiated)
           return
@@ -1443,143 +1415,45 @@ class DriveManager: ObservableObject {
 
   // MARK: - Error Handling
 
-  private enum DiskOperation { case mount, unmount, eject }
-  private enum DiskUtilError {
-    case mountEFIVolume, unmountBusyVolume
-    case mountInUseVolume(String?)
-    case unmountInUseVolume(String?)
-    case
-      ejectInUseVolume(String?)
-    case
-      mountLockedVolume, other
-  }
-
   private func handleDiskUtilError(
     _ error: String, for name: String, volume: Volume? = nil, disk: PhysicalDisk? = nil,
     operation: DiskOperation
   ) {
-    let parsedError = self.parseDiskUtilError(error, for: name, operation: operation)
-    let title: String
-    let message: String
-    let kind: AppAlertKind
+    let parsedError = DiskUtilErrorClassifier.classify(error, for: name, operation: operation)
 
-    switch parsedError {
-    case .mountLockedVolume:
+    if parsedError == .mountLockedVolume {
       guard let volume else {
-        title = String(
-          format: NSLocalizedString("“%@” is locked", comment: "Alert title"), name)
-        message = String(
-          format: NSLocalizedString(
-            "Enter the password to unlock “%@”", comment: "Alert message"), name)
-        kind = .basic
-        break
+        userActionError = AppAlert(
+          title: String(
+            format: NSLocalizedString("“%@” is locked", comment: "Alert title"), name),
+          message: String(
+            format: NSLocalizedString(
+              "Enter the password to unlock “%@”", comment: "Alert message"), name),
+          kind: .basic)
+        return
       }
       if !unlockWithSavedPassword(volume) {
         presentUnlockPrompt(for: volume, passwordFailed: false)
       }
       return
-    case .mountEFIVolume:
-      title = NSLocalizedString("Mount Failed", comment: "Alert title")
-      message = NSLocalizedString(
-        "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal.",
-        comment: "Error message")
-      kind = .basic
+    }
+    guard
+      let text = DiskUtilErrorClassifier.presentation(
+        for: parsedError, name: name, operation: operation, details: error)
+    else { return }
+
+    let kind: AppAlertKind
+    switch parsedError {
     case .unmountBusyVolume:
-      title = NSLocalizedString("Eject Failed", comment: "Alert title")
-      message =
-        String(
-          format: NSLocalizedString(
-            "Failed to eject “%@” because one of its volumes is busy or in use.",
-            comment: "Error message"), name) + "\n\n"
-        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
-      if let disk = disk {
-        kind = .forceEject { self.forceEject(disk: disk) }
-      } else {
-        kind = .basic
-      }
-    case .mountInUseVolume(let process), .unmountInUseVolume(let process),
-      .ejectInUseVolume(let process):
-      switch parsedError {
-      case .mountInUseVolume:
-        title = NSLocalizedString("Mount Failed", comment: "Alert title")
-      case .unmountInUseVolume:
-        title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-      default:
-        title = NSLocalizedString("Eject Failed", comment: "Alert title")
-      }
-
-      let summary: String
-      switch (parsedError, process) {
-      case (.mountInUseVolume, let proc?):
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to mount “%@” because it is currently in use by “%@”.",
-            comment: "Error message"), name, proc)
-      case (.mountInUseVolume, nil):
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to mount “%@” because it is currently in use by another application.",
-            comment: "Error message"), name)
-      case (.unmountInUseVolume, let proc?):
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to unmount “%@” because it is currently in use by “%@”.",
-            comment: "Error message"), name, proc)
-      case (.unmountInUseVolume, nil):
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to unmount “%@” because it is currently in use by another application.",
-            comment: "Error message"), name)
-      case (_, let proc?):
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to eject “%@” because it is currently in use by “%@”.",
-            comment: "Error message"), name, proc)
-      default:
-        summary = String(
-          format: NSLocalizedString(
-            "Failed to eject “%@” because it is currently in use by another application.",
-            comment: "Error message"), name)
-      }
-      message =
-        summary + "\n\n"
-        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
-
-      if operation == .eject, let disk = disk {
-        kind = .forceEject { self.forceEject(disk: disk) }
-      } else if operation == .unmount, let volume = volume {
-        kind = .forceUnmount { self.forceUnmount(volume: volume) }
-      } else {
-        kind = .basic
-      }
-    case .other:
-      let unknownError: String
-      switch operation {
-      case .mount:
-        title = NSLocalizedString("Mount Failed", comment: "Alert title")
-        unknownError = String(
-          format: NSLocalizedString(
-            "An unknown error occurred while trying to mount “%@”.", comment: "Error message"),
-          name)
-      case .unmount:
-        title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-        unknownError = String(
-          format: NSLocalizedString(
-            "An unknown error occurred while trying to unmount “%@”.", comment: "Error message"),
-          name)
-      case .eject:
-        title = NSLocalizedString("Eject Failed", comment: "Alert title")
-        unknownError = String(
-          format: NSLocalizedString(
-            "An unknown error occurred while trying to eject “%@”.", comment: "Error message"),
-          name)
-      }
-      message =
-        "\(unknownError)\n\n"
-        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n\(error)"
+      kind = disk.map { disk in .forceEject { self.forceEject(disk: disk) } } ?? .basic
+    case .inUse where operation == .eject:
+      kind = disk.map { disk in .forceEject { self.forceEject(disk: disk) } } ?? .basic
+    case .inUse where operation == .unmount:
+      kind = volume.map { volume in .forceUnmount { self.forceUnmount(volume: volume) } } ?? .basic
+    default:
       kind = .basic
     }
-    self.userActionError = AppAlert(title: title, message: message, kind: kind)
+    userActionError = AppAlert(title: text.title, message: text.message, kind: kind)
   }
 
   /// Asks for the password of a locked APFS volume and unlocks it.
@@ -1602,51 +1476,6 @@ class DriveManager: ObservableObject {
     userActionError = AppAlert(
       title: title, message: message,
       kind: .lockedVolume(LockedVolumeAppAlert(onConfirm: handler)))
-  }
-
-  private func parseDiskUtilError(_ rawError: String, for name: String, operation: DiskOperation)
-    -> DiskUtilError
-  {
-    let lowerCaseError = rawError.lowercased()
-
-    if operation == .mount && name.uppercased() == "EFI" {
-      return .mountEFIVolume
-    }
-
-    if lowerCaseError.contains("at least one volume could not be unmounted") {
-      return .unmountBusyVolume
-    }
-
-    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use")
-      || lowerCaseError.contains("dissented by pid")
-    {
-      var processName: String? = nil
-      if let range = rawError.range(
-        of: "(dissented by PID \\d+ )?\\((/[^)]+)\\)",
-        options: [.regularExpression, .caseInsensitive])
-      {
-        let match = String(rawError[range])
-        if let start = match.firstIndex(of: "("), let end = match.firstIndex(of: ")") {
-          let pathRange = match.index(after: start)..<end
-          let path = String(match[pathRange])
-          processName = URL(fileURLWithPath: path).lastPathComponent
-        }
-      }
-
-      return switch operation {
-      case .mount: .mountInUseVolume(processName)
-      case .unmount: .unmountInUseVolume(processName)
-      case .eject: .ejectInUseVolume(processName)
-      }
-    }
-
-    if rawError.contains(
-      "This is an encrypted and locked APFS Volume; use \"diskutil apfs unlockVolume\"")
-    {
-      return .mountLockedVolume
-    }
-
-    return .other
   }
 
   /// Mount points whose statfs has not returned yet. While one is still
