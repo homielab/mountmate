@@ -44,10 +44,19 @@ jobs:
         run: |
           brew install create-dmg
 
-          # Download Sparkle tools to get generate_appcast
-          wget https://github.com/sparkle-project/Sparkle/releases/download/2.9.5/Sparkle-2.9.5.tar.xz
+          # Download the Sparkle tools (generate_appcast) matching the framework
+          # the app links. The version comes from Package.resolved, so bumping
+          # the Sparkle package in Xcode updates both; never hard-code it here.
+          SPARKLE_VERSION="$(jq -r '.pins[] | select(.identity == "sparkle") | .state.version' \
+            MountMate.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved)"
+          if [[ -z "${SPARKLE_VERSION}" || "${SPARKLE_VERSION}" == "null" ]]; then
+            echo "::error::Could not read the Sparkle version from Package.resolved."
+            exit 1
+          fi
+          echo "Sparkle tools ${SPARKLE_VERSION}"
+          wget "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
           mkdir -p sparkle-tools
-          tar -xf Sparkle-2.9.5.tar.xz -C sparkle-tools
+          tar -xf "Sparkle-${SPARKLE_VERSION}.tar.xz" -C sparkle-tools
           echo "$PWD/sparkle-tools/bin" >> $GITHUB_PATH
 
       - name: Setup Code Signing
