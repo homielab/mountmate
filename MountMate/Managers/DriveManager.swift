@@ -849,6 +849,13 @@ class DriveManager: ObservableObject {
         "Custom Mount Point Cannot Be Root",
         comment: "Custom mount point validation")
     }
+    // A control character (a line break above all) could end the field in the
+    // root-written /etc/fstab rule and start a line of its own.
+    if PersistenceManager.containsUnsafeFstabCharacter(path) {
+      return NSLocalizedString(
+        "Custom Mount Point Control Characters",
+        comment: "Custom mount point validation")
+    }
     if let mountedVolumeName = mountedVolumeName(at: path, excluding: volume) {
       return String(
         format: NSLocalizedString(

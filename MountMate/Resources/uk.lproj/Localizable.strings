@@ -225,6 +225,7 @@
 "Custom Mount Point Empty Path" = "Введіть шлях до теки.";
 "Custom Mount Point Must Be Absolute" = "Власна точка монтування повинна бути абсолютним шляхом.";
 "Custom Mount Point Cannot Be Root" = "Власна точка монтування не може бути кореневою текою.";
+"Custom Mount Point Control Characters" = "Шлях містить керуючі символи (наприклад, перенос рядка) і не може використовуватися як точка монтування.";
 "Custom Mount Point In Use" = "Ця тека вже використовується змонтованим томом «%@».";
 "Custom Mount Point Must Be Folder" = "Власна точка монтування повинна бути текою.";
 "Custom Mount Point Inspect Error" = "MountMate не зміг перевірити цю теку.\n\nДеталі:\n%@";
@@ -315,6 +316,7 @@
 "Saving…" = "Збереження…";
 "System Default" = "Як у системі";
 "System Mount Rule Changed During Update" = "Файл /etc/fstab було змінено іншим процесом під час оновлення. Спробуйте ще раз.";
+"Staged Fstab File Changed" = "Тимчасову копію /etc/fstab змінено до запису, і оновлення було перервано. Спробуйте ще раз.";
 "This shortcut is used by another app. Choose a different one." = "Це сполучення клавіш використовує інша програма. Виберіть інше.";
 "Unmount “%@”" = "Відмонтувати «%@»";
 "Version %@ (%@)" = "Версія %@ (%@)";

@@ -225,6 +225,7 @@
 "Custom Mount Point Empty Path" = "Введите путь к папке.";
 "Custom Mount Point Must Be Absolute" = "Пользовательская точка монтирования должна быть абсолютным путём.";
 "Custom Mount Point Cannot Be Root" = "Пользовательская точка монтирования не может быть корневой папкой.";
+"Custom Mount Point Control Characters" = "Путь содержит управляющие символы (например, перенос строки) и не может использоваться как точка монтирования.";
 "Custom Mount Point In Use" = "Эта папка уже используется смонтированным томом «%@».";
 "Custom Mount Point Must Be Folder" = "Пользовательская точка монтирования должна быть папкой.";
 "Custom Mount Point Inspect Error" = "MountMate не смог проверить эту папку.\n\nДетали:\n%@";
@@ -315,6 +316,7 @@
 "Saving…" = "Сохранение…";
 "System Default" = "Как в системе";
 "System Mount Rule Changed During Update" = "Файл /etc/fstab был изменён другим процессом во время обновления. Повторите попытку.";
+"Staged Fstab File Changed" = "Временная копия /etc/fstab изменилась до записи, и обновление было прервано. Повторите попытку.";
 "This shortcut is used by another app. Choose a different one." = "Это сочетание клавиш используется другим приложением. Выберите другое.";
 "Unmount “%@”" = "Отмонтировать «%@»";
 "Version %@ (%@)" = "Версия %@ (%@)";

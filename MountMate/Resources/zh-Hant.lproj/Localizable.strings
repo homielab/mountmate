@@ -225,6 +225,7 @@
 "Custom Mount Point Empty Path" = "請輸入資料夾路徑。";
 "Custom Mount Point Must Be Absolute" = "自訂掛載點必須是絕對路徑。";
 "Custom Mount Point Cannot Be Root" = "自訂掛載點不能是根目錄。";
+"Custom Mount Point Control Characters" = "路徑包含控制字元（如換行符），不能用來作為掛載點。";
 "Custom Mount Point In Use" = "此資料夾已被已掛載的磁碟卷「%@」使用。";
 "Custom Mount Point Must Be Folder" = "自訂掛載點必須是資料夾。";
 "Custom Mount Point Inspect Error" = "MountMate 無法檢查此資料夾。\n\n詳細資料：\n%@";
@@ -315,6 +316,7 @@
 "Saving…" = "正在儲存…";
 "System Default" = "系統預設";
 "System Mount Rule Changed During Update" = "更新期間 /etc/fstab 被其他程序修改。請再試一次。";
+"Staged Fstab File Changed" = "/etc/fstab 的暫存副本在寫入前發生了變化，更新已中止。請再試一次。";
 "This shortcut is used by another app. Choose a different one." = "此快速鍵已被其他 App 使用。請選擇其他快速鍵。";
 "Unmount “%@”" = "卸載「%@」";
 "Version %@ (%@)" = "版本 %@ (%@)";

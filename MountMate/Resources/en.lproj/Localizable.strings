@@ -230,6 +230,7 @@
 "Custom Mount Point Empty Path" = "Enter a folder path.";
 "Custom Mount Point Must Be Absolute" = "The custom mount point must be an absolute path.";
 "Custom Mount Point Cannot Be Root" = "The custom mount point cannot be the root folder.";
+"Custom Mount Point Control Characters" = "The path contains control characters (like line breaks) and cannot be used as a mount point.";
 "Custom Mount Point In Use" = "The folder is already being used by the mounted volume “%@”.";
 "Custom Mount Point Must Be Folder" = "The custom mount point must be a folder.";
 "Custom Mount Point Inspect Error" = "MountMate could not inspect this folder.\n\nDetails:\n%@";
@@ -319,6 +320,7 @@
 "Saving…" = "Saving…";
 "System Default" = "System Default";
 "System Mount Rule Changed During Update" = "/etc/fstab was changed by another process during the update. Please try again.";
+"Staged Fstab File Changed" = "The staged copy of /etc/fstab changed before it was written and the update was aborted. Please try again.";
 "This shortcut is used by another app. Choose a different one." = "This shortcut is used by another app. Choose a different one.";
 "Unmount “%@”" = "Unmount “%@”";
 "Version %@ (%@)" = "Version %@ (%@)";

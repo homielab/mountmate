@@ -225,6 +225,7 @@
 "Custom Mount Point Empty Path" = "Saisissez un chemin de dossier.";
 "Custom Mount Point Must Be Absolute" = "Le point de montage personnalisé doit être un chemin absolu.";
 "Custom Mount Point Cannot Be Root" = "Le point de montage personnalisé ne peut pas être le dossier racine.";
+"Custom Mount Point Control Characters" = "Le chemin contient des caractères de contrôle (comme des sauts de ligne) et ne peut pas servir de point de montage.";
 "Custom Mount Point In Use" = "Ce dossier est déjà utilisé par le volume monté « %@ ».";
 "Custom Mount Point Must Be Folder" = "Le point de montage personnalisé doit être un dossier.";
 "Custom Mount Point Inspect Error" = "MountMate n'a pas pu inspecter ce dossier.\n\nDétails :\n%@";
@@ -315,6 +316,7 @@
 "Saving…" = "Enregistrement…";
 "System Default" = "Langue du système";
 "System Mount Rule Changed During Update" = "/etc/fstab a été modifié par un autre processus pendant la mise à jour. Veuillez réessayer.";
+"Staged Fstab File Changed" = "La copie temporaire de /etc/fstab a été modifiée avant l'écriture et la mise à jour a été annulée. Veuillez réessayer.";
 "This shortcut is used by another app. Choose a different one." = "Ce raccourci est utilisé par une autre app. Choisissez-en un autre.";
 "Unmount “%@”" = "Démonter « %@ »";
 "Version %@ (%@)" = "Version %@ (%@)";

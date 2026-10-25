@@ -7,10 +7,144 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testBlockedFstabEntryWritesNoautoRuleForVolumeUUID() {
     let entry = PersistenceManager.blockedFstabEntry(
-      volumeUUID: "1234-ABCD", fileSystemType: "hfs", identifier: "DISKUUID-1234-ABCD")
+      volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "hfs",
+      identifier: "DISKUUID-F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6")
     XCTAssertEqual(
       entry,
-      "# MountMate block: DISKUUID-1234-ABCD\nUUID=1234-ABCD none hfs rw,noauto\n")
+      "# MountMate block: DISKUUID-F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6\n"
+        + "UUID=F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6 none hfs rw,noauto\n")
+  }
+
+  func testBlockedFstabEntryAllowsPrintableUnicodeIdentifier() {
+    let entry = PersistenceManager.blockedFstabEntry(
+      volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "apfs",
+      identifier: "DISKUUID-Bản sao #1")
+    XCTAssertNotNil(entry)
+    XCTAssertTrue(entry!.contains("# MountMate block: DISKUUID-Bản sao #1\n"))
+  }
+
+  func testBlockedFstabEntryRejectsNewlineInIdentifier() {
+    XCTAssertNil(
+      PersistenceManager.blockedFstabEntry(
+        volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "apfs",
+        identifier: "DISKUUID\nUUID=11111111-2222-4333-8444-555555555555 none apfs rw"))
+  }
+
+  func testBlockedFstabEntryRejectsNonStrictUUIDs() {
+    for uuid in [
+      "1234-ABCD", "{F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6}",
+      "F81D4FAE7DEC11D0A76500A0C91E6BF6", "F81D4FAE-7DEC-11D0-A765", "NONE", "",
+    ] {
+      XCTAssertNil(
+        PersistenceManager.blockedFstabEntry(
+          volumeUUID: uuid, fileSystemType: "apfs", identifier: "DISKUUID-VOLUUID"),
+        uuid)
+    }
+  }
+
+  func testBlockedFstabEntryRejectsUnsafeFileSystemType() {
+    for type in ["APFS", "ap fs", "apfs\nrw", "apfs#", ""] {
+      XCTAssertNil(
+        PersistenceManager.blockedFstabEntry(
+          volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: type,
+          identifier: "DISKUUID-VOLUUID"),
+        type)
+    }
+  }
+
+  // MARK: - Rule field validation
+
+  func testContainsUnsafeFstabCharacterRejectsControlCharacters() {
+    for value in ["a\nb", "\n", "\r", "a\u{2028}b", "a\u{0}b"] {
+      XCTAssertTrue(PersistenceManager.containsUnsafeFstabCharacter(value), value.debugDescription)
+    }
+  }
+
+  func testContainsUnsafeFstabCharacterAllowsPrintableFields() {
+    for value in [" ", "\t", "a#b", "/Volumes/Bản sao", "disk4s1", "🎉", ""] {
+      XCTAssertFalse(PersistenceManager.containsUnsafeFstabCharacter(value), value.debugDescription)
+    }
+  }
+
+  func testIsStrictFstabUUIDAcceptsOnlyHyphenatedHexForms() {
+    XCTAssertTrue(PersistenceManager.isStrictFstabUUID("F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
+    XCTAssertTrue(PersistenceManager.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
+    XCTAssertFalse(PersistenceManager.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf"))
+    XCTAssertFalse(
+      PersistenceManager.isStrictFstabUUID("{F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6}"))
+    XCTAssertFalse(
+      PersistenceManager.isStrictFstabUUID("urn:uuid:F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
+    XCTAssertFalse(PersistenceManager.isStrictFstabUUID("1234-ABCD"))
+    XCTAssertFalse(PersistenceManager.isStrictFstabUUID(""))
+  }
+
+  func testIsPlainFstabFileSystemType() {
+    XCTAssertTrue(PersistenceManager.isPlainFstabFileSystemType("apfs"))
+    XCTAssertTrue(PersistenceManager.isPlainFstabFileSystemType("msdos"))
+    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("APFS"))
+    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("ap fs"))
+    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("apfs\n"))
+    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType(""))
+  }
+
+  // MARK: - Staged file integrity
+
+  private func runShell(_ command: String) -> (exitCode: Int32, stderr: String) {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/bin/sh")
+    process.arguments = ["-c", command]
+    let stderrPipe = Pipe()
+    process.standardError = stderrPipe
+    process.standardOutput = Pipe()
+    try? process.run()
+    process.waitUntilExit()
+    let data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+    return (process.terminationStatus, String(data: data, encoding: .utf8) ?? "")
+  }
+
+  private func stagedFile(_ bytes: Data) -> URL {
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent("mountmate-test-\(UUID().uuidString)")
+    try? bytes.write(to: url, options: .atomic)
+    return url
+  }
+
+  func testSha256HexMatchesKnownVector() {
+    XCTAssertEqual(
+      PersistenceManager.sha256Hex(Data("abc".utf8)),
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+  }
+
+  func testStagedFileIntegrityCommandAcceptsUntouchedFile() {
+    let bytes = Data("# MountMate block: DISK1-VOL1\n".utf8)
+    let url = stagedFile(bytes)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let result = runShell(
+      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: bytes))
+    XCTAssertEqual(result.exitCode, 0)
+  }
+
+  func testStagedFileIntegrityCommandAbortsAfterSwap() {
+    let bytes = Data("# MountMate block: DISK1-VOL1\n".utf8)
+    let url = stagedFile(bytes)
+    defer { try? FileManager.default.removeItem(at: url) }
+    try? Data("rm -rf /".utf8).write(to: url, options: .atomic)
+
+    let result = runShell(
+      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: bytes))
+    XCTAssertNotEqual(result.exitCode, 0)
+    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+  }
+
+  func testStagedFileIntegrityCommandAbortsForMissingFile() {
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent("mountmate-test-missing-\(UUID().uuidString)")
+
+    let result = runShell(
+      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: Data("x".utf8)))
+    XCTAssertNotEqual(result.exitCode, 0)
+    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
   }
 
   // MARK: - normalizedSystemVolumeUUID

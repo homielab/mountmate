@@ -1,6 +1,7 @@
 //  Created by homielab.com
 
 import Combine
+import CryptoKit
 import Foundation
 
 class PersistenceManager: ObservableObject {
@@ -717,9 +718,15 @@ class PersistenceManager: ObservableObject {
       }
       updated = Self.trimmedFstabContents(updated)
       for addition in additions.sorted(by: { $0.uuid < $1.uuid }) {
-        updated += Self.blockedFstabEntry(
-          volumeUUID: addition.uuid, fileSystemType: addition.fileSystemType,
-          identifier: addition.info.id)
+        guard
+          let entry = Self.blockedFstabEntry(
+            volumeUUID: addition.uuid, fileSystemType: addition.fileSystemType,
+            identifier: addition.info.id)
+        else {
+          print("⚠️ Skipped a startup block rule with unsafe fields (“\(addition.info.name)”).")
+          continue
+        }
+        updated += entry
       }
 
       try self.installSystemFstabContents(updated, expectedCurrent: snapshot.raw)
@@ -842,11 +849,16 @@ class PersistenceManager: ObservableObject {
 
   /// The /etc/fstab comment+rule pair for a blocked volume. `none` as the
   /// mount point plus `noauto` makes macOS skip the automatic mount while
-  /// leaving manual mounts possible.
+  /// leaving manual mounts possible. Returns nil when a field could not be
+  /// written safely (see `validateFstabField`); callers skip the volume.
   static func blockedFstabEntry(
     volumeUUID: String, fileSystemType: String, identifier: String
-  ) -> String {
-    "\(mountMateBlockPrefix) \(identifier)\nUUID=\(volumeUUID) none \(fileSystemType) rw,noauto\n"
+  ) -> String? {
+    guard isStrictFstabUUID(volumeUUID), isPlainFstabFileSystemType(fileSystemType),
+      !containsUnsafeFstabCharacter(identifier)
+    else { return nil }
+    return
+      "\(mountMateBlockPrefix) \(identifier)\nUUID=\(volumeUUID) none \(fileSystemType) rw,noauto\n"
   }
 
   private func refreshFstabBlockedUUIDs(from contents: String) {
@@ -990,6 +1002,22 @@ class PersistenceManager: ObservableObject {
     mountPoint: String,
     fileSystemType: String
   ) throws -> String {
+    // Everything below lands in a root-written /etc/fstab line, so every field
+    // is validated here — not just where the UI validates it — before any of
+    // it is staged for the privileged write.
+    try Self.validateFstabField(mountPoint)
+    try Self.validateFstabField(stableIdentifier(for: volume))
+    guard Self.isStrictFstabUUID(volumeUUID), Self.isPlainFstabFileSystemType(fileSystemType)
+    else {
+      throw NSError(
+        domain: "MountMate", code: Self.fstabInvalidFieldErrorCode,
+        userInfo: [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "Custom Mount Point System Error",
+            comment: "Fallback custom mount point system configuration error")
+        ])
+    }
+
     let withoutManagedEntry = removingManagedFstabEntry(from: contents, for: volume)
     let activeLines = withoutManagedEntry.components(separatedBy: .newlines)
 
@@ -1130,7 +1158,13 @@ class PersistenceManager: ObservableObject {
   private static let fstabChangedErrorCode = 3
   /// The user dismissed the administrator password prompt.
   private static let adminPromptCancelledErrorCode = 4
+  /// A rule field could not be written safely (control characters, malformed
+  /// UUID or file-system type). Never worth a password prompt.
+  static let fstabInvalidFieldErrorCode = 5
+  /// The staged copy changed on disk before the privileged shell used it.
+  private static let stagedFstabChangedErrorCode = 6
   private static let fstabChangedMarker = "MOUNTMATE_FSTAB_CHANGED"
+  static let stagedFstabChangedMarker = "MOUNTMATE_STAGED_FSTAB_CHANGED"
 
   /// Writes /etc/fstab with administrator privileges.
   ///
@@ -1141,14 +1175,17 @@ class PersistenceManager: ObservableObject {
   /// while one of them waits at the password prompt.
   private func installSystemFstabContents(_ contents: String, expectedCurrent: Data) throws {
     let normalizedContents = Self.trimmedFstabContents(contents)
+    // The bytes are hashed and written as one unit, so the identity the
+    // privileged shell checks is exactly what was staged.
+    let stagedData = normalizedContents.data(using: .utf8) ?? Data()
     let fileManager = FileManager.default
     let temporaryURL = fileManager.temporaryDirectory
       .appendingPathComponent("mountmate-fstab-\(UUID().uuidString)")
     let expectedURL = fileManager.temporaryDirectory
       .appendingPathComponent("mountmate-fstab-expected-\(UUID().uuidString)")
 
-    if !normalizedContents.isEmpty {
-      try normalizedContents.write(to: temporaryURL, atomically: true, encoding: .utf8)
+    if !stagedData.isEmpty {
+      try stagedData.write(to: temporaryURL, options: .atomic)
     }
     try expectedCurrent.write(to: expectedURL, options: .atomic)
 
@@ -1157,10 +1194,19 @@ class PersistenceManager: ObservableObject {
       try? fileManager.removeItem(at: expectedURL)
     }
 
+    // The staged copies live in the user's temporary directory; the
+    // privileged shell only touches them if their bytes still hash to what
+    // this process staged, so a swap in between aborts instead of writing.
+    let integrityGuard =
+      "\(Self.stagedFileIntegrityCommand(path: expectedURL.path, bytes: expectedCurrent)); "
+      + (stagedData.isEmpty
+        ? ""
+        : "\(Self.stagedFileIntegrityCommand(path: temporaryURL.path, bytes: stagedData)); ")
+
     // A missing /etc/fstab matches an empty expected file.
     let expectedPath = expectedURL.path.shellQuoted
     let guardCommand =
-      "if [ -e /etc/fstab ]; then /usr/bin/cmp -s \(expectedPath) /etc/fstab; else [ ! -s \(expectedPath) ]; fi || { echo \(Self.fstabChangedMarker) >&2; exit 1; }"
+      "\(integrityGuard)if [ -e /etc/fstab ]; then /usr/bin/cmp -s \(expectedPath) /etc/fstab; else [ ! -s \(expectedPath) ]; fi || { echo \(Self.fstabChangedMarker) >&2; exit 1; }"
 
     let writeCommand: String
     if normalizedContents.isEmpty {
@@ -1186,6 +1232,16 @@ class PersistenceManager: ObservableObject {
           NSLocalizedDescriptionKey: NSLocalizedString(
             "System Mount Rule Changed During Update",
             comment: "Error when /etc/fstab changed while MountMate was updating it")
+        ])
+    }
+    if !result.succeeded && result.stderr.contains(Self.stagedFstabChangedMarker) {
+      throw NSError(
+        domain: "MountMate",
+        code: Self.stagedFstabChangedErrorCode,
+        userInfo: [
+          NSLocalizedDescriptionKey: NSLocalizedString(
+            "Staged Fstab File Changed",
+            comment: "Error when a staged copy changed before the privileged write used it")
         ])
     }
     // osascript reports a dismissed password prompt as
@@ -1250,6 +1306,72 @@ class PersistenceManager: ObservableObject {
       .replacingOccurrences(of: "\\", with: "\\\\")
       .replacingOccurrences(of: " ", with: "\\040")
       .replacingOccurrences(of: "\t", with: "\\011")
+  }
+
+  // MARK: - Fstab Rule Validation
+
+  /// True when `value` has a character that must never be written into an
+  /// /etc/fstab rule: control characters and line or paragraph separators. A
+  /// newline would end the field and start a line of the attacker's choosing,
+  /// and the escaper below only encodes spaces, tabs and backslashes. Spaces
+  /// and tabs themselves stay allowed (they are escaped), as does any
+  /// printable Unicode character.
+  static func containsUnsafeFstabCharacter(_ value: String) -> Bool {
+    value.contains { character in
+      guard character != "\t" else { return false }
+      return character.isNewline
+        || character.unicodeScalars.contains {
+          CharacterSet.controlCharacters.contains($0)
+            || CharacterSet.illegalCharacters.contains($0)
+        }
+    }
+  }
+
+  /// Strict UUID shape (8-4-4-4-12 hexadecimal) for values interpolated into
+  /// /etc/fstab rules. `UUID(uuidString:)` also accepts brace and urn forms,
+  /// which this rejects.
+  static func isStrictFstabUUID(_ value: String) -> Bool {
+    let lengths = [8, 4, 4, 4, 12]
+    let parts = value.split(separator: "-", omittingEmptySubsequences: false)
+    guard parts.count == lengths.count, zip(parts, lengths).allSatisfy({ $0.0.count == $0.1 })
+    else { return false }
+    return parts.allSatisfy { $0.allSatisfy(\.isHexDigit) }
+  }
+
+  /// Only lowercase letters and digits — what `mapFstabFileSystemType`
+  /// produces and what is safe as the file-system-type field of a rule.
+  static func isPlainFstabFileSystemType(_ value: String) -> Bool {
+    !value.isEmpty && value == value.lowercased()
+      && value.allSatisfy { $0.isLetter || $0.isNumber }
+  }
+
+  /// Throws when `value` cannot be written into an /etc/fstab field. The
+  /// message names the mount point, the only rule field a user can type.
+  static func validateFstabField(_ value: String) throws {
+    guard containsUnsafeFstabCharacter(value) else { return }
+    throw NSError(
+      domain: "MountMate", code: fstabInvalidFieldErrorCode,
+      userInfo: [
+        NSLocalizedDescriptionKey: NSLocalizedString(
+          "Custom Mount Point Control Characters",
+          comment: "Custom mount point validation")
+      ])
+  }
+
+  /// Lowercase SHA-256 hex digest of `data`: the identity a staged file must
+  /// keep until the privileged shell uses it.
+  static func sha256Hex(_ data: Data) -> String {
+    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+  }
+
+  /// A shell snippet that fails unless the file at `path` still is exactly
+  /// `bytes`. The staged copies live in the user's temporary directory, where
+  /// another process could swap them between staging and the privileged write.
+  static func stagedFileIntegrityCommand(path: String, bytes: Data) -> String {
+    let expectedHash = sha256Hex(bytes)
+    return
+      "[ \"$(/usr/bin/shasum -a 256 \(path.shellQuoted) | /usr/bin/awk '{print $1}')\" = "
+      + "\"\(expectedHash)\" ] || { echo \(stagedFstabChangedMarker) >&2; exit 1; }"
   }
 
   static func trimmedFstabContents(_ contents: String) -> String {

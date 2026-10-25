@@ -225,6 +225,7 @@
 "Custom Mount Point Empty Path" = "Hãy nhập đường dẫn thư mục.";
 "Custom Mount Point Must Be Absolute" = "Điểm gắn tùy chỉnh phải là đường dẫn tuyệt đối.";
 "Custom Mount Point Cannot Be Root" = "Điểm gắn tùy chỉnh không được là thư mục gốc.";
+"Custom Mount Point Control Characters" = "Đường dẫn chứa ký tự điều khiển (như xuống dòng) nên không thể dùng làm điểm gắn.";
 "Custom Mount Point In Use" = "Thư mục này đang được dùng bởi phân vùng đã gắn “%@”.";
 "Custom Mount Point Must Be Folder" = "Điểm gắn tùy chỉnh phải là một thư mục.";
 "Custom Mount Point Inspect Error" = "MountMate không thể kiểm tra thư mục này.\n\nChi tiết:\n%@";
@@ -315,6 +316,7 @@
 "Saving…" = "Đang lưu…";
 "System Default" = "Mặc định hệ thống";
 "System Mount Rule Changed During Update" = "/etc/fstab đã bị một tiến trình khác thay đổi trong lúc cập nhật. Vui lòng thử lại.";
+"Staged Fstab File Changed" = "Bản sao tạm của /etc/fstab bị thay đổi trước khi ghi nên cập nhật đã bị hủy. Vui lòng thử lại.";
 "This shortcut is used by another app. Choose a different one." = "Phím tắt này đang được ứng dụng khác sử dụng. Hãy chọn phím tắt khác.";
 "Unmount “%@”" = "Tháo “%@”";
 "Version %@ (%@)" = "Phiên bản %@ (%@)";

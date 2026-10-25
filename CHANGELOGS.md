@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
+- Custom mount points whose path contains control characters (like line breaks) are rejected with a clear message instead of being written into the root-managed /etc/fstab, where a break could forge extra rule lines; every rule field (path, volume UUID, file-system type, identifiers) is now validated before anything is staged.
+- The staged copies of /etc/fstab are checked against their SHA-256 digest by the privileged shell before use, so a swap in the temporary directory aborts the update instead of writing foreign content.
 
 ---
 
