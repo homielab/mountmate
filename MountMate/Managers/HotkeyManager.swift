@@ -227,13 +227,17 @@ class HotkeyManager: ObservableObject {
   /// shortcut runs its action once.
   private var pressedActions: Set<HotkeyAction> = []
   private var cancellables = Set<AnyCancellable>()
+  private let defaults: UserDefaults
 
-  private init() {
+  init(defaults: UserDefaults = .standard) {
+    self.defaults = defaults
     unmountShortcut = Self.loadShortcut(
+      defaults: defaults,
       keyCodeKey: "hotkeyUnmountKeyCode",
       modifiersKey: "hotkeyUnmountModifiers",
       fallback: .defaultUnmount)
     mountShortcut = Self.loadShortcut(
+      defaults: defaults,
       keyCodeKey: "hotkeyMountKeyCode",
       modifiersKey: "hotkeyMountModifiers",
       fallback: .defaultMount)
@@ -251,7 +255,7 @@ class HotkeyManager: ObservableObject {
 
   private func setupObserver() {
     // Also fires right away with the current value.
-    UserDefaults.standard.publisher(for: \.hotkeysEnabled)
+    defaults.publisher(for: \.hotkeysEnabled)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [weak self] enabled in
@@ -265,9 +269,8 @@ class HotkeyManager: ObservableObject {
   }
 
   private static func loadShortcut(
-    keyCodeKey: String, modifiersKey: String, fallback: HotkeyShortcut
+    defaults: UserDefaults, keyCodeKey: String, modifiersKey: String, fallback: HotkeyShortcut
   ) -> HotkeyShortcut {
-    let defaults = UserDefaults.standard
     guard defaults.object(forKey: keyCodeKey) != nil,
       defaults.object(forKey: modifiersKey) != nil
     else { return fallback }
@@ -290,7 +293,6 @@ class HotkeyManager: ObservableObject {
   func setShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
     let normalizedShortcut = HotkeyShortcut(
       keyCode: shortcut.keyCode, modifiers: shortcut.modifiers)
-    let defaults = UserDefaults.standard
 
     switch action {
     case .unmountAll:
@@ -303,7 +305,7 @@ class HotkeyManager: ObservableObject {
       defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyMountModifiers")
     }
 
-    guard UserDefaults.standard.bool(forKey: "hotkeysEnabled") else { return }
+    guard defaults.bool(forKey: "hotkeysEnabled") else { return }
     stopListening()
     startListening()
   }
