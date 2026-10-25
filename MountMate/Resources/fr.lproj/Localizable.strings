@@ -364,3 +364,20 @@
 "Forget Saved Password" = "Oublier le mot de passe enregistré";
 "Password Not Saved" = "Mot de passe non enregistré";
 "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "« %@ » est déverrouillé, mais MountMate n’a pas pu enregistrer son mot de passe dans le trousseau (erreur %d).";
+
+/* Network share mount errors: causes, hints and error codes */
+"MountMate tried to sign in as “%@” in the domain “%@”." = "MountMate a tenté de se connecter en tant que « %@ » dans le domaine « %@ ».";
+"If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain." = "Si le compte appartient à un domaine Windows, saisissez le nom d’utilisateur sous la forme DOMAINE\\utilisateur ou utilisateur@domaine.";
+"Error code: %d (%@)" = "Code d’erreur : %d (%@)";
+"Error code: %d" = "Code d’erreur : %d";
+"The server “%@” requires a username and password. Enter them in the share’s settings." = "Le serveur « %@ » exige un nom d’utilisateur et un mot de passe. Saisissez-les dans les réglages du partage.";
+"The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate." = "Le mot de passe pour « %@ » a expiré ou doit être changé. Changez-le sur le serveur (par exemple en vous connectant sur un PC Windows du domaine), puis saisissez le nouveau mot de passe dans MountMate.";
+"The server rejected the password for “%@” because of its password policy. Ask the server’s administrator." = "Le serveur a refusé le mot de passe pour « %@ » en raison de sa politique de mots de passe. Contactez l’administrateur du serveur.";
+"The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator." = "Le compte pour « %@ » est restreint : il est peut-être verrouillé, désactivé ou non autorisé à se connecter pour le moment. Contactez l’administrateur du serveur.";
+"The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in." = "Le serveur « %@ » ne propose aucune méthode de connexion prise en charge par ce Mac. Demandez à son administrateur d’autoriser la connexion NTLMv2 ou Kerberos.";
+"The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3." = "Le serveur « %@ » ne prend en charge aucune version de protocole utilisable par ce Mac. Pour SMB, demandez à son administrateur d’activer SMB 2 ou SMB 3.";
+"The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server." = "Le serveur « %@ » a refusé la connexion. Vérifiez que le partage de fichiers (%@) est activé sur le serveur.";
+"Check the spelling of the share name; it is the name the server shares, not a folder path on its disk." = "Vérifiez l’orthographe du nom du partage ; c’est le nom partagé par le serveur, pas un chemin de dossier sur son disque.";
+"The server “%@” has no shares available to this account." = "Le serveur « %@ » n’a aucun partage disponible pour ce compte.";
+"Check that this account is allowed to use the share." = "Vérifiez que ce compte est autorisé à utiliser le partage.";
+"If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Si le problème est apparu après une mise à jour du serveur, demandez à l’administrateur si le serveur accepte toujours SMB 2 ou SMB 3 avec la connexion NTLMv2.";

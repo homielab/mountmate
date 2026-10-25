@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Clearer messages when an SMB or AFP share fails to mount: MountMate now tells apart a wrong password, an expired or restricted account, a share the account may not use, an unsupported sign-in method or SMB version and a refused connection, hints how to enter a Windows domain login (`DOMAIN\user` or `user@domain`), and shows the original error code (for example `Error code: 80 (EAUTH)`). The code is also written to the log.
 - "Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.
 - Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
 - Custom mount points whose path contains control characters (like line breaks) are rejected with a clear message instead of being written into the root-managed /etc/fstab, where a break could forge extra rule lines; every rule field (path, volume UUID, file-system type, identifiers) is now validated before anything is staged.

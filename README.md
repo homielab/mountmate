@@ -131,6 +131,16 @@ Log with `Log.<category>` (`MountMate/Utilities/Log.swift`), never `print()`. Ma
 
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
 
+## 🔐 Network Share Errors
+
+When an SMB or AFP share fails to mount, MountMate names the cause and what to check, followed by the original error code (for example `Error code: 80 (EAUTH)`). Please include that line when you report a problem.
+
+- **Authentication failed (`EAUTH`)**: wrong username or password. For a Windows domain account, enter the username as `DOMAIN\user` or `user@domain` (`DOMAIN;user` works too).
+- **Access denied (`EACCES`)**: the server accepted the connection but refused this account for the share. Check the account's permissions; if it started after a server update, ask the administrator whether the server still accepts SMB 2/3 with NTLMv2 sign-in.
+- **Password expired, policy, account restricted (`ENETFSPWDNEEDSCHANGE`, `ENETFSPWDPOLICY`, `ENETFSACCOUNTRESTRICTED`)**: the account must be fixed on the server side.
+- **No supported sign-in method or protocol version (`ENETFSNOAUTHMECHSUPP`, `ENETFSNOPROTOVERSSUPP`)**: the server must allow NTLMv2/Kerberos and SMB 2 or 3.
+- **Share not found (`ENOENT`)**, **connection refused (`ECONNREFUSED`)**, **server unreachable (`EHOSTUNREACH`)**: check the share name, that file sharing is on, and the network.
+
 ## 🪵 Sending Logs
 
 When you report a problem (for example a network share that will not mount), logs help a lot. MountMate writes to the macOS unified log under the subsystem `com.homielab.mountmate`, with one category per area (`drive`, `network`, `keepAlive`, `persistence`, `mounter`, `hotkey`, `shell`, `app`).

@@ -364,3 +364,20 @@
 "Forget Saved Password" = "Забути збережений пароль";
 "Password Not Saved" = "Пароль не збережено";
 "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "«%@» розблоковано, але MountMate не вдалося зберегти його пароль у в’язці ключів (помилка %d).";
+
+/* Network share mount errors: causes, hints and error codes */
+"MountMate tried to sign in as “%@” in the domain “%@”." = "MountMate намагався увійти як «%@» у домені «%@».";
+"If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain." = "Якщо обліковий запис належить до домену Windows, введіть ім’я користувача у вигляді DOMAIN\\user або user@domain.";
+"Error code: %d (%@)" = "Код помилки: %d (%@)";
+"Error code: %d" = "Код помилки: %d";
+"The server “%@” requires a username and password. Enter them in the share’s settings." = "Сервер «%@» вимагає ім’я користувача та пароль. Введіть їх у налаштуваннях ресурсу.";
+"The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate." = "Термін дії пароля для «%@» минув, або його потрібно змінити. Змініть пароль на сервері (наприклад, увійшовши на комп’ютер Windows у домені), потім введіть новий пароль у MountMate.";
+"The server rejected the password for “%@” because of its password policy. Ask the server’s administrator." = "Сервер відхилив пароль для «%@» через політику паролів. Зверніться до адміністратора сервера.";
+"The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator." = "Обліковий запис для «%@» обмежено: його могли заблокувати, вимкнути або йому заборонено входити зараз. Зверніться до адміністратора сервера.";
+"The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in." = "Сервер «%@» не пропонує жодного способу входу, який підтримує цей Mac. Попросіть адміністратора дозволити вхід через NTLMv2 або Kerberos.";
+"The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3." = "Сервер «%@» не підтримує жодної версії протоколу, доступної цьому Mac. Для SMB попросіть адміністратора увімкнути SMB 2 або SMB 3.";
+"The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server." = "Сервер «%@» відхилив підключення. Перевірте, що спільний доступ до файлів (%@) увімкнено на сервері.";
+"Check the spelling of the share name; it is the name the server shares, not a folder path on its disk." = "Перевірте написання імені ресурсу: це ім’я, під яким сервер надає доступ, а не шлях до папки на його диску.";
+"The server “%@” has no shares available to this account." = "На сервері «%@» немає ресурсів, доступних цьому обліковому запису.";
+"Check that this account is allowed to use the share." = "Перевірте, що цьому обліковому запису дозволено використовувати ресурс.";
+"If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Якщо проблема з’явилася після оновлення сервера, запитайте адміністратора, чи сервер досі приймає SMB 2 або SMB 3 із входом через NTLMv2.";

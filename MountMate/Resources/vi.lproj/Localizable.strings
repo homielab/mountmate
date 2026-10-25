@@ -364,3 +364,20 @@
 "Forget Saved Password" = "Quên mật khẩu đã lưu";
 "Password Not Saved" = "Chưa lưu mật khẩu";
 "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "Đã mở khoá “%@”, nhưng MountMate không lưu được mật khẩu vào Keychain (lỗi %d).";
+
+/* Network share mount errors: causes, hints and error codes */
+"MountMate tried to sign in as “%@” in the domain “%@”." = "MountMate đã thử đăng nhập với tên “%@” trong domain “%@”.";
+"If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain." = "Nếu tài khoản thuộc một domain Windows, hãy nhập tên người dùng dạng DOMAIN\\user hoặc user@domain.";
+"Error code: %d (%@)" = "Mã lỗi: %d (%@)";
+"Error code: %d" = "Mã lỗi: %d";
+"The server “%@” requires a username and password. Enter them in the share’s settings." = "Máy chủ “%@” yêu cầu tên người dùng và mật khẩu. Hãy nhập chúng trong phần cài đặt của thư mục chia sẻ.";
+"The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate." = "Mật khẩu cho “%@” đã hết hạn hoặc phải được đổi. Hãy đổi mật khẩu trên máy chủ (ví dụ bằng cách đăng nhập vào một máy Windows trong domain), rồi nhập mật khẩu mới vào MountMate.";
+"The server rejected the password for “%@” because of its password policy. Ask the server’s administrator." = "Máy chủ đã từ chối mật khẩu cho “%@” do chính sách mật khẩu. Hãy hỏi quản trị viên máy chủ.";
+"The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator." = "Tài khoản cho “%@” đang bị hạn chế: có thể đã bị khoá, bị vô hiệu hoá hoặc không được phép đăng nhập vào lúc này. Hãy hỏi quản trị viên máy chủ.";
+"The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in." = "Máy chủ “%@” không có phương thức đăng nhập nào mà máy Mac này hỗ trợ. Hãy nhờ quản trị viên cho phép đăng nhập bằng NTLMv2 hoặc Kerberos.";
+"The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3." = "Máy chủ “%@” không hỗ trợ phiên bản giao thức nào mà máy Mac này dùng được. Với SMB, hãy nhờ quản trị viên bật SMB 2 hoặc SMB 3.";
+"The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server." = "Máy chủ “%@” đã từ chối kết nối. Hãy kiểm tra xem chia sẻ tệp (%@) đã được bật trên máy chủ chưa.";
+"Check the spelling of the share name; it is the name the server shares, not a folder path on its disk." = "Hãy kiểm tra chính tả tên thư mục chia sẻ; đó là tên mà máy chủ chia sẻ, không phải đường dẫn thư mục trên ổ đĩa của máy chủ.";
+"The server “%@” has no shares available to this account." = "Máy chủ “%@” không có thư mục chia sẻ nào dành cho tài khoản này.";
+"Check that this account is allowed to use the share." = "Hãy kiểm tra xem tài khoản này có được phép dùng thư mục chia sẻ không.";
+"If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Nếu lỗi xuất hiện sau khi máy chủ được cập nhật, hãy hỏi quản trị viên xem máy chủ còn chấp nhận SMB 2 hoặc SMB 3 với đăng nhập NTLMv2 không.";

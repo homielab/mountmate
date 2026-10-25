@@ -364,3 +364,20 @@
 "Forget Saved Password" = "Forget Saved Password";
 "Password Not Saved" = "Password Not Saved";
 "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d).";
+
+/* Network share mount errors: causes, hints and error codes */
+"MountMate tried to sign in as “%@” in the domain “%@”." = "MountMate tried to sign in as “%@” in the domain “%@”.";
+"If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain." = "If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain.";
+"Error code: %d (%@)" = "Error code: %d (%@)";
+"Error code: %d" = "Error code: %d";
+"The server “%@” requires a username and password. Enter them in the share’s settings." = "The server “%@” requires a username and password. Enter them in the share’s settings.";
+"The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate." = "The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate.";
+"The server rejected the password for “%@” because of its password policy. Ask the server’s administrator." = "The server rejected the password for “%@” because of its password policy. Ask the server’s administrator.";
+"The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator." = "The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator.";
+"The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in." = "The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in.";
+"The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3." = "The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3.";
+"The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server." = "The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server.";
+"Check the spelling of the share name; it is the name the server shares, not a folder path on its disk." = "Check the spelling of the share name; it is the name the server shares, not a folder path on its disk.";
+"The server “%@” has no shares available to this account." = "The server “%@” has no shares available to this account.";
+"Check that this account is allowed to use the share." = "Check that this account is allowed to use the share.";
+"If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in.";

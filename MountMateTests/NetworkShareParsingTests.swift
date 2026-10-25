@@ -290,6 +290,86 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertTrue(placement("CORP\\alice", .afp) == (nil, "CORP\\alice"))
   }
 
+  func testSMBLoginPartsSplitsDomainForms() {
+    func parts(_ username: String) -> (domain: String?, user: String) {
+      NetworkMountManager.smbLoginParts(username)
+    }
+    XCTAssertTrue(parts("CORP\\alice") == ("CORP", "alice"))
+    XCTAssertTrue(parts("CORP;alice") == ("CORP", "alice"))
+    XCTAssertTrue(parts("alice@corp.example") == ("corp.example", "alice"))
+    XCTAssertTrue(parts("first.last@sub@corp.example") == ("corp.example", "first.last@sub"))
+    XCTAssertTrue(parts("alice") == (nil, "alice"))
+    XCTAssertTrue(parts("") == (nil, ""))
+    XCTAssertTrue(parts("CORP\\") == (nil, "CORP\\"))
+    XCTAssertTrue(parts("@corp") == (nil, "@corp"))
+  }
+
+  /// Renders a NetFS failure with keys as text, independent of the
+  /// system language.
+  private func failureMessage(
+    _ status: Int32, username: String = "alice", shareProtocol: ShareProtocol = .smb,
+    mountPoint: String = "/Users/test/mountmate/Data"
+  ) -> String {
+    NetworkMountManager.netFSErrorMessage(
+      status,
+      share: NetworkShare(
+        name: "Data", server: "fs01", sharePath: "data", username: username,
+        shareProtocol: shareProtocol),
+      mountPoint: mountPoint, homeDirectory: "/Users/test", localize: { $0 })
+  }
+
+  func testNetFSFailureMessagesNameCauseAndCode() {
+    let expectations: [(Int32, String, String)] = [
+      (EAUTH, "Authentication failed", "Error code: 80 (EAUTH)"),
+      (EACCES, "was denied by the server", "Error code: 13 (EACCES)"),
+      (ENOENT, "was not found on the server", "Error code: 2 (ENOENT)"),
+      (ETIMEDOUT, "timed out", "Error code: 60 (ETIMEDOUT)"),
+      (EHOSTUNREACH, "Could not connect to the server", "Error code: 65 (EHOSTUNREACH)"),
+      (ECONNREFUSED, "refused the connection", "Error code: 61 (ECONNREFUSED)"),
+      (EEXIST, "is already connected", "Error code: 17 (EEXIST)"),
+      (EBUSY, "Another volume is already mounted", "Error code: 16 (EBUSY)"),
+      (-128, "requires a username and password", "Error code: -128 (userCanceledErr)"),
+      (-5045, "has expired or must be changed", "Error code: -5045 (ENETFSPWDNEEDSCHANGE)"),
+      (-5046, "password policy", "Error code: -5046 (ENETFSPWDPOLICY)"),
+      (-5999, "is restricted", "Error code: -5999 (ENETFSACCOUNTRESTRICTED)"),
+      (-5998, "no shares available", "Error code: -5998 (ENETFSNOSHARESAVAIL)"),
+      (-5997, "no sign-in method", "Error code: -5997 (ENETFSNOAUTHMECHSUPP)"),
+      (-5996, "SMB 2 or SMB 3", "Error code: -5996 (ENETFSNOPROTOVERSSUPP)"),
+    ]
+    for (status, cause, code) in expectations {
+      let message = failureMessage(status)
+      XCTAssertTrue(message.contains(cause), "\(status): \(message)")
+      XCTAssertTrue(message.hasSuffix(code), "\(status): \(message)")
+    }
+  }
+
+  func testNetFSFailureMessageHintsAtDomainLogin() {
+    let plain = failureMessage(EAUTH, username: "alice")
+    XCTAssertTrue(plain.contains("DOMAIN\\user or user@domain"), plain)
+
+    for username in ["CORP\\alice", "alice@CORP"] {
+      let withDomain = failureMessage(EACCES, username: username)
+      XCTAssertTrue(withDomain.contains("as “alice” in the domain “CORP”"), withDomain)
+      XCTAssertFalse(withDomain.contains("DOMAIN\\user"), withDomain)
+      XCTAssertTrue(withDomain.contains("SMB 2 or SMB 3"), withDomain)
+    }
+
+    // AFP has no Windows domains; no username means no login to explain.
+    XCTAssertFalse(failureMessage(EAUTH, shareProtocol: .afp).contains("domain"))
+    XCTAssertFalse(failureMessage(EAUTH, username: "").contains("domain"))
+  }
+
+  func testNetFSAccessDeniedOutsideHomeBlamesTheMountLocation() {
+    let message = failureMessage(EACCES, mountPoint: "/Volumes/Data")
+    XCTAssertTrue(message.contains("requires administrator privileges"), message)
+    XCTAssertTrue(message.hasSuffix("Error code: 13 (EACCES)"), message)
+  }
+
+  func testUnknownNetFSStatusKeepsGenericMessage() {
+    XCTAssertEqual(failureMessage(-36), "Could not mount “Data” (error -36).")
+    XCTAssertNil(NetworkMountManager.netFSStatusName(-36))
+  }
+
   func testMalformedLinesAreIgnored() {
     XCTAssertNil(MountedNetworkShare(mountOutputLine: "no separator here (smbfs)"))
     XCTAssertNil(MountedNetworkShare(mountOutputLine: "unclosed paren (smbfs"))

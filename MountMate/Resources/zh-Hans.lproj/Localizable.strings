@@ -364,3 +364,20 @@
 "Forget Saved Password" = "忘记已存储的密码";
 "Password Not Saved" = "密码未存储";
 "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d)." = "“%@”已解锁，但 MountMate 无法将其密码存储到钥匙串（错误 %d）。";
+
+/* Network share mount errors: causes, hints and error codes */
+"MountMate tried to sign in as “%@” in the domain “%@”." = "MountMate 尝试以“%@”身份登录域“%@”。";
+"If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain." = "如果该账户属于 Windows 域，请将用户名输入为 DOMAIN\\user 或 user@domain。";
+"Error code: %d (%@)" = "错误代码：%d（%@）";
+"Error code: %d" = "错误代码：%d";
+"The server “%@” requires a username and password. Enter them in the share’s settings." = "服务器“%@”需要用户名和密码。请在共享的设置中输入。";
+"The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate." = "“%@”的密码已过期或必须更改。请在服务器上更改密码（例如登录域中的一台 Windows 电脑），然后在 MountMate 中输入新密码。";
+"The server rejected the password for “%@” because of its password policy. Ask the server’s administrator." = "由于密码策略，服务器拒绝了“%@”的密码。请联系服务器管理员。";
+"The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator." = "“%@”的账户受到限制：可能已被锁定、停用，或当前不允许登录。请联系服务器管理员。";
+"The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in." = "服务器“%@”不提供此 Mac 支持的登录方式。请让管理员允许 NTLMv2 或 Kerberos 登录。";
+"The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3." = "服务器“%@”不支持此 Mac 可用的任何协议版本。对于 SMB，请让管理员启用 SMB 2 或 SMB 3。";
+"The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server." = "服务器“%@”拒绝了连接。请检查服务器上是否已开启文件共享（%@）。";
+"Check the spelling of the share name; it is the name the server shares, not a folder path on its disk." = "请检查共享名称的拼写；它是服务器共享的名称，而不是其磁盘上的文件夹路径。";
+"The server “%@” has no shares available to this account." = "服务器“%@”没有可供此账户使用的共享。";
+"Check that this account is allowed to use the share." = "请检查此账户是否有权使用该共享。";
+"If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "如果问题出现在服务器更新之后，请询问管理员服务器是否仍接受使用 NTLMv2 登录的 SMB 2 或 SMB 3。";
