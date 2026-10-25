@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- README and README-vi now describe the same features and match the app: the default shortcuts (Unmount All `⌘⌥⇧U`, Mount All `⌘⇧M`), the admin password asked only for `/etc/fstab` (Block at Startup, custom mount points), Sparkle as the update mechanism, and the newer features; README-vi also gains the network share errors and development sections.
 - VoiceOver now reads the icon-only buttons (Expand/Collapse All, Unmount All, Settings, Refresh, Quit, Eject) by name and reports when they are busy, and the menu bar icon is announced as "MountMate" with the number of mounted volumes (and whether an action is running or failed).
 - MountMate now writes its diagnostics to the macOS unified log (subsystem `com.homielab.mountmate`) instead of standard output, so they can be viewed in Console.app or collected with `log show` when reporting a problem (see "Sending Logs" in the README). Passwords are never logged and names, paths and error details are private.
 - Keyboard shortcut labels in Settings now follow the current keyboard layout (for example AZERTY, Dvorak or Cyrillic), so the key shown is the key you press, and they update when you switch the input source. Special keys keep their symbols.

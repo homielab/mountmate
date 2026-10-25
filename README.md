@@ -60,15 +60,22 @@ So I built **MountMate**.
 - View all connected **external drives**
 - See which ones are **mounted**
 - **Mount/unmount** any drive with a click
-- Check available **free space**
-- **Keyboard Shortcuts**: Quick mount/unmount with `⌘⇧M` and `⌘⇧U`
+- Check **free space** for drives and for mounted network shares (used / total)
+- **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default; change both in Settings (the key shown follows your keyboard layout)
+- **Block USB Auto-Mount**: stop selected disks from mounting when plugged in or at login; **Block at Startup** (optional) also writes a rule to `/etc/fstab` and asks for your admin password
+- **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at a folder you choose
+- **Encrypted APFS volumes**: unlock them from MountMate, with the password optionally saved in the Keychain ("Forget Saved Password" in the right-click menu removes it)
+- **RAID**: Apple RAID sets show up as one disk instead of their members
+- **Hide EFI Partitions**: optional (Settings → General → Display)
 - **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login
 - **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period
-- **Notifications** (optional, off by default; Settings → General): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle
+- **Notifications** (optional, off by default; Settings → General → Behavior): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle
 - **Force Eject**: Safely force eject drives that are in use
+- **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
+- **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**
-- Fully native – no Electron, no dependencies
+- Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates)
 
 ## ✨ Why Use MountMate?
 
@@ -85,9 +92,9 @@ macOS automatically mounts drives when they’re plugged in – but gives you **
 MountMate runs **entirely offline**, using native macOS APIs and command-line tools. It:
 
 - Does **not** track anything
-- Does **not** require connect to the internet
+- Does **not** need the internet, except to check for updates (Sparkle)
 - Does **not** access your files
-- Does **not** require root permissions
+- Does **not** run as root: it asks for your admin password only to write `/etc/fstab` (custom mount points of volumes, Block at Startup)
 
 Just a clean utility that does one job well.
 

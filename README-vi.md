@@ -29,10 +29,22 @@ Vì vậy, tôi đã tạo **MountMate**.
 - Xem tất cả ổ đĩa ngoài đang kết nối
 - Biết được ổ nào đang được **mount**
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
-- Hiển thị **dung lượng trống** còn lại
-- **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Tự ngắt khi không dùng) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
+- Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
+- **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M`; đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)
+- **Chặn tự mount USB**: ngăn các ổ đã chọn tự mount khi cắm hoặc khi đăng nhập; **Block at Startup** (tuỳ chọn) ghi thêm một rule vào `/etc/fstab` và hỏi mật khẩu quản trị
+- **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục bạn chọn
+- **Ổ APFS mã hoá**: mở khoá ngay trong MountMate, có thể lưu mật khẩu vào Keychain ("Forget Saved Password" trong menu chuột phải để xoá)
+- **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
+- **Ẩn phân vùng EFI**: tuỳ chọn (Settings → General → Display)
+- **Network Shares**: tự mount SMB, NFS và AFP khi đăng nhập
+- **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập
+- **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
+- **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng
+- **Force Eject**: ép eject ổ đang được sử dụng
+- **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
+- **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
 - Chạy gọn nhẹ trên **thanh menu**
-- 100% native – không dùng Electron, không phụ thuộc nặng nề
+- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates)
 
 ## ✨ MountMate dành cho ai?
 
@@ -47,9 +59,9 @@ macOS sẽ tự động mount ổ đĩa khi bạn cắm vào – nhưng **không
 MountMate hoạt động **hoàn toàn ngoại tuyến**, sử dụng lệnh và API tích hợp sẵn của macOS. Ứng dụng:
 
 - **Không theo dõi** hay gửi dữ liệu
-- **Không yêu cầu kết nối mạng**
+- **Không cần internet**, trừ khi kiểm tra bản cập nhật (Sparkle)
 - **Không truy cập dữ liệu cá nhân**
-- **Không cần quyền root**
+- **Không chạy với quyền root**: chỉ hỏi mật khẩu quản trị khi ghi `/etc/fstab` (điểm mount tuỳ chỉnh của phân vùng, Block at Startup)
 
 Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm tốt.
 
@@ -60,6 +72,12 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 ![Toàn bộ giao diện](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
 
 ## 🛠️ Hướng dẫn cài đặt
+
+### Cài bằng Homebrew
+
+```bash
+brew install mountmate
+```
 
 ### Cài thủ công (dành cho người mới hoặc cập nhật thủ công)
 
@@ -73,7 +91,17 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 
 - Nếu macOS cảnh báo ứng dụng không rõ nguồn gốc, hãy vào:  
   **System Settings → Privacy & Security → Open Anyway**
-- Đảm bảo bạn kết nối mạng để macOS xác minh và tự động cập nhật
+- Đảm bảo bạn kết nối mạng để macOS xác minh; các bản cập nhật sau đó do Sparkle tự tải (Settings → About & Updates)
+
+## 🔐 Lỗi network share
+
+Khi một share SMB hoặc AFP không mount được, MountMate nêu nguyên nhân và điều cần kiểm tra, kèm mã lỗi gốc (ví dụ `Error code: 80 (EAUTH)`). Hãy gửi kèm dòng này khi báo lỗi.
+
+- **Xác thực thất bại (`EAUTH`)**: sai tên đăng nhập hoặc mật khẩu. Với tài khoản domain Windows, nhập `DOMAIN\user` hoặc `user@domain` (`DOMAIN;user` cũng được).
+- **Bị từ chối truy cập (`EACCES`)**: server nhận kết nối nhưng không cho tài khoản này dùng share. Kiểm tra quyền của tài khoản; nếu lỗi bắt đầu sau khi server cập nhật, hỏi quản trị viên xem server còn chấp nhận SMB 2/3 với đăng nhập NTLMv2 không.
+- **Mật khẩu hết hạn, chính sách, tài khoản bị hạn chế (`ENETFSPWDNEEDSCHANGE`, `ENETFSPWDPOLICY`, `ENETFSACCOUNTRESTRICTED`)**: phải xử lý tài khoản phía server.
+- **Không có cách đăng nhập hoặc phiên bản giao thức được hỗ trợ (`ENETFSNOAUTHMECHSUPP`, `ENETFSNOPROTOVERSSUPP`)**: server phải cho phép NTLMv2/Kerberos và SMB 2 hoặc 3.
+- **Không thấy share (`ENOENT`)**, **kết nối bị từ chối (`ECONNREFUSED`)**, **không tới được server (`EHOSTUNREACH`)**: kiểm tra tên share, File Sharing đã bật chưa và mạng.
 
 ## 🪵 Gửi log khi báo lỗi
 
@@ -86,6 +114,28 @@ log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > 
 ```
 
 Xem trực tiếp khi mount/unmount: `log stream --predicate 'subsystem == "com.homielab.mountmate"' --level info`, hoặc lọc theo subsystem này trong Console.app. Mật khẩu không bao giờ được ghi; tên share, tên ổ, đường dẫn và chi tiết lỗi hiện là `<private>`.
+
+## 🧑‍💻 Phát triển
+
+Mở `MountMate.xcodeproj` trong Xcode, hoặc dùng dòng lệnh:
+
+```bash
+# Unit test (ký ad-hoc, cùng lệnh với CI)
+xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
+  -destination 'platform=macOS' -derivedDataPath build/DerivedData \
+  -only-testing:MountMateTests CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+
+# Kiểm tra code style (cấu hình trong .swift-format)
+swift format lint -r MountMate MountMateTests
+```
+
+App build ở chế độ ngôn ngữ Swift 5 với strict concurrency `targeted`; unit test dùng chế độ Swift 6. Kiểu giá trị mới trong `Models/` và `Utilities/` được truyền giữa các queue thì đánh dấu `Sendable`, và giữ build không có cảnh báo concurrency.
+
+Ghi log bằng `Log.<category>` (`MountMate/Utilities/Log.swift`), không dùng `print()`. Tên share/ổ, đường dẫn và nội dung lỗi dùng `privacy: .private`, không bao giờ ghi mật khẩu, và dòng lệnh đi qua `redactedArguments`; `LoggingHygieneTests` kiểm tra điều này.
+
+Mỗi lần làm mới chỉ chạy `diskutil list` một lần và `diskutil info` cho những ổ mới, ổ đổi dung lượng hoặc bố cục phân vùng, hoặc ổ có thông tin cũ hơn 30 giây (`WholeDiskInfoCache`); các lệnh chạy song song, không chặn thread. Số lần chạy `diskutil info` được ghi ở mức debug: `log stream --predicate 'subsystem == "com.homielab.mountmate" AND category == "drive"' --level debug`.
+
+CI chạy cả hai trên mỗi pull request và mỗi push vào `main`. Kiểm tra style chỉ báo cáo, chưa làm hỏng build cho tới khi dọn xong các lỗi cũ.
 
 ## 📫 Đóng góp & phản hồi
 
