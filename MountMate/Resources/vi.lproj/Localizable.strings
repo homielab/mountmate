@@ -387,3 +387,5 @@
 "Failed to eject “%@” because it is currently in use by “%@”." = "Không thể đẩy ra “%@” vì đang được sử dụng bởi “%@”.";
 "Failed to eject “%@” because it is currently in use by another application." = "Không thể đẩy ra “%@” vì đang được sử dụng bởi một ứng dụng khác.";
 "An unknown error occurred while trying to eject “%@”." = "Đã xảy ra lỗi không xác định khi cố gắng đẩy ra “%@”.";
+"Accessibility Busy" = "Đang xử lý";
+"Accessibility Error" = "Lỗi";

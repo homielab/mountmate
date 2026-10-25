@@ -387,3 +387,5 @@
 "Failed to eject “%@” because it is currently in use by “%@”." = "Не удалось извлечь «%@», потому что он используется приложением «%@».";
 "Failed to eject “%@” because it is currently in use by another application." = "Не удалось извлечь «%@», потому что он используется другим приложением.";
 "An unknown error occurred while trying to eject “%@”." = "Произошла неизвестная ошибка при попытке извлечь «%@».";
+"Accessibility Busy" = "Выполняется";
+"Accessibility Error" = "Ошибка";

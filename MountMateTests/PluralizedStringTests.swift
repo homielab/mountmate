@@ -29,6 +29,19 @@ final class PluralizedStringTests: XCTestCase {
     }
   }
 
+  func testMenuBarMountedCountIsPluralAwareAndAccessibilityKeysExist() throws {
+    XCTAssertEqual(try format("menubar.mounted.count", "en", 1), "1 volume mounted")
+    XCTAssertEqual(try format("menubar.mounted.count", "en", 3), "3 volumes mounted")
+    XCTAssertEqual(try format("menubar.mounted.count", "ru", 5), "Подключено 5 томов")
+    for language in ["en", "fr", "ru", "uk", "vi", "zh-Hans", "zh-Hant"] {
+      for key in ["Accessibility Busy", "Accessibility Error"] {
+        XCTAssertNotEqual(
+          try bundle(language).localizedString(forKey: key, value: key, table: nil), key,
+          "\(language) misses \(key)")
+      }
+    }
+  }
+
   func testUkrainianRetryMinutes() throws {
     XCTAssertEqual(try format("retry.minutes", "uk", 1), "Кожну 1 хвилину")
     XCTAssertEqual(try format("retry.minutes", "uk", 2), "Кожні 2 хвилини")

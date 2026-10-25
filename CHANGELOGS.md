@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- VoiceOver now reads the icon-only buttons (Expand/Collapse All, Unmount All, Settings, Refresh, Quit, Eject) by name and reports when they are busy, and the menu bar icon is announced as "MountMate" with the number of mounted volumes (and whether an action is running or failed).
 - MountMate now writes its diagnostics to the macOS unified log (subsystem `com.homielab.mountmate`) instead of standard output, so they can be viewed in Console.app or collected with `log show` when reporting a problem (see "Sending Logs" in the README). Passwords are never logged and names, paths and error details are private.
 - Keyboard shortcut labels in Settings now follow the current keyboard layout (for example AZERTY, Dvorak or Cyrillic), so the key shown is the key you press, and they update when you switch the input source. Special keys keep their symbols.
 - Passwords MountMate saves in the Keychain are now labeled "MountMate – <volume or share name>" with the kind "APFS volume" or "Network share", so they are easy to find in Keychain Access. Passwords saved by earlier versions keep working and get the label the next time they are saved.

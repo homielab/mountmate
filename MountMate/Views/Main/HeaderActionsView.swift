@@ -16,6 +16,7 @@ struct HeaderActionsView: View {
         Image(systemName: "externaldrive.connected.to.line.below")
           .font(.title3)
           .foregroundStyle(.blue)
+          .accessibilityHidden(true)
 
         Text("MountMate")
           .font(.headline)
@@ -43,6 +44,9 @@ struct HeaderActionsView: View {
             ? NSLocalizedString("Expand All", comment: "Tooltip")
             : NSLocalizedString("Collapse All", comment: "Tooltip")
         )
+        .accessibilityLabel(
+          allCollapsed
+            ? Text("Expand All") : Text("Collapse All"))
 
         // Unmount All Button
         Button(action: { driveManager.unmountAllDrives() }) {
@@ -61,6 +65,8 @@ struct HeaderActionsView: View {
         }
         .buttonStyle(.plain)
         .help(NSLocalizedString("Unmount All", comment: "Tooltip"))
+        .accessibilityLabel(Text("Unmount All"))
+        .accessibilityValue(Text.busyValue(driveManager.isUnmountingAll))
         .disabled(!canUnmountAll || driveManager.isUnmountingAll)
 
         // Settings Button
@@ -75,6 +81,7 @@ struct HeaderActionsView: View {
           }
           .buttonStyle(.plain)
           .help(NSLocalizedString("Settings", comment: "Tooltip"))
+          .accessibilityLabel(Text("Settings"))
           .simultaneousGesture(
             TapGesture().onEnded {
               focusSettingsWindow()
@@ -93,6 +100,7 @@ struct HeaderActionsView: View {
           }
           .buttonStyle(.plain)
           .help(NSLocalizedString("Settings", comment: "Tooltip"))
+          .accessibilityLabel(Text("Settings"))
         }
 
         // Refresh Button
@@ -115,6 +123,8 @@ struct HeaderActionsView: View {
         }
         .buttonStyle(.plain)
         .help(NSLocalizedString("Refresh Drives", comment: "Tooltip"))
+        .accessibilityLabel(Text("Refresh Drives"))
+        .accessibilityValue(Text.busyValue(driveManager.isRefreshing))
         .disabled(driveManager.isRefreshing)
 
         // Quit Button
@@ -128,6 +138,7 @@ struct HeaderActionsView: View {
         }
         .buttonStyle(.plain)
         .help(NSLocalizedString("Quit MountMate", comment: "Tooltip"))
+        .accessibilityLabel(Text("Quit MountMate"))
       }
     }
     .padding(.horizontal, 14)

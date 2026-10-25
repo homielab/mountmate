@@ -122,5 +122,25 @@
 			<string>%d хвилини</string>
 		</dict>
 	</dict>
+	<key>menubar.mounted.count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Змонтовано %d том</string>
+			<key>few</key>
+			<string>Змонтовано %d томи</string>
+			<key>many</key>
+			<string>Змонтовано %d томів</string>
+			<key>other</key>
+			<string>Змонтовано %d тому</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

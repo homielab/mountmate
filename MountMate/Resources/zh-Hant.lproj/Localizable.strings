@@ -387,3 +387,5 @@
 "Failed to eject “%@” because it is currently in use by “%@”." = "無法推出「%@」，因為它目前正被「%@」使用。";
 "Failed to eject “%@” because it is currently in use by another application." = "無法推出「%@」，因為它目前正被其他應用程式使用。";
 "An unknown error occurred while trying to eject “%@”." = "嘗試推出「%@」時發生未知錯誤。";
+"Accessibility Busy" = "進行中";
+"Accessibility Error" = "錯誤";

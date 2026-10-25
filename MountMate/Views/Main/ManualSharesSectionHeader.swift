@@ -19,6 +19,9 @@ struct ManualSharesSectionHeader: View {
       .buttonStyle(.plain)
       .disabled(networkManager.isUnmountingManualShares)
       .help("Eject All Manually Connected Shares")
+      .accessibilityLabel(Text("Eject All Manually Connected Shares"))
+      .accessibilityValue(
+        Text.busyValue(networkManager.isUnmountingManualShares))
     }
   }
 

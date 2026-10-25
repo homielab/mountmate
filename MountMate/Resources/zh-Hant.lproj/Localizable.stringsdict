@@ -86,5 +86,19 @@
 			<string>%d 分鐘</string>
 		</dict>
 	</dict>
+	<key>menubar.mounted.count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>已掛載 %d 個卷宗</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

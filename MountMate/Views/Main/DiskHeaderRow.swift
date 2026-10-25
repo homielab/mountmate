@@ -102,6 +102,8 @@ struct DiskHeaderRow: View {
           }
         }
         .help("Eject")
+        .accessibilityLabel(Text("Eject"))
+        .accessibilityValue(Text.busyValue(isEjecting))
       }
     }
     .listRowSeparator(.hidden)

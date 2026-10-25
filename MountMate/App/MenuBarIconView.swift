@@ -38,7 +38,26 @@ struct MenuBarIconView: View {
     return physicalCount + networkCount + manualNetworkCount
   }
 
+  /// Spoken by VoiceOver: the icon and the count are one element, so the count is a value, not a label.
+  var accessibilityStatus: String {
+    var parts = [PluralizedString.format("menubar.mounted.count", mountedCount)]
+    if driveManager.userActionError != nil {
+      parts.append(NSLocalizedString("Accessibility Error", comment: "Accessibility value"))
+    } else if currentIcon == "externaldrive.fill.badge.timemachine" {
+      parts.append(NSLocalizedString("Accessibility Busy", comment: "Accessibility value"))
+    }
+    return parts.joined(separator: ", ")
+  }
+
   var body: some View {
+    iconContent
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(Text("MountMate"))
+      .accessibilityValue(Text(accessibilityStatus))
+  }
+
+  @ViewBuilder
+  private var iconContent: some View {
     let icon = currentIcon
     if showCountInMenuBar {
       HStack(spacing: 4) {

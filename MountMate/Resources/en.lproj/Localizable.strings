@@ -387,3 +387,5 @@
 "Failed to eject “%@” because it is currently in use by “%@”." = "Failed to eject “%@” because it is currently in use by “%@”.";
 "Failed to eject “%@” because it is currently in use by another application." = "Failed to eject “%@” because it is currently in use by another application.";
 "An unknown error occurred while trying to eject “%@”." = "An unknown error occurred while trying to eject “%@”.";
+"Accessibility Busy" = "In progress";
+"Accessibility Error" = "Error";
