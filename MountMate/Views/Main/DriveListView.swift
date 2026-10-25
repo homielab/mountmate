@@ -45,13 +45,18 @@ struct DriveListView: View {
     let savedPasswords = manager.volumeIDsWithSavedPassword
     var rowStates: [String: VolumeRowState] = [:]
     // Pinned volumes come from these disks too.
-    for volume in (internalDisks + externalDisks + diskImages).flatMap(\.allVolumes) {
-      rowStates[volume.id] = VolumeRowState(
-        isPinned: persistence.isPinned(volume),
-        isKeepAlive: persistence.isVolumeKeepAlive(volume),
-        isReconnecting: volume.compositeId.map { reconnecting.contains($0) } ?? false,
-        customMountPoint: persistence.customMountPoint(for: volume)?.mountPoint,
-        hasSavedPassword: savedPasswords.contains(volume.id))
+    for disk in internalDisks + externalDisks + diskImages {
+      for volume in disk.allVolumes {
+        rowStates[volume.id] = VolumeRowState(
+          isPinned: persistence.isPinned(volume),
+          isKeepAlive: persistence.isVolumeKeepAlive(volume),
+          isReconnecting: volume.compositeId.map { reconnecting.contains($0) } ?? false,
+          customMountPoint: persistence.customMountPoint(for: volume)?.mountPoint,
+          hasSavedPassword: savedPasswords.contains(volume.id),
+          canUnmountWhenIdle: disk.type == .physical && volume.category == .user
+            && volume.compositeId != nil,
+          idleUnmountMinutes: persistence.idleUnmountMinutes(for: volume))
+      }
     }
     return VolumeListState(
       rowStates: rowStates,

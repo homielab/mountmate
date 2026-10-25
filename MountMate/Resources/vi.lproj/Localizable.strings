@@ -381,3 +381,12 @@
 "The server “%@” has no shares available to this account." = "Máy chủ “%@” không có thư mục chia sẻ nào dành cho tài khoản này.";
 "Check that this account is allowed to use the share." = "Hãy kiểm tra xem tài khoản này có được phép dùng thư mục chia sẻ không.";
 "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Nếu lỗi xuất hiện sau khi máy chủ được cập nhật, hãy hỏi quản trị viên xem máy chủ còn chấp nhận SMB 2 hoặc SMB 3 với đăng nhập NTLMv2 không.";
+
+/* Unmount When Idle */
+"Unmount When Idle" = "Tự ngắt khi không dùng";
+"Unmount When Idle (Off While Kept Mounted)" = "Tự ngắt khi không dùng (tắt khi đang giữ gắn kết)";
+"Off" = "Tắt";
+"After %d min Without Use" = "Sau %d phút không dùng";
+"No Volumes Unmounted When Idle" = "Không có phân vùng tự ngắt khi không dùng";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Nhấp chuột phải vào một phân vùng trên ổ ngoài và chọn “Tự ngắt khi không dùng” để ngắt gắn kết nó sau vài phút không đọc hay ghi. Phân vùng còn đang được dùng sẽ vẫn gắn kết và được thử lại sau.";
+"“%@” was unmounted after %d min without use." = "Đã ngắt gắn kết “%@” sau %d phút không dùng.";

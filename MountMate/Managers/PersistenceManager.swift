@@ -13,6 +13,7 @@ class PersistenceManager: ObservableObject {
   private let keepAliveVolumesKey = "mountmate_keepAliveVolumes_v1"
   private let networkSharesKey = "mountmate_networkShares_v1"
   private let customMountPointsKey = "mountmate_customMountPoints_v1"
+  private let idleUnmountVolumesKey = "mountmate_idleUnmountVolumes_v1"
 
   @Published var protectedVolumes: [ManagedVolumeInfo]
   @Published var ignoredVolumes: [ManagedVolumeInfo]
@@ -20,6 +21,9 @@ class PersistenceManager: ObservableObject {
   @Published var keepAliveVolumes: [ManagedVolumeInfo]
   @Published var networkShares: [NetworkShare]
   @Published var customMountPoints: [VolumeCustomMountPoint]
+  /// Volumes unmounted after some minutes without disk activity. Only
+  /// entries with `minutes > 0` are stored.
+  @Published var idleUnmountVolumes: [IdleUnmountVolume]
   /// Volumes pinned to the top of the menu bar list, in the order they were
   /// pinned. Stored by composite ID so pins survive reconnecting the drive.
   @Published var pinnedVolumeIDs: [String] =
@@ -92,6 +96,10 @@ class PersistenceManager: ObservableObject {
     self.keepAliveVolumes = Self.droppingNonUUIDEntries(Self.load(from: keepAliveVolumesKey))
     self.networkShares = Self.load(from: networkSharesKey)
     self.customMountPoints = Self.load(from: customMountPointsKey)
+    self.idleUnmountVolumes = Self.load(from: idleUnmountVolumesKey).filter {
+      (entry: IdleUnmountVolume) in
+      entry.minutes > 0 && Self.normalizedSystemVolumeUUID(entry.volumeUUID) != nil
+    }
     self.fstabBlockedVolumeUUIDs = Self.managedFstabVolumeUUIDs(
       kinds: [Self.mountMateBlockPrefix], in: Self.readSystemFstabContents())
     // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
@@ -229,6 +237,33 @@ class PersistenceManager: ObservableObject {
   func isVolumeKeepAlive(_ volume: Volume) -> Bool {
     guard let compositeId = volume.compositeId else { return false }
     return keepAliveVolumes.contains { $0.id == compositeId }
+  }
+
+  /// Choices offered for "Unmount When Idle", in minutes (0 = off).
+  static let idleUnmountChoices = [0, 1, 5, 15, 30, 60]
+
+  /// Minutes of inactivity after which `volume` is unmounted; 0 = off.
+  func idleUnmountMinutes(for volume: Volume) -> Int {
+    guard let compositeId = volume.compositeId else { return 0 }
+    return idleUnmountVolumes.first { $0.id == compositeId }?.minutes ?? 0
+  }
+
+  /// Sets or (with 0) clears the idle timeout. False when the volume has no
+  /// UUID to save the setting under.
+  @discardableResult
+  func setIdleUnmountMinutes(_ minutes: Int, volume: Volume) -> Bool {
+    guard let info = volume.managedVolumeInfo else { return false }
+    idleUnmountVolumes.removeAll { $0.id == info.id }
+    if minutes > 0 {
+      idleUnmountVolumes.append(IdleUnmountVolume(info: info, minutes: minutes))
+    }
+    saveIdleUnmountVolumes()
+    return true
+  }
+
+  func removeIdleUnmount(info: IdleUnmountVolume) {
+    idleUnmountVolumes.removeAll { $0.id == info.id }
+    saveIdleUnmountVolumes()
   }
 
   func addNetworkShare(_ share: NetworkShare) {
@@ -1477,5 +1512,6 @@ class PersistenceManager: ObservableObject {
   private func saveKeepAliveVolumes() { save(keepAliveVolumes, to: keepAliveVolumesKey) }
   private func saveNetworkShares() { save(networkShares, to: networkSharesKey) }
   private func saveCustomMountPoints() { save(customMountPoints, to: customMountPointsKey) }
+  private func saveIdleUnmountVolumes() { save(idleUnmountVolumes, to: idleUnmountVolumesKey) }
 
 }

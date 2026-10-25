@@ -30,6 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Starts the keep-alive scheduler (reconnect sweeps, network and wake
     // monitoring) and the login mount for network shares.
     KeepAliveManager.shared.sweepNow()
+    IdleUnmountManager.shared.start()
     NetworkMountManager.shared.mountAllAutoShares()
   }
 

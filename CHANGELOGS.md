@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Unmount When Idle**: Right-click a volume on an external drive and choose "Unmount When Idle" to unmount it automatically after 1, 5, 15, 30 or 60 minutes without reads or writes on the drive. The unmount is never forced: a volume that is still in use stays mounted and is tried again later. Volumes kept mounted, internal disks, disk images and network shares are never affected. Manage the list under Settings → Management.
 - **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
 
 ### Changed

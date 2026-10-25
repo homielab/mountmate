@@ -64,6 +64,7 @@ So I built **MountMate**.
 - **Keyboard Shortcuts**: Quick mount/unmount with `⌘⇧M` and `⌘⇧U`
 - **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login
+- **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period
 - **Force Eject**: Safely force eject drives that are in use
 - Runs quietly in the **menu bar**
 - Fully native – no Electron, no dependencies

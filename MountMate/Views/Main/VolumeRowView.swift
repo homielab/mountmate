@@ -17,6 +17,10 @@ struct VolumeRowState: Equatable {
   var customMountPoint: String?
   /// A password for this (APFS) volume is saved in the Keychain.
   var hasSavedPassword = false
+  /// On an external physical disk, so "Unmount When Idle" applies.
+  var canUnmountWhenIdle = false
+  /// "Unmount When Idle" timeout in minutes; 0 = off.
+  var idleUnmountMinutes = 0
 }
 
 /// Row state for the whole list, computed once per list render by
@@ -347,6 +351,10 @@ struct VolumeRowView: View {
       }
     }
 
+    if state.canUnmountWhenIdle {
+      idleUnmountMenu
+    }
+
     Button {
       if !PersistenceManager.shared.block(volume: volume) {
         showPersistenceError(for: volume)
@@ -384,6 +392,46 @@ struct VolumeRowView: View {
     } label: {
       Label("Ignore This Volume", systemImage: "eye.slash")
     }
+  }
+
+  /// "Unmount When Idle" submenu: Off or a number of minutes, the current
+  /// choice checked. Unavailable while the volume is kept mounted.
+  private var idleUnmountMenu: some View {
+    Menu {
+      ForEach(PersistenceManager.idleUnmountChoices, id: \.self) { minutes in
+        Button {
+          if !persistence.setIdleUnmountMinutes(minutes, volume: volume) {
+            showPersistenceError(for: volume)
+          }
+        } label: {
+          let title = Self.idleUnmountChoiceTitle(minutes)
+          if minutes == state.idleUnmountMinutes {
+            Label(title, systemImage: "checkmark")
+          } else {
+            Text(title)
+          }
+        }
+      }
+    } label: {
+      Label(
+        isKeepAlive
+          ? NSLocalizedString(
+            "Unmount When Idle (Off While Kept Mounted)",
+            comment: "Volume context menu: idle unmount unavailable for keep-alive volumes")
+          : NSLocalizedString(
+            "Unmount When Idle", comment: "Volume context menu: idle unmount submenu"),
+        systemImage: "moon.zzz")
+    }
+    .disabled(isKeepAlive)
+  }
+
+  static func idleUnmountChoiceTitle(_ minutes: Int) -> String {
+    guard minutes > 0 else {
+      return NSLocalizedString("Off", comment: "Unmount When Idle: disabled")
+    }
+    return String(
+      format: NSLocalizedString(
+        "After %d min Without Use", comment: "Unmount When Idle choice; minutes"), minutes)
   }
 
   private func showPersistenceError(for volume: Volume) {

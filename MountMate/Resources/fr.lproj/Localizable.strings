@@ -381,3 +381,12 @@
 "The server “%@” has no shares available to this account." = "Le serveur « %@ » n’a aucun partage disponible pour ce compte.";
 "Check that this account is allowed to use the share." = "Vérifiez que ce compte est autorisé à utiliser le partage.";
 "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Si le problème est apparu après une mise à jour du serveur, demandez à l’administrateur si le serveur accepte toujours SMB 2 ou SMB 3 avec la connexion NTLMv2.";
+
+/* Unmount When Idle */
+"Unmount When Idle" = "Démonter après inactivité";
+"Unmount When Idle (Off While Kept Mounted)" = "Démonter après inactivité (désactivé si maintenu monté)";
+"Off" = "Désactivé";
+"After %d min Without Use" = "Après %d min sans utilisation";
+"No Volumes Unmounted When Idle" = "Aucun volume démonté après inactivité";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Cliquez avec le bouton droit sur un volume d’un disque externe et choisissez « Démonter après inactivité » pour le démonter après quelques minutes sans lecture ni écriture. Un volume encore utilisé reste monté et sera réessayé plus tard.";
+"“%@” was unmounted after %d min without use." = "« %@ » a été démonté après %d min sans utilisation.";

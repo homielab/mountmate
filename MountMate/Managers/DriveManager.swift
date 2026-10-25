@@ -845,6 +845,37 @@ class DriveManager: ObservableObject {
     }
   }
 
+  /// Unmounts a volume that "Unmount When Idle" found unused. Never forced
+  /// and never shows an alert: a volume still in use only gets a log line,
+  /// and `completion(false)`. Keep-alive is not suppressed (keep-alive
+  /// volumes are never unmounted for being idle). Call on the main thread;
+  /// `completion` runs on the main thread.
+  func unmountIdleVolume(_ volume: Volume, completion: @escaping (Bool) -> Void) {
+    guard !isBusy(volume.id) else {
+      completion(false)
+      return
+    }
+    setBusy(volume.id, true)
+    DispatchQueue.global(qos: .utility).async {
+      let result = runProcess(
+        executable: "/usr/sbin/diskutil",
+        arguments: ["unmount", volume.deviceIdentifier], timeout: Self.mountUnmountTimeout)
+      DispatchQueue.main.async {
+        guard result.succeeded else {
+          Log.drive.info(
+            "Idle unmount of \(volume.name, privacy: .private) skipped (exit \(result.exitCode ?? -1, privacy: .public), timed out: \(result.timedOut, privacy: .public)); retrying after another idle period"
+          )
+          self.setBusy(volume.id, false)
+          completion(false)
+          return
+        }
+        Log.drive.info("Unmounted idle volume \(volume.name, privacy: .private)")
+        self.refreshDrives(qos: .utility) { self.setBusy(volume.id, false) }
+        completion(true)
+      }
+    }
+  }
+
   /// The disk image containing `volume`, if no other volume on it is still
   /// mounted. Returns nil for real disks, which stay attached after unmount.
   private func diskImageToDetach(afterUnmounting volume: Volume) -> PhysicalDisk? {

@@ -30,6 +30,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - Biết được ổ nào đang được **mount**
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
 - Hiển thị **dung lượng trống** còn lại
+- **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Tự ngắt khi không dùng) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
 - Chạy gọn nhẹ trên **thanh menu**
 - 100% native – không dùng Electron, không phụ thuộc nặng nề
 

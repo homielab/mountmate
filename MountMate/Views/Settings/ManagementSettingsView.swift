@@ -58,6 +58,26 @@ struct ManagementSettingsView: View {
         )
 
         ManagementSectionView(
+          title: "Unmount When Idle",
+          iconName: "moon.zzz.fill",
+          items: persistence.idleUnmountVolumes,
+          emptyStateText: "No Volumes Unmounted When Idle",
+          footer:
+            "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later."
+        ) { info in
+          ManagedEntryRow(
+            name: info.name,
+            iconName: "moon.zzz",
+            details: [
+              VolumeRowView.idleUnmountChoiceTitle(info.minutes),
+              String(
+                format: NSLocalizedString("Vol: %@", comment: "Saved volume's volume UUID"),
+                info.volumeUUID),
+            ],
+            onDelete: { persistence.removeIdleUnmount(info: info) })
+        }
+
+        ManagementSectionView(
           title: "Pinned Volumes",
           iconName: "pin.fill",
           items: persistence.pinnedVolumeIDs.map(PinnedEntry.init(id:)),

@@ -381,3 +381,12 @@
 "The server “%@” has no shares available to this account." = "На сервері «%@» немає ресурсів, доступних цьому обліковому запису.";
 "Check that this account is allowed to use the share." = "Перевірте, що цьому обліковому запису дозволено використовувати ресурс.";
 "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "Якщо проблема з’явилася після оновлення сервера, запитайте адміністратора, чи сервер досі приймає SMB 2 або SMB 3 із входом через NTLMv2.";
+
+/* Unmount When Idle */
+"Unmount When Idle" = "Відключати під час простою";
+"Unmount When Idle (Off While Kept Mounted)" = "Відключати під час простою (недоступно, поки том утримується)";
+"Off" = "Вимк.";
+"After %d min Without Use" = "Через %d хв без використання";
+"No Volumes Unmounted When Idle" = "Немає томів, що відключаються під час простою";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Клацніть правою кнопкою на томі зовнішнього диска й виберіть «Відключати під час простою», щоб відключати його після кількох хвилин без читання й запису. Том, який ще використовується, лишається підключеним, і спроба повторюється пізніше.";
+"“%@” was unmounted after %d min without use." = "«%@» відключено після %d хв без використання.";

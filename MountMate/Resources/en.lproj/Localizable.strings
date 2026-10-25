@@ -381,3 +381,12 @@
 "The server “%@” has no shares available to this account." = "The server “%@” has no shares available to this account.";
 "Check that this account is allowed to use the share." = "Check that this account is allowed to use the share.";
 "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in." = "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in.";
+
+/* Unmount When Idle */
+"Unmount When Idle" = "Unmount When Idle";
+"Unmount When Idle (Off While Kept Mounted)" = "Unmount When Idle (Off While Kept Mounted)";
+"Off" = "Off";
+"After %d min Without Use" = "After %d min Without Use";
+"No Volumes Unmounted When Idle" = "No Volumes Unmounted When Idle";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later.";
+"“%@” was unmounted after %d min without use." = "“%@” was unmounted after %d min without use.";
