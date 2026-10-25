@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- MountMate now writes its diagnostics to the macOS unified log (subsystem `com.homielab.mountmate`) instead of standard output, so they can be viewed in Console.app or collected with `log show` when reporting a problem (see "Sending Logs" in the README). Passwords are never logged and names, paths and error details are private.
 - Passwords MountMate saves in the Keychain are now labeled "MountMate – <volume or share name>" with the kind "APFS volume" or "Network share", so they are easy to find in Keychain Access. Passwords saved by earlier versions keep working and get the label the next time they are saved.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.

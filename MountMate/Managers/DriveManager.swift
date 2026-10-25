@@ -278,15 +278,17 @@ class DriveManager: ObservableObject {
       if self.refreshRetryCount < self.maxRefreshRetries {
         self.refreshRetryCount += 1
         let retryDelay = 5.0
-        print(
-          "❗️ Refresh failed (\(error)), will retry in \(retryDelay) seconds... (Attempt \(self.refreshRetryCount))"
+        Log.drive.error(
+          "Refresh failed (\(String(describing: error), privacy: .private)), will retry in \(retryDelay, privacy: .public) seconds (attempt \(self.refreshRetryCount, privacy: .public))"
         )
 
         DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) {
           self.refreshDrives()
         }
       } else {
-        print("❌ Refresh failed after \(self.maxRefreshRetries) retries. Showing error to user.")
+        Log.drive.error(
+          "Refresh failed after \(self.maxRefreshRetries, privacy: .public) retries. Showing error to user."
+        )
         // Start over: a later one-off failure gets its retry again instead of
         // wiping the list immediately.
         self.refreshRetryCount = 0
@@ -309,14 +311,16 @@ class DriveManager: ObservableObject {
 
   private func loadMockData() -> (output: String?, error: String?) {
     guard let url = Bundle.main.url(forResource: "testDisks", withExtension: "plist") else {
-      print("⚠️ MOCK DATA ERROR: testDisks.plist not found in the app bundle.")
+      Log.drive.error("Mock data: testDisks.plist not found in the app bundle.")
       return (nil, "testDisks.plist not found")
     }
     do {
       let output = try String(contentsOf: url)
       return (output, nil)
     } catch {
-      print("❌ MOCK DATA ERROR: Could not read content from testDisks.plist. Error: \(error)")
+      Log.drive.error(
+        "Mock data: could not read testDisks.plist: \(error.localizedDescription, privacy: .public)"
+      )
       return (nil, error.localizedDescription)
     }
   }
@@ -617,8 +621,8 @@ class DriveManager: ObservableObject {
       }
 
       if self.shouldRetryMount(after: result, volume: volume) {
-        print(
-          "Initial mount failed for \(volume.deviceIdentifier) shortly after it appeared, possibly due to a race condition. Retrying in \(Int(Self.mountRetryDelay))s..."
+        Log.drive.notice(
+          "Initial mount failed for \(volume.deviceIdentifier, privacy: .public) shortly after it appeared, possibly due to a race condition. Retrying in \(Int(Self.mountRetryDelay), privacy: .public)s"
         )
 
         DispatchQueue.global(qos: .userInitiated).asyncAfter(
@@ -772,7 +776,7 @@ class DriveManager: ObservableObject {
         // of showing a generic error. "That password didn't work" only when
         // diskutil actually rejected the passphrase.
         if !wrongPassphrase {
-          print("⚠️ Unlock with saved password failed: \(result.stderr)")
+          Log.drive.error("Unlock with saved password failed: \(result.stderr, privacy: .private)")
         }
         self.presentUnlockPrompt(for: volume, passwordFailed: wrongPassphrase)
       } else {
@@ -1037,10 +1041,13 @@ class DriveManager: ObservableObject {
           wholeDiskInfoCache[identifier] = CachedDiskInfo(info: info, identity: identity)
           rootInfo[identifier] = info
         } else if let cached = wholeDiskInfoCache[identifier], cached.identity == identity {
-          print("⚠️ diskutil info failed for \(identifier); using cached disk information.")
+          Log.drive.error(
+            "diskutil info failed for \(identifier, privacy: .public); using cached disk information."
+          )
           rootInfo[identifier] = cached.info
         } else {
-          print("⚠️ diskutil info failed for \(identifier) and nothing is cached.")
+          Log.drive.error(
+            "diskutil info failed for \(identifier, privacy: .public) and nothing is cached.")
           unclassifiedDiskIDs.insert(identifier)
         }
       }
@@ -1063,7 +1070,9 @@ class DriveManager: ObservableObject {
           if externalWholeDiskIDs?.contains(identifier) == true { kind = .external }
         }
         fallbackKinds[identifier] = kind
-        print("ℹ️ Classified \(identifier) without diskutil info as \(kind).")
+        Log.drive.info(
+          "Classified \(identifier, privacy: .public) without diskutil info as \(String(describing: kind), privacy: .public)."
+        )
       }
     }
 
@@ -1368,7 +1377,9 @@ class DriveManager: ObservableObject {
           filters.usage.timedOut = true
           fallthrough
         case .failed:
-          print("Could not read file system usage for \(volumeName) (failed or timed out).")
+          Log.drive.error(
+            "Could not read file system usage for \(volumeName, privacy: .private) (failed or timed out)."
+          )
           storageError = NSLocalizedString(
             "Could not read storage details.",
             comment: "Shown when a volume's used/free space cannot be read")
@@ -1681,11 +1692,11 @@ class DriveManager: ObservableObject {
     refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) {
       [weak self] _ in
       if let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
-        print(
-          "Disk notification received for volume: \(volumeURL.lastPathComponent). Refreshing list."
+        Log.drive.info(
+          "Disk notification received for volume \(volumeURL.lastPathComponent, privacy: .private). Refreshing list."
         )
       } else {
-        print("Disk notification received. Refreshing list.")
+        Log.drive.info("Disk notification received. Refreshing list.")
       }
       self?.refreshDrives()
     }

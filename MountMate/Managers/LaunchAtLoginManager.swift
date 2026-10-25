@@ -55,7 +55,8 @@ class LaunchAtLoginManager: ObservableObject {
         try service.unregister()
       }
     } catch {
-      print("Failed to update login item status: \(error)")
+      Log.app.error(
+        "Failed to update login item status: \(error.localizedDescription, privacy: .public)")
     }
     // Reflect the actual state: on failure this reverts the toggle, and a
     // successful registration may still need the user's approval.

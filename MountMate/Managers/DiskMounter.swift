@@ -170,7 +170,7 @@ class DiskMounter: ObservableObject {
 
   private func startDiskArbitration() {
     guard session == nil else { return }
-    print("✅ Starting Disk Arbitration session...")
+    Log.mounter.info("Starting Disk Arbitration session")
     session = DASessionCreate(kCFAllocatorDefault)
     guard let session = session else { return }
 
@@ -184,8 +184,8 @@ class DiskMounter: ObservableObject {
       guard let desc = DADiskCopyDescription(disk) else { return nil }
       guard let description = desc as? [String: Any] else {
         // An unexpected description type must never block the mount.
-        print(
-          "⚠️ Unexpected Disk Arbitration description; approving mount of \(bsdName ?? "unknown volume")."
+        Log.mounter.error(
+          "Unexpected Disk Arbitration description; approving mount of \(bsdName ?? "unknown volume", privacy: .public)."
         )
         return nil
       }
@@ -233,7 +233,9 @@ class DiskMounter: ObservableObject {
       }
 
       if shouldBlock && this.allowRequestedMounts && !this.isAutomaticMount(bsdName: bsdName) {
-        print("✅ Allowing requested mount of blocked volume \(bsdName ?? "unknown volume").")
+        Log.mounter.notice(
+          "Allowing requested mount of blocked volume \(bsdName ?? "unknown volume", privacy: .public)."
+        )
         return nil
       }
 
@@ -244,7 +246,8 @@ class DiskMounter: ObservableObject {
           // is on) so the next boot never gets this far.
           PersistenceManager.shared.scheduleStartupBlockReconcile()
         }
-        print("🚫 Dissenting auto-mount for \(bsdName ?? "unknown volume").")
+        Log.mounter.notice(
+          "Dissenting auto-mount for \(bsdName ?? "unknown volume", privacy: .public).")
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
         return Unmanaged.passRetained(dissenter)
       }
@@ -388,15 +391,17 @@ class DiskMounter: ObservableObject {
           let result = runProcess(
             executable: "/usr/sbin/diskutil", arguments: ["unmount", device])
           if result.succeeded {
-            print("🚫 Unmounted blocked volume “\(info.name)” after startup.")
+            Log.mounter.notice(
+              "Unmounted blocked volume “\(info.name, privacy: .private)” after startup.")
             break
           }
           if Self.isAlreadyUnmounted(result) {
-            print("ℹ️ Blocked volume “\(info.name)” was already unmounted.")
+            Log.mounter.info(
+              "Blocked volume “\(info.name, privacy: .private)” was already unmounted.")
             break
           }
-          print(
-            "⚠️ Could not unmount blocked volume “\(info.name)” (attempt \(attempt)/3): \(result.stderr)"
+          Log.mounter.error(
+            "Could not unmount blocked volume “\(info.name, privacy: .private)” (attempt \(attempt, privacy: .public)/3): \(result.stderr, privacy: .private)"
           )
           if attempt < 3 {
             Thread.sleep(forTimeInterval: 3.0)

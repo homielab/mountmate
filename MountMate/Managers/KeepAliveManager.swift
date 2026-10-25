@@ -291,7 +291,7 @@ class KeepAliveManager: ObservableObject {
 
   @objc private func handleWake(_ notification: Notification) {
     guard isEnabled, remountOnWake else { return }
-    print("☀️ System woke from sleep. Scheduling keep-alive reconnect sweep.")
+    Log.keepAlive.notice("System woke from sleep. Scheduling keep-alive reconnect sweep.")
     // Give the network stack a moment to re-establish connectivity.
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
       self?.sweepNow(resetBackoff: true)
@@ -359,15 +359,17 @@ class KeepAliveManager: ObservableObject {
       currentInterface = interface
 
       if interfaceChanged && remountOnNetworkChange {
-        print("📶 Network interface changed (→ \(interface?.name ?? "?")). Remounting shares.")
+        Log.keepAlive.notice(
+          "Network interface changed (→ \(interface?.name ?? "?", privacy: .public)). Remounting shares."
+        )
         remountSharesForInterfaceChange()
       } else {
-        print("📶 Network became available. Running keep-alive reconnect sweep.")
+        Log.keepAlive.notice("Network became available. Running keep-alive reconnect sweep.")
         sweepNow(resetBackoff: networkChanged)
       }
     } else {
       currentInterface = nil
-      print("📴 Network unavailable. Waiting for recovery before reconnecting mounts.")
+      Log.keepAlive.notice("Network unavailable. Waiting for recovery before reconnecting mounts.")
     }
   }
 
@@ -393,9 +395,12 @@ class KeepAliveManager: ObservableObject {
         NetworkMountManager.shared.forceRemount(share: share) { [weak self] success in
           self?.recordResult(shareID: share.id, success: success)
           if success {
-            print("🔁 Remounted \(share.name) through the new network interface.")
+            Log.keepAlive.notice(
+              "Remounted \(share.name, privacy: .private) through the new network interface.")
           } else {
-            print("🔁 Could not remount \(share.name) through the new network interface.")
+            Log.keepAlive.error(
+              "Could not remount \(share.name, privacy: .private) through the new network interface."
+            )
           }
         }
       }
@@ -585,7 +590,7 @@ class KeepAliveManager: ObservableObject {
     DispatchQueue.main.asyncAfter(deadline: .now() + Self.sweepWatchdogInterval) {
       [weak self] in
       guard let self, self.isSweeping, self.sweepGeneration == generation else { return }
-      print("⚠️ Keep-alive sweep did not finish in time; allowing new sweeps.")
+      Log.keepAlive.error("Keep-alive sweep did not finish in time; allowing new sweeps.")
       self.isSweeping = false
     }
   }
@@ -607,16 +612,18 @@ class KeepAliveManager: ObservableObject {
 
       recordAttempt(shareID: share.id)
       group.enter()
-      print("🔄 Keep-alive: attempting to remount network share \(share.name).")
+      Log.keepAlive.notice("Attempting to remount network share \(share.name, privacy: .private).")
       // Not user-initiated: keeps the backoff state just recorded and any
       // user suppression intact.
       NetworkMountManager.shared.mount(share: share, userInitiated: false) {
         [weak self] success, error in
         self?.recordResult(shareID: share.id, success: success)
         if success {
-          print("🔄 Keep-alive remounted \(share.name).")
+          Log.keepAlive.notice("Remounted \(share.name, privacy: .private).")
         } else {
-          print("🔄 Keep-alive remount failed for \(share.name): \(error ?? "skipped")")
+          Log.keepAlive.error(
+            "Remount failed for \(share.name, privacy: .private): \(error ?? "skipped", privacy: .private)"
+          )
         }
         group.leave()
       }
@@ -645,7 +652,7 @@ class KeepAliveManager: ObservableObject {
 
       recordAttempt(volumeID: compositeId)
       group.enter()
-      print("🔄 Keep-alive: attempting to remount volume \(volume.name).")
+      Log.keepAlive.notice("Attempting to remount volume \(volume.name, privacy: .private).")
       // Silent mount: transient reconnect failures must not pop error dialogs.
       DriveManager.shared.mount(
         volume: volume, allowsErrorAlerts: false, isUserInitiated: false)

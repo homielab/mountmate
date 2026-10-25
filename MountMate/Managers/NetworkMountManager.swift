@@ -512,7 +512,9 @@ class NetworkMountManager: ObservableObject {
             share.name))
         return
       }
-      print("Retrying \(share.name) although an earlier NetFS call is stalled (\(Int(age))s).")
+      Log.network.notice(
+        "Retrying \(share.name, privacy: .private) although an earlier NetFS call is stalled (\(Int(age), privacy: .public)s)."
+      )
     }
 
     // Decide "already mounted" from the kernel mount table only. stat() and
@@ -522,7 +524,9 @@ class NetworkMountManager: ObservableObject {
 
     // Already mounted (at our target path or elsewhere)?
     if let existingMount = mountTable.flatMap({ mounts(of: share, in: $0).first }) {
-      print("Share \(share.name) is already mounted at \(existingMount.mountPoint)")
+      Log.network.info(
+        "Share \(share.name, privacy: .private) is already mounted at \(existingMount.mountPoint, privacy: .private)"
+      )
       refreshMountStatus()
       finish(true, nil)
       return
@@ -602,7 +606,9 @@ class NetworkMountManager: ObservableObject {
       if !userInitiated && KeepAliveManager.shared.isSuppressed(shareID: share.id) {
         // The user ejected this share in MountMate while this automatic
         // mount was in flight: undo it.
-        print("Unmounting \(share.name) again: it was ejected during an automatic mount.")
+        Log.network.notice(
+          "Unmounting \(share.name, privacy: .private) again: it was ejected during an automatic mount."
+        )
         _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
         cleanUpMountPoint(mountPoint, ifCreated: createdMountPoint)
         refreshMountStatus { finish(false, nil) }
@@ -847,7 +853,9 @@ class NetworkMountManager: ObservableObject {
       self.mountLock.unlock()
 
       if abandoned {
-        print("NetFS mount of \(share.name) finished after timing out (status \(status)).")
+        Log.network.notice(
+          "NetFS mount of \(share.name, privacy: .private) finished after timing out (status \(status, privacy: .public))."
+        )
         // An automatic mount that landed late although the user ejected the
         // share meanwhile: unmount it again, but only at our own folder.
         if status == 0, undoIfSuppressed,
@@ -857,7 +865,9 @@ class NetworkMountManager: ObservableObject {
             Self.samePath($0.mountPoint, mountPoint) && Self.hasSameSharePath($0, share)
           })
         {
-          print("Unmounting \(share.name) again: it was ejected while the mount was pending.")
+          Log.network.notice(
+            "Unmounting \(share.name, privacy: .private) again: it was ejected while the mount was pending."
+          )
           _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
         }
         self.refreshMountStatus()
@@ -976,9 +986,11 @@ class NetworkMountManager: ObservableObject {
       mount(share: share, userInitiated: false) { success, error in
         if !success {
           // Error is already sanitized by mount()
-          print("Failed to auto-mount \(share.name): \(error ?? "Unknown error")")
+          Log.network.error(
+            "Failed to auto-mount \(share.name, privacy: .private): \(error ?? "Unknown error", privacy: .private)"
+          )
         } else {
-          print("Successfully auto-mounted \(share.name)")
+          Log.network.notice("Auto-mounted \(share.name, privacy: .private)")
         }
       }
     }
@@ -1238,7 +1250,9 @@ class NetworkMountManager: ObservableObject {
   }
 
   private func adopt(_ mountPoint: String, for share: NetworkShare) {
-    print("Share \(share.name) is already mounted at \(mountPoint) under another server name.")
+    Log.network.info(
+      "Share \(share.name, privacy: .private) is already mounted at \(mountPoint, privacy: .private) under another server name."
+    )
     let adoption = Adoption(
       mountPoint: mountPoint, shareProtocol: share.shareProtocol,
       endpoint: MountedNetworkShare.endpoint(for: share))

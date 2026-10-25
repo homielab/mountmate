@@ -356,8 +356,8 @@ class HotkeyManager: ObservableObject {
       // Shortcuts saved by older versions may lack ⌘/⌃. Settings asks the
       // user to record a new one; never register them.
       guard combination.isSafeAsGlobalHotKey else {
-        print(
-          "⚠️ HotkeyManager: Not registering \(combination.displayString); it needs ⌘ or ⌃.")
+        Log.hotkey.error(
+          "Not registering \(combination.displayString, privacy: .public); it needs ⌘ or ⌃.")
         continue
       }
       var ref: EventHotKeyRef?
@@ -374,8 +374,8 @@ class HotkeyManager: ObservableObject {
         hotKeyRefs[action] = ref
       } else {
         failed.insert(action)
-        print(
-          "⚠️ HotkeyManager: Could not register \(combination.displayString) (status \(status)); it may be used by another app."
+        Log.hotkey.error(
+          "Could not register \(combination.displayString, privacy: .public) (status \(status, privacy: .public)); it may be used by another app."
         )
       }
     }
@@ -383,8 +383,8 @@ class HotkeyManager: ObservableObject {
     unavailableShortcuts = failed
     isListening = true
     #if DEBUG
-      print(
-        "HotkeyManager: Started listening (Unmount: \(unmountShortcut.displayString), Mount: \(mountShortcut.displayString))"
+      Log.hotkey.info(
+        "Started listening (Unmount: \(self.unmountShortcut.displayString, privacy: .public), Mount: \(self.mountShortcut.displayString, privacy: .public))"
       )
     #endif
   }
@@ -399,7 +399,7 @@ class HotkeyManager: ObservableObject {
     unavailableShortcuts = []
     isListening = false
     #if DEBUG
-      print("HotkeyManager: Stopped listening for global hotkeys")
+      Log.hotkey.info("Stopped listening for global hotkeys")
     #endif
   }
 
@@ -415,7 +415,8 @@ class HotkeyManager: ObservableObject {
       GetApplicationEventTarget(), hotKeyEventHandler, 2, &eventTypes, nil,
       &eventHandlerRef)
     if status != noErr {
-      print("⚠️ HotkeyManager: Could not install the hot key handler (status \(status)).")
+      Log.hotkey.error(
+        "Could not install the hot key handler (status \(status, privacy: .public)).")
     }
   }
 
@@ -433,12 +434,14 @@ class HotkeyManager: ObservableObject {
     switch action {
     case .unmountAll:
       #if DEBUG
-        print("HotkeyManager: Triggered Unmount All (\(unmountShortcut.displayString))")
+        Log.hotkey.notice(
+          "Triggered Unmount All (\(self.unmountShortcut.displayString, privacy: .public))")
       #endif
       DriveManager.shared.unmountAllDrives()
     case .mountAll:
       #if DEBUG
-        print("HotkeyManager: Triggered Mount All (\(mountShortcut.displayString))")
+        Log.hotkey.notice(
+          "Triggered Mount All (\(self.mountShortcut.displayString, privacy: .public))")
       #endif
       DriveManager.shared.mountAllVolumes()
     }

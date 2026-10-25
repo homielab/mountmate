@@ -127,7 +127,21 @@ xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
 swift format lint -r MountMate MountMateTests
 ```
 
+Log with `Log.<category>` (`MountMate/Utilities/Log.swift`), never `print()`. Mark share/volume names, paths and error text `privacy: .private`, never log a password, and pass command lines through `redactedArguments`; `LoggingHygieneTests` checks this.
+
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
+
+## 🪵 Sending Logs
+
+When you report a problem (for example a network share that will not mount), logs help a lot. MountMate writes to the macOS unified log under the subsystem `com.homielab.mountmate`, with one category per area (`drive`, `network`, `keepAlive`, `persistence`, `mounter`, `hotkey`, `shell`, `app`).
+
+Reproduce the problem, then run in Terminal and attach `mountmate.log` to your issue:
+
+```bash
+log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > ~/Desktop/mountmate.log
+```
+
+To watch live while you mount or unmount: `log stream --predicate 'subsystem == "com.homielab.mountmate"' --level info`. You can also filter on the same subsystem in Console.app. Passwords are never logged; share names, volume names, paths and error details appear as `<private>`.
 
 ## 📫 Feedback & Contributions
 

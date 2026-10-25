@@ -78,7 +78,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     guard rootPort != 0, let notifyPort else {
       // Fall back to the old notification: it cannot delay sleep, but the
       // unmounts still start.
-      print("❌ IORegisterForSystemPower failed; using NSWorkspace sleep notification.")
+      Log.app.error("IORegisterForSystemPower failed; using NSWorkspace sleep notification.")
       NSWorkspace.shared.notificationCenter.addObserver(
         self, selector: #selector(systemWillSleep), name: NSWorkspace.willSleepNotification,
         object: nil)
@@ -95,7 +95,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   /// Fallback used only when IOKit power registration failed.
   @objc private func systemWillSleep(_ notification: Notification) {
     guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else { return }
-    print("System will sleep. Ejecting all user volumes.")
+    Log.app.notice("System will sleep. Ejecting all user volumes.")
     DriveManager.shared.unmountAllDrives(suppressReconnect: false, reportFailures: false)
   }
 
@@ -112,7 +112,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         IOAllowPowerChange(powerRootPort, notificationID)
         return
       }
-      print("System will sleep. Ejecting all user volumes.")
+      Log.app.notice("System will sleep. Ejecting all user volumes.")
       let rootPort = powerRootPort
       // Both the completion and the cap below call this on the main thread;
       // the flag makes the second call a no-op.
@@ -124,7 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
       // Cap the delay: a hung unmount must not keep the Mac awake.
       DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepUnmountTimeout) {
-        if !hasAllowed { print("⚠️ Unmount on sleep still running; allowing sleep anyway.") }
+        if !hasAllowed { Log.app.error("Unmount on sleep still running; allowing sleep anyway.") }
         allowSleep()
       }
       // The unmount is not a user decision — keep-alive targets reconnect on
@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   private func checkAndRequestFullDiskAccessIfNeeded() {
     guard !SandboxChecker.isSandboxed else {
-      print("App is sandboxed. Skipping Full Disk Access check.")
+      Log.app.info("App is sandboxed. Skipping Full Disk Access check.")
       return
     }
 
@@ -150,15 +150,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       return
     }
 
-    print("Checking for Full Disk Access permission...")
+    Log.app.info("Checking for Full Disk Access permission")
 
     DispatchQueue.global(qos: .userInitiated).async {
       do {
         _ = try FileManager.default.contentsOfDirectory(
           atPath: "/Library/Application Support/com.apple.TCC")
-        print("Full Disk Access is already granted.")
+        Log.app.info("Full Disk Access is already granted.")
       } catch {
-        print("Full Disk Access not granted. Prompting user.")
+        Log.app.notice("Full Disk Access not granted. Prompting user.")
 
         DispatchQueue.main.async {
           self.showFullDiskAccessAlert()

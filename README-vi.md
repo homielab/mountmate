@@ -74,6 +74,18 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
   **System Settings → Privacy & Security → Open Anyway**
 - Đảm bảo bạn kết nối mạng để macOS xác minh và tự động cập nhật
 
+## 🪵 Gửi log khi báo lỗi
+
+Khi báo lỗi (ví dụ ổ mạng không mount được), log giúp tìm nguyên nhân nhanh hơn. MountMate ghi vào unified log của macOS với subsystem `com.homielab.mountmate`.
+
+Làm lại thao tác bị lỗi, rồi chạy trong Terminal và đính kèm file `mountmate.log` vào issue:
+
+```bash
+log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > ~/Desktop/mountmate.log
+```
+
+Xem trực tiếp khi mount/unmount: `log stream --predicate 'subsystem == "com.homielab.mountmate"' --level info`, hoặc lọc theo subsystem này trong Console.app. Mật khẩu không bao giờ được ghi; tên share, tên ổ, đường dẫn và chi tiết lỗi hiện là `<private>`.
+
 ## 📫 Đóng góp & phản hồi
 
 MountMate được tạo để giải quyết nhu cầu cá nhân của tôi – nhưng tôi rất sẵn lòng cải thiện nó cho cộng đồng.

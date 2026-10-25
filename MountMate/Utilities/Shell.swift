@@ -99,7 +99,9 @@ func runProcess(
         try writeHandle.write(contentsOf: data)
       } catch {
         // Expected when the child exits early; its exit status reports why.
-        print("⚠️ Could not write stdin to \(executable): \(error.localizedDescription)")
+        Log.shell.info(
+          "Could not write stdin to \(executable, privacy: .public): \(error.localizedDescription, privacy: .public)"
+        )
       }
       try? writeHandle.close()
     }
@@ -144,15 +146,15 @@ func runProcess(
 
   if timedOut {
     let termination = forcedTermination ? "SIGKILL" : "SIGTERM"
-    print(
-      "❌ PROCESS TIMEOUT: \(executable) \(redactedArguments(arguments).joined(separator: " ")) | elapsed=\(String(format: "%.1f", elapsed))s | processRunning=\(processWasRunning) | termination=\(termination) | stdout=\(stdoutData.count)B | stderr=\(stderrData.count)B"
+    Log.shell.error(
+      "Process timeout: \(executable, privacy: .public) \(redactedArguments(arguments).joined(separator: " "), privacy: .private) | elapsed=\(String(format: "%.1f", elapsed), privacy: .public)s | processRunning=\(processWasRunning, privacy: .public) | termination=\(termination, privacy: .public) | stdout=\(stdoutData.count, privacy: .public)B | stderr=\(stderrData.count, privacy: .public)B"
     )
     return ProcessResult(stdout: stdout, stderr: stderr, exitCode: nil, timedOut: true)
   }
 
   if elapsed > 3.0 {
-    print(
-      "⏱️ PROCESS SLOW: \(executable) \(redactedArguments(arguments).joined(separator: " ")) | \(String(format: "%.2f", elapsed))s | stdout: \(stdoutData.count)B stderr: \(stderrData.count)B"
+    Log.shell.notice(
+      "Slow process: \(executable, privacy: .public) \(redactedArguments(arguments).joined(separator: " "), privacy: .private) | \(String(format: "%.2f", elapsed), privacy: .public)s | stdout: \(stdoutData.count, privacy: .public)B stderr: \(stderrData.count, privacy: .public)B"
     )
   }
 

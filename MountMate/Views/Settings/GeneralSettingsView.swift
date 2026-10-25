@@ -379,7 +379,7 @@ struct GeneralSettingsView: View {
     do {
       try task.run()
     } catch {
-      print("⚠️ Could not relaunch MountMate: \(error.localizedDescription)")
+      Log.app.error("Could not relaunch MountMate: \(error.localizedDescription, privacy: .public)")
       return
     }
     NSApplication.shared.terminate(nil)

@@ -611,8 +611,8 @@ class PersistenceManager: ObservableObject {
         } else {
           // No alert for updates the user did not just ask for.
           self.backgroundFstabUpdateDeclined = true
-          print(
-            "⚠️ Background startup block update failed; not retrying until the next user action: \(error.localizedDescription)"
+          Log.persistence.error(
+            "Background startup block update failed; not retrying until the next user action: \(error.localizedDescription, privacy: .public)"
           )
         }
         DispatchQueue.main.async { completion?(false) }
@@ -689,8 +689,8 @@ class PersistenceManager: ObservableObject {
       var additions: [(uuid: String, fileSystemType: String, info: ManagedVolumeInfo)] = []
       for (uuid, info) in desired where !present.contains(uuid) {
         if Self.hasOtherFstabEntry(volumeUUID: uuid, in: contents) {
-          print(
-            "ℹ️ “\(info.name)” already has an /etc/fstab entry; not adding a startup block rule."
+          Log.persistence.info(
+            "“\(info.name, privacy: .private)” already has an /etc/fstab entry; not adding a startup block rule."
           )
           continue
         }
@@ -698,11 +698,13 @@ class PersistenceManager: ObservableObject {
         case .eligible(let fileSystemType):
           additions.append((uuid, fileSystemType, info))
         case .notConnected:
-          print(
-            "ℹ️ “\(info.name)” is not connected; its startup block rule will be added when it next appears."
+          Log.persistence.info(
+            "“\(info.name, privacy: .private)” is not connected; its startup block rule will be added when it next appears."
           )
         case .ineligible(let reason):
-          print("ℹ️ No startup block rule for “\(info.name)”: \(reason).")
+          Log.persistence.info(
+            "No startup block rule for “\(info.name, privacy: .private)”: \(reason, privacy: .public)."
+          )
         }
       }
 
@@ -723,7 +725,9 @@ class PersistenceManager: ObservableObject {
             volumeUUID: addition.uuid, fileSystemType: addition.fileSystemType,
             identifier: addition.info.id)
         else {
-          print("⚠️ Skipped a startup block rule with unsafe fields (“\(addition.info.name)”).")
+          Log.persistence.error(
+            "Skipped a startup block rule with unsafe fields (“\(addition.info.name, privacy: .private)”)."
+          )
           continue
         }
         updated += entry
@@ -731,8 +735,9 @@ class PersistenceManager: ObservableObject {
 
       try self.installSystemFstabContents(updated, expectedCurrent: snapshot.raw)
       self.refreshFstabBlockedUUIDs(from: updated)
-      print(
-        "✅ Startup block rules updated (\(additions.count) added, \(stale.count) removed).")
+      Log.persistence.notice(
+        "Startup block rules updated (\(additions.count, privacy: .public) added, \(stale.count, privacy: .public) removed)."
+      )
       return StartupRuleChange(
         addedNames: additions.map(\.info.name), removedCount: stale.count,
         ruleCount: present.count - stale.count + additions.count)
@@ -740,7 +745,8 @@ class PersistenceManager: ObservableObject {
       where error.domain == "MountMate" && error.code == Self.fstabChangedErrorCode
         && attemptsLeft > 1
     {
-      print("ℹ️ /etc/fstab changed during the update; retrying with the new contents.")
+      Log.persistence.notice(
+        "/etc/fstab changed during the update; retrying with the new contents.")
       return try applyStartupBlockRules(
         enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: attemptsLeft - 1)
     }
@@ -870,7 +876,9 @@ class PersistenceManager: ObservableObject {
   }
 
   private func handleStartupBlockError(_ error: Error) {
-    print("⚠️ Failed to update startup block rules in /etc/fstab: \(error.localizedDescription)")
+    Log.persistence.error(
+      "Failed to update startup block rules in /etc/fstab: \(error.localizedDescription, privacy: .public)"
+    )
     // A cancelled password prompt is not an error; say plainly what it means.
     let message =
       Self.isAdminPromptCancellation(error)
@@ -1401,8 +1409,8 @@ class PersistenceManager: ObservableObject {
     guard let data = defaults.data(forKey: key) else { return [] }
     let result = decodeLossyArray(T.self, from: data)
     if result.hadFailures {
-      print(
-        "⚠️ Some saved entries for \(key) could not be read and were skipped (\(result.elements.count) kept)."
+      Log.persistence.error(
+        "Some saved entries for \(key, privacy: .public) could not be read and were skipped (\(result.elements.count, privacy: .public) kept)."
       )
       backUpUndecodableData(data, forKey: key, defaults: defaults)
     }
@@ -1451,7 +1459,9 @@ class PersistenceManager: ObservableObject {
     let backupKey = "\(key)_backup_\(Int(now.timeIntervalSince1970))"
     defaults.set(data, forKey: backupKey)
     defaults.set(appVersion, forKey: markerKey)
-    print("ℹ️ Backed up the unreadable data of \(key) to \(backupKey).")
+    Log.persistence.notice(
+      "Backed up the unreadable data of \(key, privacy: .public) to \(backupKey, privacy: .public)."
+    )
   }
 
   static var currentAppVersion: String {
