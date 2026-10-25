@@ -129,6 +129,8 @@ swift format lint -r MountMate MountMateTests
 
 Log with `Log.<category>` (`MountMate/Utilities/Log.swift`), never `print()`. Mark share/volume names, paths and error text `privacy: .private`, never log a password, and pass command lines through `redactedArguments`; `LoggingHygieneTests` checks this.
 
+A refresh runs `diskutil list` once and `diskutil info` only for whole disks that are new, whose size or partition layout changed, or whose cached info is older than 30 seconds (`WholeDiskInfoCache`); the fetches run concurrently without blocking a thread. Each refresh logs how many `diskutil info` runs it needed at debug level: `log stream --predicate 'subsystem == "com.homielab.mountmate" AND category == "drive"' --level debug`.
+
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
 
 ## 🔐 Network Share Errors

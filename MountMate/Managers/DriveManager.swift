@@ -62,30 +62,13 @@ class DriveManager: ObservableObject {
   /// USB hard drive spins up.
   private static let mountUnmountTimeout: TimeInterval = 30
 
-  /// Last successful `diskutil info` of each whole disk, keyed by BSD name.
-  /// Reused when a later `diskutil info` fails or times out (busy or
-  /// spinning-up disk) so a disk is never re-classified (e.g. an internal
-  /// disk shown as removable) just because its info was briefly unavailable.
-  private var wholeDiskInfoCache: [String: CachedDiskInfo] = [:]
-  private let wholeDiskInfoCacheLock = NSLock()
-  private struct CachedDiskInfo {
-    let info: [String: Any]
-    /// Identity of the disk in `diskutil list` when cached (see
-    /// `listIdentity(of:)`); a mismatch means the BSD name now belongs to a
-    /// different disk.
-    let identity: String
-  }
-
-  /// Size, content type and partition layout of a whole disk as reported by
-  /// `diskutil list`. Cheap to compute and stable across refreshes; renaming
-  /// a volume does not change it.
-  private static func listIdentity(of diskData: [String: Any]) -> String {
-    let size = (diskData["Size"] as? Int64).map(String.init) ?? "?"
-    let content = diskData["Content"] as? String ?? ""
-    let partitions = (diskData["Partitions"] as? [[String: Any]] ?? []).map {
-      "\($0["Content"] as? String ?? ""):\(($0["Size"] as? Int64).map(String.init) ?? "?")"
-    }
-    return "\(size)|\(content)|\(partitions.joined(separator: ","))"
+  /// `diskutil info` of each whole disk, reused while the disk's layout is
+  /// unchanged (see `WholeDiskInfoCache`).
+  private let wholeDiskInfoCache = WholeDiskInfoCache { identifier in
+    // Only a real info plist counts; a timeout or error yields nil.
+    guard let info = DriveManager.diskInfo(for: identifier), info["DeviceIdentifier"] != nil
+    else { return nil }
+    return info
   }
 
   /// Set when a refresh found a volume whose statfs timed out; cleared by
@@ -194,10 +177,11 @@ class DriveManager: ObservableObject {
         if let plist = try PropertyListSerialization.propertyList(
           from: allDisksData, options: [], format: nil) as? [String: Any]
         {
-          let parsed = self.parseDisks(from: plist, filters: filters)
-          self.updateState(
-            with: parsed.disks, unverifiedDiskIDs: parsed.unverifiedDiskIDs,
-            usageTimedOut: filters.usage.timedOut)
+          self.parseDisks(from: plist, filters: filters) { parsed in
+            self.updateState(
+              with: parsed.disks, unverifiedDiskIDs: parsed.unverifiedDiskIDs,
+              usageTimedOut: filters.usage.timedOut)
+          }
         } else {
           self.handleRefreshFailure(error: "diskutil returned an unexpected property list.")
         }
@@ -982,11 +966,13 @@ class DriveManager: ObservableObject {
     var timedOut = false
   }
 
-  private func parseDisks(from plist: [String: Any], filters: VolumeFilterSnapshot) -> (
-    disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>
+  private func parseDisks(
+    from plist: [String: Any], filters: VolumeFilterSnapshot,
+    completion: @escaping ((disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>)) -> Void
   ) {
     guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
-      return ([], [])
+      completion(([], []))
+      return
     }
 
     var childDeviceIDs = Set<String>()
@@ -1004,55 +990,29 @@ class DriveManager: ObservableObject {
       return !childDeviceIDs.contains(deviceID) && !isSynthesizedAPFS
     }
 
-    // Fetch info for all root disks in parallel to drastically reduce refresh latency
-    let group = DispatchGroup()
-    let lock = NSLock()
-    var rootInfoMap = [String: [String: Any]]()
-
-    for disk in rootDisks {
-      guard let identifier = disk["DeviceIdentifier"] as? String else { continue }
-      group.enter()
-      DispatchQueue.global(qos: .userInitiated).async {
-        // Only a real info plist counts; a timeout or error yields nil.
-        if let info = self.getInfoForDisk(for: identifier), info["DeviceIdentifier"] != nil {
-          lock.withLock {
-            rootInfoMap[identifier] = info
-          }
-        }
-        group.leave()
-      }
+    // `diskutil info` only for new, changed or stale disks; runs off this
+    // thread and calls back once every disk has its info (or none).
+    let disks = rootDisks.compactMap { diskData -> WholeDiskInfoCache.Disk? in
+      guard let identifier = diskData["DeviceIdentifier"] as? String else { return nil }
+      return WholeDiskInfoCache.Disk(
+        identifier: identifier, identity: WholeDiskInfoCache.listIdentity(of: diskData))
     }
-    group.wait()
-    let freshInfo = rootInfoMap
-
-    // Fall back to the last good info of a disk whose info is missing now.
-    var rootInfo = [String: [String: Any]]()
-    var unclassifiedDiskIDs = Set<String>()
-    wholeDiskInfoCacheLock.withLock {
-      // Forget disks that are gone, so a reused BSD name never inherits the
-      // classification of a different disk.
-      let presentIDs = Set(rootDisks.compactMap { $0["DeviceIdentifier"] as? String })
-      wholeDiskInfoCache = wholeDiskInfoCache.filter { presentIDs.contains($0.key) }
-
-      for diskData in rootDisks {
-        guard let identifier = diskData["DeviceIdentifier"] as? String else { continue }
-        let identity = Self.listIdentity(of: diskData)
-        if let info = freshInfo[identifier] {
-          wholeDiskInfoCache[identifier] = CachedDiskInfo(info: info, identity: identity)
-          rootInfo[identifier] = info
-        } else if let cached = wholeDiskInfoCache[identifier], cached.identity == identity {
-          Log.drive.error(
-            "diskutil info failed for \(identifier, privacy: .public); using cached disk information."
-          )
-          rootInfo[identifier] = cached.info
-        } else {
-          Log.drive.error(
-            "diskutil info failed for \(identifier, privacy: .public) and nothing is cached.")
-          unclassifiedDiskIDs.insert(identifier)
-        }
-      }
+    wholeDiskInfoCache.lookup(disks) { lookup in
+      Log.drive.debug(
+        "Refresh: \(lookup.fetched.count, privacy: .public) diskutil info run(s), \(lookup.reused.count, privacy: .public) disk(s) from cache."
+      )
+      completion(
+        self.buildDisks(
+          rootDisks: rootDisks, allDisksAndPartitions: allDisksAndPartitions,
+          rootInfo: lookup.info, unclassifiedDiskIDs: lookup.unclassified, filters: filters))
     }
+  }
 
+  private func buildDisks(
+    rootDisks: [[String: Any]], allDisksAndPartitions: [[String: Any]],
+    rootInfo: [String: [String: Any]], unclassifiedDiskIDs: Set<String>,
+    filters: VolumeFilterSnapshot
+  ) -> (disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>) {
     // Second opinions for disks without any info: Disk Arbitration first (no
     // process), then `diskutil list external` once per refresh if needed.
     var fallbackKinds = [String: FallbackDiskKind]()
@@ -1253,6 +1213,11 @@ class DriveManager: ObservableObject {
 
   public func getInfoForDisk(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]?
   {
+    Self.diskInfo(for: identifier, timeout: timeout)
+  }
+
+  /// `diskutil info -plist` of a disk or volume; nil on failure or timeout.
+  static func diskInfo(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]? {
     guard !identifier.isEmpty else { return nil }
     let result = runProcess(
       executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier], timeout: timeout)

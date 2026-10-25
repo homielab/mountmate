@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Refreshing the drive list no longer starts a `diskutil info` process for every disk each time: information about disks that are still attached unchanged is reused for 30 seconds, so refreshes use less CPU and wake sleeping hard drives less often. Newly attached or reformatted disks are still read immediately.
 - Clearer messages when an SMB or AFP share fails to mount: MountMate now tells apart a wrong password, an expired or restricted account, a share the account may not use, an unsupported sign-in method or SMB version and a refused connection, hints how to enter a Windows domain login (`DOMAIN\user` or `user@domain`), and shows the original error code (for example `Error code: 80 (EAUTH)`). The code is also written to the log.
 - "Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.
 - Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
