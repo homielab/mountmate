@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>shares.imported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Импортирован %d подключённый ресурс. Добавьте учётные данные, отредактировав его.</string>
+			<key>few</key>
+			<string>Импортировано %d подключённых ресурса. Добавьте учётные данные, отредактировав каждый ресурс.</string>
+			<key>many</key>
+			<string>Импортировано %d подключённых ресурсов. Добавьте учётные данные, отредактировав каждый ресурс.</string>
+			<key>other</key>
+			<string>Импортировано %d подключённых ресурсов. Добавьте учётные данные, отредактировав каждый ресурс.</string>
+		</dict>
+	</dict>
+	<key>startup.blocked.added</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d диск теперь блокируется при запуске.</string>
+			<key>few</key>
+			<string>%d диска теперь блокируются при запуске.</string>
+			<key>many</key>
+			<string>%d дисков теперь блокируются при запуске.</string>
+			<key>other</key>
+			<string>%d диска теперь блокируются при запуске.</string>
+		</dict>
+	</dict>
+	<key>startup.blocked.count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Блокируется при запуске: %d диск.</string>
+			<key>few</key>
+			<string>Блокируется при запуске: %d диска.</string>
+			<key>many</key>
+			<string>Блокируется при запуске: %d дисков.</string>
+			<key>other</key>
+			<string>Блокируется при запуске: %d диска.</string>
+		</dict>
+	</dict>
+	<key>retry.seconds</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Каждую %d секунду</string>
+			<key>few</key>
+			<string>Каждые %d секунды</string>
+			<key>many</key>
+			<string>Каждые %d секунд</string>
+			<key>other</key>
+			<string>Каждые %d секунды</string>
+		</dict>
+	</dict>
+	<key>retry.minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Каждую %d минуту</string>
+			<key>few</key>
+			<string>Каждые %d минуты</string>
+			<key>many</key>
+			<string>Каждые %d минут</string>
+			<key>other</key>
+			<string>Каждые %d минуты</string>
+		</dict>
+	</dict>
+	<key>idle.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>«%@» отключён после %#@n@ без использования.</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d минуты</string>
+			<key>few</key>
+			<string>%d минут</string>
+			<key>many</key>
+			<string>%d минут</string>
+			<key>other</key>
+			<string>%d минуты</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

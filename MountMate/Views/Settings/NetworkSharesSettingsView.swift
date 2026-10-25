@@ -124,11 +124,7 @@ struct NetworkSharesSettingsView: View {
 
   private func importResultMessage(added: Int, discovered: Int) -> String {
     if added > 0 {
-      return String(
-        format: NSLocalizedString(
-          "Imported %d mounted share(s). Add credentials by editing each share.",
-          comment: "Mounted share import result"),
-        added)
+      return PluralizedString.format("shares.imported", added)
     }
     if discovered > 0 {
       return NSLocalizedString(

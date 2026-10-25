@@ -74,15 +74,9 @@ struct GeneralSettingsView: View {
   static func retryIntervalLabel(_ interval: Double) -> String {
     switch interval {
     case ..<60:
-      return String(
-        format: NSLocalizedString(
-          "Every %d seconds", comment: "Keep-alive retry interval option"),
-        Int(interval))
+      return PluralizedString.format("retry.seconds", Int(interval))
     default:
-      return String(
-        format: NSLocalizedString(
-          "Every %d minutes", comment: "Keep-alive retry interval option"),
-        Int(interval / 60))
+      return PluralizedString.format("retry.minutes", Int(interval / 60))
     }
   }
 
@@ -99,10 +93,7 @@ struct GeneralSettingsView: View {
     } else if persistence.blockAtStartup {
       if persistence.startupRuleCount > 0 {
         Label(
-          String(
-            format: NSLocalizedString(
-              "Blocked at startup: %d disk(s).", comment: "Startup rule count in Settings"),
-            persistence.startupRuleCount),
+          PluralizedString.format("startup.blocked.count", persistence.startupRuleCount),
           systemImage: "checkmark.circle.fill"
         )
         .font(.caption)

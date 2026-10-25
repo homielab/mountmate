@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Counts and durations in the interface (blocked disks, imported shares, retry intervals, the idle-unmount notice) now use proper plural forms, including the three forms Russian and Ukrainian need ("1 диск", "2 диска", "5 дисков") and "Every 1 minute" instead of "Every 1 minutes". Failed mount, unmount and eject alerts are now complete translated sentences instead of a sentence with a translated verb inserted, which read wrongly in French, Russian, Ukrainian and Vietnamese.
 - Refreshing the drive list no longer starts a `diskutil info` process for every disk each time: information about disks that are still attached unchanged is reused for 30 seconds, so refreshes use less CPU and wake sleeping hard drives less often. Newly attached or reformatted disks are still read immediately.
 - Clearer messages when an SMB or AFP share fails to mount: MountMate now tells apart a wrong password, an expired or restricted account, a share the account may not use, an unsupported sign-in method or SMB version and a refused connection, hints how to enter a Windows domain login (`DOMAIN\user` or `user@domain`), and shows the original error code (for example `Error code: 80 (EAUTH)`). The code is also written to the log.
 - "Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.

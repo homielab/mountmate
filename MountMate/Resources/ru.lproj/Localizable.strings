@@ -139,16 +139,10 @@
 "Details" = "Детали";
 
 // Verbs for error messages
-"unmount" = "отмонтировать";
-"eject" = "извлечь";
-"mount" = "смонтировать";
 
 // Error Messages & Formats
 "The “EFI” partition cannot be mounted directly. This is a special system partition and this behavior is normal." = "Раздел «EFI» нельзя смонтировать напрямую. Это специальный системный раздел, и такое поведение является нормальным.";
 "Failed to eject “%@” because one of its volumes is busy or in use." = "Не удалось извлечь «%@», потому что один из его томов занят или используется.";
-"Failed to %@ “%@” because it is currently in use by another application." = "Не удалось %@ «%@», потому что он используется другим приложением.";
-"Failed to %@ “%@” because it is currently in use by “%@”." = "Не удалось %@ «%@», потому что он используется приложением «%@».";
-"An unknown error occurred while trying to %@ “%@”." = "Произошла неизвестная ошибка при попытке %@ «%@».";
 "Enter the password to unlock “%@”" = "Введите пароль, чтобы разблокировать «%@»";
 "Password" = "Пароль";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Чтобы убедиться, что MountMate видит все типы дисков и предотвращает ошибки, предоставьте полный доступ к дискам.\n\nНажмите «Открыть системные настройки», чтобы перейти к соответствующей панели.";
@@ -251,8 +245,6 @@
 "Retry Interval" = "Интервал повторных попыток";
 "Remount on Network Change" = "Перемонтировать при смене сети";
 "Reconnect After Sleep" = "Переподключать после сна";
-"Every %d seconds" = "Каждые %d сек.";
-"Every %d minutes" = "Каждые %d мин.";
 "Keep Alive Footer" = "Автоподключение повторно монтирует сетевые ресурсы и тома с включённой опцией «Держать подключённым» при обрыве связи, после смены сети, при пробуждении и при входе в систему.";
 "Keep Mounted" = "Держать подключённым";
 "Reconnecting…" = "Переподключение…";
@@ -272,7 +264,6 @@
 "System Mount Rule Update Failed" = "MountMate не удалось обновить системное правило монтирования в /etc/fstab. После перезагрузки блокировка автоматического монтирования может работать не так, как ожидается.\n\nПодробности:\n%@";
 "System Mount Rule Admin Prompt" = "MountMate необходимо обновить системные правила подключения (/etc/fstab).";
 "“%@” is now blocked at startup." = "«%@» теперь блокируется при запуске.";
-"%d disks are now blocked at startup." = "Дисков, блокируемых при запуске: %d.";
 "Startup block removed." = "Блокировка при запуске снята.";
 "Block at Startup is off. All startup rules were removed." = "Блокировка при запуске выключена. Все правила запуска удалены.";
 "Startup blocking updated." = "Блокировка при запуске обновлена.";
@@ -280,7 +271,6 @@
 "“%@” will mount at its default location again." = "«%@» снова будет подключаться в стандартное место.";
 "“%@” will now mount at %@." = "«%@» теперь будет подключаться в %@.";
 "Updating startup rules…" = "Обновление правил запуска…";
-"Blocked at startup: %d disk(s)." = "Блокируется при запуске: %d диск(ов).";
 "No disk has a startup rule yet. Blocked disks get one the next time they're connected." = "Пока ни у одного диска нет правила запуска. Заблокированные диски получат его при следующем подключении.";
 "Administrator Password Needed" = "Требуется пароль администратора";
 "The password was incorrect. Try again." = "Неверный пароль. Попробуйте ещё раз.";
@@ -324,7 +314,6 @@
 "Volume Not Connected" = "Том не подключён";
 "Import Mounted" = "Импортировать подключённые";
 "Import SMB shares that are currently mounted in Finder" = "Импортировать SMB-ресурсы, подключённые сейчас в Finder";
-"Imported %d mounted share(s). Add credentials by editing each share." = "Импортировано подключённых ресурсов: %d. Добавьте учётные данные, отредактировав каждый ресурс.";
 "No mounted SMB shares were found." = "Подключённые SMB-ресурсы не найдены.";
 "Those mounted shares are already in MountMate." = "Эти подключённые ресурсы уже есть в MountMate.";
 "Access to the share “%@” was denied by the server." = "Сервер отказал в доступе к ресурсу «%@».";
@@ -389,4 +378,12 @@
 "After %d min Without Use" = "Через %d мин без использования";
 "No Volumes Unmounted When Idle" = "Нет томов, отключаемых при простое";
 "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Нажмите правой кнопкой на том внешнего диска и выберите «Отключать при простое», чтобы отключать его после нескольких минут без чтения и записи. Том, который ещё используется, остаётся подключённым, и попытка повторяется позже.";
-"“%@” was unmounted after %d min without use." = "«%@» отключён после %d мин без использования.";
+"Failed to mount “%@” because it is currently in use by “%@”." = "Не удалось смонтировать «%@», потому что он используется приложением «%@».";
+"Failed to mount “%@” because it is currently in use by another application." = "Не удалось смонтировать «%@», потому что он используется другим приложением.";
+"An unknown error occurred while trying to mount “%@”." = "Произошла неизвестная ошибка при попытке смонтировать «%@».";
+"Failed to unmount “%@” because it is currently in use by “%@”." = "Не удалось отмонтировать «%@», потому что он используется приложением «%@».";
+"Failed to unmount “%@” because it is currently in use by another application." = "Не удалось отмонтировать «%@», потому что он используется другим приложением.";
+"An unknown error occurred while trying to unmount “%@”." = "Произошла неизвестная ошибка при попытке отмонтировать «%@».";
+"Failed to eject “%@” because it is currently in use by “%@”." = "Не удалось извлечь «%@», потому что он используется приложением «%@».";
+"Failed to eject “%@” because it is currently in use by another application." = "Не удалось извлечь «%@», потому что он используется другим приложением.";
+"An unknown error occurred while trying to eject “%@”." = "Произошла неизвестная ошибка при попытке извлечь «%@».";

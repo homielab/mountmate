@@ -204,11 +204,7 @@ final class IdleUnmountManager {
     DriveManager.shared.unmountIdleVolume(volume) { succeeded in
       guard succeeded else { return }
       FeedbackHUD.show(
-        String(
-          format: NSLocalizedString(
-            "“%@” was unmounted after %d min without use.",
-            comment: "HUD after Unmount When Idle; volume name, minutes"),
-          volume.name, idleMinutes),
+        PluralizedString.format("idle.unmounted", volume.name, idleMinutes),
         systemImage: "moon.zzz.fill")
     }
   }

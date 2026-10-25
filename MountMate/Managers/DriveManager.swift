@@ -1499,34 +1499,51 @@ class DriveManager: ObservableObject {
       }
     case .mountInUseVolume(let process), .unmountInUseVolume(let process),
       .ejectInUseVolume(let process):
-      let verb: String
       switch parsedError {
       case .mountInUseVolume:
         title = NSLocalizedString("Mount Failed", comment: "Alert title")
-        verb = NSLocalizedString("mount", comment: "verb")
       case .unmountInUseVolume:
         title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-        verb = NSLocalizedString("unmount", comment: "verb")
       default:
         title = NSLocalizedString("Eject Failed", comment: "Alert title")
-        verb = NSLocalizedString("eject", comment: "verb")
       }
 
-      if let proc = process {
-        message =
-          String(
-            format: NSLocalizedString(
-              "Failed to %@ “%@” because it is currently in use by “%@”.",
-              comment: "Error message"), verb, name, proc) + "\n\n"
-          + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
-      } else {
-        message =
-          String(
-            format: NSLocalizedString(
-              "Failed to %@ “%@” because it is currently in use by another application.",
-              comment: "Error message"), verb, name) + "\n\n"
-          + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
+      let summary: String
+      switch (parsedError, process) {
+      case (.mountInUseVolume, let proc?):
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to mount “%@” because it is currently in use by “%@”.",
+            comment: "Error message"), name, proc)
+      case (.mountInUseVolume, nil):
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to mount “%@” because it is currently in use by another application.",
+            comment: "Error message"), name)
+      case (.unmountInUseVolume, let proc?):
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to unmount “%@” because it is currently in use by “%@”.",
+            comment: "Error message"), name, proc)
+      case (.unmountInUseVolume, nil):
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to unmount “%@” because it is currently in use by another application.",
+            comment: "Error message"), name)
+      case (_, let proc?):
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to eject “%@” because it is currently in use by “%@”.",
+            comment: "Error message"), name, proc)
+      default:
+        summary = String(
+          format: NSLocalizedString(
+            "Failed to eject “%@” because it is currently in use by another application.",
+            comment: "Error message"), name)
       }
+      message =
+        summary + "\n\n"
+        + NSLocalizedString("Details", comment: "Error details prefix") + ":\n" + error
 
       if operation == .eject, let disk = disk {
         kind = .forceEject { self.forceEject(disk: disk) }
@@ -1536,20 +1553,29 @@ class DriveManager: ObservableObject {
         kind = .basic
       }
     case .other:
-      let verb: String
+      let unknownError: String
       switch operation {
       case .mount:
         title = NSLocalizedString("Mount Failed", comment: "Alert title")
-        verb = NSLocalizedString("mount", comment: "verb")
+        unknownError = String(
+          format: NSLocalizedString(
+            "An unknown error occurred while trying to mount “%@”.", comment: "Error message"),
+          name)
       case .unmount:
         title = NSLocalizedString("Unmount Failed", comment: "Alert title")
-        verb = NSLocalizedString("unmount", comment: "verb")
+        unknownError = String(
+          format: NSLocalizedString(
+            "An unknown error occurred while trying to unmount “%@”.", comment: "Error message"),
+          name)
       case .eject:
         title = NSLocalizedString("Eject Failed", comment: "Alert title")
-        verb = NSLocalizedString("eject", comment: "verb")
+        unknownError = String(
+          format: NSLocalizedString(
+            "An unknown error occurred while trying to eject “%@”.", comment: "Error message"),
+          name)
       }
       message =
-        "\(String(format: NSLocalizedString("An unknown error occurred while trying to %@ “%@”.", comment: "Error message"), verb, name))\n\n"
+        "\(unknownError)\n\n"
         + NSLocalizedString("Details", comment: "Error details prefix") + ":\n\(error)"
       kind = .basic
     }

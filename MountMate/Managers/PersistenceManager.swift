@@ -680,10 +680,7 @@ class PersistenceManager: ObservableObject {
           change.addedNames[0])
       }
       if change.removedCount == 0 {
-        return String(
-          format: NSLocalizedString(
-            "%d disks are now blocked at startup.", comment: "Startup rules added for several disks"),
-          change.addedNames.count)
+        return PluralizedString.format("startup.blocked.added", change.addedNames.count)
       }
       if change.addedNames.isEmpty {
         return enabled
