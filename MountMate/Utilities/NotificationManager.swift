@@ -1,0 +1,258 @@
+//  Created by homielab.com
+
+import AppKit
+import Combine
+import UserNotifications
+
+/// Decides when a background event is worth a notification, so a target
+/// that stays down produces one notice per outage instead of one per retry.
+///
+/// A failure is announced once, when a target has failed
+/// `failuresBeforeNotice` attempts in a row (one failed attempt right after
+/// wake, before the network is back, stays quiet). A success is announced
+/// only for a target whose failure was announced, and starts a new outage.
+/// Not thread-safe: use from one queue (the main queue in the app).
+struct BackgroundEventThrottle {
+  let failuresBeforeNotice: Int
+
+  private var failureCounts: [String: Int] = [:]
+  private var announcedFailures: Set<String> = []
+
+  init(failuresBeforeNotice: Int = 2) {
+    self.failuresBeforeNotice = max(1, failuresBeforeNotice)
+  }
+
+  /// Records a failed attempt; true when this failure should be announced.
+  mutating func recordFailure(_ key: String) -> Bool {
+    guard !announcedFailures.contains(key) else { return false }
+    let count = (failureCounts[key] ?? 0) + 1
+    failureCounts[key] = count
+    guard count >= failuresBeforeNotice else { return false }
+    announcedFailures.insert(key)
+    return true
+  }
+
+  /// Records a success; true when the target recovers from an announced
+  /// failure.
+  mutating func recordSuccess(_ key: String) -> Bool {
+    failureCounts.removeValue(forKey: key)
+    return announcedFailures.remove(key) != nil
+  }
+
+  /// Drops a target's history without announcing anything (the user
+  /// unmounted it, or keep-alive was turned off).
+  mutating func forget(_ key: String) {
+    failureCounts.removeValue(forKey: key)
+    announcedFailures.remove(key)
+  }
+
+  mutating func reset() {
+    failureCounts.removeAll()
+    announcedFailures.removeAll()
+  }
+
+  /// Whether a failure is currently announced for the target. For tests.
+  func hasAnnouncedFailure(_ key: String) -> Bool {
+    announcedFailures.contains(key)
+  }
+}
+
+/// Optional macOS notifications for events that happen in the background:
+/// keep-alive reconnect failures and recoveries, blocked volumes that could
+/// not be unmounted, unmount-on-sleep running out of time, and idle unmounts.
+///
+/// Off by default. Permission is requested only when the user turns the
+/// setting on. Main thread only.
+final class NotificationManager: NSObject, ObservableObject {
+  static let shared = NotificationManager()
+
+  static let enabledKey = "notificationsEnabled"
+
+  /// The user's "Notifications" setting.
+  @Published var isEnabled: Bool {
+    didSet {
+      guard oldValue != isEnabled else { return }
+      UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey)
+      if isEnabled {
+        requestAuthorization()
+      } else {
+        keepAliveThrottle.reset()
+      }
+    }
+  }
+
+  /// Whether macOS lets MountMate show notifications: false after the user
+  /// declined the prompt or turned them off in System Settings.
+  @Published private(set) var isDeniedBySystem = false
+
+  private var isAuthorized = false
+  private var keepAliveThrottle = BackgroundEventThrottle()
+  private var cancellables = Set<AnyCancellable>()
+
+  private var center: UNUserNotificationCenter { .current() }
+
+  private override init() {
+    isEnabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+    super.init()
+  }
+
+  /// Called once at launch: becomes the notification center's delegate and
+  /// reads the current permission.
+  func start() {
+    center.delegate = self
+    if isEnabled { refreshAuthorizationStatus() }
+    // Permission can change in System Settings while MountMate runs.
+    NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+      .sink { [weak self] _ in
+        guard let self, self.isEnabled else { return }
+        self.refreshAuthorizationStatus()
+      }
+      .store(in: &cancellables)
+  }
+
+  /// True when a notification would be shown right now.
+  var canDeliver: Bool { isEnabled && isAuthorized }
+
+  func openSystemNotificationSettings() {
+    let identifier = Bundle.main.bundleIdentifier ?? "com.homielab.mountmate"
+    let pane = "x-apple.systempreferences:com.apple.Notifications-Settings.extension"
+    let url =
+      URL(string: "\(pane)?id=\(identifier)")
+      ?? URL(fileURLWithPath: "/System/Library/PreferencePanes/Notifications.prefPane")
+    NSWorkspace.shared.open(url)
+  }
+
+  // MARK: - Events
+
+  /// A keep-alive attempt for a share or volume finished.
+  func keepAliveResult(targetID: String, name: String, success: Bool) {
+    guard isEnabled else { return }
+    if success {
+      guard keepAliveThrottle.recordSuccess(targetID) else { return }
+      post(
+        id: "keepAlive.\(targetID)",
+        title: NSLocalizedString("Reconnected", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%@” is mounted again.", comment: "Notification: keep-alive reconnected a mount"),
+          name))
+    } else {
+      guard keepAliveThrottle.recordFailure(targetID) else { return }
+      post(
+        id: "keepAlive.\(targetID)",
+        title: NSLocalizedString("Cannot Reconnect", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "MountMate couldn't reconnect “%@”. It will keep trying.",
+            comment: "Notification: keep-alive reconnect failed"),
+          name))
+    }
+  }
+
+  /// The user unmounted a keep-alive target, or it left keep-alive: forget
+  /// its outage without announcing a recovery.
+  func keepAliveForget(targetID: String) {
+    keepAliveThrottle.forget(targetID)
+  }
+
+  func keepAliveReset() {
+    keepAliveThrottle.reset()
+  }
+
+  /// A blocked volume mounted before MountMate started could not be
+  /// unmounted.
+  func blockedVolumeStillMounted(name: String, volumeUUID: String) {
+    post(
+      id: "blocked.\(volumeUUID)",
+      title: NSLocalizedString("Blocked Disk Still Mounted", comment: "Notification title"),
+      body: String(
+        format: NSLocalizedString(
+          "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use.",
+          comment: "Notification: blocked volume could not be unmounted at startup"),
+        name))
+  }
+
+  /// "Unmount All Disks on Sleep" had not finished when sleep was allowed.
+  func sleepUnmountTimedOut() {
+    post(
+      id: "sleepUnmount",
+      title: NSLocalizedString("Unmount Before Sleep Unfinished", comment: "Notification title"),
+      body: NSLocalizedString(
+        "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them.",
+        comment: "Notification: unmount on sleep timed out"))
+  }
+
+  /// A volume was unmounted by "Unmount When Idle". Returns false when no
+  /// notification is shown, so the caller can fall back to its own feedback.
+  @discardableResult
+  func idleUnmounted(message: String, volumeID: String) -> Bool {
+    guard canDeliver else { return false }
+    post(
+      id: "idle.\(volumeID)",
+      title: NSLocalizedString("Unmount When Idle", comment: "Notification title"),
+      body: message)
+    return true
+  }
+
+  // MARK: - Delivery
+
+  /// Shows a notification when the setting is on and macOS allows it. A new
+  /// notification with the same id replaces the previous one.
+  private func post(id: String, title: String, body: String) {
+    guard isEnabled else { return }
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
+    let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
+    center.add(request) { error in
+      if let error {
+        Log.app.error(
+          "Could not show notification: \(error.localizedDescription, privacy: .public)")
+      }
+    }
+  }
+
+  private func requestAuthorization() {
+    center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, error in
+      if let error {
+        Log.app.error(
+          "Notification permission request failed: \(error.localizedDescription, privacy: .public)")
+      }
+      DispatchQueue.main.async {
+        self?.isAuthorized = granted
+        self?.isDeniedBySystem = !granted
+      }
+    }
+  }
+
+  private func refreshAuthorizationStatus() {
+    center.getNotificationSettings { [weak self] settings in
+      let status = settings.authorizationStatus
+      DispatchQueue.main.async {
+        guard let self else { return }
+        switch status {
+        case .notDetermined:
+          // Turned on in an earlier version of the settings or the prompt
+          // never answered: ask again.
+          self.requestAuthorization()
+        case .denied:
+          self.isAuthorized = false
+          self.isDeniedBySystem = true
+        default:
+          self.isAuthorized = true
+          self.isDeniedBySystem = false
+        }
+      }
+    }
+  }
+}
+
+extension NotificationManager: UNUserNotificationCenterDelegate {
+  /// Show banners even while MountMate's menu or settings are open.
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .list])
+  }
+}

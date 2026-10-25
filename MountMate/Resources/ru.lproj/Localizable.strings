@@ -389,3 +389,17 @@
 "An unknown error occurred while trying to eject “%@”." = "Произошла неизвестная ошибка при попытке извлечь «%@».";
 "Accessibility Busy" = "Выполняется";
 "Accessibility Error" = "Ошибка";
+
+/* Notifications */
+"Notifications" = "Уведомления";
+"Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle." = "Сообщает, когда автоподключение не может переподключить ресурс и когда он снова доступен, когда не удалось отмонтировать заблокированный диск, когда отмонтирование перед сном заняло слишком много времени и когда том отмонтирован из-за простоя.";
+"Notifications for MountMate are turned off in System Settings." = "Уведомления MountMate отключены в Системных настройках.";
+"Open Notification Settings" = "Открыть настройки уведомлений";
+"Reconnected" = "Переподключено";
+"“%@” is mounted again." = "«%@» снова подключён.";
+"Cannot Reconnect" = "Не удаётся переподключить";
+"MountMate couldn't reconnect “%@”. It will keep trying." = "MountMate не удалось переподключить «%@». Попытки продолжатся.";
+"Blocked Disk Still Mounted" = "Заблокированный диск всё ещё подключён";
+"MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate не удалось отмонтировать заблокированный том «%@», вероятно, он используется.";
+"Unmount Before Sleep Unfinished" = "Отмонтирование перед сном не завершено";
+"Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Некоторые диски ещё отмонтировались, когда Mac перешёл в режим сна. Убедитесь, что они отмонтированы, прежде чем отключать их.";

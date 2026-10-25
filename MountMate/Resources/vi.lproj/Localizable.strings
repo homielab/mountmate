@@ -389,3 +389,17 @@
 "An unknown error occurred while trying to eject “%@”." = "Đã xảy ra lỗi không xác định khi cố gắng đẩy ra “%@”.";
 "Accessibility Busy" = "Đang xử lý";
 "Accessibility Error" = "Lỗi";
+
+/* Notifications */
+"Notifications" = "Thông báo";
+"Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle." = "Thông báo khi Tự động kết nối lại không thể kết nối lại một ổ hoặc khi ổ đã kết nối lại, khi không tháo được một ổ đĩa bị chặn, khi việc tháo ổ trước lúc ngủ mất quá lâu, và khi một ổ được tháo vì không sử dụng.";
+"Notifications for MountMate are turned off in System Settings." = "Thông báo của MountMate đang bị tắt trong Cài đặt hệ thống.";
+"Open Notification Settings" = "Mở cài đặt thông báo";
+"Reconnected" = "Đã kết nối lại";
+"“%@” is mounted again." = "“%@” đã được gắn kết lại.";
+"Cannot Reconnect" = "Không thể kết nối lại";
+"MountMate couldn't reconnect “%@”. It will keep trying." = "MountMate không thể kết nối lại “%@”. Ứng dụng sẽ tiếp tục thử.";
+"Blocked Disk Still Mounted" = "Ổ đĩa bị chặn vẫn đang gắn kết";
+"MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate không thể tháo ổ đĩa bị chặn “%@”, có thể do ổ đang được sử dụng.";
+"Unmount Before Sleep Unfinished" = "Chưa tháo xong trước khi ngủ";
+"Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Một số ổ đĩa vẫn đang được tháo khi máy Mac chuyển sang chế độ ngủ. Hãy kiểm tra chúng đã được tháo trước khi rút ra.";

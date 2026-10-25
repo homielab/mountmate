@@ -174,6 +174,7 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingShareIDs.remove(shareID)
+      NotificationManager.shared.keepAliveForget(targetID: Self.notificationKey(shareID: shareID))
     }
   }
 
@@ -188,6 +189,8 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingVolumeIDs.remove(compositeId)
+      NotificationManager.shared.keepAliveForget(
+        targetID: Self.notificationKey(volumeID: compositeId))
     }
   }
 
@@ -203,6 +206,9 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingVolumeIDs.subtract(ids)
+      for id in ids {
+        NotificationManager.shared.keepAliveForget(targetID: Self.notificationKey(volumeID: id))
+      }
     }
   }
 
@@ -393,7 +399,7 @@ class KeepAliveManager: ObservableObject {
           self.reconnectingShareIDs.insert(share.id)
         }
         NetworkMountManager.shared.forceRemount(share: share) { [weak self] success in
-          self?.recordResult(shareID: share.id, success: success)
+          self?.recordResult(shareID: share.id, name: share.name, success: success)
           if success {
             Log.keepAlive.notice(
               "Remounted \(share.name, privacy: .private) through the new network interface.")
@@ -435,6 +441,7 @@ class KeepAliveManager: ObservableObject {
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingShareIDs.removeAll()
       self?.reconnectingVolumeIDs.removeAll()
+      NotificationManager.shared.keepAliveReset()
     }
   }
 
@@ -478,7 +485,11 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.withLock { shareRetryState[shareID]?.nextFireDate }
   }
 
-  private func recordResult(shareID: UUID, success: Bool) {
+  /// Notification throttle keys: one per keep-alive target.
+  static func notificationKey(shareID: UUID) -> String { "share.\(shareID.uuidString)" }
+  static func notificationKey(volumeID: String) -> String { "volume.\(volumeID)" }
+
+  private func recordResult(shareID: UUID, name: String, success: Bool) {
     // A share the user ejected in the meantime is not "reconnecting".
     let clear = success || isSuppressed(shareID: shareID)
     retryStateLock.lock()
@@ -497,10 +508,16 @@ class KeepAliveManager: ObservableObject {
       } else if !clear, !isReconnecting {
         self.reconnectingShareIDs.insert(shareID)
       }
+      let key = Self.notificationKey(shareID: shareID)
+      if success || !clear {
+        NotificationManager.shared.keepAliveResult(targetID: key, name: name, success: success)
+      } else {
+        NotificationManager.shared.keepAliveForget(targetID: key)
+      }
     }
   }
 
-  private func recordResult(volumeID: String, success: Bool) {
+  private func recordResult(volumeID: String, name: String, success: Bool) {
     retryStateLock.lock()
     if success {
       volumeRetryState.removeValue(forKey: volumeID)
@@ -508,13 +525,15 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      // Only publish real changes (see recordResult(shareID:success:)).
+      // Only publish real changes (see recordResult(shareID:name:success:)).
       let isReconnecting = self.reconnectingVolumeIDs.contains(volumeID)
       if success, isReconnecting {
         self.reconnectingVolumeIDs.remove(volumeID)
       } else if !success, !isReconnecting {
         self.reconnectingVolumeIDs.insert(volumeID)
       }
+      NotificationManager.shared.keepAliveResult(
+        targetID: Self.notificationKey(volumeID: volumeID), name: name, success: success)
     }
   }
 
@@ -604,7 +623,7 @@ class KeepAliveManager: ObservableObject {
 
     for share in shares {
       if mountedIDs.contains(share.id) {
-        recordResult(shareID: share.id, success: true)
+        recordResult(shareID: share.id, name: share.name, success: true)
         continue
       }
       guard !isSuppressed(shareID: share.id) else { continue }
@@ -617,7 +636,7 @@ class KeepAliveManager: ObservableObject {
       // user suppression intact.
       NetworkMountManager.shared.mount(share: share, userInitiated: false) {
         [weak self] success, error in
-        self?.recordResult(shareID: share.id, success: success)
+        self?.recordResult(shareID: share.id, name: share.name, success: success)
         if success {
           Log.keepAlive.notice("Remounted \(share.name, privacy: .private).")
         } else {
@@ -644,7 +663,7 @@ class KeepAliveManager: ObservableObject {
     for volume in candidateVolumes {
       guard let compositeId = volume.compositeId else { continue }
       if volume.isMounted {
-        recordResult(volumeID: compositeId, success: true)
+        recordResult(volumeID: compositeId, name: volume.name, success: true)
         continue
       }
       guard !isSuppressed(volumeID: compositeId) else { continue }
@@ -664,7 +683,7 @@ class KeepAliveManager: ObservableObject {
           .flatMap(\.allVolumes)
           .first(where: { $0.compositeId == compositeId })?
           .isMounted == false
-        self?.recordResult(volumeID: compositeId, success: !stillDown)
+        self?.recordResult(volumeID: compositeId, name: volume.name, success: !stillDown)
         group.leave()
       }
     }

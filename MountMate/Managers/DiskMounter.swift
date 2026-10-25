@@ -405,6 +405,11 @@ class DiskMounter: ObservableObject {
           )
           if attempt < 3 {
             Thread.sleep(forTimeInterval: 3.0)
+          } else {
+            DispatchQueue.main.async {
+              NotificationManager.shared.blockedVolumeStillMounted(
+                name: info.name, volumeUUID: volumeUUID)
+            }
           }
         }
       }

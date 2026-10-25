@@ -9,6 +9,7 @@ struct GeneralSettingsView: View {
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @ObservedObject private var hotkeyManager = HotkeyManager.shared
   @ObservedObject private var persistence = PersistenceManager.shared
+  @ObservedObject private var notificationManager = NotificationManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage("showInternalDisks") private var showInternalDisks = false
@@ -164,6 +165,26 @@ struct GeneralSettingsView: View {
         startupBlockStatus
         Toggle(isOn: $ejectOnSleepEnabled) {
           Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
+        }
+        Toggle(isOn: $notificationManager.isEnabled) {
+          Label("Notifications", systemImage: "bell.badge")
+        }
+        .help(
+          "Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle."
+        )
+        if notificationManager.isEnabled, notificationManager.isDeniedBySystem {
+          HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+              .foregroundStyle(.orange)
+              .accessibilityHidden(true)
+            Text("Notifications for MountMate are turned off in System Settings.")
+              .font(.caption)
+            Spacer()
+            Button("Open Notification Settings") {
+              notificationManager.openSystemNotificationSettings()
+            }
+            .controlSize(.small)
+          }
         }
       } header: {
         Label("Behavior", systemImage: "gearshape")

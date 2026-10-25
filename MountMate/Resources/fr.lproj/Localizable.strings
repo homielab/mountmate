@@ -389,3 +389,17 @@
 "An unknown error occurred while trying to eject “%@”." = "Une erreur inconnue s'est produite lors de la tentative de éjecter « %@ ».";
 "Accessibility Busy" = "En cours";
 "Accessibility Error" = "Erreur";
+
+/* Notifications */
+"Notifications" = "Notifications";
+"Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle." = "Vous avertit quand le maintien actif ne parvient pas à reconnecter un montage et quand il est rétabli, quand un disque bloqué n’a pas pu être démonté, quand le démontage avant la mise en veille a pris trop de temps et quand un volume est démonté car inutilisé.";
+"Notifications for MountMate are turned off in System Settings." = "Les notifications de MountMate sont désactivées dans Réglages Système.";
+"Open Notification Settings" = "Ouvrir les réglages de notifications";
+"Reconnected" = "Reconnecté";
+"“%@” is mounted again." = "« %@ » est de nouveau monté.";
+"Cannot Reconnect" = "Reconnexion impossible";
+"MountMate couldn't reconnect “%@”. It will keep trying." = "MountMate n’a pas pu reconnecter « %@ ». Il va continuer d’essayer.";
+"Blocked Disk Still Mounted" = "Disque bloqué toujours monté";
+"MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate n’a pas pu démonter le volume bloqué « %@ », probablement parce qu’il est utilisé.";
+"Unmount Before Sleep Unfinished" = "Démontage avant la veille inachevé";
+"Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Certains disques étaient encore en cours de démontage lorsque le Mac s’est mis en veille. Vérifiez qu’ils sont démontés avant de les déconnecter.";

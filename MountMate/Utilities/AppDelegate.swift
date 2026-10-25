@@ -27,6 +27,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     setupErrorObserver()
     setupSleepObserver()
     checkAndRequestFullDiskAccessIfNeeded()
+    NotificationManager.shared.start()
     // Starts the keep-alive scheduler (reconnect sweeps, network and wake
     // monitoring) and the login mount for network shares.
     KeepAliveManager.shared.sweepNow()
@@ -125,7 +126,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
       // Cap the delay: a hung unmount must not keep the Mac awake.
       DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepUnmountTimeout) {
-        if !hasAllowed { Log.app.error("Unmount on sleep still running; allowing sleep anyway.") }
+        if !hasAllowed {
+          Log.app.error("Unmount on sleep still running; allowing sleep anyway.")
+          NotificationManager.shared.sleepUnmountTimedOut()
+        }
         allowSleep()
       }
       // The unmount is not a user decision — keep-alive targets reconnect on

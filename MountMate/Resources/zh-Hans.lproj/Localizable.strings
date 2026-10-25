@@ -389,3 +389,17 @@
 "An unknown error occurred while trying to eject “%@”." = "尝试推出“%@”时发生未知错误。";
 "Accessibility Busy" = "进行中";
 "Accessibility Error" = "错误";
+
+/* Notifications */
+"Notifications" = "通知";
+"Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle." = "在“保持活跃”无法重新连接挂载项及其恢复时、无法推出被阻止的磁盘时、睡眠前推出耗时过长时，以及卷因闲置而被推出时通知你。";
+"Notifications for MountMate are turned off in System Settings." = "MountMate 的通知已在“系统设置”中关闭。";
+"Open Notification Settings" = "打开通知设置";
+"Reconnected" = "已重新连接";
+"“%@” is mounted again." = "“%@”已重新挂载。";
+"Cannot Reconnect" = "无法重新连接";
+"MountMate couldn't reconnect “%@”. It will keep trying." = "MountMate 无法重新连接“%@”，将继续尝试。";
+"Blocked Disk Still Mounted" = "被阻止的磁盘仍处于挂载状态";
+"MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate 无法推出被阻止的卷“%@”，可能是因为它正在使用中。";
+"Unmount Before Sleep Unfinished" = "睡眠前推出未完成";
+"Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Mac 进入睡眠时部分磁盘仍在推出中。断开连接前请确认它们已推出。";

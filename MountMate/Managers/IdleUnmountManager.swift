@@ -203,9 +203,12 @@ final class IdleUnmountManager {
     else { return }
     DriveManager.shared.unmountIdleVolume(volume) { succeeded in
       guard succeeded else { return }
-      FeedbackHUD.show(
-        PluralizedString.format("idle.unmounted", volume.name, idleMinutes),
-        systemImage: "moon.zzz.fill")
+      let message = PluralizedString.format("idle.unmounted", volume.name, idleMinutes)
+      // With notifications on, the notice stays in Notification Center for a
+      // user who was away; otherwise show the short-lived HUD as before.
+      guard !NotificationManager.shared.idleUnmounted(message: message, volumeID: volumeID)
+      else { return }
+      FeedbackHUD.show(message, systemImage: "moon.zzz.fill")
     }
   }
 

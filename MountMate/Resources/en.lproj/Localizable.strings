@@ -389,3 +389,17 @@
 "An unknown error occurred while trying to eject “%@”." = "An unknown error occurred while trying to eject “%@”.";
 "Accessibility Busy" = "In progress";
 "Accessibility Error" = "Error";
+
+/* Notifications */
+"Notifications" = "Notifications";
+"Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle." = "Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle.";
+"Notifications for MountMate are turned off in System Settings." = "Notifications for MountMate are turned off in System Settings.";
+"Open Notification Settings" = "Open Notification Settings";
+"Reconnected" = "Reconnected";
+"“%@” is mounted again." = "“%@” is mounted again.";
+"Cannot Reconnect" = "Cannot Reconnect";
+"MountMate couldn't reconnect “%@”. It will keep trying." = "MountMate couldn't reconnect “%@”. It will keep trying.";
+"Blocked Disk Still Mounted" = "Blocked Disk Still Mounted";
+"MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use.";
+"Unmount Before Sleep Unfinished" = "Unmount Before Sleep Unfinished";
+"Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them.";
