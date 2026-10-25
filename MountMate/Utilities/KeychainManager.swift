@@ -4,7 +4,7 @@ import Foundation
 import Security
 
 /// What a saved password unlocks. Shown as the item's kind in Keychain Access.
-enum KeychainItemKind {
+enum KeychainItemKind: Sendable {
   case apfsVolume
   case networkShare
 
@@ -26,13 +26,13 @@ protocol PasswordStore {
   func delete(account: String) -> OSStatus
 }
 
-class KeychainManager: PasswordStore {
+final class KeychainManager: PasswordStore, Sendable {
   static let shared = KeychainManager()
   static let serviceName = "com.homielab.mountmate"
 
   /// Outcome of reading a password, distinguishing "nothing saved" from a
   /// real failure (locked keychain, denied access, …).
-  enum ReadResult {
+  enum ReadResult: Sendable {
     case found(String)
     case notFound
     case failed(OSStatus)

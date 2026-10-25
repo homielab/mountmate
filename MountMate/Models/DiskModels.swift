@@ -2,13 +2,13 @@
 
 import Foundation
 
-enum PhysicalDiskType: Equatable {
+enum PhysicalDiskType: Equatable, Sendable {
   case internalDisk
   case physical
   case diskImage
 }
 
-enum DriveCategory: Equatable {
+enum DriveCategory: Equatable, Sendable {
   case user
   case system
 }
@@ -69,12 +69,12 @@ enum DiskTopology {
   }
 }
 
-struct APFSSnapshot: Identifiable, Hashable {
+struct APFSSnapshot: Identifiable, Hashable, Sendable {
   let id: String  // UUID
   let name: String
 }
 
-struct Volume: Identifiable, Hashable {
+struct Volume: Identifiable, Hashable, Sendable {
   let id: String  // UUID
   let deviceIdentifier: String
   let diskUUID: String?
@@ -144,12 +144,12 @@ struct Volume: Identifiable, Hashable {
   }
 }
 
-struct APFSContainer: Identifiable, Hashable {
+struct APFSContainer: Identifiable, Hashable, Sendable {
   let id: String  // deviceIdentifier
   var volumes: [Volume]
 }
 
-struct PhysicalDisk: Identifiable, Equatable {
+struct PhysicalDisk: Identifiable, Equatable, Sendable {
   let id: String  // deviceIdentifier
   let diskUUID: String?
   let connectionType: String

@@ -12,15 +12,15 @@ import IOKit
 /// counters of its block storage driver (the numbers `iostat` shows). Any
 /// read or write on the disk, by any volume or process, counts as use.
 /// Reading the counters never touches the disk itself.
-struct IdleUnmountTracker {
+struct IdleUnmountTracker: Sendable {
   /// Completed read/write operations of a whole disk since it attached.
-  struct Activity: Equatable {
+  struct Activity: Equatable, Sendable {
     let reads: UInt64
     let writes: UInt64
   }
 
   /// A mounted volume with an idle timeout.
-  struct Candidate: Equatable {
+  struct Candidate: Equatable, Sendable {
     /// `Volume.id`.
     let volumeID: String
     /// BSD name of the physical whole disk, e.g. "disk4".

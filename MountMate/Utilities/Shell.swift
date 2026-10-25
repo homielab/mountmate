@@ -4,7 +4,7 @@ import Foundation
 
 // MARK: - Result Type
 
-struct ProcessResult {
+struct ProcessResult: Sendable {
   /// Trimmed standard output.
   let stdout: String
   /// Trimmed standard error.

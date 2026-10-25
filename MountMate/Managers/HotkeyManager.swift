@@ -7,7 +7,7 @@ import Foundation
 
 // MARK: - Shortcut Model
 
-struct HotkeyShortcut: Equatable {
+struct HotkeyShortcut: Equatable, Sendable {
   let keyCode: UInt16
   let modifiers: NSEvent.ModifierFlags
 
@@ -162,7 +162,7 @@ final class SystemKeyboardLayout: KeyboardLayoutProviding {
   }
 }
 
-enum HotkeyAction: Hashable, CaseIterable {
+enum HotkeyAction: Hashable, CaseIterable, Sendable {
   case unmountAll
   case mountAll
 

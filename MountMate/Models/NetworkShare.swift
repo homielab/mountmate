@@ -2,7 +2,7 @@
 
 import Foundation
 
-struct NetworkShare: Identifiable, Codable, Hashable {
+struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
   let id: UUID
   var name: String
   var server: String

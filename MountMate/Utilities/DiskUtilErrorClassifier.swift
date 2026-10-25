@@ -1,10 +1,10 @@
 import Foundation
 
 /// The disk action a diskutil call was part of.
-enum DiskOperation { case mount, unmount, eject }
+enum DiskOperation: Sendable { case mount, unmount, eject }
 
 /// What a failed diskutil call means for the user.
-enum DiskUtilError: Equatable {
+enum DiskUtilError: Equatable, Sendable {
   case mountEFIVolume
   /// "At least one volume could not be unmounted" while ejecting a disk.
   case unmountBusyVolume

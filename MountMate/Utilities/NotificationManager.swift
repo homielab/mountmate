@@ -12,7 +12,7 @@ import UserNotifications
 /// wake, before the network is back, stays quiet). A success is announced
 /// only for a target whose failure was announced, and starts a new outage.
 /// Not thread-safe: use from one queue (the main queue in the app).
-struct BackgroundEventThrottle {
+struct BackgroundEventThrottle: Sendable {
   let failuresBeforeNotice: Int
 
   private var failureCounts: [String: Int] = [:]

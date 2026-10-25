@@ -2,7 +2,7 @@
 
 import Foundation
 
-struct ManagedVolumeInfo: Codable, Hashable, Identifiable {
+struct ManagedVolumeInfo: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let diskUUID: String
   let name: String  // The last-known name of the volume
@@ -12,7 +12,7 @@ struct ManagedVolumeInfo: Codable, Hashable, Identifiable {
   }
 }
 
-struct VolumeCustomMountPoint: Codable, Hashable, Identifiable {
+struct VolumeCustomMountPoint: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let backingDiskIdentifier: String
   let name: String
@@ -27,7 +27,7 @@ struct VolumeCustomMountPoint: Codable, Hashable, Identifiable {
 }
 
 /// "Unmount When Idle" setting of one volume (see `IdleUnmountManager`).
-struct IdleUnmountVolume: Codable, Hashable, Identifiable {
+struct IdleUnmountVolume: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let diskUUID: String
   let name: String  // The last-known name of the volume

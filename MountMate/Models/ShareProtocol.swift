@@ -3,7 +3,7 @@
 import Foundation
 
 /// Network file-sharing protocols MountMate can mount and keep alive.
-enum ShareProtocol: String, Codable, CaseIterable, Identifiable {
+enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
   case smb
   case nfs
   case afp
