@@ -38,161 +38,126 @@ struct HotkeyShortcut: Equatable {
     return modifierString + Self.keyLabel(for: keyCode)
   }
 
-  static func keyLabel(for keyCode: UInt16) -> String {
-    switch keyCode {
-    case UInt16(kVK_Return): return "↩"
-    case UInt16(kVK_Tab): return "⇥"
-    case UInt16(kVK_Space): return "Space"
-    case UInt16(kVK_Delete): return "⌫"
-    case UInt16(kVK_ForwardDelete): return "⌦"
-    case UInt16(kVK_Escape): return "Esc"
-    case UInt16(kVK_LeftArrow): return "←"
-    case UInt16(kVK_RightArrow): return "→"
-    case UInt16(kVK_DownArrow): return "↓"
-    case UInt16(kVK_UpArrow): return "↑"
-    case UInt16(kVK_Home): return "↖"
-    case UInt16(kVK_End): return "↘"
-    case UInt16(kVK_PageUp): return "⇞"
-    case UInt16(kVK_PageDown): return "⇟"
-    case UInt16(kVK_F1): return "F1"
-    case UInt16(kVK_F2): return "F2"
-    case UInt16(kVK_F3): return "F3"
-    case UInt16(kVK_F4): return "F4"
-    case UInt16(kVK_F5): return "F5"
-    case UInt16(kVK_F6): return "F6"
-    case UInt16(kVK_F7): return "F7"
-    case UInt16(kVK_F8): return "F8"
-    case UInt16(kVK_F9): return "F9"
-    case UInt16(kVK_F10): return "F10"
-    case UInt16(kVK_F11): return "F11"
-    case UInt16(kVK_F12): return "F12"
-    default:
-      return keyCode == UInt16(kVK_ANSI_A)
-        ? "A"
-        : keyCode == UInt16(kVK_ANSI_S)
-          ? "S"
-          : keyCode == UInt16(kVK_ANSI_D)
-            ? "D"
-            : keyCode == UInt16(kVK_ANSI_F)
-              ? "F"
-              : keyCode == UInt16(kVK_ANSI_H)
-                ? "H"
-                : keyCode == UInt16(kVK_ANSI_G)
-                  ? "G"
-                  : keyCode == UInt16(kVK_ANSI_Z)
-                    ? "Z"
-                    : keyCode == UInt16(kVK_ANSI_X)
-                      ? "X"
-                      : keyCode == UInt16(kVK_ANSI_C)
-                        ? "C"
-                        : keyCode == UInt16(kVK_ANSI_V)
-                          ? "V"
-                          : keyCode == UInt16(kVK_ANSI_B)
-                            ? "B"
-                            : keyCode == UInt16(kVK_ANSI_Q)
-                              ? "Q"
-                              : keyCode == UInt16(kVK_ANSI_W)
-                                ? "W"
-                                : keyCode == UInt16(kVK_ANSI_E)
-                                  ? "E"
-                                  : keyCode == UInt16(kVK_ANSI_R)
-                                    ? "R"
-                                    : keyCode == UInt16(kVK_ANSI_Y)
-                                      ? "Y"
-                                      : keyCode == UInt16(kVK_ANSI_T)
-                                        ? "T"
-                                        : keyCode == UInt16(kVK_ANSI_1)
-                                          ? "1"
-                                          : keyCode == UInt16(kVK_ANSI_2)
-                                            ? "2"
-                                            : keyCode == UInt16(kVK_ANSI_3)
-                                              ? "3"
-                                              : keyCode == UInt16(kVK_ANSI_4)
-                                                ? "4"
-                                                : keyCode == UInt16(kVK_ANSI_6)
-                                                  ? "6"
-                                                  : keyCode == UInt16(kVK_ANSI_5)
-                                                    ? "5"
-                                                    : keyCode == UInt16(kVK_ANSI_Equal)
-                                                      ? "="
-                                                      : keyCode == UInt16(kVK_ANSI_9)
-                                                        ? "9"
-                                                        : keyCode == UInt16(kVK_ANSI_7)
-                                                          ? "7"
-                                                          : keyCode == UInt16(kVK_ANSI_Minus)
-                                                            ? "-"
-                                                            : keyCode == UInt16(kVK_ANSI_8)
-                                                              ? "8"
-                                                              : keyCode == UInt16(kVK_ANSI_0)
-                                                                ? "0"
-                                                                : keyCode
-                                                                  == UInt16(kVK_ANSI_RightBracket)
-                                                                  ? "]"
-                                                                  : keyCode == UInt16(kVK_ANSI_O)
-                                                                    ? "O"
-                                                                    : keyCode == UInt16(kVK_ANSI_U)
-                                                                      ? "U"
-                                                                      : keyCode
-                                                                        == UInt16(
-                                                                          kVK_ANSI_LeftBracket)
-                                                                        ? "["
-                                                                        : keyCode
-                                                                          == UInt16(kVK_ANSI_I)
-                                                                          ? "I"
-                                                                          : keyCode
-                                                                            == UInt16(kVK_ANSI_P)
-                                                                            ? "P"
-                                                                            : keyCode
-                                                                              == UInt16(kVK_ANSI_L)
-                                                                              ? "L"
-                                                                              : keyCode
-                                                                                == UInt16(
-                                                                                  kVK_ANSI_J)
-                                                                                ? "J"
-                                                                                : keyCode
-                                                                                  == UInt16(
-                                                                                    kVK_ANSI_Quote)
-                                                                                  ? "'"
-                                                                                  : keyCode
-                                                                                    == UInt16(
-                                                                                      kVK_ANSI_K)
-                                                                                    ? "K"
-                                                                                    : keyCode
-                                                                                      == UInt16(
-                                                                                        kVK_ANSI_Semicolon
-                                                                                      )
-                                                                                      ? ";"
-                                                                                      : keyCode
-                                                                                        == UInt16(
-                                                                                          kVK_ANSI_Backslash
-                                                                                        )
-                                                                                        ? "\\"
-                                                                                        : keyCode
-                                                                                          == UInt16(
-                                                                                            kVK_ANSI_Comma
-                                                                                          )
-                                                                                          ? ","
-                                                                                          : keyCode
-                                                                                            == UInt16(
-                                                                                              kVK_ANSI_Slash
-                                                                                            )
-                                                                                            ? "/"
-                                                                                            : keyCode
-                                                                                              == UInt16(
-                                                                                                kVK_ANSI_N
-                                                                                              )
-                                                                                              ? "N"
-                                                                                              : keyCode
-                                                                                                == UInt16(
-                                                                                                  kVK_ANSI_M
-                                                                                                )
-                                                                                                ? "M"
-                                                                                                : keyCode
-                                                                                                  == UInt16(
-                                                                                                    kVK_ANSI_Period
-                                                                                                  )
-                                                                                                  ? "."
-                                                                                                  : "Key \(keyCode)"
+  /// Label for a key code. Special keys keep their symbols; character keys follow
+  /// the current keyboard layout (AZERTY, Dvorak, Cyrillic…), falling back to the
+  /// US layout when the system cannot translate the key.
+  static func keyLabel(
+    for keyCode: UInt16, layout: KeyboardLayoutProviding = SystemKeyboardLayout.shared
+  ) -> String {
+    if let special = specialKeyLabels[Int(keyCode)] { return special }
+    if let character = layout.character(for: keyCode) { return character.uppercased() }
+    return usKeyLabels[Int(keyCode)] ?? "Key \(keyCode)"
+  }
+
+  private static let specialKeyLabels: [Int: String] = [
+    kVK_Return: "↩", kVK_Tab: "⇥", kVK_Space: "Space", kVK_Delete: "⌫",
+    kVK_ForwardDelete: "⌦", kVK_Escape: "Esc", kVK_LeftArrow: "←", kVK_RightArrow: "→",
+    kVK_DownArrow: "↓", kVK_UpArrow: "↑", kVK_Home: "↖", kVK_End: "↘",
+    kVK_PageUp: "⇞", kVK_PageDown: "⇟",
+    kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3", kVK_F4: "F4", kVK_F5: "F5", kVK_F6: "F6",
+    kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9", kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
+  ]
+
+  /// US layout labels, used when the current layout cannot be read.
+  static let usKeyLabels: [Int: String] = [
+    kVK_ANSI_A: "A", kVK_ANSI_B: "B", kVK_ANSI_C: "C", kVK_ANSI_D: "D", kVK_ANSI_E: "E",
+    kVK_ANSI_F: "F", kVK_ANSI_G: "G", kVK_ANSI_H: "H", kVK_ANSI_I: "I", kVK_ANSI_J: "J",
+    kVK_ANSI_K: "K", kVK_ANSI_L: "L", kVK_ANSI_M: "M", kVK_ANSI_N: "N", kVK_ANSI_O: "O",
+    kVK_ANSI_P: "P", kVK_ANSI_Q: "Q", kVK_ANSI_R: "R", kVK_ANSI_S: "S", kVK_ANSI_T: "T",
+    kVK_ANSI_U: "U", kVK_ANSI_V: "V", kVK_ANSI_W: "W", kVK_ANSI_X: "X", kVK_ANSI_Y: "Y",
+    kVK_ANSI_Z: "Z",
+    kVK_ANSI_0: "0", kVK_ANSI_1: "1", kVK_ANSI_2: "2", kVK_ANSI_3: "3", kVK_ANSI_4: "4",
+    kVK_ANSI_5: "5", kVK_ANSI_6: "6", kVK_ANSI_7: "7", kVK_ANSI_8: "8", kVK_ANSI_9: "9",
+    kVK_ANSI_Equal: "=", kVK_ANSI_Minus: "-", kVK_ANSI_RightBracket: "]",
+    kVK_ANSI_LeftBracket: "[", kVK_ANSI_Quote: "'", kVK_ANSI_Semicolon: ";",
+    kVK_ANSI_Backslash: "\\", kVK_ANSI_Comma: ",", kVK_ANSI_Slash: "/",
+    kVK_ANSI_Period: ".", kVK_ANSI_Grave: "`",
+  ]
+}
+
+// MARK: - Keyboard layout
+
+/// Translates a virtual key code to the character the current layout prints on it.
+protocol KeyboardLayoutProviding {
+  func character(for keyCode: UInt16) -> String?
+}
+
+extension Notification.Name {
+  /// Posted on the main queue after the selected keyboard input source changed.
+  static let keyboardLayoutDidChange = Notification.Name("MountMateKeyboardLayoutDidChange")
+}
+
+/// Reads the selected keyboard layout through Text Input Sources and `UCKeyTranslate`.
+final class SystemKeyboardLayout: KeyboardLayoutProviding {
+  static let shared = SystemKeyboardLayout()
+
+  private let lock = NSLock()
+  private var layoutData: Data?
+  private var loaded = false
+  private var observer: NSObjectProtocol?
+
+  private init() {
+    observer = DistributedNotificationCenter.default().addObserver(
+      forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
+      object: nil, queue: .main
+    ) { [weak self] _ in
+      self?.invalidate()
+      Log.hotkey.debug("Keyboard input source changed; shortcut labels refreshed")
+      NotificationCenter.default.post(name: .keyboardLayoutDidChange, object: nil)
+    }
+  }
+
+  deinit {
+    if let observer { DistributedNotificationCenter.default().removeObserver(observer) }
+  }
+
+  private func invalidate() {
+    lock.lock()
+    loaded = false
+    layoutData = nil
+    lock.unlock()
+  }
+
+  private func currentLayoutData() -> Data? {
+    lock.lock()
+    defer { lock.unlock() }
+    if loaded { return layoutData }
+    loaded = true
+    // The selected layout, or the layout behind the selected input method (Pinyin, Kana…).
+    let source =
+      TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue()
+    if let source, let raw = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) {
+      layoutData = Unmanaged<CFData>.fromOpaque(raw).takeUnretainedValue() as Data
+    }
+    if layoutData == nil {
+      Log.hotkey.debug("No Unicode key layout data; falling back to the US labels")
+    }
+    return layoutData
+  }
+
+  func character(for keyCode: UInt16) -> String? {
+    guard let data = currentLayoutData() else { return nil }
+    return Self.translate(keyCode: keyCode, layoutData: data)
+  }
+
+  /// Character printed by `keyCode` without modifiers; nil for dead keys and non-printing results.
+  static func translate(keyCode: UInt16, layoutData: Data) -> String? {
+    layoutData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
+      guard let layout = buffer.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self)
+      else { return nil }
+      var deadKeyState: UInt32 = 0
+      var chars = [UniChar](repeating: 0, count: 4)
+      var length = 0
+      let status = UCKeyTranslate(
+        layout, keyCode, UInt16(kUCKeyActionDisplay), 0, UInt32(LMGetKbdType()),
+        OptionBits(kUCKeyTranslateNoDeadKeysBit), &deadKeyState, chars.count, &length, &chars)
+      guard status == noErr, length > 0 else { return nil }
+      let string = String(utf16CodeUnits: chars, count: length)
+      guard let scalar = string.unicodeScalars.first,
+        !CharacterSet.controlCharacters.contains(scalar),
+        !CharacterSet.whitespacesAndNewlines.contains(scalar)
+      else { return nil }
+      return string
     }
   }
 }

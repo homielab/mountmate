@@ -53,6 +53,8 @@ final class ShortcutRecorderButton: NSButton {
   var onShortcut: ((HotkeyShortcut) -> Void)?
   var onRecordingChanged: ((Bool) -> Void)?
 
+  private var layoutObserver: NSObjectProtocol?
+
   override var acceptsFirstResponder: Bool { true }
 
   override init(frame frameRect: NSRect) {
@@ -107,6 +109,13 @@ final class ShortcutRecorderButton: NSButton {
     focusRingType = .default
     setButtonType(.momentaryPushIn)
     updateTitle()
+    layoutObserver = NotificationCenter.default.addObserver(
+      forName: .keyboardLayoutDidChange, object: nil, queue: .main
+    ) { [weak self] _ in self?.updateTitle() }
+  }
+
+  deinit {
+    if let layoutObserver { NotificationCenter.default.removeObserver(layoutObserver) }
   }
 
   private func updateTitle() {
