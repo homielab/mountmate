@@ -113,6 +113,22 @@ If you have [Homebrew](https://brew.sh) installed, you can install MountMate dir
 brew install mountmate
 ```
 
+## 🧑‍💻 Development
+
+Open `MountMate.xcodeproj` in Xcode, or from the command line:
+
+```bash
+# Unit tests (ad-hoc signed, same command as CI)
+xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
+  -destination 'platform=macOS' -derivedDataPath build/DerivedData \
+  -only-testing:MountMateTests CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+
+# Code style (configured in .swift-format)
+swift format lint -r MountMate MountMateTests
+```
+
+CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
+
 ## 📫 Feedback & Contributions
 
 MountMate was built to solve my personal workflow issue, but I’d love to improve it for others too.

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
 
 ### Fixed
