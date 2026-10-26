@@ -2,46 +2,6 @@
 
 import SwiftUI
 
-/// Where a volume row is listed. A pinned volume appears twice (under
-/// Pinned and under its disk); the context keeps the two rows apart.
-enum VolumeRowContext: String {
-  case pinned
-  case disk
-}
-
-/// A volume's settings-derived row state.
-struct VolumeRowState: Equatable {
-  var isPinned = false
-  var isKeepAlive = false
-  var isReconnecting = false
-  var customMountPoint: String?
-  /// A password for this (APFS) volume is saved in the Keychain.
-  var hasSavedPassword = false
-  /// On an external physical disk, so "Unmount When Idle" applies.
-  var canUnmountWhenIdle = false
-  /// "Unmount When Idle" timeout in minutes; 0 = off.
-  var idleUnmountMinutes = 0
-}
-
-/// Row state for the whole list, computed once per list render by
-/// `DriveListView`. Rows get plain values instead of each observing
-/// PersistenceManager, KeepAliveManager, DriveManager and the editor, so a
-/// change only redraws the rows whose values actually changed.
-struct VolumeListState: Equatable {
-  var rowStates: [String: VolumeRowState] = [:]
-  /// `DriveManager.busyVolumeIDs`: volumes with a mount/unmount in flight.
-  var busyVolumeIDs: Set<String> = []
-  var expandedEditorRowID: String?
-
-  func rowState(for volume: Volume) -> VolumeRowState {
-    rowStates[volume.id] ?? VolumeRowState()
-  }
-
-  func isEditorExpanded(for volume: Volume, context: VolumeRowContext) -> Bool {
-    expandedEditorRowID == VolumeRowView.editorRowID(for: volume, context: context)
-  }
-}
-
 struct VolumeRowView: View {
   /// The current volume: the parent builds rows from the latest disk list.
   let volume: Volume
@@ -76,7 +36,6 @@ struct VolumeRowView: View {
   private var editorRowID: String { Self.editorRowID(for: volume, context: context) }
   private var currentVolume: Volume { volume }
   private var customMountPoint: String? { state.customMountPoint }
-  private var isKeepAlive: Bool { state.isKeepAlive }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
@@ -272,7 +231,9 @@ struct VolumeRowView: View {
         }
       }
       .contextMenu {
-        contextMenuItems
+        VolumeContextMenu(
+          volume: volume, state: state,
+          toggleCustomMountPointEditor: toggleCustomMountPointEditor)
       }
 
       if isCustomMountPointExpanded {
@@ -311,205 +272,9 @@ struct VolumeRowView: View {
     }
   }
 
-  @ViewBuilder
-  private var contextMenuItems: some View {
-    if state.isReconnecting, !volume.isMounted {
-      Button {
-        KeepAliveManager.shared.sweepNow(resetBackoff: true)
-      } label: {
-        Label("Reconnect Now", systemImage: "arrow.clockwise")
-      }
-    }
-    if volume.isMounted {
-      Button {
-        manager.unmount(volume: volume)
-      } label: {
-        Label("Unmount", systemImage: "minus.circle")
-      }
-      Button {
-        if let path = volume.mountPoint {
-          NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
-        }
-      } label: {
-        Label("Open in Finder", systemImage: "folder")
-      }
-      if let path = volume.mountPoint {
-        Button {
-          MountPointActions.copyPath(path)
-        } label: {
-          Label("Copy Path", systemImage: "doc.on.doc")
-        }
-        Button {
-          MountPointActions.openInTerminal(path)
-        } label: {
-          Label("Open in Terminal", systemImage: "terminal")
-        }
-      }
-      Divider()
-      if volume.isProtected {
-        Button {
-          if let compositeId = volume.compositeId,
-            let info = persistence.protectedVolumes.first(where: {
-              $0.id == compositeId
-            })
-          {
-            persistence.unprotect(info: info)
-            DriveManager.shared.refreshDrives(qos: .userInitiated)
-          }
-        } label: {
-          Label("Unprotect from 'Unmount All'", systemImage: "lock.open.fill")
-        }
-      } else {
-        Button {
-          if !persistence.protect(volume: volume) {
-            showPersistenceError(for: volume)
-          } else {
-            DriveManager.shared.refreshDrives(qos: .userInitiated)
-          }
-        } label: {
-          Label("Protect from 'Unmount All'", systemImage: "lock.fill")
-        }
-      }
-    } else {
-      Button {
-        manager.mount(volume: volume)
-      } label: {
-        Label("Mount", systemImage: "plus.circle")
-      }
-      Button {
-        manager.mount(volume: volume, readOnly: true)
-      } label: {
-        Label("Mount Read-Only", systemImage: "lock.circle")
-      }
-    }
-
-    Divider()
-    if state.isPinned {
-      Button {
-        persistence.setPinned(false, volume: volume)
-      } label: {
-        Label("Unpin", systemImage: "pin.slash")
-      }
-    } else {
-      Button {
-        if !persistence.setPinned(true, volume: volume) {
-          showPersistenceError(for: volume)
-        }
-      } label: {
-        Label("Pin to Top", systemImage: "pin")
-      }
-    }
-    if isKeepAlive {
-      Button {
-        if !persistence.setKeepAlive(false, volume: volume) {
-          showPersistenceError(for: volume)
-        }
-      } label: {
-        Label("Disable Keep Mounted", systemImage: "arrow.triangle.2.circlepath")
-      }
-    } else {
-      Button {
-        if !persistence.setKeepAlive(true, volume: volume) {
-          showPersistenceError(for: volume)
-        }
-      } label: {
-        Label("Keep Mounted (Auto-Reconnect)", systemImage: "arrow.triangle.2.circlepath")
-      }
-    }
-
-    if state.canUnmountWhenIdle {
-      idleUnmountMenu
-    }
-
-    Button {
-      if !PersistenceManager.shared.block(volume: volume) {
-        showPersistenceError(for: volume)
-      }
-    } label: {
-      Label("Don't Auto-Mount This Volume", systemImage: "hand.raised")
-    }
-    if state.hasSavedPassword {
-      Button {
-        manager.unlocker.forgetSavedPassword(for: volume)
-      } label: {
-        Label(
-          NSLocalizedString(
-            "Forget Saved Password", comment: "Volume context menu: delete the saved APFS password"),
-          systemImage: "key.slash")
-      }
-    }
-    Button {
-      syncEditorStateFromPersistence()
-      customMountPointEditor.expandedRowID = isCustomMountPointExpanded ? nil : editorRowID
-    } label: {
-      Label(
-        NSLocalizedString(
-          "Custom Mount Point Menu",
-          comment: "Volume context menu custom mount point action"),
-        systemImage: "folder.badge.gearshape")
-    }
-    Divider()
-    Button(role: .destructive) {
-      if !PersistenceManager.shared.ignore(volume: volume) {
-        showPersistenceError(for: volume)
-      } else {
-        DriveManager.shared.refreshDrives(qos: .userInitiated)
-      }
-    } label: {
-      Label("Ignore This Volume", systemImage: "eye.slash")
-    }
-  }
-
-  /// "Unmount When Idle" submenu: Off or a number of minutes, the current
-  /// choice checked. Unavailable while the volume is kept mounted.
-  private var idleUnmountMenu: some View {
-    Menu {
-      ForEach(PersistenceManager.idleUnmountChoices, id: \.self) { minutes in
-        Button {
-          if !persistence.setIdleUnmountMinutes(minutes, volume: volume) {
-            showPersistenceError(for: volume)
-          }
-        } label: {
-          let title = Self.idleUnmountChoiceTitle(minutes)
-          if minutes == state.idleUnmountMinutes {
-            Label(title, systemImage: "checkmark")
-          } else {
-            Text(title)
-          }
-        }
-      }
-    } label: {
-      Label(
-        isKeepAlive
-          ? NSLocalizedString(
-            "Unmount When Idle (Off While Kept Mounted)",
-            comment: "Volume context menu: idle unmount unavailable for keep-alive volumes")
-          : NSLocalizedString(
-            "Unmount When Idle", comment: "Volume context menu: idle unmount submenu"),
-        systemImage: "moon.zzz")
-    }
-    .disabled(isKeepAlive)
-  }
-
-  static func idleUnmountChoiceTitle(_ minutes: Int) -> String {
-    guard minutes > 0 else {
-      return NSLocalizedString("Off", comment: "Unmount When Idle: disabled")
-    }
-    return String(
-      format: NSLocalizedString(
-        "After %d min Without Use", comment: "Unmount When Idle choice; minutes"), minutes)
-  }
-
-  private func showPersistenceError(for volume: Volume) {
-    let message = String(
-      format: NSLocalizedString(
-        "Could not save settings for “%@” because it does not have a unique identifier (UUID).",
-        comment: "Persistence error message"), volume.name)
-    DriveManager.shared.userActionError = AppAlert(
-      title: NSLocalizedString("Action Failed", comment: "Alert title"),
-      message: message,
-      kind: .basic
-    )
+  private func toggleCustomMountPointEditor() {
+    syncEditorStateFromPersistence()
+    customMountPointEditor.expandedRowID = isCustomMountPointExpanded ? nil : editorRowID
   }
 
   private func syncEditorStateFromPersistence() {

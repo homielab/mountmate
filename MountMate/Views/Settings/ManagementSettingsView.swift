@@ -69,7 +69,7 @@ struct ManagementSettingsView: View {
             name: info.name,
             iconName: "moon.zzz",
             details: [
-              VolumeRowView.idleUnmountChoiceTitle(info.minutes),
+              VolumeMenuRules.idleUnmountChoiceTitle(info.minutes),
               String(
                 format: NSLocalizedString("Vol: %@", comment: "Saved volume's volume UUID"),
                 info.volumeUUID),
