@@ -18,13 +18,6 @@
 			remoteGlobalIDString = B4AADB102DFE3BBC00EDAAC2;
 			remoteInfo = MountMate;
 		};
-		B4AADB2A2DFE3BBD00EDAAC2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B4AADB092DFE3BBC00EDAAC2 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B4AADB102DFE3BBC00EDAAC2;
-			remoteInfo = MountMate;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -41,7 +34,6 @@
 		B1801F5CC0D8783587B2474A /* CustomMountPointEditorState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CustomMountPointEditorState.swift; sourceTree = "<group>"; };
 		B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MountMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MountMateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4B37DE32DFE47F600A60D0D /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		BD6C1AF6279D8DB4C5239393 /* ContainerRowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContainerRowView.swift; sourceTree = "<group>"; };
 		C4C09178F2601C4430AF3BB5 /* HostingWindowReader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HostingWindowReader.swift; sourceTree = "<group>"; };
@@ -89,13 +81,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B4AADB1C2DFE3BBD00EDAAC2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B4AADB262DFE3BBD00EDAAC2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -178,7 +163,6 @@
 			children = (
 				B4AADB112DFE3BBC00EDAAC2 /* MountMate.app */,
 				B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */,
-				B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -257,24 +241,6 @@
 			productReference = B4AADB1F2DFE3BBD00EDAAC2 /* MountMateTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B4AADB282DFE3BBD00EDAAC2 /* MountMateUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B4AADB392DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateUITests" */;
-			buildPhases = (
-				B4AADB252DFE3BBD00EDAAC2 /* Sources */,
-				B4AADB262DFE3BBD00EDAAC2 /* Frameworks */,
-				B4AADB272DFE3BBD00EDAAC2 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				B4AADB2B2DFE3BBD00EDAAC2 /* PBXTargetDependency */,
-			);
-			name = MountMateUITests;
-			productName = MountMateUITests;
-			productReference = B4AADB292DFE3BBD00EDAAC2 /* MountMateUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -289,10 +255,6 @@
 						CreatedOnToolsVersion = 16.4;
 					};
 					B4AADB1E2DFE3BBD00EDAAC2 = {
-						CreatedOnToolsVersion = 16.4;
-						TestTargetID = B4AADB102DFE3BBC00EDAAC2;
-					};
-					B4AADB282DFE3BBD00EDAAC2 = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = B4AADB102DFE3BBC00EDAAC2;
 					};
@@ -323,7 +285,6 @@
 			targets = (
 				B4AADB102DFE3BBC00EDAAC2 /* MountMate */,
 				B4AADB1E2DFE3BBD00EDAAC2 /* MountMateTests */,
-				B4AADB282DFE3BBD00EDAAC2 /* MountMateUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -337,13 +298,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B4AADB1D2DFE3BBD00EDAAC2 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B4AADB272DFE3BBD00EDAAC2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -367,13 +321,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B4AADB252DFE3BBD00EDAAC2 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -381,11 +328,6 @@
 			isa = PBXTargetDependency;
 			target = B4AADB102DFE3BBC00EDAAC2 /* MountMate */;
 			targetProxy = B4AADB202DFE3BBD00EDAAC2 /* PBXContainerItemProxy */;
-		};
-		B4AADB2B2DFE3BBD00EDAAC2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B4AADB102DFE3BBC00EDAAC2 /* MountMate */;
-			targetProxy = B4AADB2A2DFE3BBD00EDAAC2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -623,40 +565,6 @@
 			};
 			name = Release;
 		};
-		B4AADB3A2DFE3BBD00EDAAC2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MountMate;
-			};
-			name = Debug;
-		};
-		B4AADB3B2DFE3BBD00EDAAC2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.homielab.MountMateUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MountMate;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -683,15 +591,6 @@
 			buildConfigurations = (
 				B4AADB372DFE3BBD00EDAAC2 /* Debug */,
 				B4AADB382DFE3BBD00EDAAC2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B4AADB392DFE3BBD00EDAAC2 /* Build configuration list for PBXNativeTarget "MountMateUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B4AADB3A2DFE3BBD00EDAAC2 /* Debug */,
-				B4AADB3B2DFE3BBD00EDAAC2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

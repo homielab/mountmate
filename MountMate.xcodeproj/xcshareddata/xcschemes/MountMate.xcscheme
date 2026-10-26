@@ -39,17 +39,6 @@
                ReferencedContainer = "container:MountMate.xcodeproj">
             </BuildableReference>
          </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B4AADB282DFE3BBD00EDAAC2"
-               BuildableName = "MountMateUITests.xctest"
-               BlueprintName = "MountMateUITests"
-               ReferencedContainer = "container:MountMate.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

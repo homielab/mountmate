@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Sets the version (from the release tag) and the next build number on the app
-# target in the Xcode project, and extracts that version's notes from
+# target in the Xcode project, updates softwareVersion in the site's JSON-LD
+# (docs/index.html), and extracts that version's notes from
 # CHANGELOGS.md.
 #
 # Usage: scripts/prepare-release.sh v5.20     (or 5.20)
@@ -85,6 +86,14 @@ fi
 # --- Update the app target only (test targets keep their own 1.0 / 1) ---
 perl -pi -e "s/MARKETING_VERSION = \Q${CURRENT_VERSION}\E;/MARKETING_VERSION = ${VERSION};/g; \
              s/CURRENT_PROJECT_VERSION = \Q${CURRENT_BUILD}\E;/CURRENT_PROJECT_VERSION = ${BUILD};/g" "$PBXPROJ"
+
+# --- Site: structured data version (docs/index.html) ---
+SITE="docs/index.html"
+if [[ -f "$SITE" ]]; then
+  VERSION="$VERSION" perl -pi -e 's/("softwareVersion":\s*")[^"]*(")/${1}$ENV{VERSION}${2}/' "$SITE"
+  grep -q "\"softwareVersion\": \"${VERSION}\"" "$SITE" \
+    || { echo "❌ softwareVersion not found in ${SITE}" >&2; exit 1; }
+fi
 
 echo "📦 ${CURRENT_VERSION} (${CURRENT_BUILD}) -> ${VERSION} (${BUILD}), previous release ${PREVIOUS_TAG:-none}"
 OUT="VERSION=${VERSION}

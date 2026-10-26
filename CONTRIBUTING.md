@@ -14,7 +14,7 @@ MountMate is an Xcode project (no Swift package manifest), macOS 13 or later.
 # Unit tests (ad-hoc signing, same command as CI)
 xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
   -destination 'platform=macOS' -derivedDataPath build/DerivedData \
-  -only-testing:MountMateTests CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
+  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
 
 # Code style (configuration in .swift-format); CI runs it with --strict
 swift format lint --strict -r MountMate MountMateTests
