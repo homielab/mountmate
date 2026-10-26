@@ -98,24 +98,6 @@ enum DiskUtilErrorClassifier {
     return lower.contains(unmountBusyMarker) || mentionsBusy(lower)
   }
 
-  /// A generic "failed to mount" is retried once only when it is plausibly
-  /// transient: the volume appeared moments ago (`firstSeen` within `window`
-  /// of `now`, or not listed yet) and diskutil did not say the file system is
-  /// unsupported.
-  static func shouldRetryMount(
-    after result: ProcessResult, firstSeen: Date?, now: Date, window: TimeInterval
-  ) -> Bool {
-    guard !result.succeeded, !result.timedOut else { return false }
-    let error = result.stderr.lowercased()
-    guard error.contains("failed to mount") else { return false }
-    // diskutil's generic hint ("If the volume is damaged, try the readOnly
-    // option") is printed for every failure, so "damaged" is no usable marker.
-    let permanentMarkers = ["unrecognized", "not supported", "unsupported", "corrupt"]
-    if permanentMarkers.contains(where: { error.contains($0) }) { return false }
-    guard let firstSeen else { return true }
-    return now.timeIntervalSince(firstSeen) < window
-  }
-
   /// Last path component of the executable diskutil names as the blocker,
   /// e.g. `(/usr/bin/foo)` or `dissented by PID 12 (/usr/bin/foo)`.
   static func blockingProcessName(in rawError: String) -> String? {

@@ -194,45 +194,6 @@ final class DiskUtilErrorClassifierTests: XCTestCase {
     }
   }
 
-  // MARK: shouldRetryMount
-
-  private let now = Date(timeIntervalSince1970: 1_000_000)
-  private let failedMount = "Volume Data on disk4s1 failed to mount; Error: -69842"
-
-  private func retry(_ result: ProcessResult, firstSeenAgo: TimeInterval?) -> Bool {
-    DiskUtilErrorClassifier.shouldRetryMount(
-      after: result, firstSeen: firstSeenAgo.map { now.addingTimeInterval(-$0) }, now: now,
-      window: 20)
-  }
-
-  func testRetriesRecentGenericMountFailure() {
-    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: 3))
-  }
-
-  func testRetriesWhenVolumeNotListedYet() {
-    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: nil))
-  }
-
-  func testDoesNotRetryOldVolumeOrBoundary() {
-    XCTAssertFalse(retry(result(stderr: failedMount), firstSeenAgo: 60))
-    XCTAssertFalse(retry(result(stderr: failedMount), firstSeenAgo: 20))
-    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: 19.9))
-  }
-
-  func testDoesNotRetrySuccessTimeoutOrOtherErrors() {
-    XCTAssertFalse(retry(result(exitCode: 0), firstSeenAgo: 1))
-    XCTAssertFalse(
-      retry(result(stderr: failedMount, exitCode: nil, timedOut: true), firstSeenAgo: 1))
-    XCTAssertFalse(retry(result(stderr: "resource busy"), firstSeenAgo: 1))
-  }
-
-  func testDoesNotRetryPermanentMarkers() {
-    for marker in ["unrecognized", "not supported", "unsupported", "corrupt"] {
-      XCTAssertFalse(
-        retry(result(stderr: "\(failedMount) (\(marker) file system)"), firstSeenAgo: 1), marker)
-    }
-  }
-
   // MARK: remount after a failed unmount
 
   func testShouldRemountDecision() {

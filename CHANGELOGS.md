@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Internal: mounting, unmounting and remounting one volume moved out of `DriveManager` into `DriveManager+Mount`, and the decision to retry a failed mount into `MountRetryRules` (unit-tested for every branch); the disk-change notification handling has its own file too. No change in behavior.
 - Keep Alive's network-change handling is split out of `KeepAliveManager`: `NetworkChangeMonitor` wraps the system path monitor and `NetworkChangeRules` holds the remount decisions (Wi-Fi → Ethernet, a lost interface, VPN tunnels ignored), now unit-tested with an injected monitor. The behaviour is unchanged.
 - The volume right-click menu is split out of `VolumeRowView` into `VolumeContextMenu`, with the show/hide conditions in `VolumeMenuRules` (unit-tested). The menu itself is unchanged.
 - **Force Eject** now stops when the force unmount fails and shows that error (for example the process holding the disk), instead of ejecting anyway and showing the eject error. If the unmount works, it ejects as before.
