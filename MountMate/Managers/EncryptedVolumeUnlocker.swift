@@ -40,12 +40,24 @@ enum UnlockRetryDecision: Equatable {
   case askAgain(passwordFailed: Bool, logSavedPasswordFailure: Bool)
   /// Show the generic mount error.
   case reportError
+  /// Too many typed passwords were rejected: stop asking and say what to check.
+  case giveUp
+
+  /// Typed passwords diskutil may reject before MountMate stops asking.
+  static let maxTypedAttempts = 3
 
   /// - Parameters:
   ///   - result: the failed `diskutil` result.
   ///   - isSavedPassword: the attempt used the Keychain password, not a typed one.
-  static func decide(result: ProcessResult, isSavedPassword: Bool) -> UnlockRetryDecision {
+  ///   - typedFailures: typed passwords tried since the prompt first opened,
+  ///     counting this one. A rejected saved password does not count.
+  static func decide(
+    result: ProcessResult, isSavedPassword: Bool, typedFailures: Int = 1
+  ) -> UnlockRetryDecision {
     let wrongPassphrase = DiskUtilErrorClassifier.isWrongPassphrase(result)
+    if wrongPassphrase && !isSavedPassword && typedFailures >= maxTypedAttempts {
+      return .giveUp
+    }
     if wrongPassphrase || (isSavedPassword && !result.timedOut) {
       return .askAgain(
         passwordFailed: wrongPassphrase, logSavedPasswordFailure: !wrongPassphrase)
@@ -60,13 +72,20 @@ enum UnlockRetryDecision: Equatable {
 final class EncryptedVolumeUnlocker {
   private unowned let host: EncryptedVolumeUnlockerHost
   private let store: UnlockPasswordStore
+  /// Main thread only. Typed passwords rejected so far, per volume.
+  private var typedFailures: [String: Int] = [:]
+  /// Main thread only. Volumes whose saved password diskutil rejected.
+  private var rejectedSavedPasswords: Set<String> = []
 
   init(host: EncryptedVolumeUnlockerHost, store: UnlockPasswordStore = KeychainManager.shared) {
     self.host = host
     self.store = store
   }
 
-  func mountLockedVolume(_ volume: Volume, passphrase: String, rememberPassphrase: Bool = false) {
+  func mountLockedVolume(
+    _ volume: Volume, passphrase: String, rememberPassphrase: Bool = false,
+    forgetSavedPassword: Bool = false
+  ) {
     KeepAliveManager.shared.resume(volume: volume)
     let userInfo = ["deviceIdentifier": volume.id]
     NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
@@ -76,7 +95,7 @@ final class EncryptedVolumeUnlocker {
     DispatchQueue.global(qos: .userInitiated).async {
       self.performUnlock(
         volume: volume, passphrase: passphrase, isSavedPassword: false,
-        rememberPassphrase: rememberPassphrase)
+        rememberPassphrase: rememberPassphrase, forgetSavedPassword: forgetSavedPassword)
     }
   }
 
@@ -111,7 +130,8 @@ final class EncryptedVolumeUnlocker {
   /// Runs `diskutil apfs unlockVolume` (which also mounts the volume).
   /// Blocking; call off the main thread.
   private func performUnlock(
-    volume: Volume, passphrase: String, isSavedPassword: Bool, rememberPassphrase: Bool = false
+    volume: Volume, passphrase: String, isSavedPassword: Bool, rememberPassphrase: Bool = false,
+    forgetSavedPassword: Bool = false
   ) {
     let result = host.runDiskUtil(
       arguments: ["apfs", "unlockVolume", volume.id, "-stdinpassphrase"],
@@ -119,12 +139,23 @@ final class EncryptedVolumeUnlocker {
     let saveStatus = Self.rememberPassphraseIfUnlocked(
       passphrase, for: volume, unlocked: result.succeeded, remember: rememberPassphrase,
       store: store)
+    // A typed password worked while the saved one was rejected: the saved
+    // one is stale. Remembering replaced it above; otherwise forget it only
+    // when the user ticked the box.
+    var forgotten = false
+    if result.succeeded, forgetSavedPassword, !rememberPassphrase {
+      let status = store.delete(account: volume.id)
+      forgotten = status == errSecSuccess || status == errSecItemNotFound
+    }
     // Withdraw the single-use mount approval posted before unlocking, under
     // the same identifier, so it does not stay valid for its full lifetime.
     NotificationCenter.default.post(
       name: .didFinishManualMount, object: nil, userInfo: ["deviceIdentifier": volume.id])
     DispatchQueue.main.async {
       guard !result.succeeded else {
+        self.typedFailures[volume.id] = nil
+        self.rejectedSavedPasswords.remove(volume.id)
+        if forgotten { self.host.updateSavedPasswordIDs(.forgotten(volume.id)) }
         if let saveStatus {
           self.handlePassphraseSaveResult(saveStatus, for: volume)
         }
@@ -132,7 +163,17 @@ final class EncryptedVolumeUnlocker {
         return
       }
       self.host.setBusy(volume.id, false)
-      switch UnlockRetryDecision.decide(result: result, isSavedPassword: isSavedPassword) {
+      let wrongPassphrase = DiskUtilErrorClassifier.isWrongPassphrase(result)
+      if isSavedPassword {
+        // Only a confirmed rejection marks it stale; a timeout never does.
+        if wrongPassphrase { self.rejectedSavedPasswords.insert(volume.id) }
+      } else if wrongPassphrase {
+        self.typedFailures[volume.id, default: 0] += 1
+      }
+      let decision = UnlockRetryDecision.decide(
+        result: result, isSavedPassword: isSavedPassword,
+        typedFailures: self.typedFailures[volume.id] ?? 0)
+      switch decision {
       case .askAgain(let passwordFailed, let logSavedPasswordFailure):
         // A mistyped password, or a saved one that failed: ask again instead
         // of showing a generic error. "That password didn't work" only when
@@ -142,10 +183,30 @@ final class EncryptedVolumeUnlocker {
         }
         self.presentUnlockPrompt(for: volume, passwordFailed: passwordFailed)
       case .reportError:
+        self.typedFailures[volume.id] = nil
         self.host.reportUnlockFailure(result, for: volume)
+      case .giveUp:
+        self.typedFailures[volume.id] = nil
+        self.presentGiveUp(for: volume)
       }
       self.host.refreshDrives(qos: .userInitiated, then: nil)
     }
+  }
+
+  /// Main thread. Tells the user MountMate stopped asking for a password.
+  private func presentGiveUp(for volume: Volume) {
+    host.showAlert(
+      AppAlert(
+        title: String(
+          format: NSLocalizedString(
+            "Could not unlock “%@”", comment: "Alert title: too many wrong passwords"),
+          volume.name),
+        message: String(
+          format: NSLocalizedString(
+            "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility.",
+            comment: "Alert message after repeated wrong passwords"),
+          UnlockRetryDecision.maxTypedAttempts),
+        kind: .basic))
   }
 
   /// Main thread. Records a saved passphrase, or tells the user it could not
@@ -209,14 +270,19 @@ final class EncryptedVolumeUnlocker {
       : String(
         format: NSLocalizedString(
           "Enter the password to unlock “%@”", comment: "Alert message"), volume.name)
-    let handler = { (passphrase: String, saveInKeychain: Bool) in
-      // Saved only after the unlock succeeds (see performUnlock).
-      self.mountLockedVolume(volume, passphrase: passphrase, rememberPassphrase: saveInKeychain)
+    if !passwordFailed { typedFailures[volume.id] = nil }
+    let offersForget = rejectedSavedPasswords.contains(volume.id)
+    let handler = { (passphrase: String, saveInKeychain: Bool, forgetSaved: Bool) in
+      // Saved or forgotten only after the unlock succeeds (see performUnlock).
+      self.mountLockedVolume(
+        volume, passphrase: passphrase, rememberPassphrase: saveInKeychain,
+        forgetSavedPassword: forgetSaved && offersForget)
     }
     host.showAlert(
       AppAlert(
         title: title, message: message,
-        kind: .lockedVolume(LockedVolumeAppAlert(onConfirm: handler))))
+        kind: .lockedVolume(
+          LockedVolumeAppAlert(offersForgetSavedPassword: offersForget, onConfirm: handler))))
   }
 }
 

@@ -46,6 +46,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Encrypted volumes**: unlocking now stops after three wrong passwords with a message about what to check (Caps Lock, keyboard layout, Disk Utility) instead of asking forever. The password field has focus when the prompt opens and Unlock stays disabled until you type something. If a saved Keychain password is rejected and the one you type works, it replaces the saved one when "Remember" is ticked, or you can choose "Forget the saved password" (ticked by default); it is never deleted silently or after a timeout.
+
 - **Custom mount point**: saving a folder on a network share that no longer answers no longer freezes MountMate; the check runs in the background and stops after 2 seconds with a message.
 - **VoiceOver**: each volume, disk and network share row is now read as one item, and the usage ring ("42% used"), the warning triangle (with the error text) and the "Reconnecting…" spinner have spoken labels. The dot on a network share is filled when mounted and hollow when not, instead of relying on colour.
 - When reading the disk list fails (for example a slow or unresponsive disk), MountMate keeps showing the last known disks with the error banner instead of an empty list, and a slow network share check can no longer overwrite a newer one with outdated mount status.

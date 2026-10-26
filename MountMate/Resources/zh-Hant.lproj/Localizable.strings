@@ -444,3 +444,6 @@
 "Could not mount “%@”: %@" = "無法掛載「%@」：%@";
 "Could not mount “%@”." = "無法掛載「%@」。";
 "That network share is no longer saved in MountMate." = "MountMate 中已不再儲存該網路共享。";
+"Forget the saved password" = "忘記已儲存的密碼";
+"Could not unlock “%@”" = "無法解鎖「%@」";
+"The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "密碼已被拒絕 %d 次。請檢查大寫鎖定是否關閉、鍵盤配置是否與設定密碼時相同，或嘗試在「磁碟工具」中解鎖此檔案卷宗。";

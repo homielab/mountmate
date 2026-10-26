@@ -11,6 +11,8 @@ private let kIOMessageSystemWillSleepValue: UInt32 = 0xE000_0280
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var cancellables = Set<AnyCancellable>()
+  private static let forgetCheckboxID = NSUserInterfaceItemIdentifier("forgetSavedPassword")
+  private var emptyFieldObserver: NSObjectProtocol?
 
   // IOKit system power registration (see setupSleepObserver).
   private var powerRootPort: io_connect_t = 0
@@ -201,7 +203,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     case .basic:
       alert.addButton(withTitle: NSLocalizedString("OK", comment: "OK button"))
 
-    case .lockedVolume(_):
+    case .lockedVolume(let lockedAlert):
       let textField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
       textField.placeholderString = NSLocalizedString(
         "Password", comment: "Password placeholder")
@@ -211,15 +213,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         target: nil, action: nil)
       checkbox.frame = NSRect(x: 0, y: 0, width: 200, height: 24)
 
-      let stackView = NSStackView(views: [textField, checkbox])
+      var views: [NSView] = [textField, checkbox]
+      if lockedAlert.offersForgetSavedPassword {
+        let forget = NSButton(
+          checkboxWithTitle: NSLocalizedString(
+            "Forget the saved password", comment: "Checkbox: the saved password was rejected"),
+          target: nil, action: nil)
+        forget.frame = NSRect(x: 0, y: 0, width: 200, height: 24)
+        forget.state = .on
+        forget.identifier = Self.forgetCheckboxID
+        views.append(forget)
+      }
+      let stackView = NSStackView(views: views)
       stackView.orientation = .vertical
       stackView.alignment = .leading
       stackView.spacing = 8
-      stackView.frame = NSRect(x: 0, y: 0, width: 250, height: 56)
+      stackView.frame = NSRect(
+        x: 0, y: 0, width: 250, height: lockedAlert.offersForgetSavedPassword ? 88 : 56)
 
       alert.accessoryView = stackView
-      alert.addButton(withTitle: NSLocalizedString("Unlock", comment: "Unlock button"))
+      let unlockButton = alert.addButton(
+        withTitle: NSLocalizedString("Unlock", comment: "Unlock button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+      // Focus the password field; Unlock stays off while it is empty.
+      alert.window.initialFirstResponder = textField
+      unlockButton.isEnabled = false
+      emptyFieldObserver = NotificationCenter.default.addObserver(
+        forName: NSControl.textDidChangeNotification, object: textField, queue: .main
+      ) { [weak unlockButton, weak textField] _ in
+        unlockButton?.isEnabled = !(textField?.stringValue.isEmpty ?? true)
+      }
 
     case .forceEject:
       alert.addButton(withTitle: NSLocalizedString("Force Eject", comment: "Force Eject button"))
@@ -233,6 +256,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     NSApp.activate(ignoringOtherApps: true)
     let response = alert.runModal()
+    if let observer = emptyFieldObserver {
+      NotificationCenter.default.removeObserver(observer)
+      emptyFieldObserver = nil
+    }
 
     if response == .alertFirstButtonReturn {
       if case .lockedVolume(let lockedVolumeAlert) = appAlert.kind,
@@ -241,7 +268,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
           as? NSSecureTextField,
         let checkbox = stackView.views.first(where: { $0 is NSButton }) as? NSButton
       {
-        lockedVolumeAlert.onConfirm(textField.stringValue, checkbox.state == .on)
+        let forget = stackView.views.first { $0.identifier == Self.forgetCheckboxID } as? NSButton
+        lockedVolumeAlert.onConfirm(
+          textField.stringValue, checkbox.state == .on, forget?.state == .on)
       } else if case .forceEject(let action) = appAlert.kind {
         action()
       } else if case .forceUnmount(let action) = appAlert.kind {

@@ -37,4 +37,28 @@ final class EncryptedVolumeUnlockerTests: XCTestCase {
     let result = failure(stderr: "Error: -69854: busy")
     XCTAssertEqual(UnlockRetryDecision.decide(result: result, isSavedPassword: false), .reportError)
   }
+
+  func testThirdWrongTypedPasswordGivesUp() {
+    let result = failure(stderr: "Error: -69749: The passphrase is incorrect")
+    XCTAssertEqual(
+      UnlockRetryDecision.decide(result: result, isSavedPassword: false, typedFailures: 2),
+      .askAgain(passwordFailed: true, logSavedPasswordFailure: false))
+    XCTAssertEqual(
+      UnlockRetryDecision.decide(result: result, isSavedPassword: false, typedFailures: 3),
+      .giveUp)
+  }
+
+  func testRejectedSavedPasswordNeverGivesUp() {
+    let result = failure(stderr: "Error: -69749: The passphrase is incorrect")
+    XCTAssertEqual(
+      UnlockRetryDecision.decide(result: result, isSavedPassword: true, typedFailures: 5),
+      .askAgain(passwordFailed: true, logSavedPasswordFailure: false))
+  }
+
+  func testTimeoutAfterManyTypedFailuresIsReportedNotGivenUp() {
+    let result = failure(stderr: "", timedOut: true)
+    XCTAssertEqual(
+      UnlockRetryDecision.decide(result: result, isSavedPassword: false, typedFailures: 3),
+      .reportError)
+  }
 }

@@ -3,7 +3,10 @@
 import Foundation
 
 struct LockedVolumeAppAlert {
-  let onConfirm: (String, Bool) -> Void
+  /// The saved password was rejected: offer to forget it.
+  let offersForgetSavedPassword: Bool
+  /// Password, remember in Keychain, forget the saved password.
+  let onConfirm: (String, Bool, Bool) -> Void
 }
 
 enum AppAlertKind {

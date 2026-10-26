@@ -444,3 +444,6 @@
 "Could not mount “%@”: %@" = "Не удалось смонтировать «%@»: %@";
 "Could not mount “%@”." = "Не удалось смонтировать «%@».";
 "That network share is no longer saved in MountMate." = "Эта сетевая папка больше не сохранена в MountMate.";
+"Forget the saved password" = "Забыть сохранённый пароль";
+"Could not unlock “%@”" = "Не удалось разблокировать «%@»";
+"The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Пароль не принят %d раза подряд. Проверьте, что Caps Lock выключен и раскладка клавиатуры та же, что при создании пароля, или попробуйте разблокировать том в Дисковой утилите.";

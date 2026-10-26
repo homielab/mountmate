@@ -444,3 +444,6 @@
 "Could not mount “%@”: %@" = "Impossible de monter « %@ » : %@";
 "Could not mount “%@”." = "Impossible de monter « %@ ».";
 "That network share is no longer saved in MountMate." = "Ce partage réseau n’est plus enregistré dans MountMate.";
+"Forget the saved password" = "Oublier le mot de passe enregistré";
+"Could not unlock “%@”" = "Impossible de déverrouiller « %@ »";
+"The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Le mot de passe a été refusé %d fois. Vérifiez que le verrouillage des majuscules est désactivé et que la disposition du clavier est celle utilisée lors de la création du mot de passe, ou essayez de déverrouiller le volume dans Utilitaire de disque.";
