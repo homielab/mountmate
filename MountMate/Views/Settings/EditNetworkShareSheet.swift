@@ -21,6 +21,7 @@ struct EditNetworkShareSheet: View {
   /// field" apart from "there was nothing (readable) to show".
   @State private var loadedPassword: String?
   @State private var saveError: String?
+  @State private var showBrowser = false
 
   // Inputs as they will be saved: trimmed, pasted URL scheme removed.
   private var cleanedServer: String { NetworkShare.cleanedServerInput(server) }
@@ -92,6 +93,12 @@ struct EditNetworkShareSheet: View {
           HStack {
             Image(systemName: "server.rack").frame(width: 20)
             TextField("Server Address", text: $server, prompt: Text("192.168.1.100"))
+            Button("Browse Network…") {
+              showBrowser = true
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help(Text("Find servers on this network"))
           }
 
           HStack {
@@ -203,6 +210,12 @@ struct EditNetworkShareSheet: View {
     .frame(width: 460, height: 580)
     .onAppear {
       loadExistingData()
+    }
+    .sheet(isPresented: $showBrowser) {
+      NetworkServicePickerSheet(isPresented: $showBrowser) { service in
+        server = service.host
+        shareProtocol = service.shareProtocol
+      }
     }
     .alert(
       "Could Not Save Share",

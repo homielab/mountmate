@@ -118,7 +118,7 @@ Everything in the list above, in full:
 - **RAID**: Apple RAID sets show up as one disk instead of their members
 - **Display options** (Settings → General → Display): **Show Count in Menu Bar** puts the number of mounted volumes and shares (protected volumes not counted) next to the icon; **Show Internal Disks** lists the Mac's own disks too; **Show Only Volumes** hides the disk rows and lists just the volumes; **Hide EFI Partitions**
 - **Ignore, Protect, Pin**: right-click a volume to **Ignore** it (hide it, for example system partitions), **Protect** it from "Unmount All" and the sleep unmount, or **Pin to Top** to list it first; review the lists under Settings → Management
-- **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
+- **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login; "Browse Network…" in the share sheet lists SMB and NFS servers found on the local network and fills in the address
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login; a share or volume that is waiting shows when the next try is and a "Reconnect Now" button
 - **Copy Path / Open in Terminal**: right-click a mounted volume or network share to copy its mount path or open a Terminal window in that folder
 - **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount every removable disk before the Mac sleeps. **Mount Again on Wake** (on by default, shown when the sleep unmount is on) mounts those disks again after wake; disks you unmounted yourself, disks that were unplugged and blocked disks stay unmounted. With notifications on, you are told about disks that could not be unmounted before sleep

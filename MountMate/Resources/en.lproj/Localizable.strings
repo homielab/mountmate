@@ -497,3 +497,13 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.";
 "Almost full: %1$d%% used, %2$@ free" = "Almost full: %1$d%% used, %2$@ free";
 "Almost full: %d%% used" = "Almost full: %d%% used";
+
+// MARK: - Network Browser
+
+"Browse Network…" = "Browse Network…";
+"Find servers on this network" = "Find servers on this network";
+"Shared Servers on This Network" = "Shared Servers on This Network";
+"Looking for shared servers…" = "Looking for shared servers…";
+"No shared servers found. Type the server address by hand." = "No shared servers found. Type the server address by hand.";
+"Local network access was denied, so no servers can be listed. Type the server address by hand." = "Local network access was denied, so no servers can be listed. Type the server address by hand.";
+"Only servers announcing SMB or NFS on this network are listed." = "Only servers announcing SMB or NFS on this network are listed.";

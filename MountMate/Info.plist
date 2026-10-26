@@ -6,6 +6,13 @@
 	<string>UN9VpzA76tcbRJA1pvVliMnMPcYyEiUGRugKM7ISucY=</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>MountMate needs access to removable volumes like USB drives and SD cards to display their status and allow you to mount or unmount them.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>MountMate uses the local network to list the shared servers (SMB and NFS) that can be mounted.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_smb._tcp</string>
+		<string>_nfs._tcp</string>
+	</array>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>

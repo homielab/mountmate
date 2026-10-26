@@ -497,3 +497,13 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” đã đầy %2$d%%. Hãy giải phóng dung lượng trước khi việc sao chép và sao lưu bắt đầu lỗi.";
 "Almost full: %1$d%% used, %2$@ free" = "Gần đầy: đã dùng %1$d%%, còn trống %2$@";
 "Almost full: %d%% used" = "Gần đầy: đã dùng %d%%";
+
+// MARK: - Network Browser
+
+"Browse Network…" = "Duyệt mạng…";
+"Find servers on this network" = "Tìm máy chủ trong mạng";
+"Shared Servers on This Network" = "Máy chủ chia sẻ trong mạng này";
+"Looking for shared servers…" = "Đang tìm máy chủ chia sẻ…";
+"No shared servers found. Type the server address by hand." = "Không thấy máy chủ chia sẻ nào. Hãy nhập địa chỉ máy chủ bằng tay.";
+"Local network access was denied, so no servers can be listed. Type the server address by hand." = "Quyền truy cập mạng cục bộ bị từ chối nên không liệt kê được máy chủ. Hãy nhập địa chỉ máy chủ bằng tay.";
+"Only servers announcing SMB or NFS on this network are listed." = "Chỉ liệt kê máy chủ công bố SMB hoặc NFS trong mạng này.";

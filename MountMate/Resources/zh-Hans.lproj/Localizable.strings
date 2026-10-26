@@ -497,3 +497,13 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@”已使用 %2$d%%。请在复制和备份开始失败之前释放空间。";
 "Almost full: %1$d%% used, %2$@ free" = "快满了：已使用 %1$d%%，剩余 %2$@";
 "Almost full: %d%% used" = "快满了：已使用 %d%%";
+
+// MARK: - Network Browser
+
+"Browse Network…" = "浏览网络…";
+"Find servers on this network" = "查找此网络中的服务器";
+"Shared Servers on This Network" = "此网络中的共享服务器";
+"Looking for shared servers…" = "正在查找共享服务器…";
+"No shared servers found. Type the server address by hand." = "未找到共享服务器。请手动输入服务器地址。";
+"Local network access was denied, so no servers can be listed. Type the server address by hand." = "本地网络访问被拒绝，无法列出服务器。请手动输入服务器地址。";
+"Only servers announcing SMB or NFS on this network are listed." = "仅列出此网络中公告 SMB 或 NFS 的服务器。";

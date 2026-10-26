@@ -497,3 +497,13 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "Том «%1$@» заполнен на %2$d%%. Освободите место, пока копирование и резервные копии не начали завершаться ошибкой.";
 "Almost full: %1$d%% used, %2$@ free" = "Почти заполнен: занято %1$d%%, свободно %2$@";
 "Almost full: %d%% used" = "Почти заполнен: занято %d%%";
+
+// MARK: - Network Browser
+
+"Browse Network…" = "Обзор сети…";
+"Find servers on this network" = "Найти серверы в сети";
+"Shared Servers on This Network" = "Общие серверы в этой сети";
+"Looking for shared servers…" = "Поиск общих серверов…";
+"No shared servers found. Type the server address by hand." = "Общие серверы не найдены. Введите адрес сервера вручную.";
+"Local network access was denied, so no servers can be listed. Type the server address by hand." = "Доступ к локальной сети запрещён, серверы нельзя перечислить. Введите адрес сервера вручную.";
+"Only servers announcing SMB or NFS on this network are listed." = "Перечислены только серверы, объявляющие SMB или NFS в этой сети.";
