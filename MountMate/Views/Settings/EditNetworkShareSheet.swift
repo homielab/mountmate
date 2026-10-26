@@ -71,7 +71,7 @@ struct EditNetworkShareSheet: View {
     let manager = NetworkMountManager.shared
     let mountPoint = manager.configuredMountPoint(for: candidate)
     if let clash = otherShares.first(where: {
-      NetworkMountManager.samePath(manager.configuredMountPoint(for: $0), mountPoint)
+      NetworkMountTable.samePath(manager.configuredMountPoint(for: $0), mountPoint)
     }) {
       return String(
         format: NSLocalizedString(

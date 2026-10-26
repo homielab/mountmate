@@ -113,7 +113,7 @@ final class MountTableTests: XCTestCase {
   {
     let mounted = try XCTUnwrap(
       MountedNetworkShare(source: source, mountPoint: mountPoint, fileSystemType: fileSystemType))
-    return NetworkMountManager.importedShare(from: mounted, localize: { $0 })
+    return NetworkMountTable.importedShare(from: mounted, localize: { $0 })
   }
 
   func testImportedSMBShareTakesUserServerAndPath() throws {
@@ -173,7 +173,7 @@ final class MountTableTests: XCTestCase {
   func testImportedShareFallbacksAreLocalized() throws {
     let mounted = try XCTUnwrap(
       MountedNetworkShare(source: "//", mountPoint: "/", fileSystemType: "smbfs"))
-    let share = NetworkMountManager.importedShare(from: mounted, localize: { "«\($0)»" })
+    let share = NetworkMountTable.importedShare(from: mounted, localize: { "«\($0)»" })
     XCTAssertEqual(share.server, "«Unknown Server»")
     XCTAssertEqual(share.sharePath, "«Shared Folder»")
   }

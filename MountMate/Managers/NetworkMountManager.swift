@@ -26,19 +26,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   @Published var manuallyConnectedShares: [NetworkShare] = []
   @Published var isUnmountingManualShares = false
 
-  private var manualSharesDictionary: [String: NetworkShare] = [:]
-
-  /// Guards `manualSharesDictionary`, `adoptions` and `savedSharesSnapshot`,
-  /// which status refreshes on background threads read and write.
-  private let parseLock = NSLock()
-  /// Mounts accepted as a saved share's although their host is spelled
-  /// differently (e.g. Finder's "NAS._smb._tcp.local" or an IP address),
-  /// keyed by share ID. Recorded when NetFS reports the share as already
-  /// mounted; dropped when the mount disappears, the share's endpoint
-  /// changes, or the share is removed (see `attributeMounts`).
-  private var adoptions: [UUID: Adoption] = [:]
-  /// Saved shares as of the last status refresh (for attribution off main).
-  private var savedSharesSnapshot: [NetworkShare] = []
+  private let shareAdoption = ShareAdoption()
 
   private var workspaceObservers: [NSObjectProtocol] = []
   private var mountEventDebounce: DispatchWorkItem?
@@ -103,7 +91,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     Log.network.debug(
       "Mount table: \(mountedShares.count, privacy: .public) network share(s).")
 
-    let parsedData = self.parseMountedShares(mountedShares, savedShares: savedShares)
+    let parsedData = self.shareAdoption.parse(mountedShares, savedShares: savedShares)
 
     DispatchQueue.main.async {
       guard self.mountStatusGate.shouldApply(ticket) else {
@@ -113,8 +101,8 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       // Assigning an @Published property re-renders every observing view
       // even when the value is identical, and this runs on every
       // keep-alive tick: only publish actual changes.
-      if self.mountedShareIDs != parsedData.mountedUUIDs {
-        self.mountedShareIDs = parsedData.mountedUUIDs
+      if self.mountedShareIDs != parsedData.mountedShareIDs {
+        self.mountedShareIDs = parsedData.mountedShareIDs
       }
       self.mountPointsByShareID = parsedData.mountPoints
       if self.manuallyConnectedShares != parsedData.manualShares {
@@ -166,126 +154,10 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// Resolves a Finder URL dropped anywhere inside a mounted share back to its
   /// network share.
   func manuallyMountedShare(containing url: URL) -> NetworkShare? {
-    let droppedPath = url.standardizedFileURL.path
-    return manuallyConnectedShares.first { share in
-      guard let mountPoint = mountPointsByShareID[share.id] else { return false }
-      let mountedPath = URL(fileURLWithPath: mountPoint).standardizedFileURL.path
-      return droppedPath == mountedPath || droppedPath.hasPrefix(mountedPath + "/")
-    }
+    NetworkMountTable.manualShare(
+      containing: url, in: manuallyConnectedShares, mountPoints: mountPointsByShareID)
   }
 
-  private func parseMountedShares(
-    _ mountedShares: [MountedNetworkShare], savedShares shares: [NetworkShare]
-  ) -> (mountedUUIDs: Set<UUID>, manualShares: [NetworkShare], mountPoints: [UUID: String]) {
-    // Refreshes can run concurrently on background threads.
-    parseLock.lock()
-    defer { parseLock.unlock() }
-
-    var mountedUUIDs = Set<UUID>()
-    var mountPoints = [UUID: String]()
-    var currentManualShareMountPoints = Set<String>()
-    var manualShares = [NetworkShare]()
-
-    // Which saved share each mount is; also drops stale adoptions.
-    let attribution = Self.attributeMounts(mountedShares, to: shares, adoptions: adoptions)
-    adoptions = attribution.adoptions
-    savedSharesSnapshot = shares
-
-    for (index, mountedShare) in mountedShares.enumerated() {
-      if let ownerID = attribution.owners[index],
-        let savedShare = shares.first(where: { $0.id == ownerID })
-      {
-        mountedUUIDs.insert(savedShare.id)
-        if mountPoints[savedShare.id] == nil {
-          mountPoints[savedShare.id] = mountedShare.mountPoint
-        }
-        continue
-      }
-      // A share connected outside MountMate (Finder, Terminal…). Keep the
-      // same NetworkShare (and ID) while it stays mounted at this path.
-      currentManualShareMountPoints.insert(mountedShare.mountPoint)
-      let manualShare =
-        manualSharesDictionary[mountedShare.mountPoint] ?? Self.importedShare(from: mountedShare)
-      manualSharesDictionary[mountedShare.mountPoint] = manualShare
-      manualShares.append(manualShare)
-      mountPoints[manualShare.id] = mountedShare.mountPoint
-    }
-
-    // Clean up old manual shares that are no longer mounted
-    manualSharesDictionary = manualSharesDictionary.filter {
-      currentManualShareMountPoints.contains($0.key)
-    }
-
-    return (mountedUUIDs, manualShares, mountPoints)
-  }
-
-  /// The share MountMate offers to import for a mount it did not make:
-  /// server, share path and user from the mount source (`server:/export`
-  /// for NFS, `//[user@]server/share` for SMB and AFP), named after the last
-  /// path component. When the source cannot be read, the server is
-  /// "Unknown Server" and the share path the mount folder's name (or
-  /// "Shared Folder"). `localize` is replaceable so tests are independent of
-  /// the system language.
-  static func importedShare(
-    from mountedShare: MountedNetworkShare,
-    localize: (String) -> String = { NSLocalizedString($0, comment: "Imported network share") }
-  ) -> NetworkShare {
-    var username = ""
-    var server = ""
-    var sharePath = ""
-
-    switch mountedShare.shareProtocol {
-    case .nfs:
-      // NFS sources look like `server:/export/path` or `[v6addr]:/export`.
-      var rest = Substring(mountedShare.source)
-      if rest.hasPrefix("["), let close = rest.firstIndex(of: "]") {
-        server = String(rest[rest.index(after: rest.startIndex)..<close])
-        rest = rest[rest.index(after: close)...]
-      } else if let colon = rest.firstIndex(of: ":") {
-        server = String(rest[..<colon])
-        rest = rest[colon...]
-      } else {
-        server = String(rest)
-        rest = ""
-      }
-      if rest.hasPrefix(":") { rest = rest.dropFirst() }
-      sharePath = rest.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-    case .smb, .afp:
-      let urlString = mountedShare.source.replacingOccurrences(
-        of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
-      if let url = URL(string: urlString) {
-        username = url.user ?? ""
-        server = url.host ?? ""
-        sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-      }
-    }
-
-    if server.isEmpty {
-      server = localize("Unknown Server")
-    }
-    if sharePath.isEmpty {
-      let folder = (mountedShare.mountPoint as NSString).lastPathComponent
-      sharePath = folder.isEmpty || folder == "/" ? localize("Shared Folder") : folder
-    }
-
-    // The last path component, so the name (the default mount folder if
-    // imported) never contains "/" ("volume1/data" → "data").
-    let name = sharePath.split(separator: "/").last.map(String.init) ?? sharePath
-    return NetworkShare(
-      name: name,
-      server: server,
-      sharePath: sharePath,
-      username: username,
-      mountAtLogin: false,
-      keepMounted: false,
-      shareProtocol: mountedShare.shareProtocol,
-      // Not the current mount path: if this share is imported, its later
-      // mounts must use MountMate's default user-owned location (e.g. not
-      // /Volumes/public, which needs admin rights). The current location is
-      // tracked in `mountPointsByShareID`.
-      customMountPoint: nil
-    )
-  }
   /// Mounts a saved share. Concurrent requests for the same share share one
   /// mount operation and its result; see `NetworkShareMounter`.
   ///
@@ -333,7 +205,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
         // Only remount mounts MountMate made (at the share's own folder).
         // A mount elsewhere, e.g. the user's own Finder mount in /Volumes,
         // is left alone: it is mounted, which is all keep-alive needs.
-        guard Self.samePath(mountPoint, self.configuredMountPoint(for: share)) else {
+        guard NetworkMountTable.samePath(mountPoint, self.configuredMountPoint(for: share)) else {
           DispatchQueue.main.async { completion?(true) }
           return
         }
@@ -472,41 +344,8 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// `~/mountmate/<name>`. Also used by the share editor to detect two saved
   /// shares that would use the same folder.
   func configuredMountPoint(for share: NetworkShare) -> String {
-    Self.configuredMountPoint(
+    NetworkMountTable.configuredMountPoint(
       for: share, homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path)
-  }
-
-  /// `configuredMountPoint(for:)` with the home folder passed in: a relative
-  /// custom path is taken from `homeDirectory`.
-  static func configuredMountPoint(for share: NetworkShare, homeDirectory homeDir: String)
-    -> String
-  {
-    if let customPath = share.customMountPoint, !customPath.isEmpty {
-      let expandedPath = (customPath as NSString).expandingTildeInPath
-      if !expandedPath.hasPrefix("/") {
-        return "\(homeDir)/\(expandedPath)"
-      } else {
-        return expandedPath
-      }
-    } else {
-      let mountsDir = "\(homeDir)/mountmate"
-      return "\(mountsDir)/\(share.name)"
-    }
-  }
-
-  /// Whether two mount point paths name the same folder. Compared
-  /// case-insensitively (the default APFS volume is case-insensitive), which
-  /// errs on the side of treating paths as the same.
-  static func samePath(_ lhs: String, _ rhs: String) -> Bool {
-    normalizedMountPath(lhs) == normalizedMountPath(rhs)
-  }
-
-  private static func normalizedMountPath(_ path: String) -> String {
-    var standardized = (path as NSString).standardizingPath
-    while standardized.count > 1 && standardized.hasSuffix("/") {
-      standardized.removeLast()
-    }
-    return standardized.lowercased()
   }
 
   /// Network mounts in the kernel mount table, or nil if it could not be
@@ -516,91 +355,23 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     MountTable.networkShares()
   }
 
-  /// A mount accepted as a saved share's although its host is spelled
-  /// differently. Remembers the share's endpoint at adoption time so the
-  /// adoption is void once the share's server, path or protocol is edited.
-  struct Adoption: Equatable {
-    let mountPoint: String
-    let shareProtocol: ShareProtocol
-    let endpoint: MountedNetworkShare.Endpoint
-  }
-
-  /// Decides which saved share each mount is, in two passes:
-  /// 1. exact host + path matches (`matches`) over all shares;
-  /// 2. only for mounts no share matched exactly: still-valid adoptions.
-  /// A share with an exact match never also claims a mount by adoption.
-  /// An adoption is valid while its share exists with the same protocol and
-  /// endpoint and an unclaimed mount with that share path is at its mount
-  /// point; invalid adoptions are left out of the returned set.
-  ///
-  /// - Returns: the owning share ID per mount (aligned with `mounts`), and
-  ///   the adoptions to keep.
-  static func attributeMounts(
-    _ mounts: [MountedNetworkShare], to shares: [NetworkShare], adoptions: [UUID: Adoption]
-  ) -> (owners: [UUID?], adoptions: [UUID: Adoption]) {
-    var owners = [UUID?](repeating: nil, count: mounts.count)
-    var exactlyMatched = Set<UUID>()
-    for (index, mount) in mounts.enumerated() {
-      if let share = shares.first(where: { mount.matches($0) }) {
-        owners[index] = share.id
-        exactlyMatched.insert(share.id)
-      }
-    }
-
-    var keptAdoptions: [UUID: Adoption] = [:]
-    for (shareID, adoption) in adoptions {
-      guard !exactlyMatched.contains(shareID),
-        let share = shares.first(where: { $0.id == shareID }),
-        share.shareProtocol == adoption.shareProtocol,
-        MountedNetworkShare.endpoint(for: share) == adoption.endpoint,
-        let index = mounts.indices.first(where: {
-          owners[$0] == nil && samePath(mounts[$0].mountPoint, adoption.mountPoint)
-            && hasSameSharePath(mounts[$0], share)
-        })
-      else { continue }
-      owners[index] = shareID
-      keptAdoptions[shareID] = adoption
-    }
-    return (owners, keptAdoptions)
-  }
-
-  /// The mounts in `mountTable` that are `share`, attributed against the
-  /// share list of the last refresh (with `share` itself up to date).
+  /// The mounts in `mountTable` that are `share` (see `ShareAdoption`).
   func mounts(of share: NetworkShare, in mountTable: [MountedNetworkShare])
     -> [MountedNetworkShare]
   {
-    let (snapshot, currentAdoptions) = parseLock.withLock { (savedSharesSnapshot, adoptions) }
-    var shares = snapshot
-    if let index = shares.firstIndex(where: { $0.id == share.id }) {
-      shares[index] = share
-    } else {
-      shares.append(share)
-    }
-    let owners = Self.attributeMounts(mountTable, to: shares, adoptions: currentAdoptions).owners
-    return mountTable.indices.filter { owners[$0] == share.id }.map { mountTable[$0] }
+    shareAdoption.mounts(of: share, in: mountTable)
   }
 
   /// Forgets any adopted mount for a share (call when it is edited or removed).
   func forgetAdoption(forShareID shareID: UUID) {
-    parseLock.withLock { _ = adoptions.removeValue(forKey: shareID) }
-  }
-
-  /// Same protocol and share path, whatever the host is called.
-  static func hasSameSharePath(_ mounted: MountedNetworkShare, _ share: NetworkShare)
-    -> Bool
-  {
-    mounted.shareProtocol == share.shareProtocol
-      && mounted.endpoint?.path == MountedNetworkShare.endpoint(for: share).path
+    shareAdoption.forget(shareID: shareID)
   }
 
   func adopt(_ mountPoint: String, for share: NetworkShare) {
     Log.network.info(
       "Share \(share.name, privacy: .private) is already mounted at \(mountPoint, privacy: .private) under another server name."
     )
-    let adoption = Adoption(
-      mountPoint: mountPoint, shareProtocol: share.shareProtocol,
-      endpoint: MountedNetworkShare.endpoint(for: share))
-    parseLock.withLock { adoptions[share.id] = adoption }
+    shareAdoption.adopt(mountPoint, for: share)
   }
 
   /// Where `share` is mounted right now according to a fresh mount table, or
@@ -612,12 +383,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     guard let mountTable = currentMountTable() else {
       return lastKnown ?? configuredMountPoint(for: share)
     }
-    let shareMounts = self.mounts(of: share, in: mountTable)
-    if let lastKnown,
-      let mount = shareMounts.first(where: { Self.samePath($0.mountPoint, lastKnown) })
-    {
-      return mount.mountPoint
-    }
-    return shareMounts.first?.mountPoint
+    return NetworkMountTable.liveMountPoint(
+      of: mounts(of: share, in: mountTable), lastKnown: lastKnown)
   }
 }

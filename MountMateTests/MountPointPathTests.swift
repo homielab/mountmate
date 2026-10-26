@@ -73,25 +73,25 @@ final class MountPointPathTests: XCTestCase {
 
   func testConfiguredMountPointDefaultsToMountmateFolder() {
     XCTAssertEqual(
-      NetworkMountManager.configuredMountPoint(for: share(), homeDirectory: "/Users/test"),
+      NetworkMountTable.configuredMountPoint(for: share(), homeDirectory: "/Users/test"),
       "/Users/test/mountmate/Media")
     XCTAssertEqual(
-      NetworkMountManager.configuredMountPoint(
+      NetworkMountTable.configuredMountPoint(
         for: share(customMountPoint: ""), homeDirectory: "/Users/test"),
       "/Users/test/mountmate/Media")
   }
 
   func testConfiguredMountPointUsesCustomPath() {
     XCTAssertEqual(
-      NetworkMountManager.configuredMountPoint(
+      NetworkMountTable.configuredMountPoint(
         for: share(customMountPoint: "/Volumes/NAS"), homeDirectory: "/Users/test"),
       "/Volumes/NAS")
     XCTAssertEqual(
-      NetworkMountManager.configuredMountPoint(
+      NetworkMountTable.configuredMountPoint(
         for: share(customMountPoint: "Shares/NAS"), homeDirectory: "/Users/test"),
       "/Users/test/Shares/NAS")
     XCTAssertEqual(
-      NetworkMountManager.configuredMountPoint(
+      NetworkMountTable.configuredMountPoint(
         for: share(customMountPoint: "~/NAS"), homeDirectory: "/Users/test"),
       NSHomeDirectory() + "/NAS")
   }

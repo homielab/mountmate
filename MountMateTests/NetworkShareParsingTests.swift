@@ -197,10 +197,10 @@ final class NetworkShareParsingTests: XCTestCase {
   }
 
   func testMountPathComparison() {
-    XCTAssertTrue(NetworkMountManager.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/a/"))
+    XCTAssertTrue(NetworkMountTable.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/a/"))
     XCTAssertTrue(
-      NetworkMountManager.samePath("/Users/me/x/../mountmate/A", "/Users/me/mountmate/A"))
-    XCTAssertFalse(NetworkMountManager.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/B"))
+      NetworkMountTable.samePath("/Users/me/x/../mountmate/A", "/Users/me/mountmate/A"))
+    XCTAssertFalse(NetworkMountTable.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/B"))
   }
 
   // MARK: - Attribution (exact matches first, then adoptions)
@@ -213,9 +213,9 @@ final class NetworkShareParsingTests: XCTestCase {
   }
 
   private func adoption(for share: NetworkShare, at mountPoint: String)
-    -> NetworkMountManager.Adoption
+    -> ShareAdoption.Adoption
   {
-    NetworkMountManager.Adoption(
+    ShareAdoption.Adoption(
       mountPoint: mountPoint, shareProtocol: share.shareProtocol,
       endpoint: MountedNetworkShare.endpoint(for: share))
   }
@@ -226,7 +226,7 @@ final class NetworkShareParsingTests: XCTestCase {
     let x = NetworkShare(name: "X", server: "serverX", sharePath: "public", username: "")
     let xMount = try mount("//serverX/public", at: "/Users/me/mountmate/X", "smbfs")
 
-    let result = NetworkMountManager.attributeMounts(
+    let result = ShareAdoption.attributeMounts(
       [xMount], to: [y, x], adoptions: [y.id: adoption(for: y, at: "/Users/me/mountmate/X")])
 
     XCTAssertEqual(result.owners, [x.id])
@@ -239,13 +239,13 @@ final class NetworkShareParsingTests: XCTestCase {
     let ipMount = try mount("//192.168.1.5/public", at: "/Volumes/public", "smbfs")
     let adoptions = [share.id: adoption(for: share, at: "/Volumes/public")]
 
-    let result = NetworkMountManager.attributeMounts([ipMount], to: [share], adoptions: adoptions)
+    let result = ShareAdoption.attributeMounts([ipMount], to: [share], adoptions: adoptions)
     XCTAssertEqual(result.owners, [share.id])
     XCTAssertEqual(result.adoptions, adoptions)
 
     // Once the share also has an exact match, the adoption is not used.
     let exact = try mount("//nas/public", at: "/Users/me/mountmate/NAS", "smbfs")
-    let both = NetworkMountManager.attributeMounts(
+    let both = ShareAdoption.attributeMounts(
       [ipMount, exact], to: [share], adoptions: adoptions)
     XCTAssertEqual(both.owners, [nil, share.id])
     XCTAssertTrue(both.adoptions.isEmpty)
@@ -264,19 +264,19 @@ final class NetworkShareParsingTests: XCTestCase {
     editedProtocol.shareProtocol = .afp
 
     for edited in [editedServer, editedPath, editedProtocol] {
-      let result = NetworkMountManager.attributeMounts(
+      let result = ShareAdoption.attributeMounts(
         [ipMount], to: [edited], adoptions: adoptions)
       XCTAssertEqual(result.owners, [nil])
       XCTAssertTrue(result.adoptions.isEmpty)
     }
 
     // Share removed.
-    let removed = NetworkMountManager.attributeMounts([ipMount], to: [], adoptions: adoptions)
+    let removed = ShareAdoption.attributeMounts([ipMount], to: [], adoptions: adoptions)
     XCTAssertEqual(removed.owners, [nil])
     XCTAssertTrue(removed.adoptions.isEmpty)
 
     // Mount gone.
-    let gone = NetworkMountManager.attributeMounts([], to: [share], adoptions: adoptions)
+    let gone = ShareAdoption.attributeMounts([], to: [share], adoptions: adoptions)
     XCTAssertTrue(gone.adoptions.isEmpty)
   }
 

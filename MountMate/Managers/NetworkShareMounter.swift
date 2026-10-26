@@ -168,7 +168,7 @@ final class NetworkShareMounter {
     // shares with the same name). Never report that as success, and never
     // mount on top of it.
     if let occupant = mountTable?.first(where: {
-      NetworkMountManager.samePath($0.mountPoint, mountPoint)
+      NetworkMountTable.samePath($0.mountPoint, mountPoint)
     }) {
       finish(
         false,
@@ -337,7 +337,7 @@ final class NetworkShareMounter {
     guard created else { return }
     // If the mount table can't be read, leave the folder alone.
     guard let mountTable = host.currentMountTable(),
-      !mountTable.contains(where: { NetworkMountManager.samePath($0.mountPoint, mountPoint) })
+      !mountTable.contains(where: { NetworkMountTable.samePath($0.mountPoint, mountPoint) })
     else { return }
     // No network share is mounted there, so stat() on it cannot hang; this
     // also catches non-network filesystems mounted on the folder.
@@ -486,13 +486,13 @@ final class NetworkShareMounter {
   {
     guard let mountTable = host.currentMountTable() else { return nil }
     if let atOurFolder = mountTable.first(where: {
-      NetworkMountManager.samePath($0.mountPoint, ownMountPoint)
-        && NetworkMountManager.hasSameSharePath($0, share)
+      NetworkMountTable.samePath($0.mountPoint, ownMountPoint)
+        && NetworkMountTable.hasSameSharePath($0, share)
     }) {
       return atOurFolder
     }
     return mountTable.first(where: {
-      $0.matches(share) && NetworkMountManager.hasSameSharePath($0, share)
+      $0.matches(share) && NetworkMountTable.hasSameSharePath($0, share)
     })
   }
 
@@ -570,8 +570,8 @@ final class NetworkShareMounter {
           KeepAliveManager.shared.isSuppressed(shareID: share.id),
           let mountTable = self.host.currentMountTable(),
           mountTable.contains(where: {
-            NetworkMountManager.samePath($0.mountPoint, mountPoint)
-              && NetworkMountManager.hasSameSharePath($0, share)
+            NetworkMountTable.samePath($0.mountPoint, mountPoint)
+              && NetworkMountTable.hasSameSharePath($0, share)
           })
         {
           Log.network.notice(
