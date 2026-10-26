@@ -65,6 +65,7 @@ struct GeneralSettingsView: View {
 
   @State private var diagnosticsState: DiagnosticsCopyState = .idle
   @State private var showRestartAlert = false
+  @State private var showRelaunchFailedAlert = false
   @State private var recordingShortcut: HotkeyAction?
   @State private var showShortcutConflictAlert = false
   @State private var shortcutConflictMessage = ""
@@ -412,6 +413,11 @@ struct GeneralSettingsView: View {
     } message: {
       Text("Please restart MountMate for the language change to take effect.")
     }
+    .alert("Could Not Restart", isPresented: $showRelaunchFailedAlert) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("MountMate could not restart itself. Open it again from Applications.")
+    }
     .alert("Shortcut Already Assigned", isPresented: $showShortcutConflictAlert) {
       Button("OK", role: .cancel) {}
     } message: {
@@ -501,6 +507,7 @@ struct GeneralSettingsView: View {
       try task.run()
     } catch {
       Log.app.error("Could not relaunch MountMate: \(error.localizedDescription, privacy: .public)")
+      showRelaunchFailedAlert = true
       return
     }
     NSApplication.shared.terminate(nil)

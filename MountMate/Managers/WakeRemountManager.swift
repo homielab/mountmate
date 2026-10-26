@@ -44,12 +44,27 @@ final class WakeRemountManager {
   private(set) var plan: WakeRemountPlan? {
     get {
       guard let data = defaults.data(forKey: Self.planKey) else { return nil }
-      return try? JSONDecoder().decode(WakeRemountPlan.self, from: data)
+      do {
+        return try JSONDecoder().decode(WakeRemountPlan.self, from: data)
+      } catch {
+        Log.persistence.error(
+          "Could not read the saved Mount Again on Wake plan, dropping it: \(error.localizedDescription, privacy: .public)"
+        )
+        defaults.removeObject(forKey: Self.planKey)
+        return nil
+      }
     }
     set {
-      if let newValue, !newValue.isEmpty, let data = try? JSONEncoder().encode(newValue) {
-        defaults.set(data, forKey: Self.planKey)
-      } else {
+      guard let newValue, !newValue.isEmpty else {
+        defaults.removeObject(forKey: Self.planKey)
+        return
+      }
+      do {
+        defaults.set(try JSONEncoder().encode(newValue), forKey: Self.planKey)
+      } catch {
+        Log.persistence.error(
+          "Could not save the Mount Again on Wake plan: \(error.localizedDescription, privacy: .public)"
+        )
         defaults.removeObject(forKey: Self.planKey)
       }
     }

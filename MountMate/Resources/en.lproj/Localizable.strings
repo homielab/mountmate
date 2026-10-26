@@ -120,6 +120,8 @@
 "Full Disk Access Recommended" = "Full Disk Access Recommended";
 "Action Failed" = "Action Failed";
 "Restart Required" = "Restart Required";
+"Could Not Restart" = "Could Not Restart";
+"MountMate could not restart itself. Open it again from Applications." = "MountMate could not restart itself. Open it again from Applications.";
 
 // Buttons
 "OK" = "OK";

@@ -5,11 +5,20 @@ import Foundation
 /// Saves and loads lists of `Codable` values as JSON in `UserDefaults`,
 /// tolerating entries that can no longer be decoded.
 enum CodableDefaultsStore {
+  /// Returns false (and keeps the previously saved value) when the list
+  /// cannot be encoded; the reason is logged.
+  @discardableResult
   static func save<T: Codable>(
     _ items: [T], to key: String, defaults: UserDefaults = .standard
-  ) {
-    if let data = try? JSONEncoder().encode(items) {
-      defaults.set(data, forKey: key)
+  ) -> Bool {
+    do {
+      defaults.set(try JSONEncoder().encode(items), forKey: key)
+      return true
+    } catch {
+      Log.persistence.error(
+        "Could not save \(key, privacy: .public): \(error.localizedDescription, privacy: .public)"
+      )
+      return false
     }
   }
 

@@ -50,6 +50,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Mounting, unmounting or reconnecting (Keep Alive) a network share no longer re-reads all disks, so the menu updates with less background work.
+
+- A failure to save a setting, to keep the Mount Again on Wake plan or to build Copy Diagnostics is now written to the log, and if MountMate cannot restart itself after a language change, it says so and asks you to open it again.
+
 - The drive and share lists refresh when the Mac wakes from sleep, so they no longer show disks or shares that changed while it slept.
 
 - A drive whose APFS container spans several physical disks (for example a Fusion drive) is listed once instead of under each disk, and its used space is no longer counted twice.

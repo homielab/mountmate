@@ -92,7 +92,14 @@ class DriveManager: ObservableObject {
 
   private(set) lazy var unlocker = EncryptedVolumeUnlocker(host: self)
 
+  /// Network mount points as of the last mount event (main thread); an
+  /// unmounted share is gone from the table, so this tells what it was.
+  private var knownNetworkMountPoints: Set<String> = []
+
   private init() {
+    if let entries = MountTable.entries() {
+      knownNetworkMountPoints = DiskEventFilter.networkMountPoints(in: entries)
+    }
     setupDiskChangeObservers()
     refreshDrives()
     unlocker.loadSavedPasswordAccounts()
@@ -723,6 +730,21 @@ class DriveManager: ObservableObject {
   }
 
   @objc private func handleDiskNotification(notification: NSNotification) {
+    // Share mounts are tracked by NetworkMountManager; skip the disk refresh.
+    if notification.name == NSWorkspace.didMountNotification
+      || notification.name == NSWorkspace.didUnmountNotification
+    {
+      let volumeURL = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL
+      let entries = MountTable.entries()
+      let isLocal = DiskEventFilter.isLocalDiskEvent(
+        volumeURL: volumeURL, entries: entries,
+        knownNetworkMountPoints: knownNetworkMountPoints)
+      if let entries { knownNetworkMountPoints = DiskEventFilter.networkMountPoints(in: entries) }
+      guard isLocal else {
+        Log.drive.debug("Network share mount event ignored for the disk list.")
+        return
+      }
+    }
     refreshDebounceTimer?.invalidate()
     // Short debounce: coalesces bursts (a disk with several volumes posts one
     // notification per volume) without making plug-ins feel slow.

@@ -120,6 +120,8 @@
 "Full Disk Access Recommended" = "Accès complet au disque recommandé";
 "Action Failed" = "Échec de l'action";
 "Restart Required" = "Redémarrage requis";
+"Could Not Restart" = "Redémarrage impossible";
+"MountMate could not restart itself. Open it again from Applications." = "MountMate n’a pas pu redémarrer. Rouvrez-le depuis Applications.";
 
 // Buttons
 "OK" = "OK";

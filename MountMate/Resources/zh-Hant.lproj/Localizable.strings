@@ -120,6 +120,8 @@
 "Full Disk Access Recommended" = "建議授予完整磁碟存取權限";
 "Action Failed" = "操作失敗";
 "Restart Required" = "需要重新啟動";
+"Could Not Restart" = "無法重新啟動";
+"MountMate could not restart itself. Open it again from Applications." = "MountMate 無法自行重新啟動。請從「應用程式」中再次打開。";
 
 // Buttons
 "OK" = "好";

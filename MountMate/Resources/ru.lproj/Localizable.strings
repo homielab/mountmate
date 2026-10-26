@@ -120,6 +120,8 @@
 "Full Disk Access Recommended" = "Рекомендуется полный доступ к дискам";
 "Action Failed" = "Операция не удалась";
 "Restart Required" = "Требуется перезапуск";
+"Could Not Restart" = "Не удалось перезапустить";
+"MountMate could not restart itself. Open it again from Applications." = "MountMate не смог перезапуститься. Откройте его снова из папки «Программы».";
 
 // Buttons
 "OK" = "OK";

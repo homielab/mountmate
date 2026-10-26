@@ -156,7 +156,16 @@ enum DiagnosticsReport {
   /// Builds the report in the background and puts it on the pasteboard.
   /// Returns false when the log could not be read.
   static func copyToPasteboard() async -> Bool {
-    let report = await Task.detached(priority: .userInitiated) { try? build() }.value
+    let report = await Task.detached(priority: .userInitiated) { () -> String? in
+      do {
+        return try build()
+      } catch {
+        Log.app.error(
+          "Could not build the diagnostics report: \(error.localizedDescription, privacy: .public)"
+        )
+        return nil
+      }
+    }.value
     guard let report else { return false }
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()

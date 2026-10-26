@@ -120,6 +120,8 @@
 "Full Disk Access Recommended" = "Nên cấp quyền Truy cập Toàn bộ Đĩa";
 "Action Failed" = "Thao tác thất bại";
 "Restart Required" = "Cần khởi động lại";
+"Could Not Restart" = "Không thể khởi động lại";
+"MountMate could not restart itself. Open it again from Applications." = "MountMate không tự khởi động lại được. Hãy mở lại ứng dụng từ thư mục Applications.";
 
 // Buttons
 "OK" = "OK";
