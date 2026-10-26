@@ -49,8 +49,14 @@ struct LogsSettingsSection: View {
   private func copyDiagnostics() {
     diagnosticsState = .collecting
     let failing = (DriveManager.shared.physicalDisks ?? []).filter { $0.smartStatus == .failing }
+    // Counted at the configured limit, or the default one while the warning is off.
+    let almostFull = LowSpaceRules.warnings(
+      in: DriveManager.shared.physicalDisks ?? [],
+      threshold: LowSpaceRules.threshold() ?? Double(LowSpaceRules.defaultPercent) / 100
+    ).count
     Task {
-      let copied = await DiagnosticsReport.copyToPasteboard(failingDiskCount: failing.count)
+      let copied = await DiagnosticsReport.copyToPasteboard(
+        failingDiskCount: failing.count, almostFullVolumeCount: almostFull)
       diagnosticsState = copied ? .copied : .failed
     }
   }

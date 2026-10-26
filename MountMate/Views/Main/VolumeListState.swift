@@ -21,6 +21,8 @@ struct VolumeRowState: Equatable {
   var canUnmountWhenIdle = false
   /// "Unmount When Idle" timeout in minutes; 0 = off.
   var idleUnmountMinutes = 0
+  /// Set when the volume is almost full (see `LowSpaceRules`).
+  var lowSpace: LowSpaceRules.Warning?
 }
 
 /// Row state for the whole list, computed once per list render by

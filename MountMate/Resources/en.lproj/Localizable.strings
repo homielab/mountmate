@@ -489,3 +489,11 @@
 "Disk Is Failing" = "Disk Is Failing";
 "“%@” reports a failing SMART status. Back up its data now." = "“%@” reports a failing SMART status. Back up its data now.";
 "SMART status: failing — back up this disk" = "SMART status: failing — back up this disk";
+"Almost Full" = "Almost Full";
+"Volume Almost Full" = "Volume Almost Full";
+"Warn when a volume is almost full" = "Warn when a volume is almost full";
+"Almost full from" = "Almost full from";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted.";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.";
+"Almost full: %1$d%% used, %2$@ free" = "Almost full: %1$d%% used, %2$@ free";
+"Almost full: %d%% used" = "Almost full: %d%% used";

@@ -489,3 +489,11 @@
 "Disk Is Failing" = "Диск виходить з ладу";
 "“%@” reports a failing SMART status. Back up its data now." = "«%@» повідомляє про збій SMART. Зробіть резервну копію даних зараз.";
 "SMART status: failing — back up this disk" = "Стан SMART: збій — зробіть резервну копію цього диска";
+"Almost Full" = "Майже заповнений";
+"Volume Almost Full" = "Том майже заповнений";
+"Warn when a volume is almost full" = "Попереджати, коли том майже заповнений";
+"Almost full from" = "Майже заповнений від";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Позначає змонтований том, який майже заповнений, і за ввімкнених сповіщень повідомляє один раз при кожному монтуванні. Нічого не розмонтовується і не видаляється.";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "Том «%1$@» заповнений на %2$d%%. Звільніть місце, доки копіювання та резервні копії не почали завершуватися помилкою.";
+"Almost full: %1$d%% used, %2$@ free" = "Майже заповнений: зайнято %1$d%%, вільно %2$@";
+"Almost full: %d%% used" = "Майже заповнений: зайнято %d%%";

@@ -489,3 +489,11 @@
 "Disk Is Failing" = "Ổ đĩa sắp hỏng";
 "“%@” reports a failing SMART status. Back up its data now." = "“%@” báo trạng thái SMART là hỏng. Hãy sao lưu dữ liệu ngay.";
 "SMART status: failing — back up this disk" = "Trạng thái SMART: sắp hỏng — hãy sao lưu ổ đĩa này";
+"Almost Full" = "Gần đầy";
+"Volume Almost Full" = "Ổ gần đầy";
+"Warn when a volume is almost full" = "Cảnh báo khi phân vùng gần đầy";
+"Almost full from" = "Gần đầy từ";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Đánh dấu phân vùng đã mount sắp đầy và, khi bật Thông báo, báo một lần mỗi lần mount. Không có gì bị unmount hay xoá.";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” đã đầy %2$d%%. Hãy giải phóng dung lượng trước khi việc sao chép và sao lưu bắt đầu lỗi.";
+"Almost full: %1$d%% used, %2$@ free" = "Gần đầy: đã dùng %1$d%%, còn trống %2$@";
+"Almost full: %d%% used" = "Gần đầy: đã dùng %d%%";

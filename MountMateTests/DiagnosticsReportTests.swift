@@ -16,13 +16,15 @@ final class DiagnosticsReportTests: XCTestCase {
     let report = DiagnosticsReport.format(
       appVersion: "6.4", build: "70", macOS: "Version 15.1",
       flags: [.init(name: "Keep Alive", isOn: true), .init(name: "Notifications", isOn: false)],
-      failingDiskCount: 2, lines: [line(-60, "Refreshed 3 disks")], generatedAt: now, timeZone: utc)
+      failingDiskCount: 2, almostFullVolumeCount: 3,
+      lines: [line(-60, "Refreshed 3 disks")], generatedAt: now, timeZone: utc)
     XCTAssertTrue(report.hasPrefix("MountMate diagnostics\n"))
     XCTAssertTrue(report.contains("MountMate: 6.4 (70)"))
     XCTAssertTrue(report.contains("macOS: Version 15.1"))
     XCTAssertTrue(report.contains("  Keep Alive: on"))
     XCTAssertTrue(report.contains("  Notifications: off"))
     XCTAssertTrue(report.contains("Disks reporting SMART failing: 2"))
+    XCTAssertTrue(report.contains("Volumes almost full: 3"))
     XCTAssertTrue(report.contains("Log, last hour (1 line):"))
     XCTAssertTrue(report.contains("[drive] info: Refreshed 3 disks"))
   }

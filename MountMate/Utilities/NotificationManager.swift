@@ -172,6 +172,7 @@ final class NotificationManager: NSObject, ObservableObject {
   private var isAuthorized = false
   private var keepAliveThrottle = BackgroundEventThrottle()
   private var smartTracker = SMARTAlertTracker()
+  private var lowSpaceTracker = LowSpaceAlertTracker()
   private var cancellables = Set<AnyCancellable>()
 
   private let center: NotificationCentering
@@ -306,7 +307,7 @@ final class NotificationManager: NSObject, ObservableObject {
   }
 
   /// A refresh finished. Announces each disk that reports a failing SMART
-  /// status, once. With notifications off nothing is remembered, so turning
+  /// status and each volume that is almost full, once. With notifications off nothing is remembered, so turning
   /// them on announces a disk that is still failing.
   func disksRefreshed(_ disks: [PhysicalDisk]) {
     guard isEnabled else { return }
@@ -319,6 +320,18 @@ final class NotificationManager: NSObject, ObservableObject {
             "“%@” reports a failing SMART status. Back up its data now.",
             comment: "Notification: a disk's SMART status is failing"),
           disk.name ?? disk.connectionType))
+    }
+    // Nothing is remembered while the warning is off, like with SMART.
+    guard let threshold = LowSpaceRules.threshold(defaults: defaults) else { return }
+    for (volume, warning) in lowSpaceTracker.newWarnings(in: disks, threshold: threshold) {
+      post(
+        id: "lowSpace.\(volume.id)",
+        title: NSLocalizedString("Volume Almost Full", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.",
+            comment: "Notification: a volume is almost full"),
+          volume.name, warning.percentUsed))
     }
   }
 

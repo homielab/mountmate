@@ -93,6 +93,32 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertEqual(center.added.count, 1)
   }
 
+  func testAlmostFullVolumeIsAnnouncedOncePerMountWhenTheWarningIsOn() {
+    let manager = makeManager()
+    manager.isEnabled = true
+    drainMainQueue()
+    func full(mounted: Bool) -> PhysicalDisk {
+      let volume = Volume(
+        id: "v1", deviceIdentifier: "disk6s1", diskUUID: nil, name: "Backup", isMounted: mounted,
+        mountPoint: mounted ? "/Volumes/Backup" : nil, freeSpace: "5 GB", totalSize: "100 GB",
+        usedSpace: "95 GB", usedBytes: nil, fileSystemType: "apfs", usagePercentage: 0.95,
+        category: .user, isProtected: false, snapshots: [])
+      var disk = disk("disk6", smart: .verified)
+      disk.partitions = [volume]
+      return disk
+    }
+    manager.disksRefreshed([full(mounted: true)])
+    manager.disksRefreshed([full(mounted: true)])
+    XCTAssertEqual(center.added.map(\.identifier), ["lowSpace.v1"])
+    manager.disksRefreshed([full(mounted: false)])
+    manager.disksRefreshed([full(mounted: true)])
+    XCTAssertEqual(center.added.count, 2)
+    defaults.set(false, forKey: LowSpaceRules.enabledKey)
+    manager.disksRefreshed([full(mounted: false)])
+    manager.disksRefreshed([full(mounted: true)])
+    XCTAssertEqual(center.added.count, 2)
+  }
+
   func testIsOffByDefaultAndReadsTheSavedSetting() {
     XCTAssertFalse(makeManager().isEnabled)
     defaults.set(true, forKey: NotificationManager.enabledKey)

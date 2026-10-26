@@ -10,6 +10,8 @@ struct BehaviorSettingsSection: View {
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
+  @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
+  @AppStorage(LowSpaceRules.thresholdKey) private var lowSpacePercent = LowSpaceRules.defaultPercent
 
   /// One line under "Also Block at Startup" saying what is in effect, so the
   /// user can see the result after the password prompt closes.
@@ -110,6 +112,22 @@ struct BehaviorSettingsSection: View {
       .help(
         "Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle."
       )
+      Toggle(isOn: $lowSpaceEnabled) {
+        Label(
+          "Warn when a volume is almost full", systemImage: "externaldrive.badge.exclamationmark")
+      }
+      .help(
+        "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted."
+      )
+      if lowSpaceEnabled {
+        Picker(selection: $lowSpacePercent) {
+          ForEach(LowSpaceRules.percentChoices, id: \.self) { percent in
+            Text(verbatim: "\(percent)%").tag(percent)
+          }
+        } label: {
+          Label("Almost full from", systemImage: "gauge.with.dots.needle.67percent")
+        }
+      }
       if notificationManager.isEnabled, notificationManager.isDeniedBySystem {
         HStack(spacing: 6) {
           Image(systemName: "exclamationmark.triangle.fill")

@@ -489,3 +489,11 @@
 "Disk Is Failing" = "Disque défaillant";
 "“%@” reports a failing SMART status. Back up its data now." = "« %@ » signale un état SMART défaillant. Sauvegardez ses données maintenant.";
 "SMART status: failing — back up this disk" = "État SMART : défaillant — sauvegardez ce disque";
+"Almost Full" = "Presque plein";
+"Volume Almost Full" = "Volume presque plein";
+"Warn when a volume is almost full" = "Avertir quand un volume est presque plein";
+"Almost full from" = "Presque plein à partir de";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Signale un volume monté presque plein et, si les notifications sont activées, vous prévient une fois à chaque montage. Rien n’est démonté ni supprimé.";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "« %1$@ » est plein à %2$d %%. Libérez de l’espace avant que les copies et les sauvegardes n’échouent.";
+"Almost full: %1$d%% used, %2$@ free" = "Presque plein : %1$d %% utilisés, %2$@ libres";
+"Almost full: %d%% used" = "Presque plein : %d %% utilisés";

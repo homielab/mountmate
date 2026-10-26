@@ -489,3 +489,11 @@
 "Disk Is Failing" = "磁盘即将故障";
 "“%@” reports a failing SMART status. Back up its data now." = "“%@”的 SMART 状态为故障。请立即备份其中的数据。";
 "SMART status: failing — back up this disk" = "SMART 状态：故障 — 请备份此磁盘";
+"Almost Full" = "快满了";
+"Volume Almost Full" = "卷快满了";
+"Warn when a volume is almost full" = "卷快满时发出警告";
+"Almost full from" = "占用达到以下比例时视为快满";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "标记已挂载且快满的卷；开启通知后，每次挂载只提醒一次。不会卸载或删除任何内容。";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@”已使用 %2$d%%。请在复制和备份开始失败之前释放空间。";
+"Almost full: %1$d%% used, %2$@ free" = "快满了：已使用 %1$d%%，剩余 %2$@";
+"Almost full: %d%% used" = "快满了：已使用 %d%%";

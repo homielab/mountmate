@@ -56,7 +56,9 @@ struct VolumeRowView: View {
                 .accessibilityLabel(Text(error))
             } else if currentVolume.isMounted, let percentage = currentVolume.usagePercentage {
               CircularProgressRing(
-                progress: percentage, color: CircularProgressRing.usageColor(for: percentage),
+                progress: percentage,
+                color: state.lowSpace == nil
+                  ? CircularProgressRing.usageColor(for: percentage) : .orange,
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
             } else if state.isReconnecting {
@@ -90,6 +92,18 @@ struct VolumeRowView: View {
                   .padding(.vertical, 2)
                   .background(Color.orange.opacity(0.15))
                   .clipShape(.rect(cornerRadius: 4))
+              }
+              if let warning = state.lowSpace {
+                let message = LowSpaceRules.message(for: warning)
+                Text("Almost Full")
+                  .font(.caption2).fontWeight(.semibold)
+                  .foregroundStyle(.orange)
+                  .padding(.horizontal, 6)
+                  .padding(.vertical, 2)
+                  .background(Color.orange.opacity(0.15))
+                  .clipShape(.rect(cornerRadius: 4))
+                  .help(message)
+                  .accessibilityLabel(Text(message))
               }
               if let total = currentVolume.totalSize, let used = currentVolume.usedSpace,
                 let free = currentVolume.freeSpace

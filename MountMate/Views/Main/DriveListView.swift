@@ -17,6 +17,9 @@ struct DriveListView: View {
   @ObservedObject private var persistence = PersistenceManager.shared
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
   @State private var expandedEditorRowID: String?
+  // Read here so the rows redraw when the warning setting changes.
+  @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
+  @AppStorage(LowSpaceRules.thresholdKey) private var lowSpacePercent = LowSpaceRules.defaultPercent
 
   init(
     pinnedVolumes: [Volume], internalDisks: [PhysicalDisk], externalDisks: [PhysicalDisk],
@@ -43,6 +46,7 @@ struct DriveListView: View {
   private var listState: VolumeListState {
     let reconnecting = keepAliveManager.reconnectingVolumeIDs
     let savedPasswords = manager.volumeIDsWithSavedPassword
+    let lowSpaceThreshold = LowSpaceRules.threshold()
     var rowStates: [String: VolumeRowState] = [:]
     // Pinned volumes come from these disks too.
     for disk in internalDisks + externalDisks + diskImages {
@@ -55,7 +59,9 @@ struct DriveListView: View {
           hasSavedPassword: savedPasswords.contains(volume.id),
           canUnmountWhenIdle: disk.type == .physical && volume.category == .user
             && volume.compositeId != nil,
-          idleUnmountMinutes: persistence.idleUnmountMinutes(for: volume))
+          idleUnmountMinutes: persistence.idleUnmountMinutes(for: volume),
+          lowSpace: LowSpaceRules.warning(
+            for: volume, on: disk.type, threshold: lowSpaceThreshold))
       }
     }
     return VolumeListState(

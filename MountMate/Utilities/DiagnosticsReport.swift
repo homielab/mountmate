@@ -76,6 +76,7 @@ enum DiagnosticsReport {
     macOS: String,
     flags: [Flag],
     failingDiskCount: Int = 0,
+    almostFullVolumeCount: Int = 0,
     lines: [LogLine],
     generatedAt: Date,
     homeDirectory: String = NSHomeDirectory(),
@@ -92,7 +93,10 @@ enum DiagnosticsReport {
       "Settings:",
     ]
     out += flags.map { "  \($0.name): \($0.isOn ? "on" : "off")" }
-    out += ["", "Disks reporting SMART failing: \(failingDiskCount)"]
+    out += [
+      "", "Disks reporting SMART failing: \(failingDiskCount)",
+      "Volumes almost full: \(almostFullVolumeCount)",
+    ]
     out += [
       "",
       "Log, last hour (\(lines.count) \(lines.count == 1 ? "line" : "lines")):",
@@ -144,7 +148,9 @@ enum DiagnosticsReport {
   }
 
   /// The whole report for this run. Slow: call it off the main thread.
-  static func build(failingDiskCount: Int = 0, now: Date = Date()) throws -> String {
+  static func build(
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, now: Date = Date()
+  ) throws -> String {
     let info = Bundle.main.infoDictionary
     return format(
       appVersion: info?["CFBundleShortVersionString"] as? String ?? "?",
@@ -152,16 +158,20 @@ enum DiagnosticsReport {
       macOS: ProcessInfo.processInfo.operatingSystemVersionString,
       flags: flags(),
       failingDiskCount: failingDiskCount,
+      almostFullVolumeCount: almostFullVolumeCount,
       lines: try collectLogLines(now: now),
       generatedAt: now)
   }
 
   /// Builds the report in the background and puts it on the pasteboard.
   /// Returns false when the log could not be read.
-  static func copyToPasteboard(failingDiskCount: Int = 0) async -> Bool {
+  static func copyToPasteboard(
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0
+  ) async -> Bool {
     let report = await Task.detached(priority: .userInitiated) { () -> String? in
       do {
-        return try build(failingDiskCount: failingDiskCount)
+        return try build(
+          failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount)
       } catch {
         Log.app.error(
           "Could not build the diagnostics report: \(error.localizedDescription, privacy: .public)"

@@ -489,3 +489,11 @@
 "Disk Is Failing" = "磁碟即將故障";
 "“%@” reports a failing SMART status. Back up its data now." = "「%@」的 SMART 狀態為故障。請立即備份其中的資料。";
 "SMART status: failing — back up this disk" = "SMART 狀態：故障 — 請備份此磁碟";
+"Almost Full" = "快滿了";
+"Volume Almost Full" = "磁碟區快滿了";
+"Warn when a volume is almost full" = "磁碟區快滿時發出警告";
+"Almost full from" = "使用量達到以下比例時視為快滿";
+"Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "標示已掛載且快滿的磁碟區；開啟通知後，每次掛載只提醒一次。不會卸載或刪除任何內容。";
+"“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "「%1$@」已使用 %2$d%%。請在拷貝與備份開始失敗之前釋出空間。";
+"Almost full: %1$d%% used, %2$@ free" = "快滿了：已使用 %1$d%%，剩餘 %2$@";
+"Almost full: %d%% used" = "快滿了：已使用 %d%%";
