@@ -11,8 +11,11 @@ private final class FakeNotificationCenter: NotificationCentering {
   private(set) var authorizationRequests = 0
   private(set) var added: [UNNotificationRequest] = []
   private(set) var delegateSet = false
+  private(set) var categories: Set<UNNotificationCategory> = []
 
   func setDelegate(_ delegate: UNUserNotificationCenterDelegate) { delegateSet = true }
+
+  func setCategories(_ categories: Set<UNNotificationCategory>) { self.categories = categories }
 
   func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
     authorizationRequests += 1
@@ -146,5 +149,58 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertEqual(center.added.map(\.identifier), ["sleepUnmount"])
     XCTAssertTrue(manager.idleUnmounted(message: "m", volumeID: "v"))
     XCTAssertEqual(center.added.last?.identifier, "idle.v")
+  }
+
+  // MARK: - Actions
+
+  func testKeepAliveFailureUsesTheReconnectCategory() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let manager = makeManager()
+    manager.keepAliveResult(targetID: "a", name: "NAS", success: false)
+    manager.keepAliveResult(targetID: "a", name: "NAS", success: false)
+    XCTAssertEqual(
+      center.added.last?.content.categoryIdentifier, NotificationAction.keepAliveFailedCategory)
+  }
+
+  func testOtherNotificationsUseTheDefaultCategory() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let manager = makeManager()
+    manager.sleepUnmountTimedOut()
+    manager.blockedVolumeStillMounted(name: "Disk", volumeUUID: "u")
+    XCTAssertEqual(center.added.count, 2)
+    XCTAssertTrue(center.added.allSatisfy { $0.content.categoryIdentifier.isEmpty })
+  }
+
+  func testStartRegistersTheReconnectAction() {
+    makeManager().start()
+    let category = center.categories.first {
+      $0.identifier == NotificationAction.keepAliveFailedCategory
+    }
+    XCTAssertEqual(category?.actions.map(\.identifier), [NotificationAction.reconnectActionID])
+  }
+
+  func testActionIdentifiersResolve() {
+    XCTAssertEqual(
+      NotificationAction.resolve(actionIdentifier: NotificationAction.reconnectActionID),
+      .reconnectNow)
+    XCTAssertEqual(
+      NotificationAction.resolve(actionIdentifier: UNNotificationDefaultActionIdentifier),
+      .openPopover)
+    XCTAssertEqual(
+      NotificationAction.resolve(actionIdentifier: UNNotificationDismissActionIdentifier), .none)
+  }
+
+  func testHandleResponseRunsTheMatchingAction() {
+    let manager = makeManager()
+    var reconnects = 0
+    var opens = 0
+    manager.reconnectNow = { reconnects += 1 }
+    manager.openPopover = { opens += 1 }
+    manager.handleResponse(actionIdentifier: NotificationAction.reconnectActionID)
+    XCTAssertEqual([reconnects, opens], [1, 0])
+    manager.handleResponse(actionIdentifier: UNNotificationDefaultActionIdentifier)
+    XCTAssertEqual([reconnects, opens], [1, 1])
+    manager.handleResponse(actionIdentifier: UNNotificationDismissActionIdentifier)
+    XCTAssertEqual([reconnects, opens], [1, 1])
   }
 }

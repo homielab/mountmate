@@ -57,10 +57,46 @@ struct BackgroundEventThrottle: Sendable {
   }
 }
 
+/// What a click on a MountMate notification (or one of its buttons) does.
+enum NotificationAction: Equatable {
+  case reconnectNow
+  case openPopover
+  case none
+
+  /// Category of the "Cannot Reconnect" notification, which has the
+  /// "Reconnect Now" button.
+  static let keepAliveFailedCategory = "keepAliveFailed"
+  static let reconnectActionID = "reconnectNow"
+
+  /// Clicking the notification body opens the popover; the button retries;
+  /// dismissing does nothing.
+  static func resolve(actionIdentifier: String) -> NotificationAction {
+    switch actionIdentifier {
+    case UNNotificationDefaultActionIdentifier: return .openPopover
+    case reconnectActionID: return .reconnectNow
+    default: return .none
+    }
+  }
+
+  /// The categories to register with the notification center.
+  static func makeCategories() -> Set<UNNotificationCategory> {
+    let reconnect = UNNotificationAction(
+      identifier: reconnectActionID,
+      title: NSLocalizedString("Reconnect Now", comment: "Notification button"),
+      options: [])
+    return [
+      UNNotificationCategory(
+        identifier: keepAliveFailedCategory, actions: [reconnect], intentIdentifiers: [],
+        options: [])
+    ]
+  }
+}
+
 /// The part of `UNUserNotificationCenter` MountMate uses, so tests can stand
 /// in for the system.
 protocol NotificationCentering: AnyObject {
   func setDelegate(_ delegate: UNUserNotificationCenterDelegate)
+  func setCategories(_ categories: Set<UNNotificationCategory>)
   func requestAuthorization(completion: @escaping (_ granted: Bool, _ error: Error?) -> Void)
   func authorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void)
   func add(_ request: UNNotificationRequest, completion: @escaping (Error?) -> Void)
@@ -73,6 +109,10 @@ final class SystemNotificationCenter: NotificationCentering {
 
   func setDelegate(_ delegate: UNUserNotificationCenterDelegate) {
     center.delegate = delegate
+  }
+
+  func setCategories(_ categories: Set<UNNotificationCategory>) {
+    center.setNotificationCategories(categories)
   }
 
   func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
@@ -123,6 +163,10 @@ final class NotificationManager: NSObject, ObservableObject {
   private let center: NotificationCentering
   private let defaults: UserDefaults
 
+  /// What the notification buttons do; replaced in tests.
+  var reconnectNow: () -> Void = { KeepAliveManager.shared.sweepNow(resetBackoff: true) }
+  var openPopover: () -> Void = { MenuBarPopover.open() }
+
   init(
     center: NotificationCentering = SystemNotificationCenter(),
     defaults: UserDefaults = .standard
@@ -137,6 +181,7 @@ final class NotificationManager: NSObject, ObservableObject {
   /// reads the current permission.
   func start() {
     center.setDelegate(self)
+    center.setCategories(NotificationAction.makeCategories())
     if isEnabled { refreshAuthorizationStatus() }
     // Permission can change in System Settings while MountMate runs.
     NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
@@ -177,6 +222,7 @@ final class NotificationManager: NSObject, ObservableObject {
       guard keepAliveThrottle.recordFailure(targetID) else { return }
       post(
         id: "keepAlive.\(targetID)",
+        category: NotificationAction.keepAliveFailedCategory,
         title: NSLocalizedString("Cannot Reconnect", comment: "Notification title"),
         body: String(
           format: NSLocalizedString(
@@ -249,9 +295,10 @@ final class NotificationManager: NSObject, ObservableObject {
 
   /// Shows a notification when the setting is on and macOS allows it. A new
   /// notification with the same id replaces the previous one.
-  private func post(id: String, title: String, body: String) {
+  private func post(id: String, category: String? = nil, title: String, body: String) {
     guard isEnabled else { return }
     let content = UNMutableNotificationContent()
+    if let category { content.categoryIdentifier = category }
     content.title = title
     content.body = body
     let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
@@ -260,6 +307,15 @@ final class NotificationManager: NSObject, ObservableObject {
         Log.app.error(
           "Could not show notification: \(error.localizedDescription, privacy: .public)")
       }
+    }
+  }
+
+  /// Runs what the user chose on a notification. Main thread.
+  func handleResponse(actionIdentifier: String) {
+    switch NotificationAction.resolve(actionIdentifier: actionIdentifier) {
+    case .reconnectNow: reconnectNow()
+    case .openPopover: openPopover()
+    case .none: break
     }
   }
 
@@ -304,5 +360,16 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
     completionHandler([.banner, .list])
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let action = response.actionIdentifier
+    DispatchQueue.main.async {
+      self.handleResponse(actionIdentifier: action)
+      completionHandler()
+    }
   }
 }
