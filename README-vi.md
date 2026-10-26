@@ -35,7 +35,8 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục bạn chọn
 - **Ổ APFS mã hoá**: mở khoá ngay trong MountMate, có thể lưu mật khẩu vào Keychain ("Forget Saved Password" trong menu chuột phải để xoá)
 - **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
-- **Ẩn phân vùng EFI**: tuỳ chọn (Settings → General → Display)
+- **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI
+- **Ignore, Protect, Pin**: chuột phải một phân vùng để **Ignore** (ẩn đi, ví dụ phân vùng hệ thống), **Protect** (không bị "Unmount All" và unmount khi ngủ) hoặc **Pin to Top** (xếp lên đầu); xem lại các danh sách trong Settings → Management
 - **Network Shares**: tự mount SMB, NFS và AFP khi đăng nhập
 - **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập
 - **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
@@ -71,6 +72,16 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 <img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light.png" width="300" /><img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/dark.png" width="300" />
 
 ![Toàn bộ giao diện](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
+
+## ⚡️ Bắt đầu nhanh
+
+Cài bằng [Homebrew](https://brew.sh):
+
+```bash
+brew install mountmate
+```
+
+Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/releases) rồi kéo MountMate.app vào thư mục Applications.
 
 ## 🛠️ Hướng dẫn cài đặt
 
@@ -140,7 +151,7 @@ Danh sách ổ được dựng bởi `DiskListParser` (`MountMate/Managers/DiskL
 
 Mã cho `/etc/fstab` chia làm ba: `FstabRules` (`MountMate/Managers/FstabRules.swift`) dựng, tìm, xoá các dòng của MountMate và kiểm từng trường, toàn hàm thuần không đụng file; `FstabVolumeLookup` hỏi `diskutil` định dạng của volume và volume có được chặn lúc khởi động không; `FstabWriter` đọc `/etc/fstab` và ghi nó qua hộp thoại mật khẩu quản trị. Kiểm thay đổi quy tắc trong `FstabRulesTests` và `BlockedFstabRuleTests`; lệnh đặc quyền được kiểm trên một file tạm, không bao giờ trên `/etc/fstab` thật.
 
-CI chạy cả hai trên mỗi pull request và mỗi push vào `main`. Kiểm tra style chỉ báo cáo, chưa làm hỏng build cho tới khi dọn xong các lỗi cũ.
+CI chạy cả hai trên mỗi pull request và mỗi push vào `main`; kiểm tra style ở chế độ strict. Xem quy ước trong [CONTRIBUTING.md](CONTRIBUTING.md) (bằng tiếng Anh).
 
 ### Phát hành
 
@@ -158,7 +169,7 @@ SPARKLE_PRIVATE_KEY=/path/to/test_key scripts/2-build.sh --dry-run
 ## 📫 Đóng góp & phản hồi
 
 MountMate được tạo để giải quyết nhu cầu cá nhân của tôi – nhưng tôi rất sẵn lòng cải thiện nó cho cộng đồng.
-Nếu bạn có góp ý hoặc muốn tham gia phát triển, [hãy mở issue tại đây](https://github.com/homielab/mountmate/issues)!
+Nếu bạn có góp ý hoặc muốn tham gia phát triển, [hãy mở issue tại đây](https://github.com/homielab/mountmate/issues) (form báo lỗi hỏi mã lỗi và log)! Pull request cũng được chào đón: xem [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🤝 Hỗ trợ
 

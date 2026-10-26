@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - The localization test now also checks that every language keeps the same format placeholders (`%@`, `%d`, `%1$@`…) as English; three unused strings were removed from all languages.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
+- Docs: added a CONTRIBUTING guide, GitHub issue forms (bug reports ask for the version and the error code) and a pull request template; both READMEs now list the display options (menu bar count, internal disks, only volumes) and Ignore, Protect and Pin, and the Vietnamese README has a Quick Start.
 
 ### Fixed
 

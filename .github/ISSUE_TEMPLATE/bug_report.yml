@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in MountMate does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. A mount error and the log usually make the cause much quicker to find.
+  - type: input
+    id: mountmate-version
+    attributes:
+      label: MountMate version
+      description: Settings → About & Updates, or the version of the Homebrew cask.
+      placeholder: "6.3"
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.1, Apple silicon"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is affected?
+      options:
+        - Internal or external drive (USB, Thunderbolt, SD card)
+        - Encrypted APFS volume
+        - RAID set
+        - Network share (SMB)
+        - Network share (NFS or AFP)
+        - Block USB Auto-Mount / Block at Startup
+        - Keep Alive or Unmount When Idle
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: error-code
+    attributes:
+      label: Error code
+      description: The line shown in the error dialog, copied as is. Write "none" if no dialog appeared.
+      placeholder: "Error code: 80 (EAUTH)"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: |
+        Reproduce the problem, then run this in Terminal and attach `mountmate.log` (or paste the relevant lines). Passwords are never logged.
+        `log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > ~/Desktop/mountmate.log`
+      render: text

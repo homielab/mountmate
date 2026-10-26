@@ -66,7 +66,8 @@ So I built **MountMate**.
 - **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at a folder you choose
 - **Encrypted APFS volumes**: unlock them from MountMate, with the password optionally saved in the Keychain ("Forget Saved Password" in the right-click menu removes it)
 - **RAID**: Apple RAID sets show up as one disk instead of their members
-- **Hide EFI Partitions**: optional (Settings → General → Display)
+- **Display options** (Settings → General → Display): **Show Count in Menu Bar** puts the number of mounted volumes and shares (protected volumes not counted) next to the icon; **Show Internal Disks** lists the Mac's own disks too; **Show Only Volumes** hides the disk rows and lists just the volumes; **Hide EFI Partitions**
+- **Ignore, Protect, Pin**: right-click a volume to **Ignore** it (hide it, for example system partitions), **Protect** it from "Unmount All" and the sleep unmount, or **Pin to Top** to list it first; review the lists under Settings → Management
 - **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login
 - **Copy Path / Open in Terminal**: right-click a mounted volume or network share to copy its mount path or open a Terminal window in that folder
@@ -147,7 +148,7 @@ The disk list is built by `DiskListParser` (`MountMate/Managers/DiskListParser.s
 
 `/etc/fstab` code is split in three: `FstabRules` (`MountMate/Managers/FstabRules.swift`) builds, finds and removes MountMate's lines and validates every field, as pure functions without file access; `FstabVolumeLookup` asks `diskutil` for the file system and startup-block eligibility of a volume; `FstabWriter` reads `/etc/fstab` and writes it through the administrator prompt. Test rule changes in `FstabRulesTests` and `BlockedFstabRuleTests`; the privileged command is tested against a temporary file, never the real `/etc/fstab`.
 
-CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
+CI runs both on every pull request and push to `main`; the style check is strict. See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions.
 
 ### Releasing
 
@@ -187,7 +188,7 @@ To watch live while you mount or unmount: `log stream --predicate 'subsystem == 
 ## 📫 Feedback & Contributions
 
 MountMate was built to solve my personal workflow issue, but I’d love to improve it for others too.
-Feel free to [open an issue](https://github.com/homielab/mountmate/issues) or suggest improvements!
+Feel free to [open an issue](https://github.com/homielab/mountmate/issues) (the form asks for the error code and a log) or suggest improvements! Pull requests are welcome too: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🤝 Support
 
