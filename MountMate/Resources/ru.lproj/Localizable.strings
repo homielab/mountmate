@@ -220,6 +220,7 @@
 "Custom Mount Point In Use" = "Эта папка уже используется смонтированным томом «%@».";
 "Custom Mount Point Must Be Folder" = "Пользовательская точка монтирования должна быть папкой.";
 "Custom Mount Point Inspect Error" = "MountMate не смог проверить эту папку.\n\nДетали:\n%@";
+"Custom Mount Point Check Timed Out" = "Папка не ответила за 2 секунды. Если она на сетевом ресурсе, проверьте его доступность и повторите попытку.";
 "Custom Mount Point Create Error" = "MountMate не смог создать эту папку.\n\nДетали:\n%@";
 "Custom Mount Point Requires UUID" = "Этот том не имеет стабильного UUID, поэтому MountMate не может добавить для него системное правило монтирования.";
 "Custom Mount Point Unsupported File System" = "MountMate не смог определить правильный тип файловой системы для системного правила монтирования этого тома.";

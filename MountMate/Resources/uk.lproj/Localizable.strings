@@ -220,6 +220,7 @@
 "Custom Mount Point In Use" = "Ця тека вже використовується змонтованим томом «%@».";
 "Custom Mount Point Must Be Folder" = "Власна точка монтування повинна бути текою.";
 "Custom Mount Point Inspect Error" = "MountMate не зміг перевірити цю теку.\n\nДеталі:\n%@";
+"Custom Mount Point Check Timed Out" = "Тека не відповіла протягом 2 секунд. Якщо вона на мережевому ресурсі, перевірте його доступність і повторіть спробу.";
 "Custom Mount Point Create Error" = "MountMate не зміг створити цю теку.\n\nДеталі:\n%@";
 "Custom Mount Point Requires UUID" = "Цей том не має стабільного UUID, тому MountMate не може додати для нього системне правило монтування.";
 "Custom Mount Point Unsupported File System" = "MountMate не зміг визначити правильний тип файлової системи для системного правила монтування цього тому.";

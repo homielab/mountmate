@@ -111,3 +111,60 @@ final class MountPointPathTests: XCTestCase {
     XCTAssertEqual(MountedNetworkShare.normalizedHost("nas.local"), "nas")
   }
 }
+
+// MARK: - Timeout
+
+final class MountPointCheckTimeoutTests: XCTestCase {
+  func testFastWorkDeliversItsResultOnTheMainThread() {
+    let done = expectation(description: "completion")
+    DriveManager.runWithTimeout(
+      2, work: { 42 },
+      completion: { value in
+        XCTAssertEqual(value, 42)
+        XCTAssertTrue(Thread.isMainThread)
+        done.fulfill()
+      })
+    wait(for: [done], timeout: 5)
+  }
+
+  func testSlowWorkGivesNilAfterTheTimeoutAndReportsOnce() {
+    let done = expectation(description: "completion")
+    final class Counter: @unchecked Sendable { var value = 0 }
+    let calls = Counter()
+    let started = Date()
+    DriveManager.runWithTimeout(
+      0.2,
+      work: {
+        Thread.sleep(forTimeInterval: 1)
+        return 1
+      },
+      completion: { value in
+        calls.value += 1
+        XCTAssertNil(value)
+        XCTAssertLessThan(Date().timeIntervalSince(started), 0.9)
+        done.fulfill()
+      })
+    wait(for: [done], timeout: 5)
+    // Let the slow work finish: it must not report a second time.
+    let settle = expectation(description: "settle")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) { settle.fulfill() }
+    wait(for: [settle], timeout: 5)
+    XCTAssertEqual(calls.value, 1)
+  }
+
+  func testCheckCustomMountPointFindsAnExistingEmptyFolder() throws {
+    let folder = FileManager.default.temporaryDirectory
+      .appendingPathComponent("MountPointCheck-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let done = expectation(description: "check")
+    DriveManager.shared.checkCustomMountPoint(folder.path) { check in
+      guard case .directory(let exists, let isDirectory, let isEmpty) = check else {
+        return XCTFail("unexpected \(check)")
+      }
+      XCTAssertTrue(exists && isDirectory && isEmpty)
+      done.fulfill()
+    }
+    wait(for: [done], timeout: 5)
+  }
+}

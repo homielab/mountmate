@@ -922,6 +922,60 @@ class DriveManager: ObservableObject {
     return nil
   }
 
+  /// What checking a folder chosen as a custom mount point found.
+  enum MountPointCheck {
+    case invalid(String)
+    case directory(exists: Bool, isDirectory: Bool, isEmpty: Bool)
+    case inspectFailed(String)
+    /// The file system did not answer within the timeout (a hung network share).
+    case timedOut
+  }
+
+  /// Validates and inspects `rawPath` off the main thread and calls
+  /// `completion` on the main thread, after `timeout` at the latest. The folder
+  /// may sit on a network share that no longer answers.
+  func checkCustomMountPoint(
+    _ rawPath: String, excluding volume: Volume? = nil, timeout: TimeInterval = 2,
+    completion: @escaping (MountPointCheck) -> Void
+  ) {
+    Self.runWithTimeout(
+      timeout,
+      work: { [self] () -> MountPointCheck in
+        if let error = customMountPointValidationError(for: rawPath, excluding: volume) {
+          return .invalid(error)
+        }
+        do {
+          let state = try inspectDirectory(at: rawPath)
+          return .directory(
+            exists: state.exists, isDirectory: state.isDirectory, isEmpty: state.isEmpty)
+        } catch {
+          return .inspectFailed(error.localizedDescription)
+        }
+      },
+      completion: { completion($0 ?? .timedOut) })
+  }
+
+  /// Runs `work` on a background queue; `completion` runs once on the main
+  /// thread with its result, or with nil when it takes longer than `timeout`
+  /// (the work then finishes unobserved).
+  static func runWithTimeout<T: Sendable>(
+    _ timeout: TimeInterval, work: @escaping @Sendable () -> T,
+    completion: @escaping @Sendable (T?) -> Void
+  ) {
+    let lock = NSLock()
+    nonisolated(unsafe) var finished = false
+    let finish: @Sendable (T?) -> Void = { value in
+      let isFirst = lock.withLock { () -> Bool in
+        defer { finished = true }
+        return !finished
+      }
+      guard isFirst else { return }
+      DispatchQueue.main.async { completion(value) }
+    }
+    DispatchQueue.global(qos: .userInitiated).async { finish(work()) }
+    DispatchQueue.global().asyncAfter(deadline: .now() + timeout) { finish(nil) }
+  }
+
   func inspectDirectory(at rawPath: String) throws -> (
     exists: Bool, isDirectory: Bool, isEmpty: Bool
   ) {

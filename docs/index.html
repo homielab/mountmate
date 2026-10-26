@@ -320,6 +320,42 @@
         margin-bottom: 60px;
       }
 
+      .brew-install {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 auto 16px;
+        padding: 10px 10px 10px 18px;
+        border-radius: 12px;
+        background-color: var(--section-bg);
+        border: 1px solid var(--border-color);
+        font-size: 16px;
+      }
+
+      .brew-install code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .brew-install button {
+        border: 0;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+        color: var(--link-color);
+        background: transparent;
+      }
+
+      .brew-install button:hover {
+        text-decoration: underline;
+      }
+
+      .requirements {
+        font-size: 15px !important;
+        margin: 0 auto 40px !important;
+      }
+
       .btn-primary {
         background-color: var(--button-bg);
         color: white;
@@ -842,6 +878,14 @@
         >
       </div>
 
+      <div class="brew-install">
+        <code id="brew-command">brew install mountmate</code>
+        <button type="button" id="brew-copy" aria-label="Copy the Homebrew install command">
+          Copy
+        </button>
+      </div>
+      <p class="requirements">Requires macOS 13 Ventura or later.</p>
+
       <div class="hero-image-container">
         <!-- Using full screenshots for the hero -->
         <img
@@ -956,6 +1000,15 @@
         <p>The ones we hear most often.</p>
 
         <div class="faq">
+          <details>
+            <summary>Can I install MountMate with Homebrew?</summary>
+            <p>
+              Yes. Run <code>brew install mountmate</code> in Terminal. The app
+              needs macOS 13 Ventura or later and updates itself afterwards
+              (Settings → About &amp; Updates), or with
+              <code>brew upgrade mountmate</code>.
+            </p>
+          </details>
           <details>
             <summary>Why does MountMate ask for my administrator password?</summary>
             <p>
@@ -1147,6 +1200,18 @@
         link.addEventListener("click", () => {
           navContainer.classList.remove("menu-active");
           document.body.classList.remove("menu-open");
+        });
+      });
+    </script>
+    <script>
+      document.getElementById("brew-copy").addEventListener("click", function () {
+        var button = this;
+        var text = document.getElementById("brew-command").textContent;
+        navigator.clipboard.writeText(text).then(function () {
+          button.textContent = "Copied";
+          setTimeout(function () {
+            button.textContent = "Copy";
+          }, 2000);
         });
       });
     </script>

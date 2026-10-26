@@ -220,6 +220,7 @@
 "Custom Mount Point In Use" = "该文件夹已被已挂载的卷“%@”使用。";
 "Custom Mount Point Must Be Folder" = "自定义挂载点必须是文件夹。";
 "Custom Mount Point Inspect Error" = "MountMate 无法检查此文件夹。\n\n详细信息：\n%@";
+"Custom Mount Point Check Timed Out" = "文件夹在 2 秒内没有响应。如果它位于网络共享上，请检查共享是否可访问后重试。";
 "Custom Mount Point Create Error" = "MountMate 无法创建此文件夹。\n\n详细信息：\n%@";
 "Custom Mount Point Requires UUID" = "此卷没有稳定的 UUID，因此 MountMate 无法为其添加系统挂载规则。";
 "Custom Mount Point Unsupported File System" = "MountMate 无法确定此卷系统挂载规则所需的正确文件系统类型。";

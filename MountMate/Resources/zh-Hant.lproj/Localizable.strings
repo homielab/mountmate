@@ -220,6 +220,7 @@
 "Custom Mount Point In Use" = "此資料夾已被已掛載的磁碟卷「%@」使用。";
 "Custom Mount Point Must Be Folder" = "自訂掛載點必須是資料夾。";
 "Custom Mount Point Inspect Error" = "MountMate 無法檢查此資料夾。\n\n詳細資料：\n%@";
+"Custom Mount Point Check Timed Out" = "資料夾在 2 秒內沒有回應。如果它位於網路共享上，請檢查共享是否可連線後再試一次。";
 "Custom Mount Point Create Error" = "MountMate 無法建立此資料夾。\n\n詳細資料：\n%@";
 "Custom Mount Point Requires UUID" = "此磁碟卷沒有穩定的 UUID，因此 MountMate 無法為它新增系統掛載規則。";
 "Custom Mount Point Unsupported File System" = "MountMate 無法判定此磁碟卷系統掛載規則所需的正確檔案系統類型。";

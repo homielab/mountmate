@@ -31,7 +31,7 @@ cask "mountmate" do
   url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
   name "MountMate"
   desc "Menubar app to easily manage external drives"
-  homepage "https://homielab.com/en/page/mountmate"
+  homepage "https://mountmate.homielab.com"
 
   livecheck do
     url "https://mountmate.homielab.com/appcast.xml"

@@ -220,6 +220,7 @@
 "Custom Mount Point In Use" = "Thư mục này đang được dùng bởi phân vùng đã gắn “%@”.";
 "Custom Mount Point Must Be Folder" = "Điểm gắn tùy chỉnh phải là một thư mục.";
 "Custom Mount Point Inspect Error" = "MountMate không thể kiểm tra thư mục này.\n\nChi tiết:\n%@";
+"Custom Mount Point Check Timed Out" = "Thư mục không phản hồi trong 2 giây. Nếu nằm trên ổ mạng, hãy kiểm tra kết nối tới ổ đó rồi thử lại.";
 "Custom Mount Point Create Error" = "MountMate không thể tạo thư mục này.\n\nChi tiết:\n%@";
 "Custom Mount Point Requires UUID" = "Ổ này không cung cấp UUID ổn định nên MountMate không thể thêm quy tắc gắn hệ thống cho nó.";
 "Custom Mount Point Unsupported File System" = "MountMate không thể xác định đúng kiểu hệ thống tệp cho quy tắc gắn hệ thống của ổ này.";

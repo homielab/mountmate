@@ -178,40 +178,44 @@ struct InlineCustomMountPointEditor: View {
       return
     }
 
-    if let validationError = driveManager.customMountPointValidationError(
-      for: normalizedPath, excluding: volume)
-    {
-      editorState.inlineError = validationError
-      return
+    // Validation and the folder check read the file system, which can hang on
+    // a network share: they run off the main thread (the spinner shows
+    // meanwhile) and give up after 2 seconds.
+    editorState.savingVolumeIDs.insert(volume.id)
+    driveManager.checkCustomMountPoint(normalizedPath, excluding: volume) { check in
+      editorState.savingVolumeIDs.remove(volume.id)
+      // The editor may have been closed or reopened for another row meanwhile.
+      guard editorState.expandedRowID == rowID else { return }
+      continueSave(with: check, path: normalizedPath)
     }
+  }
 
-    do {
-      let directoryState = try driveManager.inspectDirectory(at: normalizedPath)
-      editorState.pendingSavePath = normalizedPath
-
-      if !directoryState.exists {
-        editorState.showCreateDirectoryAlert = true
-        return
-      }
-
-      guard directoryState.isDirectory else {
-        editorState.inlineError = NSLocalizedString(
-          "Custom Mount Point Must Be Folder",
-          comment: "Custom mount point validation")
-        return
-      }
-
-      if !directoryState.isEmpty {
-        editorState.showNonEmptyDirectoryAlert = true
-        return
-      }
-
-      commitPendingSave()
-    } catch {
+  private func continueSave(with check: DriveManager.MountPointCheck, path: String) {
+    switch check {
+    case .invalid(let validationError):
+      editorState.inlineError = validationError
+    case .timedOut:
+      editorState.inlineError = NSLocalizedString(
+        "Custom Mount Point Check Timed Out",
+        comment: "Custom mount point validation")
+    case .inspectFailed(let description):
       editorState.inlineError = String(
         format: NSLocalizedString(
           "Custom Mount Point Inspect Error",
-          comment: "Custom mount point validation"), error.localizedDescription)
+          comment: "Custom mount point validation"), description)
+    case .directory(let exists, let isDirectory, let isEmpty):
+      editorState.pendingSavePath = path
+      if !exists {
+        editorState.showCreateDirectoryAlert = true
+      } else if !isDirectory {
+        editorState.inlineError = NSLocalizedString(
+          "Custom Mount Point Must Be Folder",
+          comment: "Custom mount point validation")
+      } else if !isEmpty {
+        editorState.showNonEmptyDirectoryAlert = true
+      } else {
+        commitPendingSave()
+      }
     }
   }
 

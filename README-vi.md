@@ -85,6 +85,10 @@ Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/release
 
 ## 🛠️ Hướng dẫn cài đặt
 
+### Yêu cầu
+
+- macOS 13 Ventura trở lên
+
 ### Cài bằng Homebrew
 
 ```bash
@@ -104,6 +108,7 @@ brew install mountmate
 - Nếu macOS cảnh báo ứng dụng không rõ nguồn gốc, hãy vào:  
   **System Settings → Privacy & Security → Open Anyway**
 - Đảm bảo bạn kết nối mạng để macOS xác minh; các bản cập nhật sau đó do Sparkle tự tải (Settings → About & Updates)
+- MountMate chỉ hỏi mật khẩu quản trị để sửa `/etc/fstab` ("Also Block at Startup", điểm mount tuỳ chỉnh); Full Disk Access (System Settings → Privacy & Security) giúp đọc ổ trong thư mục được bảo vệ
 
 ## 🔐 Lỗi network share
 

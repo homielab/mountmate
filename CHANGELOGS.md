@@ -32,10 +32,12 @@ All notable changes to this project will be documented in this file.
 - The localization test now also checks that every language keeps the same format placeholders (`%@`, `%d`, `%1$@`…) as English; three unused strings were removed from all languages.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
+- Docs: the website and README now show `brew install mountmate` (with a copy button on the site), the macOS 13 requirement and first-launch notes; the Homebrew cask points to mountmate.homielab.com.
 - Docs: added a CONTRIBUTING guide, GitHub issue forms (bug reports ask for the version and the error code) and a pull request template; both READMEs now list the display options (menu bar count, internal disks, only volumes) and Ignore, Protect and Pin, and the Vietnamese README has a Quick Start.
 
 ### Fixed
 
+- **Custom mount point**: saving a folder on a network share that no longer answers no longer freezes MountMate; the check runs in the background and stops after 2 seconds with a message.
 - **VoiceOver**: each volume, disk and network share row is now read as one item, and the usage ring ("42% used"), the warning triangle (with the error text) and the "Reconnecting…" spinner have spoken labels. The dot on a network share is filled when mounted and hollow when not, instead of relying on colour.
 - When reading the disk list fails (for example a slow or unresponsive disk), MountMate keeps showing the last known disks with the error banner instead of an empty list, and a slow network share check can no longer overwrite a newer one with outdated mount status.
 - Share passwords are now hidden in every kind of share URL shown in error messages (also `//user:password@server/share`), "Mount All" no longer skips a volume just because it is named "EFI", and the remaining English-only network share errors and the "Could not eject" alert are translated.

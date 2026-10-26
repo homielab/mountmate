@@ -224,6 +224,7 @@
 "Custom Mount Point In Use" = "The folder is already being used by the mounted volume “%@”.";
 "Custom Mount Point Must Be Folder" = "The custom mount point must be a folder.";
 "Custom Mount Point Inspect Error" = "MountMate could not inspect this folder.\n\nDetails:\n%@";
+"Custom Mount Point Check Timed Out" = "The folder did not answer within 2 seconds. If it is on a network share, check that the share is reachable and try again.";
 "Custom Mount Point Create Error" = "MountMate could not create this folder.\n\nDetails:\n%@";
 "Custom Mount Point Requires UUID" = "This volume does not expose a stable UUID, so MountMate cannot add a system mount rule for it.";
 "Custom Mount Point Unsupported File System" = "MountMate could not determine the correct filesystem type for this volume's system mount rule.";

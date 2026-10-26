@@ -108,6 +108,10 @@ Just a clean utility that does one job well.
 
 ## 🛠️ Installation
 
+### Requirements
+
+- macOS 13 Ventura or later
+
 ### Manual Installation
 
 1. [Download the latest `.dmg` release](https://github.com/homielab/mountmate/releases)
@@ -123,6 +127,12 @@ If you have [Homebrew](https://brew.sh) installed, you can install MountMate dir
 ```bash
 brew install mountmate
 ```
+
+### First launch
+
+- If macOS warns about an app from an unidentified developer, go to **System Settings → Privacy & Security → Open Anyway**.
+- Stay online so macOS can verify the app; later updates are downloaded by Sparkle (Settings → About & Updates).
+- Some features need extra permission: MountMate asks for your administrator password only to edit `/etc/fstab` ("Also Block at Startup", custom mount points), and Full Disk Access (System Settings → Privacy & Security) lets it read volumes in protected folders.
 
 ## 🧑‍💻 Development
 
