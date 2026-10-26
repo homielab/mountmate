@@ -62,6 +62,7 @@ So I built **MountMate**.
 - **Mount/unmount** any drive with a click
 - Check **free space** for drives and for mounted network shares (used / total)
 - **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default; change both in Settings (the key shown follows your keyboard layout)
+- **Keyboard and VoiceOver**: rows in the popover take keyboard focus (Tab, Up/Down; Return or Space mounts or unmounts on macOS 14+), VoiceOver gets row actions, and animations stop with Reduce motion
 - **Block USB Auto-Mount**: stop selected disks from mounting when plugged in or at login; **Block at Startup** (optional) also writes a rule to `/etc/fstab` and asks for your admin password
 - **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at a folder you choose
 - **Encrypted APFS volumes**: unlock them from MountMate, with the password optionally saved in the Keychain ("Forget Saved Password" in the right-click menu removes it)

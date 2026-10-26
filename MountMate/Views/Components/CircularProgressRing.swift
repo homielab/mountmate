@@ -6,6 +6,7 @@ struct CircularProgressRing: View {
   let progress: Double
   let color: Color
   let lineWidth: CGFloat
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   static func usageColor(for percentage: Double) -> Color {
     if percentage > 0.9 { return .red } else if percentage > 0.75 { return .orange }
@@ -29,7 +30,7 @@ struct CircularProgressRing: View {
           )
         )
         .rotationEffect(.degrees(-90))
-        .animation(.easeInOut(duration: 0.3), value: progress)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
     }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(Text(Self.usedLabel(for: progress)))

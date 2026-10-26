@@ -673,19 +673,47 @@ class KeepAliveManager: ObservableObject {
       group.enter()
       Log.keepAlive.notice("Attempting to remount volume \(volume.name, privacy: .private).")
       // Silent mount: transient reconnect failures must not pop error dialogs.
-      DriveManager.shared.mount(
-        volume: volume, allowsErrorAlerts: false, isUserInitiated: false)
-      // `mount` refreshes the disk list when it finishes; give it a moment to
-      // settle before recording the result.
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-        let stillDown =
-          (DriveManager.shared.physicalDisks ?? [])
-          .flatMap(\.allVolumes)
-          .first(where: { $0.compositeId == compositeId })?
-          .isMounted == false
-        self?.recordResult(volumeID: compositeId, name: volume.name, success: !stillDown)
-        group.leave()
-      }
+      // The result is recorded when the mount really finishes, however long a
+      // slow (spinning) drive takes.
+      remount(
+        volume: volume,
+        mounter: { volume, completion in
+          DriveManager.shared.mount(
+            volume: volume, allowsErrorAlerts: false, isUserInitiated: false,
+            completion: completion)
+        },
+        completion: { [weak self] result in
+          var succeeded = false
+          if case .success = result { succeeded = true }
+          self?.recordResult(volumeID: compositeId, name: volume.name, success: succeeded)
+          group.leave()
+        })
     }
+  }
+
+  /// Runs `mounter` and reports its result once, on the main thread, when it
+  /// completes. If it never completes, reports a timeout failure after
+  /// `timeout` so a stuck mount cannot block the sweep. Internal (not private)
+  /// for unit tests.
+  func remount(
+    volume: Volume,
+    mounter: (Volume, @escaping (Result<Void, Error>) -> Void) -> Void,
+    timeout: TimeInterval = DriveManager.mountUnmountTimeout * 2 + 20,
+    completion: @escaping (Result<Void, Error>) -> Void
+  ) {
+    let lock = NSLock()
+    var finished = false
+    let finish: (Result<Void, Error>) -> Void = { result in
+      lock.lock()
+      let isFirst = !finished
+      finished = true
+      lock.unlock()
+      guard isFirst else { return }
+      DispatchQueue.main.async { completion(result) }
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+      finish(.failure(MountFailure(message: "Timed out waiting for the mount to finish")))
+    }
+    mounter(volume, finish)
   }
 }

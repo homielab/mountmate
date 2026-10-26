@@ -7,6 +7,7 @@ struct DiskHeaderRow: View {
   @Binding var isExpanded: Bool
   @EnvironmentObject var manager: DriveManager
   @State private var isHovering = false
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   /// Internal disks offer no eject. A disk whose type could not be
   /// determined still shows Eject; DriveManager explains why it refuses.
@@ -22,7 +23,7 @@ struct DiskHeaderRow: View {
           .font(.caption2)
           .foregroundStyle(.secondary)
           .rotationEffect(.degrees(isExpanded ? 90 : 0))
-          .animation(.easeInOut(duration: 0.2), value: isExpanded)
+          .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isExpanded)
           .frame(width: 12)
 
         ZStack {
@@ -73,7 +74,7 @@ struct DiskHeaderRow: View {
       .accessibilityElement(children: .combine)
       .contentShape(Rectangle())
       .onTapGesture {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        Motion.perform(.easeInOut(duration: 0.2)) {
           isExpanded.toggle()
         }
       }

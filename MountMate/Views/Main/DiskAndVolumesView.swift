@@ -52,7 +52,7 @@ struct DiskAndVolumesView: View {
     // Not an @EnvironmentObject: observing DriveManager here would redraw
     // every disk on any of its changes, and only this subject is needed.
     .onReceive(DriveManager.shared.driveExpansionSubject) { expanded in
-      withAnimation {
+      Motion.perform {
         self.isExpanded = expanded
       }
     }

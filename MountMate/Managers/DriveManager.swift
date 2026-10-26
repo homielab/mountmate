@@ -4,6 +4,12 @@ import Combine
 import Foundation
 import SwiftUI
 
+/// Why a mount did not succeed (the `diskutil` failure message).
+struct MountFailure: LocalizedError {
+  let message: String
+  var errorDescription: String? { message }
+}
+
 class DriveManager: ObservableObject {
   static let shared = DriveManager()
 
@@ -63,7 +69,7 @@ class DriveManager: ObservableObject {
 
   /// diskutil mount/unmount can take well over 15 seconds while a sleeping
   /// USB hard drive spins up.
-  private static let mountUnmountTimeout: TimeInterval = 30
+  static let mountUnmountTimeout: TimeInterval = 30
 
   /// `diskutil info` of each whole disk, reused while the disk's layout is
   /// unchanged (see `WholeDiskInfoCache`).
@@ -548,8 +554,12 @@ class DriveManager: ObservableObject {
   ///   dialogs.
   /// - Parameter isUserInitiated: Set to `false` for automatic reconnects so
   ///   blocked-volume mount approval cannot be bypassed.
+  /// - Parameter completion: Called on the main thread once the mount has
+  ///   finished (including the retry and the disk list refresh), with the
+  ///   failure message of `diskutil` when it did not succeed.
   func mount(
-    volume: Volume, allowsErrorAlerts: Bool = true, isUserInitiated: Bool = true
+    volume: Volume, allowsErrorAlerts: Bool = true, isUserInitiated: Bool = true,
+    completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     if isUserInitiated {
       let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
@@ -585,10 +595,12 @@ class DriveManager: ObservableObject {
           if isUserInitiated {
             Self.postDidFinishManualMount(volume)
           }
-          self.handleMountResult(retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts)
+          self.handleMountResult(
+            retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
         }
       } else {
-        self.handleMountResult(result, for: volume, allowsErrorAlerts: allowsErrorAlerts)
+        self.handleMountResult(
+          result, for: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
       }
     }
   }
@@ -606,12 +618,16 @@ class DriveManager: ObservableObject {
   }
 
   private func handleMountResult(
-    _ result: ProcessResult, for volume: Volume, allowsErrorAlerts: Bool = true
+    _ result: ProcessResult, for volume: Volume, allowsErrorAlerts: Bool = true,
+    completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     DispatchQueue.main.async {
       guard !result.succeeded else {
         // Keep the spinner until the list shows the volume as mounted.
-        self.refreshDrives(qos: .userInitiated) { self.setBusy(volume.id, false) }
+        self.refreshDrives(qos: .userInitiated) {
+          self.setBusy(volume.id, false)
+          completion?(.success(()))
+        }
         return
       }
       // Cleared before handling the error: a locked volume starts an unlock
@@ -622,7 +638,13 @@ class DriveManager: ObservableObject {
           DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
           for: volume.name, volume: volume, operation: .mount)
       }
-      self.refreshDrives(qos: .userInitiated)
+      self.refreshDrives(qos: .userInitiated) {
+        completion?(
+          .failure(
+            MountFailure(
+              message: DiskUtilErrorClassifier.failureMessage(
+                for: result, timeout: Self.mountUnmountTimeout))))
+      }
     }
   }
 

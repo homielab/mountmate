@@ -190,14 +190,21 @@ struct VolumeRowView: View {
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: mountPoint)])
           }
         }
-
-        Button(action: {
-          if currentVolume.isMounted {
-            manager.unmount(volume: currentVolume)
-          } else {
-            manager.mount(volume: currentVolume)
+        .rowKeyboardNavigation(primaryAction: toggleMount)
+        .accessibilityAction(named: Text(currentVolume.isMounted ? "Unmount" : "Mount")) {
+          toggleMount()
+        }
+        .accessibilityActions {
+          if currentVolume.isMounted, let path = currentVolume.mountPoint {
+            Button("Open in Finder") {
+              NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+            }
+            Button("Copy Path") { MountPointActions.copyPath(path) }
+            Button("Open in Terminal") { MountPointActions.openInTerminal(path) }
           }
-        }) {
+        }
+
+        Button(action: toggleMount) {
           Label(
             currentVolume.isMounted
               ? NSLocalizedString("Unmount", comment: "Unmount volume action")
@@ -274,6 +281,16 @@ struct VolumeRowView: View {
         }
         .padding(.leading, 32)
       }
+    }
+  }
+
+  /// Main action of the row: unmount a mounted volume, mount an unmounted one.
+  private func toggleMount() {
+    guard !isLoading else { return }
+    if currentVolume.isMounted {
+      manager.unmount(volume: currentVolume)
+    } else {
+      manager.mount(volume: currentVolume)
     }
   }
 

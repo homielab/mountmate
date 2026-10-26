@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Keep Alive** now waits for a volume's remount to really finish instead of checking after 3 seconds, so a slow USB drive that needs up to 30 seconds to spin up is no longer counted as a failed reconnect (no backoff, no false "could not reconnect" notification).
+- **Accessibility**: with "Reduce motion" on, the usage rings and the disk expand arrow no longer animate. Volume and share rows can be focused with Tab (Up/Down move between rows; Return or Space mounts or unmounts on macOS 14+), and VoiceOver offers Mount/Unmount, Open in Finder, Copy Path and Open in Terminal as actions on each row.
 - **Full Disk Access** now shows in Settings → General → Permissions as "Granted" or "Not Granted", with an "Open System Settings" button when it is missing. It updates when you come back from System Settings, so declining the one-time prompt no longer hides the problem.
 - Network share status is now read straight from the system mount table instead of running `/sbin/mount` and parsing its text on every refresh, so Keep Alive checks start no process and mount folders whose names contain " on " or parentheses can no longer confuse it. A share connected in Finder whose server or share name cannot be read now shows "Unknown Server" / "Shared Folder" in your language, and NFS shares on an IPv6 server are imported with the right server and path.
 - A busy network share no longer gets a pointless second mount attempt after a network change: if the unmount fails and the share is still mounted, MountMate keeps it and logs why. Mount All and the error alerts now agree on what a locked encrypted volume looks like.

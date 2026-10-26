@@ -133,4 +133,71 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertTrue(
       KeepAliveManager.shouldRemountShares(previous: wifi, current: wifi2, available: [wifi2]))
   }
+
+  // MARK: - Remounting volumes
+
+  private func remountTestVolume() -> Volume {
+    Volume(
+      id: "remount-test", deviceIdentifier: "disk9s1", diskUUID: nil, name: "Slow Drive",
+      isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: "exfat", usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+  }
+
+  func testSlowRemountIsReportedWhenItFinishesNotAfterAFixedDelay() {
+    let started = Date()
+    let done = expectation(description: "remount result")
+    var elapsed: TimeInterval = 0
+    var result: Result<Void, Error>?
+    // A spinning drive that needs 4 s (longer than the old fixed 3 s wait).
+    KeepAliveManager.shared.remount(
+      volume: remountTestVolume(),
+      mounter: { _, completion in
+        DispatchQueue.global().asyncAfter(deadline: .now() + 4) { completion(.success(())) }
+      },
+      timeout: 30,
+      completion: {
+        elapsed = Date().timeIntervalSince(started)
+        result = $0
+        done.fulfill()
+      })
+    wait(for: [done], timeout: 15)
+    guard case .success = result else { return XCTFail("slow successful mount must not fail") }
+    XCTAssertGreaterThanOrEqual(elapsed, 3.9)
+  }
+
+  func testFailedRemountIsReportedAsFailure() {
+    let done = expectation(description: "remount result")
+    var result: Result<Void, Error>?
+    KeepAliveManager.shared.remount(
+      volume: remountTestVolume(),
+      mounter: { _, completion in completion(.failure(MountFailure(message: "busy"))) },
+      completion: {
+        result = $0
+        done.fulfill()
+      })
+    wait(for: [done], timeout: 5)
+    guard case .failure = result else { return XCTFail("expected a failure") }
+  }
+
+  func testRemountThatNeverFinishesTimesOutOnceAndIgnoresLateCompletion() {
+    let done = expectation(description: "remount result")
+    var results = 0
+    var lateCompletion: ((Result<Void, Error>) -> Void)?
+    KeepAliveManager.shared.remount(
+      volume: remountTestVolume(),
+      mounter: { _, completion in lateCompletion = completion },
+      timeout: 0.2,
+      completion: { result in
+        results += 1
+        if case .success = result { XCTFail("timeout must be a failure") }
+        done.fulfill()
+      })
+    wait(for: [done], timeout: 5)
+    lateCompletion?(.success(()))
+    let settle = expectation(description: "settle")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { settle.fulfill() }
+    wait(for: [settle], timeout: 2)
+    XCTAssertEqual(results, 1)
+  }
 }

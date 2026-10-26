@@ -31,6 +31,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
 - Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
 - **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M`; đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)
+- **Bàn phím và VoiceOver**: các hàng trong popover nhận focus bàn phím (Tab, Lên/Xuống; Return hoặc Space để mount/unmount trên macOS 14+), VoiceOver có action cho từng hàng, animation tắt khi bật Reduce motion
 - **Chặn tự mount USB**: ngăn các ổ đã chọn tự mount khi cắm hoặc khi đăng nhập; **Block at Startup** (tuỳ chọn) ghi thêm một rule vào `/etc/fstab` và hỏi mật khẩu quản trị
 - **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục bạn chọn
 - **Ổ APFS mã hoá**: mở khoá ngay trong MountMate, có thể lưu mật khẩu vào Keychain ("Forget Saved Password" trong menu chuột phải để xoá)

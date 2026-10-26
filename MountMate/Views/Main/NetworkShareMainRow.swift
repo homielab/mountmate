@@ -37,6 +37,31 @@ struct NetworkShareMainRow: View {
     return NSLocalizedString("Not Mounted", comment: "Status")
   }
 
+  /// Main action of the row: eject a mounted share, mount an unmounted one.
+  private func toggleMount() {
+    guard !isWorking else { return }
+    isWorking = true
+    if isMounted {
+      NetworkMountManager.shared.unmount(share: share) { success, error in
+        isWorking = false
+        if !success, let error = error {
+          DriveManager.shared.userActionError = AppAlert(
+            title: NSLocalizedString("Unmount Failed", comment: "Alert title"),
+            message: error, kind: .basic)
+        }
+      }
+    } else {
+      NetworkMountManager.shared.mount(share: share) { success, error in
+        isWorking = false
+        if !success, let error = error {
+          DriveManager.shared.userActionError = AppAlert(
+            title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,
+            kind: .basic)
+        }
+      }
+    }
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 0) {
@@ -93,29 +118,20 @@ struct NetworkShareMainRow: View {
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
           }
         }
-
-        Button(action: {
-          isWorking = true
+        .rowKeyboardNavigation(primaryAction: toggleMount)
+        .accessibilityAction(named: Text(isMounted ? "Eject" : "Mount")) { toggleMount() }
+        .accessibilityActions {
           if isMounted {
-            NetworkMountManager.shared.unmount(share: share) { success, error in
-              isWorking = false
-              if !success, let error = error {
-                DriveManager.shared.userActionError = AppAlert(
-                  title: NSLocalizedString("Unmount Failed", comment: "Alert title"),
-                  message: error, kind: .basic)
-              }
+            let path = NetworkMountManager.shared.getMountPoint(for: share)
+            Button("Open in Finder") {
+              NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
             }
-          } else {
-            NetworkMountManager.shared.mount(share: share) { success, error in
-              isWorking = false
-              if !success, let error = error {
-                DriveManager.shared.userActionError = AppAlert(
-                  title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,
-                  kind: .basic)
-              }
-            }
+            Button("Copy Path") { MountPointActions.copyPath(path) }
+            Button("Open in Terminal") { MountPointActions.openInTerminal(path) }
           }
-        }) {
+        }
+
+        Button(action: toggleMount) {
           Label(
             isMounted
               ? NSLocalizedString("Eject", comment: "Action")
