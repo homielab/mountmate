@@ -50,6 +50,31 @@ final class MountTableTests: XCTestCase {
         fileSystemType: "smbfs"))
   }
 
+  func testEntryReadsReadOnlyFlag() {
+    var stat = statfs()
+    write("/dev/disk4s1", into: &stat.f_mntfromname)
+    write("/Volumes/Backup", into: &stat.f_mntonname)
+    write("msdos", into: &stat.f_fstypename)
+    XCTAssertFalse(MountTable.entry(from: stat).isReadOnly)
+
+    stat.f_flags = UInt32(MNT_RDONLY) | UInt32(MNT_NOSUID)
+    XCTAssertTrue(MountTable.entry(from: stat).isReadOnly)
+    stat.f_flags = UInt32(MNT_NOSUID)
+    XCTAssertFalse(MountTable.entry(from: stat).isReadOnly)
+  }
+
+  func testReadOnlyMountPointsListsOnlyReadOnlyEntries() {
+    let entries = [
+      MountEntry(
+        source: "/dev/disk3s1s1", mountPoint: "/", fileSystemType: "apfs", isReadOnly: true),
+      MountEntry(source: "/dev/disk4s1", mountPoint: "/Volumes/Data", fileSystemType: "exfat"),
+      MountEntry(
+        source: "/dev/disk5s1", mountPoint: "/Volumes/Backup", fileSystemType: "hfs",
+        isReadOnly: true),
+    ]
+    XCTAssertEqual(MountTable.readOnlyMountPoints(in: entries), ["/", "/Volumes/Backup"])
+  }
+
   func testEntryKeepsNonASCIIMountPoints() {
     var stat = statfs()
     write("//nas/ảnh", into: &stat.f_mntfromname)

@@ -45,6 +45,8 @@ struct DiskListParser {
   /// Used and free space of a mounted volume whose list entry has no
   /// `CapacityInUse` (non-APFS volumes).
   var fileSystemUsage: (String) -> DriveManager.FileSystemUsageResult = { _ in .failed }
+  /// Mount points of the file systems that are mounted read-only.
+  var readOnlyMountPoints: Set<String> = []
   /// Second opinion for whole disks without `diskutil info`; disks missing
   /// from the result count as `.unknown`.
   var classifyDisksWithoutInfo: (Set<String>) -> [String: FallbackDiskKind] = { _ in [:] }
@@ -400,7 +402,8 @@ struct DiskListParser {
       fileSystemType: fileSystemType,
       usagePercentage: usagePercentage, category: category, isProtected: isProtected,
       snapshots: snapshots,
-      storageError: storageError)
+      storageError: storageError,
+      isReadOnly: mountPoint.map { readOnlyMountPoints.contains($0) } ?? false)
   }
 
   private static func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {

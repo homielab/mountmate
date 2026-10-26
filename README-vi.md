@@ -29,6 +29,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - Xem tất cả ổ đĩa ngoài đang kết nối
 - Biết được ổ nào đang được **mount**
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
+- **Mount chỉ đọc**: chuột phải một volume chưa mount để mount ở chế độ chỉ đọc (bảo vệ ổ backup, đọc ổ NTFS hoặc ổ hỏng); hàng volume hiện nhãn "Chỉ đọc"
 - Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
 - **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M`; đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)
 - **Bàn phím và VoiceOver**: các hàng trong popover nhận focus bàn phím (Tab, Lên/Xuống; Return hoặc Space để mount/unmount trên macOS 14+), VoiceOver có action cho từng hàng, animation tắt khi bật Reduce motion

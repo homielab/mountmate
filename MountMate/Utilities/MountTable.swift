@@ -8,6 +8,8 @@ struct MountEntry: Equatable, Sendable {
   let source: String
   let mountPoint: String
   let fileSystemType: String
+  /// Mounted read-only (`MNT_RDONLY`).
+  var isReadOnly: Bool = false
 }
 
 /// Reads the kernel mount table with `getfsstat(MNT_NOWAIT)`: the same data
@@ -52,7 +54,19 @@ enum MountTable {
     MountEntry(
       source: string(fromCharacters: stat.f_mntfromname),
       mountPoint: string(fromCharacters: stat.f_mntonname),
-      fileSystemType: string(fromCharacters: stat.f_fstypename))
+      fileSystemType: string(fromCharacters: stat.f_fstypename),
+      isReadOnly: isReadOnly(flags: stat.f_flags))
+  }
+
+  /// Whether the `statfs` mount flags contain `MNT_RDONLY`.
+  static func isReadOnly(flags: UInt32) -> Bool {
+    flags & UInt32(MNT_RDONLY) != 0
+  }
+
+  /// Mount points of the read-only file systems, or empty if the table could
+  /// not be read.
+  static func readOnlyMountPoints(in entries: [MountEntry]) -> Set<String> {
+    Set(entries.filter(\.isReadOnly).map(\.mountPoint))
   }
 
   /// A NUL-terminated UTF-8 string stored in a fixed-size C array (imported

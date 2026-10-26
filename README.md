@@ -60,6 +60,7 @@ So I built **MountMate**.
 - View all connected **external drives**
 - See which ones are **mounted**
 - **Mount/unmount** any drive with a click
+- **Mount Read-Only**: right-click an unmounted volume to mount it read-only (protect a backup drive, inspect a damaged or NTFS drive); the row shows a "Read-only" badge
 - Check **free space** for drives and for mounted network shares (used / total)
 - **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default; change both in Settings (the key shown follows your keyboard layout)
 - **Keyboard and VoiceOver**: rows in the popover take keyboard focus (Tab, Up/Down; Return or Space mounts or unmounts on macOS 14+), VoiceOver gets row actions, and animations stop with Reduce motion

@@ -429,3 +429,5 @@
 "Not Granted" = "未授予";
 "Permissions" = "权限";
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "完全磁盘访问权限可让 MountMate 看到所有类型的磁盘并读取存储详情。请在“系统设置 > 隐私与安全性”中为 MountMate 开启。";
+"Mount Read-Only" = "以只读方式装载";
+"Read-only" = "只读";

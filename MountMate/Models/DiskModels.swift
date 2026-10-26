@@ -93,6 +93,9 @@ struct Volume: Identifiable, Hashable, Sendable {
 
   var storageError: String?
 
+  /// Mounted read-only (see `DriveManager.mount(volume:readOnly:)`).
+  var isReadOnly: Bool = false
+
   /// The volume's UUID, or nil when the volume has none. DriveManager
   /// falls back to the BSD device identifier (e.g. "disk4s1") for `id`,
   /// which another volume can get later, so it must never be used to save

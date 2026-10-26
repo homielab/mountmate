@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Mount Read-Only**: right-click a volume that is not mounted and choose "Mount Read-Only" to mount it without write access (useful for backup drives, NTFS drives and damaged drives). Volumes mounted read-only show a "Read-only" badge in their row. Unmount works as usual; a normal Mount, Keep Alive and auto-mount are unchanged.
 - **Notifications** (Settings → General, off by default): MountMate can notify you when Keep Alive cannot reconnect a share or volume and when it is back, when a blocked disk mounted before MountMate started could not be unmounted, and when "Unmount All Disks on Sleep" had not finished before the Mac slept. A mount that stays down gives one notification, not one per retry. With notifications on, the "Unmount When Idle" notice also goes to Notification Center instead of the short on-screen message. macOS asks for permission only when you turn the setting on.
 - **Unmount When Idle**: Right-click a volume on an external drive and choose "Unmount When Idle" to unmount it automatically after 1, 5, 15, 30 or 60 minutes without reads or writes on the drive. The unmount is never forced: a volume that is still in use stays mounted and is tried again later. Volumes kept mounted, internal disks, disk images and network shares are never affected. Manage the list under Settings → Management.
 - **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.

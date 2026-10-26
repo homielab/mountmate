@@ -123,6 +123,15 @@ struct VolumeRowView: View {
               .foregroundStyle(currentVolume.isMounted ? .primary : .secondary)
 
             if currentVolume.isMounted {
+              if currentVolume.isReadOnly {
+                Text("Read-only")
+                  .font(.caption2).fontWeight(.semibold)
+                  .foregroundStyle(.orange)
+                  .padding(.horizontal, 6)
+                  .padding(.vertical, 2)
+                  .background(Color.orange.opacity(0.15))
+                  .clipShape(.rect(cornerRadius: 4))
+              }
               if let total = currentVolume.totalSize, let used = currentVolume.usedSpace,
                 let free = currentVolume.freeSpace
               {
@@ -351,6 +360,11 @@ struct VolumeRowView: View {
         manager.mount(volume: volume)
       } label: {
         Label("Mount", systemImage: "plus.circle")
+      }
+      Button {
+        manager.mount(volume: volume, readOnly: true)
+      } label: {
+        Label("Mount Read-Only", systemImage: "lock.circle")
       }
     }
 

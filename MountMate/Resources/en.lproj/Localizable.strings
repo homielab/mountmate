@@ -429,3 +429,5 @@
 "Not Granted" = "Not Granted";
 "Permissions" = "Permissions";
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security.";
+"Mount Read-Only" = "Mount Read-Only";
+"Read-only" = "Read-only";

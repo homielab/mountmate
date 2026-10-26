@@ -429,3 +429,5 @@
 "Not Granted" = "Не надано";
 "Permissions" = "Дозволи";
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Повний доступ до дисків дозволяє MountMate бачити всі типи дисків і читати дані про зберігання. Увімкніть його для MountMate в Системних налаштуваннях > Конфіденційність і безпека.";
+"Mount Read-Only" = "Змонтувати лише для читання";
+"Read-only" = "Лише читання";

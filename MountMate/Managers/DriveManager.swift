@@ -549,6 +549,7 @@ class DriveManager: ObservableObject {
 
   /// Mounts a volume.
   ///
+  /// - Parameter readOnly: Mount with `diskutil mount readOnly`.
   /// - Parameter allowsErrorAlerts: Pass `false` for automatic (keep-alive)
   ///   mount attempts so transient reconnect failures never surface as error
   ///   dialogs.
@@ -558,7 +559,8 @@ class DriveManager: ObservableObject {
   ///   finished (including the retry and the disk list refresh), with the
   ///   failure message of `diskutil` when it did not succeed.
   func mount(
-    volume: Volume, allowsErrorAlerts: Bool = true, isUserInitiated: Bool = true,
+    volume: Volume, readOnly: Bool = false, allowsErrorAlerts: Bool = true,
+    isUserInitiated: Bool = true,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     if isUserInitiated {
@@ -570,7 +572,8 @@ class DriveManager: ObservableObject {
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(
-        executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier],
+        executable: "/usr/sbin/diskutil",
+        arguments: Self.mountArguments(for: volume, readOnly: readOnly),
         timeout: Self.mountUnmountTimeout)
       if isUserInitiated {
         Self.postDidFinishManualMount(volume)
@@ -590,7 +593,8 @@ class DriveManager: ObservableObject {
               name: .willManuallyMount, object: nil, userInfo: userInfo)
           }
           let retryResult = runProcess(
-            executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier],
+            executable: "/usr/sbin/diskutil",
+            arguments: Self.mountArguments(for: volume, readOnly: readOnly),
             timeout: Self.mountUnmountTimeout)
           if isUserInitiated {
             Self.postDidFinishManualMount(volume)
@@ -603,6 +607,12 @@ class DriveManager: ObservableObject {
           result, for: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
       }
     }
+  }
+
+  /// The `diskutil` arguments that mount `volume`.
+  static func mountArguments(for volume: Volume, readOnly: Bool) -> [String] {
+    readOnly
+      ? ["mount", "readOnly", volume.deviceIdentifier] : ["mount", volume.deviceIdentifier]
   }
 
   private func shouldRetryMount(after result: ProcessResult, volume: Volume) -> Bool {
@@ -1040,6 +1050,7 @@ class DriveManager: ObservableObject {
         filters: filters,
         showInternalDisks: UserDefaults.standard.bool(forKey: "showInternalDisks"),
         fileSystemUsage: { Self.fileSystemUsage(atPath: $0) },
+        readOnlyMountPoints: MountTable.readOnlyMountPoints(in: MountTable.entries() ?? []),
         classifyDisksWithoutInfo: DiskListParser.classifyWithSystem)
       completion(
         parser.parse(
