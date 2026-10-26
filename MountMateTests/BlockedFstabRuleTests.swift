@@ -115,36 +115,178 @@ final class BlockedFstabRuleTests: XCTestCase {
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   }
 
-  func testStagedFileIntegrityCommandAcceptsUntouchedFile() {
+  // MARK: - Privileged fstab command
+
+  private func temporaryPath(_ label: String) -> URL {
+    FileManager.default.temporaryDirectory
+      .appendingPathComponent("mountmate-test-\(label)-\(UUID().uuidString)")
+  }
+
+  /// Contents the field validation already rejects, but the command builder
+  /// must still carry byte for byte: quotes, `$`, backticks, backslashes,
+  /// several trailing newlines and no shell-level meaning anywhere.
+  private let hostileContents = Data(
+    ("# MountMate block: it's $HOME `id` $(id) \\ \"x\" ; rm -rf /\n\n"
+      + "UUID=A none apfs rw\n\n\n").utf8)
+
+  func testStagedContentsLoadCommandAcceptsUntouchedFile() {
     let bytes = Data("# MountMate block: DISK1-VOL1\n".utf8)
     let url = stagedFile(bytes)
     defer { try? FileManager.default.removeItem(at: url) }
 
     let result = runShell(
-      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: bytes))
+      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: bytes))
     XCTAssertEqual(result.exitCode, 0)
   }
 
-  func testStagedFileIntegrityCommandAbortsAfterSwap() {
+  func testStagedContentsLoadCommandAbortsAfterSwap() {
     let bytes = Data("# MountMate block: DISK1-VOL1\n".utf8)
     let url = stagedFile(bytes)
     defer { try? FileManager.default.removeItem(at: url) }
     try? Data("rm -rf /".utf8).write(to: url, options: .atomic)
 
     let result = runShell(
-      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: bytes))
+      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: bytes))
     XCTAssertNotEqual(result.exitCode, 0)
     XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
   }
 
-  func testStagedFileIntegrityCommandAbortsForMissingFile() {
-    let url = FileManager.default.temporaryDirectory
-      .appendingPathComponent("mountmate-test-missing-\(UUID().uuidString)")
+  func testStagedContentsLoadCommandAbortsForMissingFile() {
+    let url = temporaryPath("missing")
 
     let result = runShell(
-      PersistenceManager.stagedFileIntegrityCommand(path: url.path, bytes: Data("x".utf8)))
+      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: Data("x".utf8)))
     XCTAssertNotEqual(result.exitCode, 0)
     XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+  }
+
+  func testStagedContentsLoadCommandRejectsDroppedTrailingNewline() {
+    // Command substitution strips trailing newlines; the sentinel keeps
+    // them, so a file that only differs there is still a mismatch.
+    let url = stagedFile(Data("UUID=A none apfs rw".utf8))
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let result = runShell(
+      PersistenceManager.stagedContentsLoadCommand(
+        path: url.path, bytes: Data("UUID=A none apfs rw\n".utf8)))
+    XCTAssertNotEqual(result.exitCode, 0)
+    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+  }
+
+  func testSystemFstabWriteCommandReadsStagedFileOnce() {
+    let stagedPath = "/tmp/mountmate-fstab-it's $x"
+    let command = PersistenceManager.systemFstabWriteCommand(
+      stagedPath: stagedPath, stagedData: hostileContents, expectedCurrent: Data())
+
+    let quotedPath = stagedPath.shellQuoted
+    XCTAssertEqual(command.components(separatedBy: quotedPath).count - 1, 1)
+    XCTAssertEqual(command.components(separatedBy: "/bin/cat").count - 1, 1)
+    XCTAssertFalse(command.contains("cmp"))
+    // The contents themselves never appear in the command, only their digest.
+    XCTAssertFalse(command.contains("rm -rf"))
+    XCTAssertTrue(command.contains(PersistenceManager.sha256Hex(hostileContents)))
+
+    // Load, then the /etc/fstab guard, then the write from the variable.
+    let load = command.range(of: "/bin/cat")!.lowerBound
+    let guardCheck = command.range(of: PersistenceManager.sha256Hex(Data()))!.lowerBound
+    let write = command.range(of: "> '/etc/fstab'")!.lowerBound
+    XCTAssertLessThan(load, guardCheck)
+    XCTAssertLessThan(guardCheck, write)
+    XCTAssertTrue(
+      command.contains(
+        "printf '%s' \"$\(PersistenceManager.stagedContentsVariable)\" > '/etc/fstab'"))
+  }
+
+  func testSystemFstabWriteCommandWritesStagedBytesExactly() throws {
+    let staged = stagedFile(hostileContents)
+    let target = temporaryPath("target")
+    let current = Data("# old\n".utf8)
+    try current.write(to: target)
+    defer {
+      try? FileManager.default.removeItem(at: staged)
+      try? FileManager.default.removeItem(at: target)
+    }
+
+    // chown root:wheel fails without root; everything before it must work.
+    let result = runShell(
+      PersistenceManager.systemFstabWriteCommand(
+        stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: current,
+        fstabPath: target.path))
+    XCTAssertFalse(result.stderr.contains("MOUNTMATE_"), result.stderr)
+    XCTAssertEqual(try Data(contentsOf: target), hostileContents)
+  }
+
+  func testSystemFstabWriteCommandAbortsWhenStagedFileWasSwapped() throws {
+    let staged = stagedFile(Data("swapped\n".utf8))
+    let target = temporaryPath("target")
+    let current = Data("# old\n".utf8)
+    try current.write(to: target)
+    defer {
+      try? FileManager.default.removeItem(at: staged)
+      try? FileManager.default.removeItem(at: target)
+    }
+
+    let result = runShell(
+      PersistenceManager.systemFstabWriteCommand(
+        stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: current,
+        fstabPath: target.path))
+    XCTAssertNotEqual(result.exitCode, 0)
+    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+    XCTAssertEqual(try Data(contentsOf: target), current)
+  }
+
+  func testSystemFstabWriteCommandAbortsWhenFstabChanged() throws {
+    let staged = stagedFile(hostileContents)
+    let target = temporaryPath("target")
+    try Data("# edited meanwhile\n".utf8).write(to: target)
+    defer {
+      try? FileManager.default.removeItem(at: staged)
+      try? FileManager.default.removeItem(at: target)
+    }
+
+    let result = runShell(
+      PersistenceManager.systemFstabWriteCommand(
+        stagedPath: staged.path, stagedData: hostileContents,
+        expectedCurrent: Data("# old\n".utf8), fstabPath: target.path))
+    XCTAssertNotEqual(result.exitCode, 0)
+    XCTAssertTrue(result.stderr.contains("MOUNTMATE_FSTAB_CHANGED"))
+    XCTAssertEqual(try Data(contentsOf: target), Data("# edited meanwhile\n".utf8))
+  }
+
+  func testSystemFstabWriteCommandMissingFstabMatchesOnlyEmptyExpectation() {
+    let staged = stagedFile(hostileContents)
+    let target = temporaryPath("absent")
+    defer {
+      try? FileManager.default.removeItem(at: staged)
+      try? FileManager.default.removeItem(at: target)
+    }
+
+    let refused = runShell(
+      PersistenceManager.systemFstabWriteCommand(
+        stagedPath: staged.path, stagedData: hostileContents,
+        expectedCurrent: Data("# old\n".utf8), fstabPath: target.path))
+    XCTAssertTrue(refused.stderr.contains("MOUNTMATE_FSTAB_CHANGED"))
+    XCTAssertFalse(FileManager.default.fileExists(atPath: target.path))
+
+    _ = runShell(
+      PersistenceManager.systemFstabWriteCommand(
+        stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: Data(),
+        fstabPath: target.path))
+    XCTAssertEqual(try? Data(contentsOf: target), hostileContents)
+  }
+
+  func testSystemFstabWriteCommandRemovesFileWithoutStagedCopy() throws {
+    let target = temporaryPath("target")
+    let current = Data("# old\n".utf8)
+    try current.write(to: target)
+    defer { try? FileManager.default.removeItem(at: target) }
+
+    let command = PersistenceManager.systemFstabWriteCommand(
+      stagedPath: nil, stagedData: Data(), expectedCurrent: current, fstabPath: target.path)
+    XCTAssertFalse(command.contains("/bin/cat"))
+    let result = runShell(command)
+    XCTAssertEqual(result.exitCode, 0, result.stderr)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: target.path))
   }
 
   // MARK: - normalizedSystemVolumeUUID

@@ -1221,45 +1221,16 @@ class PersistenceManager: ObservableObject {
     let fileManager = FileManager.default
     let temporaryURL = fileManager.temporaryDirectory
       .appendingPathComponent("mountmate-fstab-\(UUID().uuidString)")
-    let expectedURL = fileManager.temporaryDirectory
-      .appendingPathComponent("mountmate-fstab-expected-\(UUID().uuidString)")
 
     if !stagedData.isEmpty {
       try stagedData.write(to: temporaryURL, options: .atomic)
     }
-    try expectedCurrent.write(to: expectedURL, options: .atomic)
+    defer { try? fileManager.removeItem(at: temporaryURL) }
 
-    defer {
-      try? fileManager.removeItem(at: temporaryURL)
-      try? fileManager.removeItem(at: expectedURL)
-    }
-
-    // The staged copies live in the user's temporary directory; the
-    // privileged shell only touches them if their bytes still hash to what
-    // this process staged, so a swap in between aborts instead of writing.
-    let integrityGuard =
-      "\(Self.stagedFileIntegrityCommand(path: expectedURL.path, bytes: expectedCurrent)); "
-      + (stagedData.isEmpty
-        ? ""
-        : "\(Self.stagedFileIntegrityCommand(path: temporaryURL.path, bytes: stagedData)); ")
-
-    // A missing /etc/fstab matches an empty expected file.
-    let expectedPath = expectedURL.path.shellQuoted
-    let guardCommand =
-      "\(integrityGuard)if [ -e /etc/fstab ]; then /usr/bin/cmp -s \(expectedPath) /etc/fstab; else [ ! -s \(expectedPath) ]; fi || { echo \(Self.fstabChangedMarker) >&2; exit 1; }"
-
-    let writeCommand: String
-    if normalizedContents.isEmpty {
-      writeCommand = "/bin/rm -f /etc/fstab"
-    } else {
-      // Do not use `install` here. On recent macOS versions it stages the
-      // destination in /etc and atomically replaces /etc/fstab with rename(2),
-      // which can be rejected even after administrator authentication. Writing
-      // the existing file in place avoids that protected-directory rename.
-      writeCommand =
-        "/bin/cat \(temporaryURL.path.shellQuoted) > /etc/fstab && /bin/chmod 644 /etc/fstab && /usr/sbin/chown root:wheel /etc/fstab"
-    }
-    let command = "\(guardCommand); \(writeCommand)"
+    let command = Self.systemFstabWriteCommand(
+      stagedPath: stagedData.isEmpty ? nil : temporaryURL.path,
+      stagedData: stagedData,
+      expectedCurrent: expectedCurrent)
 
     let prompt = NSLocalizedString(
       "System Mount Rule Admin Prompt", comment: "Administrator password prompt for /etc/fstab")
@@ -1404,14 +1375,60 @@ class PersistenceManager: ObservableObject {
     SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
   }
 
-  /// A shell snippet that fails unless the file at `path` still is exactly
-  /// `bytes`. The staged copies live in the user's temporary directory, where
-  /// another process could swap them between staging and the privileged write.
-  static func stagedFileIntegrityCommand(path: String, bytes: Data) -> String {
-    let expectedHash = sha256Hex(bytes)
+  /// Shell variable that holds the staged contents inside the privileged
+  /// shell.
+  static let stagedContentsVariable = "mountmate_staged"
+
+  /// The privileged command that replaces `fstabPath` (normally /etc/fstab)
+  /// with `stagedData`, or removes it when `stagedPath` is nil.
+  ///
+  /// - The current file must still hash to `expectedCurrent` (a missing file
+  ///   matches empty bytes), else it fails with `fstabChangedMarker`, so two
+  ///   writers never silently overwrite each other's change while one waits
+  ///   at the password prompt.
+  /// - The staged copy lives in the user's temporary directory, where another
+  ///   process could swap it. It is read exactly once into a shell variable;
+  ///   the variable is hashed and the same variable is written, so nothing
+  ///   reopens the file between the check and the write.
+  static func systemFstabWriteCommand(
+    stagedPath: String?, stagedData: Data, expectedCurrent: Data,
+    fstabPath: String = "/etc/fstab"
+  ) -> String {
+    let target = fstabPath.shellQuoted
+    let guardCommand =
+      "if [ -e \(target) ]; then "
+      + "[ \"$(/usr/bin/shasum -a 256 < \(target) | /usr/bin/awk '{print $1}')\" = "
+      + "\"\(sha256Hex(expectedCurrent))\" ]; "
+      + "else \(expectedCurrent.isEmpty ? "true" : "false"); fi "
+      + "|| { echo \(fstabChangedMarker) >&2; exit 1; }"
+
+    guard let stagedPath else {
+      return "\(guardCommand); /bin/rm -f \(target)"
+    }
+    // Do not use `install` here. On recent macOS versions it stages the
+    // destination in /etc and atomically replaces /etc/fstab with rename(2),
+    // which can be rejected even after administrator authentication. Writing
+    // the existing file in place avoids that protected-directory rename.
+    let variable = stagedContentsVariable
     return
-      "[ \"$(/usr/bin/shasum -a 256 \(path.shellQuoted) | /usr/bin/awk '{print $1}')\" = "
-      + "\"\(expectedHash)\" ] || { echo \(stagedFstabChangedMarker) >&2; exit 1; }"
+      "\(stagedContentsLoadCommand(path: stagedPath, bytes: stagedData)); \(guardCommand); "
+      + "printf '%s' \"$\(variable)\" > \(target) && /bin/chmod 644 \(target) "
+      + "&& /usr/sbin/chown root:wheel \(target)"
+  }
+
+  /// A shell snippet that reads the staged file at `path` once into
+  /// `stagedContentsVariable` and fails with `stagedFstabChangedMarker`
+  /// unless those bytes hash to `bytes`. A trailing sentinel keeps the
+  /// final newlines command substitution would strip; a NUL byte (which the
+  /// shell drops) or any swap makes the digest differ and aborts.
+  static func stagedContentsLoadCommand(path: String, bytes: Data) -> String {
+    let variable = stagedContentsVariable
+    let fail = "{ echo \(stagedFstabChangedMarker) >&2; exit 1; }"
+    return
+      "\(variable)=\"$(/bin/cat \(path.shellQuoted) && printf .)\" || \(fail); "
+      + "\(variable)=\"${\(variable)%.}\"; "
+      + "[ \"$(printf '%s' \"$\(variable)\" | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}')\" = "
+      + "\"\(sha256Hex(bytes))\" ] || \(fail)"
   }
 
   static func trimmedFstabContents(_ contents: String) -> String {

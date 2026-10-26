@@ -28,7 +28,7 @@ All notable changes to this project will be documented in this file.
 - "Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.
 - Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
 - Custom mount points whose path contains control characters (like line breaks) are rejected with a clear message instead of being written into the root-managed /etc/fstab, where a break could forge extra rule lines; every rule field (path, volume UUID, file-system type, identifiers) is now validated before anything is staged.
-- The staged copies of /etc/fstab are checked against their SHA-256 digest by the privileged shell before use, so a swap in the temporary directory aborts the update instead of writing foreign content.
+- The privileged shell reads the staged copy of /etc/fstab exactly once, checks those bytes against their SHA-256 digest and writes the same bytes, so swapping the file in the temporary directory either aborts the update or has no effect; there is no gap between the check and the write anymore. The current /etc/fstab is compared by digest, without a second staged file.
 
 ---
 
