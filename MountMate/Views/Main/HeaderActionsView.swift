@@ -11,6 +11,15 @@ struct HeaderActionsView: View {
     !driveManager.unmountAllCandidates.isEmpty
   }
 
+  /// Matches what ejectAllDisks() acts on (external physical disks).
+  private var canEjectAll: Bool {
+    !driveManager.ejectAllCandidates.isEmpty
+  }
+
+  private var isEjectingAny: Bool {
+    !driveManager.busyEjectingDiskIDs.isEmpty
+  }
+
   var body: some View {
     HStack(spacing: 8) {
       HStack(spacing: 8) {
@@ -69,6 +78,27 @@ struct HeaderActionsView: View {
         .accessibilityLabel(Text("Unmount All"))
         .accessibilityValue(Text.busyValue(driveManager.isUnmountingAll))
         .disabled(!canUnmountAll || driveManager.isUnmountingAll)
+
+        // Eject All External Disks Button
+        Button(action: { driveManager.ejectAllDisks() }) {
+          Group {
+            if isEjectingAny {
+              ProgressView().controlSize(.small)
+            } else {
+              Image(systemName: "eject.circle.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(canEjectAll ? Color.orange : Color.secondary.opacity(0.4))
+            }
+          }
+          .frame(width: 28, height: 28)
+          .background(Color.primary.opacity(0.06))
+          .clipShape(.rect(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help(NSLocalizedString("Eject All External Disks", comment: "Tooltip"))
+        .accessibilityLabel(Text("Eject All External Disks"))
+        .accessibilityValue(Text.busyValue(isEjectingAny))
+        .disabled(!canEjectAll || isEjectingAny)
 
         // Settings Button
         if #available(macOS 14.0, *) {

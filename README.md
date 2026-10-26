@@ -62,7 +62,8 @@ So I built **MountMate**.
 - **Mount/unmount** any drive with a click
 - **Mount Read-Only**: right-click an unmounted volume to mount it read-only (protect a backup drive, inspect a damaged or NTFS drive); the row shows a "Read-only" badge
 - Check **free space** for drives and for mounted network shares (used / total)
-- **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default; change both in Settings (the key shown follows your keyboard layout)
+- **Eject All External Disks**: one button (next to Unmount All), an optional shortcut (none by default) or a Shortcuts action unmounts and ejects every external disk so you can unplug them; internal disks, disk images and disks with a protected volume are skipped, nothing is forced, and failures are listed in one alert
+- **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default (Eject All External Disks has none until you record one); change them in Settings (the key shown follows your keyboard layout)
 - **Keyboard and VoiceOver**: rows in the popover take keyboard focus (Tab, Up/Down; Return or Space mounts or unmounts on macOS 14+), VoiceOver gets row actions, and animations stop with Reduce motion
 - **Block USB Auto-Mount**: stop selected disks from mounting when plugged in or at login; **Block at Startup** (optional) also writes a rule to `/etc/fstab` and asks for your admin password
 - **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at a folder you choose
@@ -76,7 +77,7 @@ So I built **MountMate**.
 - **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount every removable disk before the Mac sleeps. **Mount Again on Wake** (on by default, shown when the sleep unmount is on) mounts those disks again after wake; disks you unmounted yourself, disks that were unplugged and blocked disks stay unmounted. With notifications on, you are told about disks that could not be unmounted before sleep
 - **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period
 - **Notifications** (optional, off by default; Settings → General → Behavior): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle. Clicking a notification opens MountMate, and the "Cannot Reconnect" one has a "Reconnect Now" button.
-- **Shortcuts**: the Shortcuts app (and Spotlight, Siri, Automator via "Run Shortcut") gets three actions: Mount All Volumes, Unmount All Volumes and Mount Network Share (pick any saved share). Build "arrive home → mount the NAS" or "before bed → unmount all" automations; a failure is shown as the shortcut's error. Needs MountMate to be installed; it starts in the background when a shortcut runs
+- **Shortcuts**: the Shortcuts app (and Spotlight, Siri, Automator via "Run Shortcut") gets four actions: Mount All Volumes, Unmount All Volumes, Eject All External Disks and Mount Network Share (pick any saved share). Build "arrive home → mount the NAS" or "before bed → unmount all" automations; a failure is shown as the shortcut's error. Needs MountMate to be installed; it starts in the background when a shortcut runs
 - **Force Eject**: Safely force eject drives that are in use
 - **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
 - **Localized** in 7 languages, with correct plural forms

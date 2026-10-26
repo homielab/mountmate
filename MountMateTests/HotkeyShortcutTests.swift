@@ -99,6 +99,31 @@ final class HotkeyShortcutTests: XCTestCase {
     XCTAssertEqual(manager.shortcut(for: .mountAll), .defaultMount)
   }
 
+  func testEjectAllHasNoDefaultShortcutAndRegistersNothing() {
+    let manager = HotkeyManager(defaults: defaults)
+    XCTAssertNil(manager.shortcut(for: .ejectAll))
+    XCTAssertNil(manager.ejectShortcut)
+  }
+
+  func testEjectAllShortcutRoundTripsAndCanBeCleared() {
+    let eject = HotkeyShortcut(keyCode: UInt16(kVK_ANSI_E), modifiers: [.command, .option])
+    let manager = HotkeyManager(defaults: defaults)
+    manager.setShortcut(eject, for: .ejectAll)
+    XCTAssertEqual(manager.shortcut(for: .ejectAll), eject)
+    XCTAssertEqual(HotkeyManager(defaults: defaults).ejectShortcut, eject)
+    XCTAssertEqual(manager.shortcut(for: .unmountAll), .defaultUnmount)
+
+    manager.clearShortcut(for: .ejectAll)
+    XCTAssertNil(manager.shortcut(for: .ejectAll))
+    XCTAssertNil(HotkeyManager(defaults: defaults).ejectShortcut)
+  }
+
+  func testClearingMountAllKeepsItsShortcut() {
+    let manager = HotkeyManager(defaults: defaults)
+    manager.clearShortcut(for: .mountAll)
+    XCTAssertEqual(manager.shortcut(for: .mountAll), .defaultMount)
+  }
+
   func testSetShortcutRoundTripsThroughDefaults() {
     let unmount = HotkeyShortcut(keyCode: UInt16(kVK_ANSI_K), modifiers: [.command, .control])
     let mount = HotkeyShortcut(keyCode: UInt16(kVK_F6), modifiers: [.command, .option])

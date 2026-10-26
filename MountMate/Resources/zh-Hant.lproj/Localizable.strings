@@ -463,3 +463,11 @@
 "Diagnostics" = "診斷";
 "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "拷貝 MountMate 版本、macOS 版本、你的開關設定以及最近一小時的記錄檔。可貼到問題回報中。其中不含密碼、路徑、磁碟名稱或共享名稱。";
 "Logs" = "記錄檔";
+
+// MARK: - Eject All External Disks
+"Eject All External Disks" = "推出所有外接磁碟";
+"Could not eject: %@" = "無法推出：%@";
+"Disks ejected." = "磁碟已推出。";
+"Clear Shortcut" = "清除快速鍵";
+"Not Set" = "未設定";
+"Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "卸載並推出所有外接磁碟，以便安全拔除。含受保護檔案卷的磁碟會保留。";

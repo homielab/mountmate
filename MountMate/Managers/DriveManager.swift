@@ -326,6 +326,59 @@ class DriveManager: ObservableObject {
     BulkVolumeActions.unmountCandidates(in: bulkActionDisks)
   }
 
+  /// The disks "Eject All External Disks" would eject right now.
+  var ejectAllCandidates: [PhysicalDisk] {
+    BulkVolumeActions.ejectCandidates(
+      in: physicalDisks ?? [], unverifiedDiskIDs: unverifiedDiskIDs)
+  }
+
+  /// Ejects every external disk (`diskutil eject`, never forced), in
+  /// parallel, and reports the disks that could not be ejected in one alert.
+  /// - Parameter reportFailures: show that alert. Off when the caller
+  ///   reports the result itself (Shortcuts).
+  /// - Parameter completion: Called on the main thread with the names of the
+  ///   disks that could not be ejected, after the drive list refreshed
+  ///   (immediately with `[]` when there is nothing to eject).
+  func ejectAllDisks(reportFailures: Bool = true, completion: (([String]) -> Void)? = nil) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async {
+        self.ejectAllDisks(reportFailures: reportFailures, completion: completion)
+      }
+      return
+    }
+    let disks = ejectAllCandidates
+    guard !disks.isEmpty else {
+      completion?([])
+      return
+    }
+    let volumes = disks.flatMap(\.allVolumes)
+    KeepAliveManager.shared.suppress(volumes: volumes)
+    WakeRemountManager.shared.forget(volumes)
+    for disk in disks { setEjecting(disk.id, true) }
+
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      let failures = BulkVolumeActions.runConcurrently(
+        disks, runner: BulkVolumeActions.diskutilEject)
+      DispatchQueue.main.async {
+        guard let self else { return }
+        let names = failures.map { $0.name ?? $0.id }
+        if reportFailures,
+          let alert = BulkVolumeActions.failureAlert(
+            forNames: names,
+            title: NSLocalizedString("Eject Failed", comment: "Alert title"),
+            format: NSLocalizedString(
+              "Could not eject: %@", comment: "Bulk eject failure; list of disk names"))
+        {
+          self.userActionError = alert
+        }
+        self.refreshDrives(qos: .userInitiated) {
+          for disk in disks { self.setEjecting(disk.id, false) }
+          completion?(names)
+        }
+      }
+    }
+  }
+
   /// - Parameter suppressReconnect: `false` when the unmount is not a user
   ///   decision (e.g. the unmount-all-on-sleep action) so that keep-alive
   ///   targets are reconnected on the next wake or sweep.

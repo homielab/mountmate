@@ -34,6 +34,14 @@ enum IntentActions {
     }
   }
 
+  /// Names of the disks that could not be ejected.
+  static func ejectAll() async -> [String] {
+    let manager = await refreshedDriveManager()
+    return await withCheckedContinuation { continuation in
+      manager.ejectAllDisks(reportFailures: false) { continuation.resume(returning: $0) }
+    }
+  }
+
   /// `nil` when the share is mounted, else the error (possibly empty).
   static func mount(share: NetworkShare) async -> String? {
     await withCheckedContinuation { continuation in
@@ -74,6 +82,22 @@ struct UnmountAllIntent: AppIntent {
   }
 }
 
+struct EjectAllIntent: AppIntent {
+  static var title: LocalizedStringResource = "Eject All External Disks"
+  static var description = IntentDescription(
+    "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay."
+  )
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    let failed = await IntentActions.ejectAll()
+    guard failed.isEmpty else {
+      throw IntentFailure(message: IntentMessages.ejectFailure(names: failed))
+    }
+    return .result(dialog: IntentDialog(stringLiteral: IntentMessages.disksEjected()))
+  }
+}
+
 struct MountShareIntent: AppIntent {
   static var title: LocalizedStringResource = "Mount Network Share"
   static var description = IntentDescription("Mounts a network share saved in MountMate.")
@@ -110,6 +134,13 @@ struct MountMateShortcuts: AppShortcutsProvider {
         "Unmount all drives with \(.applicationName)",
       ],
       shortTitle: "Unmount All Volumes", systemImageName: "eject")
+    AppShortcut(
+      intent: EjectAllIntent(),
+      phrases: [
+        "Eject all external disks with \(.applicationName)",
+        "Eject all drives with \(.applicationName)",
+      ],
+      shortTitle: "Eject All External Disks", systemImageName: "eject.circle")
     AppShortcut(
       intent: MountShareIntent(),
       phrases: ["Mount a network share with \(.applicationName)"],

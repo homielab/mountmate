@@ -463,3 +463,11 @@
 "Diagnostics" = "Diagnostic";
 "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "Copie la version de MountMate et de macOS, vos réglages activés/désactivés et la dernière heure de son journal. Collez-le dans un rapport de bug. Il ne contient ni mots de passe, ni chemins, ni noms de disques ou de partages.";
 "Logs" = "Journaux";
+
+// MARK: - Eject All External Disks
+"Eject All External Disks" = "Éjecter tous les disques externes";
+"Could not eject: %@" = "Impossible d’éjecter : %@";
+"Disks ejected." = "Disques éjectés.";
+"Clear Shortcut" = "Effacer le raccourci";
+"Not Set" = "Non défini";
+"Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Démonte et éjecte chaque disque externe pour pouvoir le débrancher. Les disques ayant un volume protégé restent.";

@@ -87,6 +87,13 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(internalDisk.partitions.map(\.deviceIdentifier), ["disk0s1", "disk0s3"])
   }
 
+  func testEjectAllSelectsTheTwoExternalDisksAndNotTheInternalOne() {
+    let result = parse(parser(showInternalDisks: true))
+    let candidates = BulkVolumeActions.ejectCandidates(
+      in: result.disks, unverifiedDiskIDs: result.unverifiedDiskIDs)
+    XCTAssertEqual(Set(candidates.map(\.id)), ["disk6", "disk7"])
+  }
+
   func testAPFSContainerSkipsSealedSnapshotAndKeepsSnapshots() throws {
     let internalDisk = try XCTUnwrap(parse(parser(showInternalDisks: true)).disks.first)
     let container = try XCTUnwrap(internalDisk.containers.first)

@@ -463,3 +463,11 @@
 "Diagnostics" = "Diagnostics";
 "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names.";
 "Logs" = "Logs";
+
+// MARK: - Eject All External Disks
+"Eject All External Disks" = "Eject All External Disks";
+"Could not eject: %@" = "Could not eject: %@";
+"Disks ejected." = "Disks ejected.";
+"Clear Shortcut" = "Clear Shortcut";
+"Not Set" = "Not Set";
+"Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay.";

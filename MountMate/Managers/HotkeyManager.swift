@@ -165,12 +165,14 @@ final class SystemKeyboardLayout: KeyboardLayoutProviding {
 enum HotkeyAction: Hashable, CaseIterable, Sendable {
   case unmountAll
   case mountAll
+  case ejectAll
 
   /// Carbon hot key ID (EventHotKeyID.id).
   fileprivate var hotKeyID: UInt32 {
     switch self {
     case .unmountAll: return 1
     case .mountAll: return 2
+    case .ejectAll: return 3
     }
   }
 
@@ -216,6 +218,9 @@ class HotkeyManager: ObservableObject {
 
   @Published private(set) var unmountShortcut: HotkeyShortcut
   @Published private(set) var mountShortcut: HotkeyShortcut
+  /// "Eject All External Disks" has no default shortcut: nothing is
+  /// registered until the user records one.
+  @Published private(set) var ejectShortcut: HotkeyShortcut?
   @Published var isListening = false
   /// Actions whose shortcut could not be registered while listening,
   /// usually because another app already uses the combination.
@@ -241,6 +246,8 @@ class HotkeyManager: ObservableObject {
       keyCodeKey: "hotkeyMountKeyCode",
       modifiersKey: "hotkeyMountModifiers",
       fallback: .defaultMount)
+    ejectShortcut = Self.loadOptionalShortcut(
+      defaults: defaults, keyCodeKey: "hotkeyEjectKeyCode", modifiersKey: "hotkeyEjectModifiers")
     setupObserver()
   }
 
@@ -271,9 +278,17 @@ class HotkeyManager: ObservableObject {
   private static func loadShortcut(
     defaults: UserDefaults, keyCodeKey: String, modifiersKey: String, fallback: HotkeyShortcut
   ) -> HotkeyShortcut {
+    loadOptionalShortcut(defaults: defaults, keyCodeKey: keyCodeKey, modifiersKey: modifiersKey)
+      ?? fallback
+  }
+
+  /// The saved shortcut, or nil when none was saved.
+  private static func loadOptionalShortcut(
+    defaults: UserDefaults, keyCodeKey: String, modifiersKey: String
+  ) -> HotkeyShortcut? {
     guard defaults.object(forKey: keyCodeKey) != nil,
       defaults.object(forKey: modifiersKey) != nil
-    else { return fallback }
+    else { return nil }
 
     let keyCode = UInt16(clamping: defaults.integer(forKey: keyCodeKey))
     let modifiers = NSEvent.ModifierFlags(
@@ -283,11 +298,24 @@ class HotkeyManager: ObservableObject {
 
   // MARK: - Shortcut Configuration
 
-  func shortcut(for action: HotkeyAction) -> HotkeyShortcut {
+  /// The action's shortcut; nil only for an action without a default that
+  /// the user has not assigned (Eject All).
+  func shortcut(for action: HotkeyAction) -> HotkeyShortcut? {
     switch action {
     case .unmountAll: return unmountShortcut
     case .mountAll: return mountShortcut
+    case .ejectAll: return ejectShortcut
     }
+  }
+
+  /// Removes the shortcut of an action that has no default (Eject All).
+  /// Mount All and Unmount All keep theirs.
+  func clearShortcut(for action: HotkeyAction) {
+    guard action == .ejectAll else { return }
+    ejectShortcut = nil
+    defaults.removeObject(forKey: "hotkeyEjectKeyCode")
+    defaults.removeObject(forKey: "hotkeyEjectModifiers")
+    reregisterIfListening()
   }
 
   func setShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
@@ -303,8 +331,16 @@ class HotkeyManager: ObservableObject {
       mountShortcut = normalizedShortcut
       defaults.set(Int(normalizedShortcut.keyCode), forKey: "hotkeyMountKeyCode")
       defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyMountModifiers")
+    case .ejectAll:
+      ejectShortcut = normalizedShortcut
+      defaults.set(Int(normalizedShortcut.keyCode), forKey: "hotkeyEjectKeyCode")
+      defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyEjectModifiers")
     }
 
+    reregisterIfListening()
+  }
+
+  private func reregisterIfListening() {
     guard defaults.bool(forKey: "hotkeysEnabled") else { return }
     stopListening()
     startListening()
@@ -319,7 +355,7 @@ class HotkeyManager: ObservableObject {
 
     var failed: Set<HotkeyAction> = []
     for action in HotkeyAction.allCases {
-      let combination = self.shortcut(for: action)
+      guard let combination = self.shortcut(for: action) else { continue }
       // Shortcuts saved by older versions may lack ⌘/⌃. Settings asks the
       // user to record a new one; never register them.
       guard combination.isSafeAsGlobalHotKey else {
@@ -411,6 +447,11 @@ class HotkeyManager: ObservableObject {
           "Triggered Mount All (\(self.mountShortcut.displayString, privacy: .public))")
       #endif
       DriveManager.shared.mountAllVolumes()
+    case .ejectAll:
+      #if DEBUG
+        Log.hotkey.notice("Triggered Eject All External Disks")
+      #endif
+      DriveManager.shared.ejectAllDisks()
     }
   }
 }

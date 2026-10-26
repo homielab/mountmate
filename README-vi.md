@@ -31,7 +31,8 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
 - **Mount chỉ đọc**: chuột phải một volume chưa mount để mount ở chế độ chỉ đọc (bảo vệ ổ backup, đọc ổ NTFS hoặc ổ hỏng); hàng volume hiện nhãn "Chỉ đọc"
 - Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
-- **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M`; đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)
+- **Eject All External Disks**: một nút (cạnh Unmount All), phím tắt tuỳ chọn (mặc định không gán) hoặc hành động Shortcuts để unmount và eject mọi ổ ngoài rồi rút ra; bỏ qua ổ trong, ổ ảnh đĩa và ổ có phân vùng được Protect, không ép buộc, lỗi được liệt kê trong một thông báo
+- **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M` (Eject All External Disks không có phím mặc định); đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)
 - **Bàn phím và VoiceOver**: các hàng trong popover nhận focus bàn phím (Tab, Lên/Xuống; Return hoặc Space để mount/unmount trên macOS 14+), VoiceOver có action cho từng hàng, animation tắt khi bật Reduce motion
 - **Chặn tự mount USB**: ngăn các ổ đã chọn tự mount khi cắm hoặc khi đăng nhập; **Block at Startup** (tuỳ chọn) ghi thêm một rule vào `/etc/fstab` và hỏi mật khẩu quản trị
 - **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục bạn chọn
@@ -45,7 +46,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
 - **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount mọi ổ tháo được trước khi máy ngủ. **Mount Again on Wake** (mặc định bật, chỉ hiện khi bật unmount khi ngủ) mount lại các ổ đó sau khi thức dậy; ổ bạn tự unmount, ổ đã rút và ổ bị chặn vẫn không được mount. Khi bật thông báo, app báo những ổ không kịp unmount trước khi ngủ
 - **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng
-- **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 3 hành động: Mount All Volumes, Unmount All Volumes và Mount Network Share (chọn một share đã lưu). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
+- **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 4 hành động: Mount All Volumes, Unmount All Volumes, Eject All External Disks và Mount Network Share (chọn một share đã lưu). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
 - **Force Eject**: ép eject ổ đang được sử dụng
 - **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều

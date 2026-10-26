@@ -3,3 +3,5 @@
 "Unmount all volumes with ${applicationName}" = "Unmount tất cả phân vùng bằng ${applicationName}";
 "Unmount all drives with ${applicationName}" = "Unmount tất cả ổ đĩa bằng ${applicationName}";
 "Mount a network share with ${applicationName}" = "Mount chia sẻ mạng bằng ${applicationName}";
+"Eject all external disks with ${applicationName}" = "Đẩy ra tất cả ổ đĩa ngoài bằng ${applicationName}";
+"Eject all drives with ${applicationName}" = "Đẩy ra tất cả ổ đĩa bằng ${applicationName}";

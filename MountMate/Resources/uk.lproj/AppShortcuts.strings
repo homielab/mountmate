@@ -3,3 +3,5 @@
 "Unmount all volumes with ${applicationName}" = "Відключити всі томи в ${applicationName}";
 "Unmount all drives with ${applicationName}" = "Відключити всі диски в ${applicationName}";
 "Mount a network share with ${applicationName}" = "Підключити мережеву папку в ${applicationName}";
+"Eject all external disks with ${applicationName}" = "Вийняти всі зовнішні диски через ${applicationName}";
+"Eject all drives with ${applicationName}" = "Вийняти всі накопичувачі через ${applicationName}";

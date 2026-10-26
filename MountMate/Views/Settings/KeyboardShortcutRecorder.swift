@@ -5,7 +5,7 @@ import Carbon
 import SwiftUI
 
 struct KeyboardShortcutRecorder: NSViewRepresentable {
-  @Binding var shortcut: HotkeyShortcut
+  @Binding var shortcut: HotkeyShortcut?
   @Binding var isRecording: Bool
 
   func makeCoordinator() -> Coordinator {
@@ -44,7 +44,7 @@ struct KeyboardShortcutRecorder: NSViewRepresentable {
 }
 
 final class ShortcutRecorderButton: NSButton {
-  var shortcut = HotkeyShortcut.defaultUnmount {
+  var shortcut: HotkeyShortcut? {
     didSet { updateTitle() }
   }
   var isRecording = false {
@@ -122,7 +122,8 @@ final class ShortcutRecorderButton: NSButton {
     title =
       isRecording
       ? NSLocalizedString("Press Shortcut…", comment: "Keyboard shortcut recorder prompt")
-      : shortcut.displayString
+      : (shortcut?.displayString
+        ?? NSLocalizedString("Not Set", comment: "Keyboard shortcut recorder: no shortcut assigned"))
     toolTip = title
     setAccessibilityLabel(
       NSLocalizedString("Keyboard Shortcut", comment: "Keyboard shortcut recorder label"))

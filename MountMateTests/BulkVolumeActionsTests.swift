@@ -63,6 +63,68 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertEqual(candidates.map(\.id), ["a", "e"])
   }
 
+  // MARK: - Eject candidates
+
+  func testEjectCandidatesAreExternalDisksCountedOnceWhateverTheirVolumes() {
+    let disks = [
+      disk("disk2", volumes: [volume("a"), volume("b")]),
+      disk("disk3", type: .internalDisk, volumes: [volume("c")]),
+      disk("disk4", type: .diskImage, volumes: [volume("d")]),
+      disk("disk5", volumes: [volume("e", isProtected: true), volume("f")]),
+      disk("disk6", volumes: [volume("g", mounted: false)]),
+      disk("disk7", volumes: [volume("h")]),
+    ]
+    let candidates = BulkVolumeActions.ejectCandidates(in: disks, unverifiedDiskIDs: ["disk7"])
+    // disk2 once (2 volumes), no internal disk, no disk image, no disk with
+    // a protected volume, no unverified disk; an unmounted disk still ejects.
+    XCTAssertEqual(candidates.map(\.id), ["disk2", "disk6"])
+  }
+
+  func testEjectCandidatesAreEmptyWithoutDisks() {
+    XCTAssertEqual(BulkVolumeActions.ejectCandidates(in: [], unverifiedDiskIDs: []), [])
+  }
+
+  func testEjectArgumentsNeverForceAndUseUnmountDiskForRAIDSets() {
+    let plain = disk("disk2", volumes: [])
+    XCTAssertEqual(BulkVolumeActions.ejectArguments(for: plain), ["eject", "disk2"])
+    let raid = PhysicalDisk(
+      id: "disk9", diskUUID: nil, connectionType: "USB", name: "R", totalSize: nil, freeSpace: nil,
+      usedSpace: nil, usagePercentage: nil, type: .physical, isRAIDSet: true, partitions: [],
+      containers: [], storageError: nil)
+    XCTAssertEqual(BulkVolumeActions.ejectArguments(for: raid), ["unmountDisk", "disk9"])
+  }
+
+  func testOneFailedEjectDoesNotStopTheOthersAndIsReportedOnce() {
+    let disks = ["disk2", "disk3", "disk4", "disk5"].map { disk($0, volumes: []) }
+    final class Seen: @unchecked Sendable {
+      private let lock = NSLock()
+      private var ids = Set<String>()
+      func add(_ id: String) { lock.withLock { _ = ids.insert(id) } }
+      var all: Set<String> { lock.withLock { ids } }
+    }
+    let seen = Seen()
+    let failures = BulkVolumeActions.runConcurrently(disks) { disk in
+      seen.add(disk.id)
+      return disk.id != "disk3"
+    }
+    XCTAssertEqual(seen.all, ["disk2", "disk3", "disk4", "disk5"])
+    XCTAssertEqual(failures.map(\.id), ["disk3"])
+    let alert = BulkVolumeActions.failureAlert(
+      forNames: failures.map { $0.name ?? $0.id }, title: "Eject Failed",
+      format: "Could not eject: %@")
+    XCTAssertEqual(alert?.message, "Could not eject: disk3")
+  }
+
+  func testSeveralFailedEjectsAreNamedInOneAlert() {
+    let disks = ["disk2", "disk3", "disk4"].map { disk($0, volumes: []) }
+    let failures = BulkVolumeActions.runConcurrently(disks) { $0.id == "disk3" }
+    let alert = BulkVolumeActions.failureAlert(
+      forNames: failures.map { $0.name ?? $0.id }, title: "Eject Failed",
+      format: "Could not eject: %@")
+    XCTAssertEqual(alert?.message, "Could not eject: disk2, disk4")
+    XCTAssertNil(BulkVolumeActions.failureAlert(forNames: [], title: "T", format: "%@"))
+  }
+
   // MARK: - Runner
 
   func testRunConcurrentlyReturnsNoFailuresWhenEveryRunnerSucceeds() {
@@ -91,7 +153,7 @@ final class BulkVolumeActionsTests: XCTestCase {
   }
 
   func testRunConcurrentlyWithNothingToDoReturnsNothing() {
-    XCTAssertEqual(BulkVolumeActions.runConcurrently([]) { _ in false }, [])
+    XCTAssertEqual(BulkVolumeActions.runConcurrently([Volume]()) { _ in false }, [])
   }
 
   func testRunConcurrentlyNeverExceedsOneRunnerPerCore() {

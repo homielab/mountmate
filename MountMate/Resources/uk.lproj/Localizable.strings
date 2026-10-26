@@ -463,3 +463,11 @@
 "Diagnostics" = "Діагностика";
 "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "Копіює версії MountMate і macOS, ваші перемикачі та журнал за останню годину. Вставте його у звіт про помилку. У ньому немає паролів, шляхів, імен дисків і спільних папок.";
 "Logs" = "Журнали";
+
+// MARK: - Eject All External Disks
+"Eject All External Disks" = "Вийняти всі зовнішні диски";
+"Could not eject: %@" = "Не вдалося вийняти: %@";
+"Disks ejected." = "Диски вийнято.";
+"Clear Shortcut" = "Видалити скорочення";
+"Not Set" = "Не задано";
+"Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Розмонтовує та виймає кожен зовнішній диск, щоб його можна було відключити. Диски із захищеним томом залишаються.";

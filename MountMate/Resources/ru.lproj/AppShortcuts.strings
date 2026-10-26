@@ -3,3 +3,5 @@
 "Unmount all volumes with ${applicationName}" = "Размонтировать все тома в ${applicationName}";
 "Unmount all drives with ${applicationName}" = "Размонтировать все диски в ${applicationName}";
 "Mount a network share with ${applicationName}" = "Смонтировать сетевую папку в ${applicationName}";
+"Eject all external disks with ${applicationName}" = "Извлечь все внешние диски с помощью ${applicationName}";
+"Eject all drives with ${applicationName}" = "Извлечь все накопители с помощью ${applicationName}";

@@ -23,6 +23,20 @@ final class IntentMessagesTests: XCTestCase {
       "Could not unmount: A")
   }
 
+  func testEjectFailureListsNamesAndIsTranslated() throws {
+    XCTAssertEqual(
+      IntentMessages.ejectFailure(names: ["A", "B"], localize: { $0 }), "Could not eject: A, B")
+    let english = try localizer("en")
+    for language in languages where language != "en" {
+      let localize = try localizer(language)
+      XCTAssertNotEqual(
+        IntentMessages.disksEjected(localize: localize),
+        IntentMessages.disksEjected(localize: english), language)
+      XCTAssertTrue(
+        IntentMessages.ejectFailure(names: ["NAS"], localize: localize).contains("NAS"), language)
+    }
+  }
+
   func testShareFailureWithAndWithoutReason() {
     XCTAssertEqual(
       IntentMessages.shareFailure(name: "NAS", reason: "Host down", localize: { $0 }),

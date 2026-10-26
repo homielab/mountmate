@@ -293,6 +293,7 @@ struct GeneralSettingsView: View {
           VStack(alignment: .leading, spacing: 8) {
             shortcutRow(description: "Unmount All Volumes", action: .unmountAll)
             shortcutRow(description: "Mount All Volumes", action: .mountAll)
+            shortcutRow(description: "Eject All External Disks", action: .ejectAll)
             Text(
               "Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app."
             )
@@ -443,7 +444,7 @@ struct GeneralSettingsView: View {
         KeyboardShortcutRecorder(
           shortcut: Binding(
             get: { hotkeyManager.shortcut(for: action) },
-            set: { updateShortcut($0, for: action) }
+            set: { if let shortcut = $0 { updateShortcut(shortcut, for: action) } }
           ),
           isRecording: Binding(
             get: { recordingShortcut == action },
@@ -451,9 +452,20 @@ struct GeneralSettingsView: View {
           )
         )
         .frame(width: 150, height: 26)
+        if action == .ejectAll, hotkeyManager.shortcut(for: action) != nil {
+          Button {
+            hotkeyManager.clearShortcut(for: action)
+          } label: {
+            Image(systemName: "xmark.circle.fill")
+          }
+          .buttonStyle(.plain)
+          .foregroundStyle(.secondary)
+          .help(NSLocalizedString("Clear Shortcut", comment: "Tooltip"))
+          .accessibilityLabel(Text("Clear Shortcut"))
+        }
       }
       if recordingShortcut == nil {
-        if !hotkeyManager.shortcut(for: action).isSafeAsGlobalHotKey {
+        if let assigned = hotkeyManager.shortcut(for: action), !assigned.isSafeAsGlobalHotKey {
           // Saved by an older version; not registered (see HotkeyManager).
           shortcutWarning("This shortcut needs ⌘ or ⌃. Click it to record a new one.")
         } else if hotkeyManager.unavailableShortcuts.contains(action) {
@@ -484,8 +496,10 @@ struct GeneralSettingsView: View {
   }
 
   private func updateShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
-    let otherAction: HotkeyAction = action == .unmountAll ? .mountAll : .unmountAll
-    guard shortcut != hotkeyManager.shortcut(for: otherAction) else {
+    let isTaken = HotkeyAction.allCases.contains {
+      $0 != action && hotkeyManager.shortcut(for: $0) == shortcut
+    }
+    guard !isTaken else {
       shortcutConflictMessage = NSLocalizedString(
         "This shortcut is already assigned to the other action.",
         comment: "Duplicate keyboard shortcut warning")

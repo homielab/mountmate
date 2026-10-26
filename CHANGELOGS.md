@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Eject All External Disks**: a button in the popover header (next to Unmount All), an optional keyboard shortcut (Settings → General → Keyboard Shortcuts, none by default) and a Shortcuts action unmount and eject every external disk at once so you can unplug them. Internal disks, disk images and disks with a protected volume are left alone, nothing is forced, and one alert names any disk that could not be ejected.
 - **Notification actions**: the "Cannot Reconnect" notification now has a "Reconnect Now" button that retries right away, and clicking any MountMate notification opens the MountMate popover.
 - **Reconnect Now**: a share or volume that Keep Alive is waiting to reconnect now shows "Retrying in N seconds" under "Reconnecting…", with a "Reconnect Now" button (also in the right-click menu) that retries right away instead of waiting out the backoff. The countdown only updates while the popover is open.
 - **Reconnecting icon**: while Keep Alive is reconnecting a share or volume, the menu bar icon shows a Wi-Fi badge (VoiceOver says "Reconnecting") and returns to normal once everything is connected.

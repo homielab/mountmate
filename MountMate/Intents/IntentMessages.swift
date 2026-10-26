@@ -17,6 +17,14 @@ enum IntentMessages {
     localize("Volumes unmounted.")
   }
 
+  static func disksEjected(localize: Localize = defaultLocalize) -> String {
+    localize("Disks ejected.")
+  }
+
+  static func ejectFailure(names: [String], localize: Localize = defaultLocalize) -> String {
+    String(format: localize("Could not eject: %@"), names.joined(separator: ", "))
+  }
+
   static func shareMounted(name: String, localize: Localize = defaultLocalize) -> String {
     String(format: localize("“%@” mounted."), name)
   }
