@@ -415,7 +415,7 @@ struct VolumeRowView: View {
     }
     if state.hasSavedPassword {
       Button {
-        manager.forgetSavedPassword(for: volume)
+        manager.unlocker.forgetSavedPassword(for: volume)
       } label: {
         Label(
           NSLocalizedString(

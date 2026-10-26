@@ -36,7 +36,7 @@ class DriveManager: ObservableObject {
   /// Volumes (by `Volume.id`) with an unlock password saved in the Keychain.
   /// Read once at launch (attributes only, no access prompt), then kept up
   /// to date as passwords are saved and forgotten.
-  @Published private(set) var volumeIDsWithSavedPassword: Set<String> = []
+  @Published var volumeIDsWithSavedPassword: Set<String> = []
 
   /// Source-compatible accessors for views written for a single busy item.
   /// Prefer `isBusy(_:)` / `isEjecting(_:)`, which are correct when several
@@ -90,10 +90,12 @@ class DriveManager: ObservableObject {
   private var volumeFirstSeen: [String: Date] = [:]
   private let volumeFirstSeenLock = NSLock()
 
+  private(set) lazy var unlocker = EncryptedVolumeUnlocker(host: self)
+
   private init() {
     setupDiskChangeObservers()
     refreshDrives()
-    loadSavedPasswordAccounts()
+    unlocker.loadSavedPasswordAccounts()
   }
 
   deinit {
@@ -105,7 +107,7 @@ class DriveManager: ObservableObject {
 
   /// Main thread only (hops over otherwise). Calls made from one thread keep
   /// their order, so a start always lands before its own completion.
-  private func setBusy(_ volumeID: String, _ busy: Bool) {
+  func setBusy(_ volumeID: String, _ busy: Bool) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async { self.setBusy(volumeID, busy) }
       return
@@ -685,137 +687,6 @@ class DriveManager: ObservableObject {
     }
   }
 
-  func mountLockedVolume(_ volume: Volume, passphrase: String, rememberPassphrase: Bool = false) {
-    KeepAliveManager.shared.resume(volume: volume)
-    let userInfo = ["deviceIdentifier": volume.id]
-    NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
-    setBusy(volume.id, true)
-
-    // The password the user just typed always wins over a saved one.
-    DispatchQueue.global(qos: .userInitiated).async {
-      self.performUnlock(
-        volume: volume, passphrase: passphrase, isSavedPassword: false,
-        rememberPassphrase: rememberPassphrase)
-    }
-  }
-
-  /// Tries the keychain password for a locked volume without prompting.
-  /// Returns false when there is no saved password.
-  private func unlockWithSavedPassword(_ volume: Volume) -> Bool {
-    guard let saved = KeychainManager.shared.load(account: volume.id), !saved.isEmpty else {
-      return false
-    }
-    KeepAliveManager.shared.resume(volume: volume)
-    NotificationCenter.default.post(
-      name: .willManuallyMount, object: nil, userInfo: ["deviceIdentifier": volume.id])
-    setBusy(volume.id, true)
-    DispatchQueue.global(qos: .userInitiated).async {
-      self.performUnlock(volume: volume, passphrase: saved, isSavedPassword: true)
-    }
-    return true
-  }
-
-  /// Saves the passphrase the user asked to remember, but only once it has
-  /// unlocked the volume, so a mistyped password is never stored.
-  ///
-  /// - Returns: nil when nothing was saved, otherwise the Keychain status.
-  static func rememberPassphraseIfUnlocked(
-    _ passphrase: String, for volume: Volume, unlocked: Bool, remember: Bool,
-    store: PasswordStore
-  ) -> OSStatus? {
-    guard unlocked, remember else { return nil }
-    return store.save(password: passphrase, for: volume.id, name: volume.name, kind: .apfsVolume)
-  }
-
-  /// Runs `diskutil apfs unlockVolume` (which also mounts the volume).
-  /// Blocking; call off the main thread.
-  private func performUnlock(
-    volume: Volume, passphrase: String, isSavedPassword: Bool, rememberPassphrase: Bool = false
-  ) {
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil",
-      arguments: ["apfs", "unlockVolume", volume.id, "-stdinpassphrase"],
-      input: Data(passphrase.utf8), timeout: Self.mountUnmountTimeout)
-    let saveStatus = Self.rememberPassphraseIfUnlocked(
-      passphrase, for: volume, unlocked: result.succeeded, remember: rememberPassphrase,
-      store: KeychainManager.shared)
-    // Withdraw the single-use mount approval posted before unlocking, under
-    // the same identifier, so it does not stay valid for its full lifetime.
-    NotificationCenter.default.post(
-      name: .didFinishManualMount, object: nil, userInfo: ["deviceIdentifier": volume.id])
-    DispatchQueue.main.async {
-      guard !result.succeeded else {
-        if let saveStatus {
-          self.handlePassphraseSaveResult(saveStatus, for: volume)
-        }
-        self.refreshDrives(qos: .userInitiated) { self.setBusy(volume.id, false) }
-        return
-      }
-      self.setBusy(volume.id, false)
-      let wrongPassphrase = DiskUtilErrorClassifier.isWrongPassphrase(result)
-      if wrongPassphrase || (isSavedPassword && !result.timedOut) {
-        // A mistyped password, or a saved one that failed: ask again instead
-        // of showing a generic error. "That password didn't work" only when
-        // diskutil actually rejected the passphrase.
-        if !wrongPassphrase {
-          Log.drive.error("Unlock with saved password failed: \(result.stderr, privacy: .private)")
-        }
-        self.presentUnlockPrompt(for: volume, passwordFailed: wrongPassphrase)
-      } else {
-        self.handleDiskUtilError(
-          DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
-          for: volume.name, volume: volume, operation: .mount)
-      }
-      self.refreshDrives(qos: .userInitiated)
-    }
-  }
-
-  /// Main thread. Records a saved passphrase, or tells the user it could not
-  /// be saved (the volume is unlocked either way).
-  private func handlePassphraseSaveResult(_ status: OSStatus, for volume: Volume) {
-    guard status != errSecSuccess else {
-      volumeIDsWithSavedPassword.insert(volume.id)
-      return
-    }
-    userActionError = AppAlert(
-      title: NSLocalizedString("Password Not Saved", comment: "Alert title"),
-      message: String(
-        format: NSLocalizedString(
-          "“%@” is unlocked, but MountMate could not save its password to the Keychain (error %d).",
-          comment: "Alert message: APFS unlock succeeded, Keychain save failed"),
-        volume.name, status),
-      kind: .basic)
-  }
-
-  /// Deletes the saved unlock password of an APFS volume.
-  func forgetSavedPassword(for volume: Volume) {
-    DispatchQueue.global(qos: .userInitiated).async {
-      let status = KeychainManager.shared.delete(account: volume.id)
-      DispatchQueue.main.async {
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-          self.userActionError = AppAlert(
-            title: NSLocalizedString("Action Failed", comment: "Alert title"),
-            message: String(
-              format: NSLocalizedString(
-                "MountMate could not remove the saved password from the Keychain (error %d).",
-                comment: "Keychain delete error"),
-              status),
-            kind: .basic)
-          return
-        }
-        self.volumeIDsWithSavedPassword.remove(volume.id)
-      }
-    }
-  }
-
-  /// Reads which volumes have a saved password, off the main thread.
-  private func loadSavedPasswordAccounts() {
-    DispatchQueue.global(qos: .utility).async {
-      let accounts = KeychainManager.shared.savedAccounts()
-      DispatchQueue.main.async { self.volumeIDsWithSavedPassword.formUnion(accounts) }
-    }
-  }
-
   func unmount(volume: Volume) {
     KeepAliveManager.shared.suppress(volume: volume)
     setBusy(volume.id, true)
@@ -1104,7 +975,7 @@ class DriveManager: ObservableObject {
 
   // MARK: - Error Handling
 
-  private func handleDiskUtilError(
+  func handleDiskUtilError(
     _ error: String, for name: String, volume: Volume? = nil, disk: PhysicalDisk? = nil,
     operation: DiskOperation
   ) {
@@ -1121,8 +992,8 @@ class DriveManager: ObservableObject {
           kind: .basic)
         return
       }
-      if !unlockWithSavedPassword(volume) {
-        presentUnlockPrompt(for: volume, passwordFailed: false)
+      if !unlocker.unlockWithSavedPassword(volume) {
+        unlocker.presentUnlockPrompt(for: volume, passwordFailed: false)
       }
       return
     }
@@ -1143,28 +1014,6 @@ class DriveManager: ObservableObject {
       kind = .basic
     }
     userActionError = AppAlert(title: text.title, message: text.message, kind: kind)
-  }
-
-  /// Asks for the password of a locked APFS volume and unlocks it.
-  private func presentUnlockPrompt(for volume: Volume, passwordFailed: Bool) {
-    let title = String(
-      format: NSLocalizedString("“%@” is locked", comment: "Alert title"), volume.name)
-    let message =
-      passwordFailed
-      ? String(
-        format: NSLocalizedString(
-          "That password didn’t work. Enter the password to unlock “%@”",
-          comment: "Alert message after a wrong or outdated saved password"), volume.name)
-      : String(
-        format: NSLocalizedString(
-          "Enter the password to unlock “%@”", comment: "Alert message"), volume.name)
-    let handler = { (passphrase: String, saveInKeychain: Bool) in
-      // Saved only after the unlock succeeds (see performUnlock).
-      self.mountLockedVolume(volume, passphrase: passphrase, rememberPassphrase: saveInKeychain)
-    }
-    userActionError = AppAlert(
-      title: title, message: message,
-      kind: .lockedVolume(LockedVolumeAppAlert(onConfirm: handler)))
   }
 
   /// Mount points whose statfs has not returned yet. While one is still

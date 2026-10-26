@@ -45,7 +45,7 @@ final class KeychainPasswordTests: XCTestCase {
 
   func testFailedUnlockSavesNothing() {
     let store = RecordingPasswordStore()
-    let status = DriveManager.rememberPassphraseIfUnlocked(
+    let status = EncryptedVolumeUnlocker.rememberPassphraseIfUnlocked(
       "typo", for: volume(), unlocked: false, remember: true, store: store)
     XCTAssertNil(status)
     XCTAssertTrue(store.saved.isEmpty)
@@ -53,7 +53,7 @@ final class KeychainPasswordTests: XCTestCase {
 
   func testSuccessfulUnlockSavesLabeledItemWhenAsked() {
     let store = RecordingPasswordStore()
-    let status = DriveManager.rememberPassphraseIfUnlocked(
+    let status = EncryptedVolumeUnlocker.rememberPassphraseIfUnlocked(
       "secret", for: volume(), unlocked: true, remember: true, store: store)
     XCTAssertEqual(status, errSecSuccess)
     XCTAssertEqual(
@@ -62,7 +62,7 @@ final class KeychainPasswordTests: XCTestCase {
 
   func testSuccessfulUnlockWithoutRememberSavesNothing() {
     let store = RecordingPasswordStore()
-    let status = DriveManager.rememberPassphraseIfUnlocked(
+    let status = EncryptedVolumeUnlocker.rememberPassphraseIfUnlocked(
       "secret", for: volume(), unlocked: true, remember: false, store: store)
     XCTAssertNil(status)
     XCTAssertTrue(store.saved.isEmpty)
@@ -71,7 +71,7 @@ final class KeychainPasswordTests: XCTestCase {
   func testSaveFailureIsReported() {
     let store = RecordingPasswordStore()
     store.saveStatus = errSecInteractionNotAllowed
-    let status = DriveManager.rememberPassphraseIfUnlocked(
+    let status = EncryptedVolumeUnlocker.rememberPassphraseIfUnlocked(
       "secret", for: volume(), unlocked: true, remember: true, store: store)
     XCTAssertEqual(status, errSecInteractionNotAllowed)
   }
