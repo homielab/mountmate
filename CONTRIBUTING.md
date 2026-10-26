@@ -20,7 +20,7 @@ xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
 swift format lint --strict -r MountMate MountMateTests
 ```
 
-Add tests for new logic in `MountMateTests/`. Code that talks to `diskutil`, the Keychain or `/etc/fstab` takes its input through a closure or protocol so it can be tested without touching the system; never point a test at the real `/etc/fstab`.
+Add tests for new logic in `MountMateTests/`. Code that talks to `diskutil`, the Keychain or `/etc/fstab` takes its input through a closure or protocol so it can be tested without touching the system; never point a test at the real `/etc/fstab`. Code that hops to the main queue after a callback takes the scheduler as a parameter too (see `NotificationManager`'s `performOnMain`), so tests run the hops right away instead of waiting a fixed number of main-queue turns; don't add sleeps.
 
 ## Code guidelines
 

@@ -177,17 +177,31 @@ final class NotificationManager: NSObject, ObservableObject {
 
   private let center: NotificationCentering
   private let defaults: UserDefaults
+  private let activationNotifications: NotificationCenter
+  private let performOnMain: (@escaping () -> Void) -> Void
 
   /// What the notification buttons do; replaced in tests.
   var reconnectNow: () -> Void = { KeepAliveManager.shared.sweepNow(resetBackoff: true) }
   var openPopover: () -> Void = { MenuBarPopover.open() }
 
+  /// - Parameters:
+  ///   - activationNotifications: where `didBecomeActiveNotification` is
+  ///     observed to re-read the permission.
+  ///   - performOnMain: how the notification center's callbacks get back to
+  ///     the main thread. Tests run them right away, so they don't depend on
+  ///     how many main-queue hops a permission check takes.
   init(
     center: NotificationCentering = SystemNotificationCenter(),
-    defaults: UserDefaults = .standard
+    defaults: UserDefaults = .standard,
+    activationNotifications: NotificationCenter = .default,
+    performOnMain: @escaping (@escaping () -> Void) -> Void = {
+      DispatchQueue.main.async(execute: $0)
+    }
   ) {
     self.center = center
     self.defaults = defaults
+    self.activationNotifications = activationNotifications
+    self.performOnMain = performOnMain
     isEnabled = defaults.bool(forKey: Self.enabledKey)
     super.init()
   }
@@ -199,7 +213,7 @@ final class NotificationManager: NSObject, ObservableObject {
     center.setCategories(NotificationAction.makeCategories())
     if isEnabled { refreshAuthorizationStatus() }
     // Permission can change in System Settings while MountMate runs.
-    NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+    activationNotifications.publisher(for: NSApplication.didBecomeActiveNotification)
       .sink { [weak self] _ in
         guard let self, self.isEnabled else { return }
         self.refreshAuthorizationStatus()
@@ -369,7 +383,7 @@ final class NotificationManager: NSObject, ObservableObject {
         Log.app.error(
           "Notification permission request failed: \(error.localizedDescription, privacy: .public)")
       }
-      DispatchQueue.main.async {
+      self?.performOnMain {
         self?.isAuthorized = granted
         self?.isDeniedBySystem = !granted
       }
@@ -378,7 +392,7 @@ final class NotificationManager: NSObject, ObservableObject {
 
   private func refreshAuthorizationStatus() {
     center.authorizationStatus { [weak self] status in
-      DispatchQueue.main.async {
+      self?.performOnMain {
         guard let self else { return }
         switch status {
         case .notDetermined:

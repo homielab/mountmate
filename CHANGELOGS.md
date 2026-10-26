@@ -61,6 +61,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Unit tests**: `NotificationManagerTests` no longer fails at random in a full test run (the permission check that asks again takes two main-queue hops, the test waited for one); the manager now takes its main-thread scheduler and app-activation notification center as parameters.
 - VoiceOver no longer reads the decorative icons in snapshot and container rows.
 - Mounting, unmounting or reconnecting (Keep Alive) a network share no longer re-reads all disks, so the menu updates with less background work.
 

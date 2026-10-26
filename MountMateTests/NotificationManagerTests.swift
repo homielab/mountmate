@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import AppKit
 import UserNotifications
 import XCTest
 
@@ -36,26 +37,28 @@ final class NotificationManagerTests: XCTestCase {
   private var defaults: UserDefaults!
   private var suiteName: String!
   private var center: FakeNotificationCenter!
+  /// Stands in for `NotificationCenter.default`, so the test host app
+  /// becoming active cannot trigger an extra permission check.
+  private var activation: NotificationCenter!
 
   override func setUp() {
     suiteName = "NotificationManagerTests-\(UUID().uuidString)"
     defaults = UserDefaults(suiteName: suiteName)
     center = FakeNotificationCenter()
+    activation = NotificationCenter()
   }
 
   override func tearDown() {
     defaults.removePersistentDomain(forName: suiteName)
   }
 
+  /// The manager runs its main-thread hops right away, so every permission
+  /// check (even one that asks again and hops twice) has finished when the
+  /// call returns.
   private func makeManager() -> NotificationManager {
-    NotificationManager(center: center, defaults: defaults)
-  }
-
-  /// Lets the manager's main-thread hops run.
-  private func drainMainQueue() {
-    let done = expectation(description: "main queue")
-    DispatchQueue.main.async { done.fulfill() }
-    wait(for: [done], timeout: 2)
+    NotificationManager(
+      center: center, defaults: defaults, activationNotifications: activation,
+      performOnMain: { $0() })
   }
 
   private func disk(_ id: String, smart: SMARTStatus) -> PhysicalDisk {
@@ -68,7 +71,6 @@ final class NotificationManagerTests: XCTestCase {
   func testFailingDiskIsAnnouncedOnceAcrossRefreshes() {
     let manager = makeManager()
     manager.isEnabled = true
-    drainMainQueue()
     let disks = [disk("disk6", smart: .failing), disk("disk7", smart: .verified)]
     manager.disksRefreshed(disks)
     manager.disksRefreshed(disks)
@@ -82,7 +84,6 @@ final class NotificationManagerTests: XCTestCase {
     manager.disksRefreshed([disk("disk6", smart: .failing)])
     XCTAssertTrue(center.added.isEmpty)
     manager.isEnabled = true
-    drainMainQueue()
     manager.disksRefreshed([
       disk("disk6", smart: .verified), disk("disk7", smart: .notSupported),
       disk("disk8", smart: .unknown),
@@ -96,7 +97,6 @@ final class NotificationManagerTests: XCTestCase {
   func testAlmostFullVolumeIsAnnouncedOncePerMountWhenTheWarningIsOn() {
     let manager = makeManager()
     manager.isEnabled = true
-    drainMainQueue()
     func full(mounted: Bool) -> PhysicalDisk {
       let volume = Volume(
         id: "v1", deviceIdentifier: "disk6s1", diskUUID: nil, name: "Backup", isMounted: mounted,
@@ -128,7 +128,6 @@ final class NotificationManagerTests: XCTestCase {
   func testTurningOnSavesTheSettingAndAsksForPermissionOnce() {
     let manager = makeManager()
     manager.isEnabled = true
-    drainMainQueue()
     XCTAssertTrue(defaults.bool(forKey: NotificationManager.enabledKey))
     XCTAssertEqual(center.authorizationRequests, 1)
     XCTAssertTrue(manager.canDeliver)
@@ -141,7 +140,6 @@ final class NotificationManagerTests: XCTestCase {
     center.grantsPermission = false
     let manager = makeManager()
     manager.isEnabled = true
-    drainMainQueue()
     XCTAssertTrue(manager.isDeniedBySystem)
     XCTAssertFalse(manager.canDeliver)
   }
@@ -149,7 +147,6 @@ final class NotificationManagerTests: XCTestCase {
   func testTurningOffSavesTheSettingWithoutAskingAgain() {
     let manager = makeManager()
     manager.isEnabled = true
-    drainMainQueue()
     manager.isEnabled = false
     XCTAssertFalse(defaults.bool(forKey: NotificationManager.enabledKey))
     XCTAssertEqual(center.authorizationRequests, 1)
@@ -160,7 +157,6 @@ final class NotificationManagerTests: XCTestCase {
     center.status = .denied
     let manager = makeManager()
     manager.start()
-    drainMainQueue()
     XCTAssertTrue(center.delegateSet)
     XCTAssertTrue(manager.isDeniedBySystem)
     XCTAssertFalse(manager.canDeliver)
@@ -171,7 +167,6 @@ final class NotificationManagerTests: XCTestCase {
     center.status = .authorized
     let manager = makeManager()
     manager.start()
-    drainMainQueue()
     XCTAssertFalse(manager.isDeniedBySystem)
     XCTAssertTrue(manager.canDeliver)
   }
@@ -181,16 +176,52 @@ final class NotificationManagerTests: XCTestCase {
     center.status = .notDetermined
     let manager = makeManager()
     manager.start()
-    drainMainQueue()
     XCTAssertEqual(center.authorizationRequests, 1)
     XCTAssertTrue(manager.canDeliver)
+  }
+
+  func testPermissionIsAppliedOnlyOnTheMainThreadHops() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    center.status = .notDetermined
+    var pending: [() -> Void] = []
+    let manager = NotificationManager(
+      center: center, defaults: defaults, activationNotifications: activation,
+      performOnMain: { pending.append($0) })
+    manager.start()
+    XCTAssertEqual(center.authorizationRequests, 0)
+    // Status read, then the prompt's answer: two hops.
+    var hops = 0
+    while !pending.isEmpty {
+      pending.removeFirst()()
+      hops += 1
+      if hops == 1 { XCTAssertFalse(manager.canDeliver) }
+    }
+    XCTAssertEqual(hops, 2)
+    XCTAssertEqual(center.authorizationRequests, 1)
+    XCTAssertTrue(manager.canDeliver)
+  }
+
+  func testBecomingActiveReadsAPermissionChangedInSystemSettings() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    center.status = .authorized
+    let manager = makeManager()
+    manager.start()
+    XCTAssertTrue(manager.canDeliver)
+    center.status = .denied
+    activation.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+    XCTAssertTrue(manager.isDeniedBySystem)
+    XCTAssertFalse(manager.canDeliver)
+    // With the setting off, becoming active doesn't check again.
+    manager.isEnabled = false
+    center.status = .authorized
+    activation.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+    XCTAssertTrue(manager.isDeniedBySystem)
   }
 
   func testStartDoesNothingWhileTheSettingIsOff() {
     center.status = .denied
     let manager = makeManager()
     manager.start()
-    drainMainQueue()
     XCTAssertFalse(manager.isDeniedBySystem)
     XCTAssertEqual(center.authorizationRequests, 0)
   }
@@ -205,7 +236,6 @@ final class NotificationManagerTests: XCTestCase {
     let manager = makeManager()
     XCTAssertFalse(manager.idleUnmounted(message: "m", volumeID: "v"))
     manager.isEnabled = true
-    drainMainQueue()
     manager.sleepUnmountTimedOut()
     XCTAssertEqual(center.added.map(\.identifier), ["sleepUnmount"])
     XCTAssertTrue(manager.idleUnmounted(message: "m", volumeID: "v"))
