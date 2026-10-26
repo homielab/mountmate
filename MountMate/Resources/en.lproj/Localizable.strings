@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Could Not Load Disks";
-"Data Parsing Error" = "Data Parsing Error";
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";
@@ -203,7 +201,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "Custom Mount Point…";
-"Use Custom Mount Point" = "Use custom mount point";
 "Folder Path" = "Folder Path";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "Choose…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "Invalid share configuration";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location.";
 "Could not eject: %@" = "Could not eject: %@";
+
+"Copy Path" = "Copy Path";
+"Open in Terminal" = "Open in Terminal";
+"Automatically check for updates" = "Automatically check for updates";

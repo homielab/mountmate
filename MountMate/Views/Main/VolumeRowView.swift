@@ -285,6 +285,18 @@ struct VolumeRowView: View {
       } label: {
         Label("Open in Finder", systemImage: "folder")
       }
+      if let path = volume.mountPoint {
+        Button {
+          MountPointActions.copyPath(path)
+        } label: {
+          Label("Copy Path", systemImage: "doc.on.doc")
+        }
+        Button {
+          MountPointActions.openInTerminal(path)
+        } label: {
+          Label("Open in Terminal", systemImage: "terminal")
+        }
+      }
       Divider()
       if volume.isProtected {
         Button {

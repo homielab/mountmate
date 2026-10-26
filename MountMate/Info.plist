@@ -6,6 +6,8 @@
 	<string>UN9VpzA76tcbRJA1pvVliMnMPcYyEiUGRugKM7ISucY=</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>MountMate needs access to removable volumes like USB drives and SD cards to display their status and allow you to mount or unmount them.</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://mountmate.homielab.com/appcast.xml</string>
 </dict>

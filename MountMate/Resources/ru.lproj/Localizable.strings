@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Не удалось загрузить диски";
-"Data Parsing Error" = "Ошибка разбора данных";
 "Eject Failed" = "Не удалось извлечь";
 "Mount Failed" = "Не удалось смонтировать";
 "Unmount Failed" = "Не удалось отмонтировать";
@@ -199,7 +197,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "Пользовательская точка монтирования…";
-"Use Custom Mount Point" = "Использовать пользовательскую точку монтирования";
 "Folder Path" = "Путь к папке";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "Выбрать…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "Неверная настройка общего ресурса";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Не удалось подключить «%1$@» в «%2$@».\n\nДля этого места монтирования нужны права администратора. Укажите путь в своей домашней папке (например, ~/mountmate/%1$@) или оставьте поле «Пользовательская точка подключения» пустым, чтобы использовать расположение по умолчанию.";
 "Could not eject: %@" = "Не удалось извлечь: %@";
+
+"Copy Path" = "Скопировать путь";
+"Open in Terminal" = "Открыть в Терминале";
+"Automatically check for updates" = "Автоматически проверять обновления";

@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Impossible de charger les disques";
-"Data Parsing Error" = "Erreur d'analyse des données";
 "Eject Failed" = "Échec de l'éjection";
 "Mount Failed" = "Échec du montage";
 "Unmount Failed" = "Échec du démontage";
@@ -199,7 +197,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "Point de montage personnalisé…";
-"Use Custom Mount Point" = "Utiliser un point de montage personnalisé";
 "Folder Path" = "Chemin du dossier";
 "Custom Mount Point Path Prompt" = "/Volumes/MonDisque";
 "Choose Folder" = "Choisir un dossier…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "Configuration du partage non valide";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Impossible de monter « %1$@ » sur « %2$@ ».\n\nL’emplacement de montage nécessite des privilèges d’administrateur. Utilisez un chemin dans votre dossier personnel (par exemple ~/mountmate/%1$@) ou laissez le point de montage personnalisé vide pour utiliser l’emplacement par défaut.";
 "Could not eject: %@" = "Impossible d’éjecter : %@";
+
+"Copy Path" = "Copier le chemin";
+"Open in Terminal" = "Ouvrir dans le Terminal";
+"Automatically check for updates" = "Rechercher automatiquement les mises à jour";

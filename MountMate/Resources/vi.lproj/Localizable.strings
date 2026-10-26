@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Không thể tải danh sách ổ đĩa";
-"Data Parsing Error" = "Lỗi phân tích dữ liệu";
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
@@ -199,7 +197,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "Điểm gắn tùy chỉnh…";
-"Use Custom Mount Point" = "Dùng điểm gắn tùy chỉnh";
 "Folder Path" = "Đường dẫn thư mục";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "Chọn…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "Cấu hình chia sẻ không hợp lệ";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Không thể gắn “%1$@” tại “%2$@”.\n\nVị trí gắn kết cần quyền quản trị viên. Hãy dùng một đường dẫn trong thư mục người dùng (ví dụ ~/mountmate/%1$@) hoặc để trống Điểm gắn tùy chỉnh để dùng vị trí mặc định.";
 "Could not eject: %@" = "Không thể đẩy ra: %@";
+
+"Copy Path" = "Sao chép đường dẫn";
+"Open in Terminal" = "Mở trong Terminal";
+"Automatically check for updates" = "Tự động kiểm tra cập nhật";

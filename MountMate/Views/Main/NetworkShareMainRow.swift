@@ -135,6 +135,26 @@ struct NetworkShareMainRow: View {
       }
       .padding(.vertical, 4)
       .padding(.horizontal, 4)
+      .contextMenu {
+        if isMounted {
+          let path = NetworkMountManager.shared.getMountPoint(for: share)
+          Button {
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+          } label: {
+            Label("Open in Finder", systemImage: "folder")
+          }
+          Button {
+            MountPointActions.copyPath(path)
+          } label: {
+            Label("Copy Path", systemImage: "doc.on.doc")
+          }
+          Button {
+            MountPointActions.openInTerminal(path)
+          } label: {
+            Label("Open in Terminal", systemImage: "terminal")
+          }
+        }
+      }
       .background(isHovering ? Color.primary.opacity(0.08) : Color.clear)
       .clipShape(.rect(cornerRadius: 6))
       .onHover { hovering in

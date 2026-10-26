@@ -69,13 +69,14 @@ So I built **MountMate**.
 - **Hide EFI Partitions**: optional (Settings → General → Display)
 - **Network Shares**: Auto-mount SMB, NFS, and AFP shares at login
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login
+- **Copy Path / Open in Terminal**: right-click a mounted volume or network share to copy its mount path or open a Terminal window in that folder
 - **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period
 - **Notifications** (optional, off by default; Settings → General → Behavior): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle
 - **Force Eject**: Safely force eject drives that are in use
 - **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
 - **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**
-- Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates)
+- Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates, where you can switch automatic checks off; the popover header has a Check for Updates button)
 
 ## ✨ Why Use MountMate?
 

@@ -285,6 +285,9 @@ struct GeneralSettingsView: View {
             title: { Text("Donate") },
             icon: { Image(systemName: "heart.fill").foregroundStyle(.red) })
         }
+        Toggle(isOn: $updaterViewModel.automaticallyChecksForUpdates) {
+          Label("Automatically check for updates", systemImage: "clock.arrow.circlepath")
+        }
         Button(action: { updaterViewModel.checkForUpdates() }) {
           Label("Check for Updates...", systemImage: "arrow.down.circle.fill")
         }

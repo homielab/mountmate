@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "無法載入磁碟";
-"Data Parsing Error" = "資料解析錯誤";
 "Eject Failed" = "推出失敗";
 "Mount Failed" = "掛載失敗";
 "Unmount Failed" = "卸載失敗";
@@ -199,7 +197,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "自訂掛載點…";
-"Use Custom Mount Point" = "使用自訂掛載點";
 "Folder Path" = "資料夾路徑";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "選擇…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "分享設定無效";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "無法將「%1$@」掛載到「%2$@」。\n\n此掛載位置需要管理者權限。請使用個人資料夾中的路徑（例如 ~/mountmate/%1$@），或將自訂掛載點留空以使用預設位置。";
 "Could not eject: %@" = "無法推出：%@";
+
+"Copy Path" = "拷貝路徑";
+"Open in Terminal" = "在終端機中開啟";
+"Automatically check for updates" = "自動檢查更新";

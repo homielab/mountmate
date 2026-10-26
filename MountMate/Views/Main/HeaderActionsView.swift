@@ -4,6 +4,7 @@ import SwiftUI
 
 struct HeaderActionsView: View {
   @EnvironmentObject var driveManager: DriveManager
+  @EnvironmentObject var updaterViewModel: UpdaterController
 
   /// Matches exactly what unmountAllDrives() acts on (removable disks only).
   private var canUnmountAll: Bool {
@@ -126,6 +127,20 @@ struct HeaderActionsView: View {
         .accessibilityLabel(Text("Refresh Drives"))
         .accessibilityValue(Text.busyValue(driveManager.isRefreshing))
         .disabled(driveManager.isRefreshing)
+
+        // Check for Updates Button
+        Button(action: { updaterViewModel.checkForUpdates() }) {
+          Image(systemName: "arrow.down.circle")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(updaterViewModel.canCheckForUpdates ? Color.primary : Color.secondary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(.rect(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help(NSLocalizedString("Check for Updates...", comment: "Tooltip"))
+        .accessibilityLabel(Text("Check for Updates..."))
+        .disabled(!updaterViewModel.canCheckForUpdates)
 
         // Quit Button
         Button(action: { NSApplication.shared.terminate(nil) }) {

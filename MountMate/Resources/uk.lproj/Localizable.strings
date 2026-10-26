@@ -113,8 +113,6 @@
 //=============================================
 
 // Titles
-"Could Not Load Disks" = "Не вдалося завантажити диски";
-"Data Parsing Error" = "Помилка розбору даних";
 "Eject Failed" = "Не вдалося вийняти";
 "Mount Failed" = "Не вдалося змонтувати";
 "Unmount Failed" = "Не вдалося відмонтувати";
@@ -199,7 +197,6 @@
 //=============================================
 
 "Custom Mount Point Menu" = "Власна точка монтування…";
-"Use Custom Mount Point" = "Використовувати власну точку монтування";
 "Folder Path" = "Шлях до теки";
 "Custom Mount Point Path Prompt" = "/Volumes/MyDrive";
 "Choose Folder" = "Вибрати…";
@@ -410,3 +407,7 @@
 "Invalid share configuration" = "Неправильне налаштування спільного ресурсу";
 "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Не вдалося підключити «%1$@» у «%2$@».\n\nДля цього місця монтування потрібні права адміністратора. Вкажіть шлях у своїй домашній папці (наприклад, ~/mountmate/%1$@) або залиште поле «Власна точка підключення» порожнім, щоб використати розташування за замовчуванням.";
 "Could not eject: %@" = "Не вдалося вийняти: %@";
+
+"Copy Path" = "Скопіювати шлях";
+"Open in Terminal" = "Відкрити в Терміналі";
+"Automatically check for updates" = "Автоматично перевіряти оновлення";

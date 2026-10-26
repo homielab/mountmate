@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 - **Unmount When Idle**: Right-click a volume on an external drive and choose "Unmount When Idle" to unmount it automatically after 1, 5, 15, 30 or 60 minutes without reads or writes on the drive. The unmount is never forced: a volume that is still in use stays mounted and is tried again later. Volumes kept mounted, internal disks, disk images and network shares are never affected. Manage the list under Settings → Management.
 - **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
 
+- **Copy Path and Open in Terminal**: The right-click menu of a mounted volume or network share now has "Copy Path" (puts the mount path on the clipboard) and "Open in Terminal" (opens a Terminal window in that folder). They are not shown for volumes that are not mounted.
+- **Updates**: Settings → About & Updates has an "Automatically check for updates" switch, automatic checks are on from the first launch (no more question at the second launch), and the popover header has a "Check for Updates..." button.
+
 ### Changed
 
 - The update window now shows what is new in the offered version (its notes from this changelog), and the update feed keeps the last three versions instead of only the newest one.
@@ -22,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Keyboard shortcut labels in Settings now follow the current keyboard layout (for example AZERTY, Dvorak or Cyrillic), so the key shown is the key you press, and they update when you switch the input source. Special keys keep their symbols.
 - Passwords MountMate saves in the Keychain are now labeled "MountMate – <volume or share name>" with the kind "APFS volume" or "Network share", so they are easy to find in Keychain Access. Passwords saved by earlier versions keep working and get the label the next time they are saved.
 - The sample `diskutil` output used during development (`testDisks.plist`) is no longer shipped inside the app; it is now a test fixture, and the disk-list parsing it exercises has its own unit tests.
+- The localization test now also checks that every language keeps the same format placeholders (`%@`, `%d`, `%1$@`…) as English; three unused strings were removed from all languages.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
 

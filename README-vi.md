@@ -38,13 +38,14 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Ẩn phân vùng EFI**: tuỳ chọn (Settings → General → Display)
 - **Network Shares**: tự mount SMB, NFS và AFP khi đăng nhập
 - **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập
+- **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
 - **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng
 - **Force Eject**: ép eject ổ đang được sử dụng
 - **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
 - Chạy gọn nhẹ trên **thanh menu**
-- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates)
+- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates, nơi tắt được kiểm tra tự động; header popover có nút Check for Updates)
 
 ## ✨ MountMate dành cho ai?
 

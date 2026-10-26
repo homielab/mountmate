@@ -21,6 +21,7 @@ struct MountMateApp: App {
         MainView()
       }
       .environmentObject(driveManager)
+      .environmentObject(updaterViewModel)
     } label: {
       MenuBarIconView(driveManager: driveManager)
     }
