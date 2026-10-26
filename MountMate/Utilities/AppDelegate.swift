@@ -34,6 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // monitoring) and the login mount for network shares.
     KeepAliveManager.shared.sweepNow()
     IdleUnmountManager.shared.start()
+    WakeRemountManager.shared.start()
     NetworkMountManager.shared.mountAllAutoShares()
   }
 
@@ -100,7 +101,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc private func systemWillSleep(_ notification: Notification) {
     guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else { return }
     Log.app.notice("System will sleep. Ejecting all user volumes.")
-    DriveManager.shared.unmountAllDrives(suppressReconnect: false, reportFailures: false)
+    WakeRemountManager.shared.begin(volumes: DriveManager.shared.unmountAllCandidates)
+    DriveManager.shared.unmountAllDrives(
+      suppressReconnect: false, reportFailures: false,
+      unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
   }
 
   /// Main thread. Every kIOMessageCanSystemSleep / kIOMessageSystemWillSleep
@@ -130,14 +134,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepUnmountTimeout) {
         if !hasAllowed {
           Log.app.error("Unmount on sleep still running; allowing sleep anyway.")
+          WakeRemountManager.shared.sleepTimedOut()
           NotificationManager.shared.sleepUnmountTimedOut()
         }
         allowSleep()
       }
       // The unmount is not a user decision — keep-alive targets reconnect on
       // wake, so pass suppressReconnect: false.
+      WakeRemountManager.shared.begin(volumes: DriveManager.shared.unmountAllCandidates)
       DriveManager.shared.unmountAllDrives(
-        suppressReconnect: false, reportFailures: false, completion: allowSleep)
+        suppressReconnect: false, reportFailures: false, completion: allowSleep,
+        unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
 
     default:
       break

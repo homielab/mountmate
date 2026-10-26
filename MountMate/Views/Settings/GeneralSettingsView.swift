@@ -12,6 +12,7 @@ struct GeneralSettingsView: View {
   @ObservedObject private var notificationManager = NotificationManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
+  @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
   @AppStorage("showInternalDisks") private var showInternalDisks = false
   @AppStorage("showOnlyVolumes") private var showOnlyVolumes = false
   @AppStorage("hideEFIPartitions") private var hideEFIPartitions = false
@@ -208,6 +209,14 @@ struct GeneralSettingsView: View {
         startupBlockStatus
         Toggle(isOn: $ejectOnSleepEnabled) {
           Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
+        }
+        if ejectOnSleepEnabled {
+          Toggle(isOn: $remountOnWakeEnabled) {
+            Label("Mount Again on Wake", systemImage: "sunrise")
+          }
+          .help(
+            "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted."
+          )
         }
         Toggle(isOn: $notificationManager.isEnabled) {
           Label("Notifications", systemImage: "bell.badge")

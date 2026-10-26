@@ -331,15 +331,18 @@ class DriveManager: ObservableObject {
   ///   the main thread.
   /// - Parameter finished: Called on the main thread with the names of the
   ///   volumes that could not be unmounted, after the drive list refreshed.
+  /// - Parameter unmountResult: Called on the main thread right before
+  ///   `completion` with the volumes that could not be unmounted.
   func unmountAllDrives(
     suppressReconnect: Bool = true, reportFailures: Bool = true,
-    completion: (() -> Void)? = nil, finished: (([String]) -> Void)? = nil
+    completion: (() -> Void)? = nil, finished: (([String]) -> Void)? = nil,
+    unmountResult: (([Volume]) -> Void)? = nil
   ) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
         self.unmountAllDrives(
           suppressReconnect: suppressReconnect, reportFailures: reportFailures,
-          completion: completion, finished: finished)
+          completion: completion, finished: finished, unmountResult: unmountResult)
       }
       return
     }
@@ -352,6 +355,8 @@ class DriveManager: ObservableObject {
     }
     if suppressReconnect {
       KeepAliveManager.shared.suppress(volumes: drivesToUnmount)
+      // The user chose this: the volumes stay unmounted after a wake.
+      WakeRemountManager.shared.forget(drivesToUnmount)
     }
     unmountAllRunCount += 1
     isUnmountingAll = true
@@ -364,6 +369,7 @@ class DriveManager: ObservableObject {
         ).succeeded
       }
       DispatchQueue.main.async {
+        unmountResult?(failures)
         completion?()
         guard let self else { return }
         if reportFailures {
@@ -689,6 +695,7 @@ class DriveManager: ObservableObject {
 
   func unmount(volume: Volume) {
     KeepAliveManager.shared.suppress(volume: volume)
+    WakeRemountManager.shared.forget([volume])
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(

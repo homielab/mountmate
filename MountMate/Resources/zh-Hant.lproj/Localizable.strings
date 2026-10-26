@@ -448,3 +448,7 @@
 "Could not unlock “%@”" = "無法解鎖「%@」";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "密碼已被拒絕 %d 次。請檢查大寫鎖定是否關閉、鍵盤配置是否與設定密碼時相同，或嘗試在「磁碟工具」中解鎖此檔案卷宗。";
 "Login Item Error" = "無法更改登入時啟動：%@";
+"Mount Again on Wake" = "喚醒時重新掛載";
+"Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 喚醒時，重新掛載睡眠前已退出的磁碟。您手動退出的磁碟、未連線的磁碟和已封鎖的磁碟會維持退出狀態。";
+"Disks Were Not Unmounted Before Sleep" = "睡眠前未能退出的磁碟";
+"MountMate could not unmount these disks before the Mac went to sleep: %@." = "Mac 進入睡眠前，MountMate 無法退出這些磁碟：%@。";

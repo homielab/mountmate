@@ -448,3 +448,7 @@
 "Could not unlock “%@”" = "Не вдалося розблокувати «%@»";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Пароль не прийнято %d рази поспіль. Перевірте, що Caps Lock вимкнено і розкладка клавіатури та сама, що під час створення пароля, або спробуйте розблокувати том у Дисковій утиліті.";
 "Login Item Error" = "Не вдалося змінити запуск під час входу: %@";
+"Mount Again on Wake" = "Монтувати знову після пробудження";
+"Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Знову монтує диски, відмонтовані перед сном, коли Mac прокидається. Диски, які ви відмонтували самі, непідключені та заблоковані диски залишаються відмонтованими.";
+"Disks Were Not Unmounted Before Sleep" = "Диски не було відмонтовано перед сном";
+"MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate не зміг відмонтувати ці диски до переходу Mac у режим сну: %@.";

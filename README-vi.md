@@ -43,6 +43,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập
 - **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
+- **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount mọi ổ tháo được trước khi máy ngủ. **Mount Again on Wake** (mặc định bật, chỉ hiện khi bật unmount khi ngủ) mount lại các ổ đó sau khi thức dậy; ổ bạn tự unmount, ổ đã rút và ổ bị chặn vẫn không được mount. Khi bật thông báo, app báo những ổ không kịp unmount trước khi ngủ
 - **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng
 - **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 3 hành động: Mount All Volumes, Unmount All Volumes và Mount Network Share (chọn một share đã lưu). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
 - **Force Eject**: ép eject ổ đang được sử dụng

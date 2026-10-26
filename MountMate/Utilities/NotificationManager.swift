@@ -182,6 +182,20 @@ final class NotificationManager: NSObject, ObservableObject {
         comment: "Notification: unmount on sleep timed out"))
   }
 
+  /// After wake: volumes that "Unmount All Disks on Sleep" had no time to
+  /// unmount are still mounted.
+  func sleepUnmountLeftoverMounted(names: [String]) {
+    post(
+      id: "sleepUnmountLeftover",
+      title: NSLocalizedString(
+        "Disks Were Not Unmounted Before Sleep", comment: "Notification title"),
+      body: String(
+        format: NSLocalizedString(
+          "MountMate could not unmount these disks before the Mac went to sleep: %@.",
+          comment: "Notification after wake; list of volume names"),
+        names.joined(separator: ", ")))
+  }
+
   /// A volume was unmounted by "Unmount When Idle". Returns false when no
   /// notification is shown, so the caller can fall back to its own feedback.
   @discardableResult

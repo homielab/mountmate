@@ -448,3 +448,7 @@
 "Could not unlock “%@”" = "Could not unlock “%@”";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility.";
 "Login Item Error" = "Could not change Start at Login: %@";
+"Mount Again on Wake" = "Mount Again on Wake";
+"Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted.";
+"Disks Were Not Unmounted Before Sleep" = "Disks Were Not Unmounted Before Sleep";
+"MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate could not unmount these disks before the Mac went to sleep: %@.";
