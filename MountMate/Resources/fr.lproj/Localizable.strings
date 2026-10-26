@@ -452,3 +452,10 @@
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Remonte au réveil du Mac les disques démontés avant la veille. Les disques que vous avez démontés vous-même, les disques non connectés et les disques bloqués restent démontés.";
 "Disks Were Not Unmounted Before Sleep" = "Disques non démontés avant la veille";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate n’a pas pu démonter ces disques avant la mise en veille du Mac : %@.";
+"Collecting…" = "Collecte en cours…";
+"Copied" = "Copié";
+"Could not read the log" = "Impossible de lire le journal";
+"Copy Diagnostics" = "Copier le diagnostic";
+"Diagnostics" = "Diagnostic";
+"Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "Copie la version de MountMate et de macOS, vos réglages activés/désactivés et la dernière heure de son journal. Collez-le dans un rapport de bug. Il ne contient ni mots de passe, ni chemins, ni noms de disques ou de partages.";
+"Logs" = "Journaux";

@@ -128,7 +128,9 @@ Khi một share SMB hoặc AFP không mount được, MountMate nêu nguyên nh�
 
 Khi báo lỗi (ví dụ ổ mạng không mount được), log giúp tìm nguyên nhân nhanh hơn. MountMate ghi vào unified log của macOS với subsystem `com.homielab.mountmate`.
 
-Làm lại thao tác bị lỗi, rồi chạy trong Terminal và đính kèm file `mountmate.log` vào issue:
+Cách dễ nhất: làm lại thao tác bị lỗi, mở **Cài đặt → Chung → Nhật ký** rồi bấm **Sao chép chẩn đoán**, dán kết quả vào issue. Báo cáo gồm phiên bản MountMate và macOS, các cài đặt bật/tắt và nhật ký 1 giờ gần nhất của MountMate; không có mật khẩu, đường dẫn, tên ổ đĩa hay tên thư mục chia sẻ.
+
+Cách dự phòng: chạy trong Terminal và đính kèm file `mountmate.log` vào issue:
 
 ```bash
 log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > ~/Desktop/mountmate.log

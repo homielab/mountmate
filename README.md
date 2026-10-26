@@ -193,7 +193,9 @@ When an SMB or AFP share fails to mount, MountMate names the cause and what to c
 
 When you report a problem (for example a network share that will not mount), logs help a lot. MountMate writes to the macOS unified log under the subsystem `com.homielab.mountmate`, with one category per area (`drive`, `network`, `keepAlive`, `persistence`, `mounter`, `hotkey`, `shell`, `app`).
 
-Reproduce the problem, then run in Terminal and attach `mountmate.log` to your issue:
+Easiest: reproduce the problem, open **Settings → General → Logs** and click **Copy Diagnostics**, then paste the result into your issue. The report has the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log. It has no passwords, paths, or disk and share names.
+
+Fallback: run this in Terminal and attach `mountmate.log` to your issue:
 
 ```bash
 log show --predicate 'subsystem == "com.homielab.mountmate"' --last 1h --info > ~/Desktop/mountmate.log

@@ -452,3 +452,10 @@
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 唤醒时，重新挂载睡眠前已推出的磁盘。您手动推出的磁盘、未连接的磁盘和已阻止的磁盘保持推出状态。";
 "Disks Were Not Unmounted Before Sleep" = "睡眠前未能推出的磁盘";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "Mac 进入睡眠前，MountMate 无法推出这些磁盘：%@。";
+"Collecting…" = "正在收集…";
+"Copied" = "已复制";
+"Could not read the log" = "无法读取日志";
+"Copy Diagnostics" = "复制诊断信息";
+"Diagnostics" = "诊断";
+"Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "复制 MountMate 版本、macOS 版本、你的开关设置以及最近一小时的日志。可粘贴到问题报告中。其中不含密码、路径、磁盘名称或共享名称。";
+"Logs" = "日志";

@@ -2,6 +2,10 @@
 
 import SwiftUI
 
+enum DiagnosticsCopyState: Equatable {
+  case idle, collecting, copied, failed
+}
+
 struct GeneralSettingsView: View {
   @EnvironmentObject var launchManager: LaunchAtLoginManager
   @EnvironmentObject var diskMounter: DiskMounter
@@ -59,6 +63,7 @@ struct GeneralSettingsView: View {
   @State private var fullDiskAccessGranted: Bool?
   @State private var selectedLanguage: String = GeneralSettingsView.currentLanguageSelection()
 
+  @State private var diagnosticsState: DiagnosticsCopyState = .idle
   @State private var showRestartAlert = false
   @State private var recordingShortcut: HotkeyAction?
   @State private var showShortcutConflictAlert = false
@@ -324,6 +329,41 @@ struct GeneralSettingsView: View {
       }
 
       Section {
+        LabeledContent {
+          HStack(spacing: 8) {
+            switch diagnosticsState {
+            case .idle:
+              EmptyView()
+            case .collecting:
+              ProgressView().controlSize(.small)
+              Text("Collecting…")
+            case .copied:
+              Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .accessibilityHidden(true)
+              Text("Copied")
+            case .failed:
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+              Text("Could not read the log")
+            }
+            Button("Copy Diagnostics") { copyDiagnostics() }
+              .controlSize(.small)
+              .disabled(diagnosticsState == .collecting)
+          }
+          .font(.caption)
+        } label: {
+          Label("Diagnostics", systemImage: "stethoscope")
+        }
+        .help(
+          "Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names."
+        )
+      } header: {
+        Label("Logs", systemImage: "doc.text.magnifyingglass")
+      }
+
+      Section {
         Link(destination: URL(string: "https://homielab.com/en/page/mountmate")!) {
           Label("Homepage", systemImage: "house.fill")
         }
@@ -376,6 +416,14 @@ struct GeneralSettingsView: View {
       Button("OK", role: .cancel) {}
     } message: {
       Text(shortcutConflictMessage)
+    }
+  }
+
+  private func copyDiagnostics() {
+    diagnosticsState = .collecting
+    Task {
+      let copied = await DiagnosticsReport.copyToPasteboard()
+      diagnosticsState = copied ? .copied : .failed
     }
   }
 

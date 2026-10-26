@@ -452,3 +452,10 @@
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Знову монтує диски, відмонтовані перед сном, коли Mac прокидається. Диски, які ви відмонтували самі, непідключені та заблоковані диски залишаються відмонтованими.";
 "Disks Were Not Unmounted Before Sleep" = "Диски не було відмонтовано перед сном";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate не зміг відмонтувати ці диски до переходу Mac у режим сну: %@.";
+"Collecting…" = "Збирання даних…";
+"Copied" = "Скопійовано";
+"Could not read the log" = "Не вдалося прочитати журнал";
+"Copy Diagnostics" = "Скопіювати діагностику";
+"Diagnostics" = "Діагностика";
+"Copies MountMate's version, macOS version, your on/off settings and the last hour of its log. Paste it into a bug report. It has no passwords, paths or disk and share names." = "Копіює версії MountMate і macOS, ваші перемикачі та журнал за останню годину. Вставте його у звіт про помилку. У ньому немає паролів, шляхів, імен дисків і спільних папок.";
+"Logs" = "Журнали";
