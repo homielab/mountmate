@@ -90,14 +90,8 @@ class KeepAliveManager: ObservableObject {
 
   // MARK: - Retry State
 
-  /// Tracks retry progress for a single keep-alive target.
-  struct RetryState {
-    var attempt: Int = 0
-    var nextFireDate: Date?
-  }
-
-  private var shareRetryState: [UUID: RetryState] = [:]
-  private var volumeRetryState: [String: RetryState] = [:]
+  private var shareRetries = RetryBook<UUID>()
+  private var volumeRetries = RetryBook<String>()
   private let retryStateLock = NSLock()
 
   /// Identifiers of targets the user unmounted on purpose (session-scoped).
@@ -152,7 +146,11 @@ class KeepAliveManager: ObservableObject {
 
     PersistenceManager.shared.$networkShares
       .receive(on: DispatchQueue.main)
-      .sink { [weak self] _ in self?.pruneRetryState() }
+      .sink { [weak self] _ in self?.reconcileTargets() }
+      .store(in: &cancellables)
+    PersistenceManager.shared.$keepAliveVolumes
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.reconcileTargets() }
       .store(in: &cancellables)
   }
 
@@ -170,7 +168,7 @@ class KeepAliveManager: ObservableObject {
     suppressedShareIDs.insert(shareID)
     suppressionLock.unlock()
     retryStateLock.lock()
-    shareRetryState.removeValue(forKey: shareID)
+    shareRetries.remove(shareID)
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingShareIDs.remove(shareID)
@@ -185,7 +183,7 @@ class KeepAliveManager: ObservableObject {
     suppressedVolumeIDs.insert(compositeId)
     suppressionLock.unlock()
     retryStateLock.lock()
-    volumeRetryState.removeValue(forKey: compositeId)
+    volumeRetries.remove(compositeId)
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingVolumeIDs.remove(compositeId)
@@ -202,7 +200,7 @@ class KeepAliveManager: ObservableObject {
     suppressedVolumeIDs.formUnion(ids)
     suppressionLock.unlock()
     retryStateLock.lock()
-    for id in ids { volumeRetryState.removeValue(forKey: id) }
+    for id in ids { volumeRetries.remove(id) }
     retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingVolumeIDs.subtract(ids)
@@ -229,7 +227,7 @@ class KeepAliveManager: ObservableObject {
     suppressedShareIDs.remove(shareID)
     suppressionLock.unlock()
     retryStateLock.lock()
-    shareRetryState.removeValue(forKey: shareID)
+    shareRetries.remove(shareID)
     retryStateLock.unlock()
   }
 
@@ -241,7 +239,7 @@ class KeepAliveManager: ObservableObject {
     suppressedVolumeIDs.remove(compositeId)
     suppressionLock.unlock()
     retryStateLock.lock()
-    volumeRetryState.removeValue(forKey: compositeId)
+    volumeRetries.remove(compositeId)
     retryStateLock.unlock()
   }
 
@@ -264,15 +262,10 @@ class KeepAliveManager: ObservableObject {
   /// Clears every pending backoff delay. Attempt counts are kept, so a
   /// target that keeps failing backs off again from where it was.
   private func clearBackoffDelays() {
-    func dueNow(_ state: RetryState) -> RetryState {
-      var state = state
-      state.nextFireDate = nil
-      return state
+    retryStateLock.withLock {
+      shareRetries.clearDelays()
+      volumeRetries.clearDelays()
     }
-    retryStateLock.lock()
-    shareRetryState = shareRetryState.mapValues(dueNow)
-    volumeRetryState = volumeRetryState.mapValues(dueNow)
-    retryStateLock.unlock()
   }
 
   // MARK: - Scheduling
@@ -426,18 +419,62 @@ class KeepAliveManager: ObservableObject {
     return PersistenceManager.shared.networkShares.filter { $0.keepMounted || $0.mountAtLogin }
   }
 
-  private func pruneRetryState() {
-    let validShareIDs = Set(PersistenceManager.shared.networkShares.map(\.id))
-    retryStateLock.lock()
-    shareRetryState = shareRetryState.filter { validShareIDs.contains($0.key) }
-    retryStateLock.unlock()
+  /// Drops everything kept for targets that are no longer keep-alive targets
+  /// (share deleted or no longer "Keep Mounted", volume's Keep Alive turned
+  /// off or the drive unplugged): their retry state, their "reconnecting"
+  /// flag (which would otherwise keep the menu bar badge up for good) and
+  /// their notification throttle. Main thread only.
+  func reconcileTargets() {
+    reconcileTargets(
+      validShareIDs: Set(keepAliveShares.map(\.id)),
+      validVolumeIDs: presentKeepAliveVolumeIDs())
+  }
+
+  /// Internal (not private) for unit tests.
+  func reconcileTargets(validShareIDs: Set<UUID>, validVolumeIDs: Set<String>) {
+    let (staleShares, staleVolumes) = retryStateLock.withLock {
+      (
+        shareRetries.prune(keeping: validShareIDs),
+        volumeRetries.prune(keeping: validVolumeIDs)
+      )
+    }
+    let reconnectingShares = reconnectingShareIDs.subtracting(validShareIDs)
+    let reconnectingVolumes = reconnectingVolumeIDs.subtracting(validVolumeIDs)
+    // Only touch the published sets when something changes (see recordResult).
+    if !reconnectingShares.isEmpty {
+      reconnectingShareIDs.subtract(reconnectingShares)
+    }
+    if !reconnectingVolumes.isEmpty {
+      reconnectingVolumeIDs.subtract(reconnectingVolumes)
+    }
+    for id in staleShares.union(reconnectingShares) {
+      NotificationManager.shared.keepAliveForget(targetID: Self.notificationKey(shareID: id))
+    }
+    for id in staleVolumes.union(reconnectingVolumes) {
+      NotificationManager.shared.keepAliveForget(targetID: Self.notificationKey(volumeID: id))
+    }
+  }
+
+  /// Keep-alive volumes that are currently plugged in and not blocked: the
+  /// only ones a sweep can reconnect.
+  private func presentKeepAliveVolumeIDs() -> Set<String> {
+    let keepAliveIDs = Set(PersistenceManager.shared.keepAliveVolumes.map(\.id))
+    guard !keepAliveIDs.isEmpty, isEnabled else { return [] }
+    let disks = DriveManager.shared.physicalDisks ?? []
+    return Set(
+      disks.flatMap(\.allVolumes).compactMap { volume -> String? in
+        guard let id = volume.compositeId, keepAliveIDs.contains(id),
+          !PersistenceManager.shared.isVolumeBlocked(volume)
+        else { return nil }
+        return id
+      })
   }
 
   private func resetRetryState() {
-    retryStateLock.lock()
-    shareRetryState.removeAll()
-    volumeRetryState.removeAll()
-    retryStateLock.unlock()
+    retryStateLock.withLock {
+      shareRetries.removeAll()
+      volumeRetries.removeAll()
+    }
     DispatchQueue.main.async { [weak self] in
       self?.reconnectingShareIDs.removeAll()
       self?.reconnectingVolumeIDs.removeAll()
@@ -458,45 +495,38 @@ class KeepAliveManager: ObservableObject {
 
   /// Internal (not private) for unit tests.
   func recordAttempt(shareID: UUID) {
-    retryStateLock.lock()
-    var state = shareRetryState[shareID] ?? RetryState()
-    state.attempt += 1
-    state.nextFireDate = Date().addingTimeInterval(backoffDelay(forAttempt: state.attempt))
-    shareRetryState[shareID] = state
-    retryStateLock.unlock()
+    retryStateLock.withLock {
+      shareRetries.recordAttempt(shareID, backoff: backoffDelay(forAttempt:))
+    }
   }
 
   private func recordAttempt(volumeID: String) {
-    retryStateLock.lock()
-    var state = volumeRetryState[volumeID] ?? RetryState()
-    state.attempt += 1
-    state.nextFireDate = Date().addingTimeInterval(backoffDelay(forAttempt: state.attempt))
-    volumeRetryState[volumeID] = state
-    retryStateLock.unlock()
+    retryStateLock.withLock {
+      volumeRetries.recordAttempt(volumeID, backoff: backoffDelay(forAttempt:))
+    }
   }
 
   /// Number of consecutive failed attempts recorded for a share. For tests.
   func retryAttempt(forShareID shareID: UUID) -> Int {
-    retryStateLock.withLock { shareRetryState[shareID]?.attempt ?? 0 }
+    retryStateLock.withLock { shareRetries.attempt(for: shareID) }
   }
 
   /// When the share may next be retried (nil: right away). For tests.
   func nextRetryDate(forShareID shareID: UUID) -> Date? {
-    retryStateLock.withLock { shareRetryState[shareID]?.nextFireDate }
+    retryStateLock.withLock { shareRetries.nextFireDate(for: shareID) }
   }
 
   /// Notification throttle keys: one per keep-alive target.
   static func notificationKey(shareID: UUID) -> String { "share.\(shareID.uuidString)" }
   static func notificationKey(volumeID: String) -> String { "volume.\(volumeID)" }
 
-  private func recordResult(shareID: UUID, name: String, success: Bool) {
+  /// Internal (not private) for unit tests.
+  func recordResult(shareID: UUID, name: String, success: Bool) {
     // A share the user ejected in the meantime is not "reconnecting".
     let clear = success || isSuppressed(shareID: shareID)
-    retryStateLock.lock()
     if clear {
-      shareRetryState.removeValue(forKey: shareID)
+      retryStateLock.withLock { shareRetries.remove(shareID) }
     }
-    retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       // Every mutation of an @Published property re-renders its observers,
@@ -517,23 +547,28 @@ class KeepAliveManager: ObservableObject {
     }
   }
 
-  private func recordResult(volumeID: String, name: String, success: Bool) {
-    retryStateLock.lock()
-    if success {
-      volumeRetryState.removeValue(forKey: volumeID)
+  /// Internal (not private) for unit tests.
+  func recordResult(volumeID: String, name: String, success: Bool) {
+    // A volume the user ejected in the meantime is not "reconnecting".
+    let clear = success || isSuppressed(volumeID: volumeID)
+    if clear {
+      retryStateLock.withLock { volumeRetries.remove(volumeID) }
     }
-    retryStateLock.unlock()
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       // Only publish real changes (see recordResult(shareID:name:success:)).
       let isReconnecting = self.reconnectingVolumeIDs.contains(volumeID)
-      if success, isReconnecting {
+      if clear, isReconnecting {
         self.reconnectingVolumeIDs.remove(volumeID)
-      } else if !success, !isReconnecting {
+      } else if !clear, !isReconnecting {
         self.reconnectingVolumeIDs.insert(volumeID)
       }
-      NotificationManager.shared.keepAliveResult(
-        targetID: Self.notificationKey(volumeID: volumeID), name: name, success: success)
+      let key = Self.notificationKey(volumeID: volumeID)
+      if success || !clear {
+        NotificationManager.shared.keepAliveResult(targetID: key, name: name, success: success)
+      } else {
+        NotificationManager.shared.keepAliveForget(targetID: key)
+      }
     }
   }
 
@@ -547,23 +582,11 @@ class KeepAliveManager: ObservableObject {
   /// A target is due for a retry when it has never been attempted, or when
   /// its backoff delay has elapsed.
   private func isDueForRetry(shareID: UUID) -> Bool {
-    retryStateLock.lock()
-    defer { retryStateLock.unlock() }
-    guard let state = shareRetryState[shareID] else { return true }
-    if let fireDate = state.nextFireDate {
-      return Date() >= fireDate
-    }
-    return true
+    retryStateLock.withLock { shareRetries.isDue(shareID) }
   }
 
   private func isDueForRetry(volumeID: String) -> Bool {
-    retryStateLock.lock()
-    defer { retryStateLock.unlock() }
-    guard let state = volumeRetryState[volumeID] else { return true }
-    if let fireDate = state.nextFireDate {
-      return Date() >= fireDate
-    }
-    return true
+    retryStateLock.withLock { volumeRetries.isDue(volumeID) }
   }
 
   // MARK: - Reconnect Sweep
@@ -601,7 +624,11 @@ class KeepAliveManager: ObservableObject {
     }
 
     group.notify(queue: .main) { [weak self] in
-      guard let self, self.sweepGeneration == generation else { return }
+      guard let self else { return }
+      // Targets that vanished while the sweep ran (drive pulled, share
+      // removed) must not keep the "reconnecting" badge up.
+      self.reconcileTargets()
+      guard self.sweepGeneration == generation else { return }
       self.isSweeping = false
     }
 

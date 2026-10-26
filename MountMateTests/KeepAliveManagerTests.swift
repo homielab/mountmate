@@ -200,4 +200,68 @@ final class KeepAliveManagerTests: XCTestCase {
     wait(for: [settle], timeout: 2)
     XCTAssertEqual(results, 1)
   }
+
+  // MARK: - Reconnecting state cleanup
+
+  /// Waits for the main-queue hops `recordResult` does.
+  private func drainMain() {
+    let done = expectation(description: "main drained")
+    DispatchQueue.main.async { done.fulfill() }
+    wait(for: [done], timeout: 2)
+  }
+
+  private func iconState(of manager: KeepAliveManager) -> MenuBarIconState {
+    MenuBarIconState(
+      isUnmountingAll: false, busyVolume: false, busyEject: false, error: false,
+      reconnecting: !manager.reconnectingShareIDs.isEmpty
+        || !manager.reconnectingVolumeIDs.isEmpty)
+  }
+
+  func testRemovedShareLeavesReconnectingAndIconGoesIdle() {
+    let manager = KeepAliveManager.shared
+    let id = UUID()
+    manager.recordAttempt(shareID: id)
+    manager.recordResult(shareID: id, name: "Gone", success: false)
+    drainMain()
+    XCTAssertTrue(manager.reconnectingShareIDs.contains(id))
+    XCTAssertEqual(iconState(of: manager), .reconnecting)
+
+    // The share was deleted or is no longer "Keep Mounted".
+    manager.reconcileTargets(validShareIDs: [], validVolumeIDs: [])
+    XCTAssertFalse(manager.reconnectingShareIDs.contains(id))
+    XCTAssertEqual(manager.retryAttempt(forShareID: id), 0)
+    XCTAssertEqual(iconState(of: manager), .idle)
+  }
+
+  func testUnpluggedOrNoLongerKeptVolumeLeavesReconnecting() {
+    let manager = KeepAliveManager.shared
+    let id = "KeepAliveTest-\(UUID().uuidString)"
+    manager.recordResult(volumeID: id, name: "Drive", success: false)
+    drainMain()
+    XCTAssertEqual(iconState(of: manager), .reconnecting)
+
+    // Still a keep-alive target and plugged in: stays.
+    manager.reconcileTargets(validShareIDs: [], validVolumeIDs: [id])
+    XCTAssertTrue(manager.reconnectingVolumeIDs.contains(id))
+
+    // Pulled out or Keep Alive turned off.
+    manager.reconcileTargets(validShareIDs: [], validVolumeIDs: [])
+    XCTAssertFalse(manager.reconnectingVolumeIDs.contains(id))
+    XCTAssertEqual(iconState(of: manager), .idle)
+  }
+
+  func testSuppressedVolumeFailureIsNotReconnecting() {
+    let manager = KeepAliveManager.shared
+    let volume = Volume(
+      id: UUID().uuidString, deviceIdentifier: "disk9s1", diskUUID: nil, name: "Ejected",
+      isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: "exfat", usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+    let id = volume.compositeId!
+    manager.suppress(volume: volume)
+    defer { manager.resume(volume: volume) }
+    manager.recordResult(volumeID: id, name: "Ejected", success: false)
+    drainMain()
+    XCTAssertFalse(manager.reconnectingVolumeIDs.contains(id))
+  }
 }
