@@ -171,7 +171,8 @@ struct NetworkShareRow: View {
         set: { if !$0 { deleteUnmountError = nil } })
     ) {
       Button(
-        NSLocalizedString("Remove Anyway", comment: "Remove a network share that could not be unmounted"),
+        NSLocalizedString(
+          "Remove Anyway", comment: "Remove a network share that could not be unmounted"),
         role: .destructive
       ) {
         // Only forgets the share in MountMate; never touches its files.

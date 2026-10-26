@@ -5,7 +5,9 @@ import XCTest
 final class ShellRedactionTests: XCTestCase {
   func testURLPasswordIsRedacted() {
     XCTAssertEqual(
-      redactedArguments(["-o", "noowners,nosuid", "smb://alice:s3cr%40t@nas.local/share", "/Volumes/share"]),
+      redactedArguments([
+        "-o", "noowners,nosuid", "smb://alice:s3cr%40t@nas.local/share", "/Volumes/share",
+      ]),
       ["-o", "noowners,nosuid", "smb://alice:***@nas.local/share", "/Volumes/share"])
   }
 
@@ -20,7 +22,9 @@ final class ShellRedactionTests: XCTestCase {
   }
 
   func testURLWithoutPasswordIsUnchanged() {
-    let arguments = ["smb://alice@nas.local/share", "smb://nas.local:445/share", "nfs-server:/export"]
+    let arguments = [
+      "smb://alice@nas.local/share", "smb://nas.local:445/share", "nfs-server:/export",
+    ]
     XCTAssertEqual(redactedArguments(arguments), arguments)
   }
 

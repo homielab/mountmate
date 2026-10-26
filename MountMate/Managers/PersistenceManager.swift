@@ -114,8 +114,7 @@ class PersistenceManager: ObservableObject {
   /// name inherited the setting. `Volume.compositeId` is now nil for such
   /// volumes, so these entries can never match again; drop them on load.
   /// They disappear from storage with the next save of the list.
-  private static func droppingNonUUIDEntries(_ infos: [ManagedVolumeInfo]) -> [ManagedVolumeInfo]
-  {
+  private static func droppingNonUUIDEntries(_ infos: [ManagedVolumeInfo]) -> [ManagedVolumeInfo] {
     infos.filter { normalizedSystemVolumeUUID($0.volumeUUID) != nil }
   }
 
@@ -209,7 +208,8 @@ class PersistenceManager: ObservableObject {
     // fstabQueue (block then unblock during the password prompt) and not yet
     // reflected in fstabBlockedVolumeUUIDs. The queued reconcile runs after
     // it and removes the rule; when nothing changes it does not prompt.
-    let hasKnownRule = Self.normalizedSystemVolumeUUID(info.volumeUUID)
+    let hasKnownRule =
+      Self.normalizedSystemVolumeUUID(info.volumeUUID)
       .map { fstabBlockedVolumeUUIDs.contains($0) } ?? false
     if blockAtStartup || hasKnownRule {
       reconcileStartupBlockRules(userInitiated: true)
@@ -632,8 +632,9 @@ class PersistenceManager: ObservableObject {
       do {
         let change = try self.applyStartupBlockRules(
           enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: 2)
-        if userInitiated, let message = Self.feedbackMessage(
-          for: change, enabled: enabled, fromToggle: fromToggle)
+        if userInitiated,
+          let message = Self.feedbackMessage(
+            for: change, enabled: enabled, fromToggle: fromToggle)
         {
           FeedbackHUD.show(message)
         }
@@ -775,7 +776,7 @@ class PersistenceManager: ObservableObject {
         ruleCount: present.count - stale.count + additions.count)
     } catch let error as NSError
       where error.domain == "MountMate" && error.code == Self.fstabChangedErrorCode
-        && attemptsLeft > 1
+      && attemptsLeft > 1
     {
       Log.persistence.notice(
         "/etc/fstab changed during the update; retrying with the new contents.")

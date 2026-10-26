@@ -229,7 +229,7 @@ class DriveManager: ObservableObject {
         self.followupRefreshCompletions = []
         self.refreshDrives(qos: .userInitiated)
       }
-      finished.forEach { $0() }
+      for completion in finished { completion() }
     }
   }
 
@@ -295,7 +295,7 @@ class DriveManager: ObservableObject {
           self.refreshDrives(qos: .userInitiated)
         }
       }
-      finished.forEach { $0() }
+      for completion in finished { completion() }
     }
   }
 
@@ -371,7 +371,8 @@ class DriveManager: ObservableObject {
   }
 
   func mountAllVolumes() {
-    let volumesToMount = bulkActionDisks
+    let volumesToMount =
+      bulkActionDisks
       .flatMap(\.allVolumes)
       .filter {
         // `.user` leaves out EFI partitions (category `.system`), which

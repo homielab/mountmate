@@ -126,9 +126,10 @@ struct VolumeRowView: View {
                   String(
                     format: NSLocalizedString(
                       "DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
-                    used, total, free))
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
+                    used, total, free)
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
               } else if let total = currentVolume.totalSize, let used = currentVolume.usedSpace {
                 Text(String(format: "%@ / %@", used, total))
                   .font(.caption)

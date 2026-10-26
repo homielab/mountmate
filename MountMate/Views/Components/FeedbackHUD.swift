@@ -33,14 +33,20 @@ enum FeedbackHUD {
     hideWork?.cancel()
     panel.alphaValue = 0
     panel.orderFrontRegardless()
-    NSAnimationContext.runAnimationGroup { $0.duration = 0.18; panel.animator().alphaValue = 1 }
+    NSAnimationContext.runAnimationGroup {
+      $0.duration = 0.18
+      panel.animator().alphaValue = 1
+    }
     NSAccessibility.post(
       element: NSApp as Any, notification: .announcementRequested,
       userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.high.rawValue])
 
     let work = DispatchWorkItem {
       NSAnimationContext.runAnimationGroup(
-        { $0.duration = 0.3; panel.animator().alphaValue = 0 },
+        {
+          $0.duration = 0.3
+          panel.animator().alphaValue = 0
+        },
         completionHandler: { panel.orderOut(nil) })
     }
     hideWork = work

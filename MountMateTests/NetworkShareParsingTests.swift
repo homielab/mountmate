@@ -168,7 +168,8 @@ final class NetworkShareParsingTests: XCTestCase {
 
     let nfs = try XCTUnwrap(
       MountedNetworkShare(mountOutputLine: "[fd00::2]:/exports/public on /Volumes/p (nfs)"))
-    XCTAssertEqual(nfs.endpoint, MountedNetworkShare.Endpoint(host: "fd00::2", path: "exports/public"))
+    XCTAssertEqual(
+      nfs.endpoint, MountedNetworkShare.Endpoint(host: "fd00::2", path: "exports/public"))
 
     let nfsShare = NetworkShare(
       name: "p", server: "fd00::2", sharePath: "exports/public", username: "",
@@ -177,12 +178,14 @@ final class NetworkShareParsingTests: XCTestCase {
 
     let nfsV4 = try XCTUnwrap(
       MountedNetworkShare(mountOutputLine: "10.0.0.5:/exports/public on /Volumes/p (nfs)"))
-    XCTAssertEqual(nfsV4.endpoint, MountedNetworkShare.Endpoint(host: "10.0.0.5", path: "exports/public"))
+    XCTAssertEqual(
+      nfsV4.endpoint, MountedNetworkShare.Endpoint(host: "10.0.0.5", path: "exports/public"))
   }
 
   func testMountPathComparison() {
     XCTAssertTrue(NetworkMountManager.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/a/"))
-    XCTAssertTrue(NetworkMountManager.samePath("/Users/me/x/../mountmate/A", "/Users/me/mountmate/A"))
+    XCTAssertTrue(
+      NetworkMountManager.samePath("/Users/me/x/../mountmate/A", "/Users/me/mountmate/A"))
     XCTAssertFalse(NetworkMountManager.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/B"))
   }
 
@@ -266,9 +269,10 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertTrue(NetworkMountManager.shouldRetryAsGuest(afterStatus: EPERM))
     XCTAssertTrue(NetworkMountManager.shouldRetryAsGuest(afterStatus: -128))
     XCTAssertTrue(NetworkMountManager.shouldRetryAsGuest(afterStatus: -5997))
-    for status in [0, ETIMEDOUT, ENOENT, EEXIST, EBUSY, -5998, EHOSTUNREACH, ENETUNREACH,
-      ECONNREFUSED]
-    {
+    for status in [
+      0, ETIMEDOUT, ENOENT, EEXIST, EBUSY, -5998, EHOSTUNREACH, ENETUNREACH,
+      ECONNREFUSED,
+    ] {
       XCTAssertFalse(NetworkMountManager.shouldRetryAsGuest(afterStatus: status))
     }
   }

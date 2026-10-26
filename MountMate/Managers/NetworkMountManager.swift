@@ -479,7 +479,9 @@ class NetworkMountManager: ObservableObject {
       self.mountLock.lock()
       let waiters = self.pendingMountCompletions.removeValue(forKey: share.id) ?? []
       self.mountLock.unlock()
-      DispatchQueue.main.async { waiters.forEach { $0(success, error) } }
+      DispatchQueue.main.async {
+        for completion in waiters { completion(success, error) }
+      }
     }
 
     // Everything below can block (`/sbin/mount`, the Keychain, NetFS), so

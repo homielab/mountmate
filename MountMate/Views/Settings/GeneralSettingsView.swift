@@ -100,10 +100,12 @@ struct GeneralSettingsView: View {
         .font(.caption)
         .foregroundStyle(.green)
       } else {
-        Text("No disk has a startup rule yet. Blocked disks get one the next time they're connected.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
+        Text(
+          "No disk has a startup rule yet. Blocked disks get one the next time they're connected."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
       }
     }
   }
@@ -301,7 +303,8 @@ struct GeneralSettingsView: View {
     .padding(.horizontal)
     // Pick up a Login Items approval made in System Settings.
     .onAppear { launchManager.refreshStatus() }
-    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) {
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))
+    {
       _ in launchManager.refreshStatus()
     }
 

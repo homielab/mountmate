@@ -269,7 +269,8 @@ class DiskMounter: ObservableObject {
 
     let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]
     DARegisterDiskAppearedCallback(session, matching as CFDictionary, appearedCallback, context)
-    DARegisterDiskDisappearedCallback(session, matching as CFDictionary, disappearedCallback, context)
+    DARegisterDiskDisappearedCallback(
+      session, matching as CFDictionary, disappearedCallback, context)
     DARegisterDiskMountApprovalCallback(session, matching as CFDictionary, mountCallback, context)
     DASessionSetDispatchQueue(session, DispatchQueue.main)
 
