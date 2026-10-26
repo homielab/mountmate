@@ -501,17 +501,27 @@ class DriveManager: ObservableObject {
       let forceUnmountResult = runProcess(
         executable: "/usr/sbin/diskutil", arguments: ["unmountDisk", "force", disk.id],
         timeout: timeout)
-      let result =
-        disk.isRAIDSet
-        ? forceUnmountResult
+      // A failed force unmount is the real reason the disk stays: report it
+      // and do not eject on top of it.
+      let ejectResult: ProcessResult? =
+        disk.isRAIDSet || !ForceEjectOutcome.shouldEject(afterUnmount: forceUnmountResult)
+        ? nil
         : runProcess(
           executable: "/usr/sbin/diskutil", arguments: ["eject", disk.id], timeout: timeout)
+      let outcome = ForceEjectOutcome.choose(
+        unmountResult: forceUnmountResult, ejectResult: ejectResult)
       DispatchQueue.main.async {
-        if !result.succeeded {
+        let failure: (result: ProcessResult, operation: DiskOperation)? =
+          switch outcome {
+          case .succeeded: nil
+          case .unmountFailed(let result): (result, .unmount)
+          case .ejectFailed(let result): (result, .eject)
+          }
+        if let failure {
           self.setEjecting(disk.id, false)
           self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: timeout),
-            for: disk.name ?? disk.id, disk: disk, operation: .eject)
+            DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: timeout),
+            for: disk.name ?? disk.id, disk: disk, operation: failure.operation)
           self.refreshDrives(qos: .userInitiated)
         } else {
           self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }

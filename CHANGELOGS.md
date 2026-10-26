@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Force Eject** now stops when the force unmount fails and shows that error (for example the process holding the disk), instead of ejecting anyway and showing the eject error. If the unmount works, it ejects as before.
+- Internal: the rules that decide which mounts of blocked volumes are allowed (one-time approvals that expire after 60 seconds, matching by device name or volume/disk UUID, the 15 second auto-mount window) moved into `MountApprovalLedger` with unit tests. No change in behavior.
 - Internal: mounting a network share moved out of `NetworkMountManager` into `NetworkShareMounter`, with unit tests for the stalled-mount rule, the connection URL and how a mount result becomes a message. No change in behavior.
 - **Keep Alive** now waits for a volume's remount to really finish instead of checking after 3 seconds, so a slow USB drive that needs up to 30 seconds to spin up is no longer counted as a failed reconnect (no backoff, no false "could not reconnect" notification).
 - **Accessibility**: with "Reduce motion" on, the usage rings and the disk expand arrow no longer animate. Volume and share rows can be focused with Tab (Up/Down move between rows; Return or Space mounts or unmounts on macOS 14+), and VoiceOver offers Mount/Unmount, Open in Finder, Copy Path and Open in Terminal as actions on each row.

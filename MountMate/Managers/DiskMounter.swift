@@ -24,16 +24,11 @@ class DiskMounter: ObservableObject {
     didSet { UserDefaults.standard.set(allowRequestedMounts, forKey: "allowRequestedMounts") }
   }
 
-  /// How long after a disk appears a mount is treated as macOS's automatic
-  /// mount rather than a request from an app.
-  private static let autoMountWindow: TimeInterval = 15
-
   private var session: DASession?
-  /// When each mountable volume (by BSD name) was last seen appearing.
-  private var diskAppearances: [String: Date] = [:]
-  private let diskAppearancesLock = NSLock()
-  private var manualMountApprovals: [String: Date] = [:]
-  private let manualMountApprovalLock = NSLock()
+  /// Manual mount approvals and disk appearances, guarded by `ledgerLock`
+  /// (the Disk Arbitration callbacks run on another queue).
+  private var ledger = MountApprovalLedger()
+  private let ledgerLock = NSLock()
   private var cancellables = Set<AnyCancellable>()
   /// Guards the launch-time cleanup so it runs once per app launch even when
   /// the session is restarted.
@@ -91,81 +86,25 @@ class DiskMounter: ObservableObject {
     // volumes on slow disks ("Volume on diskXsY failed to mount"). The
     // approval is still single-use and is withdrawn as soon as the mount
     // finishes (didFinishManualMount); this is only an upper bound.
-    let key = identifier.lowercased()
-    let lifetime = Self.manualMountApprovalLifetime
-    let expiration = Date().addingTimeInterval(lifetime)
-    manualMountApprovalLock.lock()
-    manualMountApprovals[key] = expiration
-    manualMountApprovalLock.unlock()
+    let lifetime = MountApprovalLedger.approvalLifetime
+    let expiration = withLedger { $0.approve(identifier) }
 
     DispatchQueue.main.asyncAfter(deadline: .now() + lifetime) { [weak self] in
-      guard let self else { return }
-      self.manualMountApprovalLock.lock()
-      if self.manualMountApprovals[key] == expiration {
-        self.manualMountApprovals.removeValue(forKey: key)
-      }
-      self.manualMountApprovalLock.unlock()
+      self?.withLedger { $0.withdrawApproval(for: identifier, ifExpiring: expiration) }
     }
   }
-
-  private static let manualMountApprovalLifetime: TimeInterval = 60
 
   @objc private func handleDidFinishMount(notification: Notification) {
     guard let identifier = notification.userInfo?["deviceIdentifier"] as? String,
       !identifier.isEmpty
     else { return }
-    manualMountApprovalLock.lock()
-    manualMountApprovals.removeValue(forKey: identifier.lowercased())
-    manualMountApprovalLock.unlock()
+    withLedger { $0.withdrawApproval(for: identifier) }
   }
 
-  private func consumeManualMountApproval(
-    bsdName: String?, volumeUUID: String?, diskUUID: String?
-  ) -> Bool {
-    let identifiers = [bsdName, volumeUUID, diskUUID]
-      .compactMap { $0?.lowercased() }
-    guard !identifiers.isEmpty else { return false }
-
-    let now = Date()
-    manualMountApprovalLock.lock()
-    defer { manualMountApprovalLock.unlock() }
-    manualMountApprovals = manualMountApprovals.filter { $0.value > now }
-
-    for identifier in identifiers {
-      if manualMountApprovals.removeValue(forKey: identifier) != nil {
-        return true
-      }
-    }
-    return false
-  }
-
-  private func recordAppearance(of bsdName: String?) {
-    guard let key = bsdName?.lowercased() else { return }
-    diskAppearancesLock.lock()
-    diskAppearances[key] = Date()
-    diskAppearancesLock.unlock()
-  }
-
-  private func forgetAppearance(of bsdName: String?) {
-    guard let key = bsdName?.lowercased() else { return }
-    diskAppearancesLock.lock()
-    diskAppearances.removeValue(forKey: key)
-    diskAppearancesLock.unlock()
-  }
-
-  /// True when this mount looks like macOS auto-mounting a disk that just
-  /// appeared. A disk with no recorded appearance is treated as new (and
-  /// recorded now), so callback ordering can never let an auto-mount through.
-  private func isAutomaticMount(bsdName: String?) -> Bool {
-    guard let key = bsdName?.lowercased() else { return true }
-    let now = Date()
-    diskAppearancesLock.lock()
-    defer { diskAppearancesLock.unlock() }
-    guard let appeared = diskAppearances[key] else {
-      diskAppearances[key] = now
-      return true
-    }
-    return now.timeIntervalSince(appeared) < Self.autoMountWindow
+  private func withLedger<T>(_ body: (inout MountApprovalLedger) -> T) -> T {
+    ledgerLock.lock()
+    defer { ledgerLock.unlock() }
+    return body(&ledger)
   }
 
   private func startDiskArbitration() {
@@ -203,9 +142,10 @@ class DiskMounter: ObservableObject {
       // Only mount requests explicitly initiated by MountMate bypass the
       // runtime block. Disk Arbitration does not identify the source of a
       // request from Finder, Terminal, or the OS.
-      if this.consumeManualMountApproval(
-        bsdName: bsdName, volumeUUID: volumeUUIDString, diskUUID: diskUUIDString)
-      {
+      if this.withLedger({
+        $0.consumeApproval(
+          bsdName: bsdName, volumeUUID: volumeUUIDString, diskUUID: diskUUIDString)
+      }) {
         return nil
       }
 
@@ -232,7 +172,9 @@ class DiskMounter: ObservableObject {
         }
       }
 
-      if shouldBlock && this.allowRequestedMounts && !this.isAutomaticMount(bsdName: bsdName) {
+      if shouldBlock && this.allowRequestedMounts
+        && !this.withLedger({ $0.isAutomaticMount(bsdName: bsdName) })
+      {
         Log.mounter.notice(
           "Allowing requested mount of blocked volume \(bsdName ?? "unknown volume", privacy: .public)."
         )
@@ -259,12 +201,14 @@ class DiskMounter: ObservableObject {
     let appearedCallback: DADiskAppearedCallback = { disk, context in
       guard let context = context else { return }
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
-      this.recordAppearance(of: DADiskGetBSDName(disk).map { String(cString: $0) })
+      let name = DADiskGetBSDName(disk).map { String(cString: $0) }
+      this.withLedger { $0.recordAppearance(of: name) }
     }
     let disappearedCallback: DADiskDisappearedCallback = { disk, context in
       guard let context = context else { return }
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
-      this.forgetAppearance(of: DADiskGetBSDName(disk).map { String(cString: $0) })
+      let name = DADiskGetBSDName(disk).map { String(cString: $0) }
+      this.withLedger { $0.forgetAppearance(of: name) }
     }
 
     let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]
@@ -425,12 +369,7 @@ class DiskMounter: ObservableObject {
   private func stopDiskArbitration() {
     guard let session = session else { return }
     DASessionSetDispatchQueue(session, nil)
-    manualMountApprovalLock.lock()
-    manualMountApprovals.removeAll()
-    manualMountApprovalLock.unlock()
-    diskAppearancesLock.lock()
-    diskAppearances.removeAll()
-    diskAppearancesLock.unlock()
+    withLedger { $0.removeAll() }
     self.session = nil
   }
 }
