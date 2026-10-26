@@ -281,16 +281,16 @@ final class NetworkShareParsingTests: XCTestCase {
   }
 
   func testGuestRetryOnlyForCredentialStyleFailures() {
-    XCTAssertTrue(NetworkShareMounter.shouldRetryAsGuest(afterStatus: EAUTH))
-    XCTAssertTrue(NetworkShareMounter.shouldRetryAsGuest(afterStatus: EACCES))
-    XCTAssertTrue(NetworkShareMounter.shouldRetryAsGuest(afterStatus: EPERM))
-    XCTAssertTrue(NetworkShareMounter.shouldRetryAsGuest(afterStatus: -128))
-    XCTAssertTrue(NetworkShareMounter.shouldRetryAsGuest(afterStatus: -5997))
+    XCTAssertTrue(NetworkMountPlan.shouldRetryAsGuest(afterStatus: EAUTH))
+    XCTAssertTrue(NetworkMountPlan.shouldRetryAsGuest(afterStatus: EACCES))
+    XCTAssertTrue(NetworkMountPlan.shouldRetryAsGuest(afterStatus: EPERM))
+    XCTAssertTrue(NetworkMountPlan.shouldRetryAsGuest(afterStatus: -128))
+    XCTAssertTrue(NetworkMountPlan.shouldRetryAsGuest(afterStatus: -5997))
     for status in [
       0, ETIMEDOUT, ENOENT, EEXIST, EBUSY, -5998, EHOSTUNREACH, ENETUNREACH,
       ECONNREFUSED,
     ] {
-      XCTAssertFalse(NetworkShareMounter.shouldRetryAsGuest(afterStatus: status))
+      XCTAssertFalse(NetworkMountPlan.shouldRetryAsGuest(afterStatus: status))
     }
   }
 
@@ -298,7 +298,7 @@ final class NetworkShareParsingTests: XCTestCase {
     func placement(_ username: String, _ shareProtocol: ShareProtocol = .smb)
       -> (urlUser: String?, user: String?)
     {
-      NetworkShareMounter.netFSUserPlacement(
+      NetworkMountPlan.netFSUserPlacement(
         for: NetworkShare(
           name: "s", server: "nas", sharePath: "s", username: username,
           shareProtocol: shareProtocol))

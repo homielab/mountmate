@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Internal: the pure decisions of a network-share mount moved out of `NetworkShareMounter` into `NetworkMountPlan` (may the attempt start, the preflight checks, how a result maps to the message and clean-up, the NetFS connection URL, user placement and options, the NFS arguments and failure classification, finding a share's own mount in the mount table), unit-tested for every branch; the file shrinks from 623 to under 400 lines. No change in behavior.
 - Internal: mounting, unmounting and remounting one volume moved out of `DriveManager` into `DriveManager+Mount`, and the decision to retry a failed mount into `MountRetryRules` (unit-tested for every branch); the disk-change notification handling has its own file too. No change in behavior.
 - Keep Alive's network-change handling is split out of `KeepAliveManager`: `NetworkChangeMonitor` wraps the system path monitor and `NetworkChangeRules` holds the remount decisions (Wi-Fi → Ethernet, a lost interface, VPN tunnels ignored), now unit-tested with an injected monitor. The behaviour is unchanged.
 - The volume right-click menu is split out of `VolumeRowView` into `VolumeContextMenu`, with the show/hide conditions in `VolumeMenuRules` (unit-tested). The menu itself is unchanged.
