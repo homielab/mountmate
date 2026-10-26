@@ -327,15 +327,17 @@ class DriveManager: ObservableObject {
   /// - Parameter completion: Called on the main thread once every unmount
   ///   has finished (immediately when there is nothing to unmount). Call on
   ///   the main thread.
+  /// - Parameter finished: Called on the main thread with the names of the
+  ///   volumes that could not be unmounted, after the drive list refreshed.
   func unmountAllDrives(
     suppressReconnect: Bool = true, reportFailures: Bool = true,
-    completion: (() -> Void)? = nil
+    completion: (() -> Void)? = nil, finished: (([String]) -> Void)? = nil
   ) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
         self.unmountAllDrives(
           suppressReconnect: suppressReconnect, reportFailures: reportFailures,
-          completion: completion)
+          completion: completion, finished: finished)
       }
       return
     }
@@ -343,6 +345,7 @@ class DriveManager: ObservableObject {
 
     guard !drivesToUnmount.isEmpty else {
       completion?()
+      finished?([])
       return
     }
     if suppressReconnect {
@@ -371,12 +374,19 @@ class DriveManager: ObservableObject {
         self.refreshDrives(qos: .userInitiated) {
           self.unmountAllRunCount -= 1
           self.isUnmountingAll = self.unmountAllRunCount > 0
+          finished?(failures.map(\.name))
         }
       }
     }
   }
 
-  func mountAllVolumes() {
+  /// - Parameter reportFailures: show an alert naming volumes that could not
+  ///   be mounted. Off when the caller reports the result itself.
+  /// - Parameter completion: Called on the main thread with the names of the
+  ///   volumes that could not be mounted, after the drive list refreshed.
+  func mountAllVolumes(
+    reportFailures: Bool = true, completion: (([String]) -> Void)? = nil
+  ) {
     let volumesToMount =
       bulkActionDisks
       .flatMap(\.allVolumes)
@@ -387,7 +397,10 @@ class DriveManager: ObservableObject {
           && !PersistenceManager.shared.isVolumeBlocked($0)
       }
 
-    guard !volumesToMount.isEmpty else { return }
+    guard !volumesToMount.isEmpty else {
+      completion?([])
+      return
+    }
 
     for volume in volumesToMount {
       KeepAliveManager.shared.resume(volume: volume)
@@ -407,12 +420,16 @@ class DriveManager: ObservableObject {
       }
       DispatchQueue.main.async {
         guard let self else { return }
-        self.reportBulkFailures(
-          failures,
-          title: NSLocalizedString("Mount Failed", comment: "Alert title"),
-          format: NSLocalizedString(
-            "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
-        self.refreshDrives(qos: .userInitiated)
+        if reportFailures {
+          self.reportBulkFailures(
+            failures,
+            title: NSLocalizedString("Mount Failed", comment: "Alert title"),
+            format: NSLocalizedString(
+              "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
+        }
+        self.refreshDrives(qos: .userInitiated) {
+          completion?(failures.map(\.name))
+        }
       }
     }
   }

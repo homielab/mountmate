@@ -431,3 +431,16 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "完全磁盘访问权限可让 MountMate 看到所有类型的磁盘并读取存储详情。请在“系统设置 > 隐私与安全性”中为 MountMate 开启。";
 "Mount Read-Only" = "以只读方式装载";
 "Read-only" = "只读";
+
+// MARK: - Shortcuts
+"Mounts every external volume that is not mounted yet." = "挂载所有尚未挂载的外置卷宗。";
+"Unmounts every mounted external volume except protected ones." = "卸载所有已挂载的外置卷宗（受保护的除外）。";
+"Mounts a network share saved in MountMate." = "挂载 MountMate 中保存的网络共享。";
+"Mount Network Share" = "挂载网络共享";
+"Network Share" = "网络共享";
+"Volumes mounted." = "卷宗已挂载。";
+"Volumes unmounted." = "卷宗已卸载。";
+"“%@” mounted." = "已挂载“%@”。";
+"Could not mount “%@”: %@" = "无法挂载“%@”：%@";
+"Could not mount “%@”." = "无法挂载“%@”。";
+"That network share is no longer saved in MountMate." = "MountMate 中已不再保存该网络共享。";

@@ -431,3 +431,16 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Truy cập Toàn bộ Đĩa cho phép MountMate thấy mọi loại ổ đĩa và đọc thông tin lưu trữ. Bật cho MountMate trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 "Mount Read-Only" = "Mount chỉ đọc";
 "Read-only" = "Chỉ đọc";
+
+// MARK: - Shortcuts
+"Mounts every external volume that is not mounted yet." = "Mount mọi phân vùng ngoài chưa được mount.";
+"Unmounts every mounted external volume except protected ones." = "Unmount mọi phân vùng ngoài đang mount, trừ các phân vùng được bảo vệ.";
+"Mounts a network share saved in MountMate." = "Mount một chia sẻ mạng đã lưu trong MountMate.";
+"Mount Network Share" = "Mount chia sẻ mạng";
+"Network Share" = "Chia sẻ mạng";
+"Volumes mounted." = "Đã mount các phân vùng.";
+"Volumes unmounted." = "Đã unmount các phân vùng.";
+"“%@” mounted." = "Đã mount “%@”.";
+"Could not mount “%@”: %@" = "Không mount được “%@”: %@";
+"Could not mount “%@”." = "Không mount được “%@”.";
+"That network share is no longer saved in MountMate." = "Chia sẻ mạng này không còn được lưu trong MountMate.";

@@ -75,6 +75,7 @@ So I built **MountMate**.
 - **Copy Path / Open in Terminal**: right-click a mounted volume or network share to copy its mount path or open a Terminal window in that folder
 - **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period
 - **Notifications** (optional, off by default; Settings → General → Behavior): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle
+- **Shortcuts**: the Shortcuts app (and Spotlight, Siri, Automator via "Run Shortcut") gets three actions: Mount All Volumes, Unmount All Volumes and Mount Network Share (pick any saved share). Build "arrive home → mount the NAS" or "before bed → unmount all" automations; a failure is shown as the shortcut's error. Needs MountMate to be installed; it starts in the background when a shortcut runs
 - **Force Eject**: Safely force eject drives that are in use
 - **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
 - **Localized** in 7 languages, with correct plural forms

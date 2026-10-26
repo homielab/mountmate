@@ -1,0 +1,5 @@
+"Mount all volumes with ${applicationName}" = "Mount tất cả phân vùng bằng ${applicationName}";
+"Mount all drives with ${applicationName}" = "Mount tất cả ổ đĩa bằng ${applicationName}";
+"Unmount all volumes with ${applicationName}" = "Unmount tất cả phân vùng bằng ${applicationName}";
+"Unmount all drives with ${applicationName}" = "Unmount tất cả ổ đĩa bằng ${applicationName}";
+"Mount a network share with ${applicationName}" = "Mount chia sẻ mạng bằng ${applicationName}";

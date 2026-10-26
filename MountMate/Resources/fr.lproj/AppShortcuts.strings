@@ -1,0 +1,5 @@
+"Mount all volumes with ${applicationName}" = "Monter tous les volumes avec ${applicationName}";
+"Mount all drives with ${applicationName}" = "Monter tous les disques avec ${applicationName}";
+"Unmount all volumes with ${applicationName}" = "Démonter tous les volumes avec ${applicationName}";
+"Unmount all drives with ${applicationName}" = "Démonter tous les disques avec ${applicationName}";
+"Mount a network share with ${applicationName}" = "Monter un partage réseau avec ${applicationName}";

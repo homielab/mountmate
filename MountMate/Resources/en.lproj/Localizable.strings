@@ -431,3 +431,16 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security.";
 "Mount Read-Only" = "Mount Read-Only";
 "Read-only" = "Read-only";
+
+// MARK: - Shortcuts
+"Mounts every external volume that is not mounted yet." = "Mounts every external volume that is not mounted yet.";
+"Unmounts every mounted external volume except protected ones." = "Unmounts every mounted external volume except protected ones.";
+"Mounts a network share saved in MountMate." = "Mounts a network share saved in MountMate.";
+"Mount Network Share" = "Mount Network Share";
+"Network Share" = "Network Share";
+"Volumes mounted." = "Volumes mounted.";
+"Volumes unmounted." = "Volumes unmounted.";
+"“%@” mounted." = "“%@” mounted.";
+"Could not mount “%@”: %@" = "Could not mount “%@”: %@";
+"Could not mount “%@”." = "Could not mount “%@”.";
+"That network share is no longer saved in MountMate." = "That network share is no longer saved in MountMate.";

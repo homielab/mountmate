@@ -431,3 +431,16 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Полный доступ к дискам позволяет MountMate видеть все типы дисков и читать данные о хранилище. Включите его для MountMate в Системных настройках > Конфиденциальность и безопасность.";
 "Mount Read-Only" = "Подключить только для чтения";
 "Read-only" = "Только чтение";
+
+// MARK: - Shortcuts
+"Mounts every external volume that is not mounted yet." = "Монтирует все внешние тома, которые ещё не смонтированы.";
+"Unmounts every mounted external volume except protected ones." = "Размонтирует все смонтированные внешние тома, кроме защищённых.";
+"Mounts a network share saved in MountMate." = "Монтирует сетевую папку, сохранённую в MountMate.";
+"Mount Network Share" = "Смонтировать сетевую папку";
+"Network Share" = "Сетевая папка";
+"Volumes mounted." = "Тома смонтированы.";
+"Volumes unmounted." = "Тома размонтированы.";
+"“%@” mounted." = "«%@» смонтирована.";
+"Could not mount “%@”: %@" = "Не удалось смонтировать «%@»: %@";
+"Could not mount “%@”." = "Не удалось смонтировать «%@».";
+"That network share is no longer saved in MountMate." = "Эта сетевая папка больше не сохранена в MountMate.";

@@ -1,0 +1,5 @@
+"Mount all volumes with ${applicationName}" = "用 ${applicationName} 挂载所有卷宗";
+"Mount all drives with ${applicationName}" = "用 ${applicationName} 挂载所有磁盘";
+"Unmount all volumes with ${applicationName}" = "用 ${applicationName} 卸载所有卷宗";
+"Unmount all drives with ${applicationName}" = "用 ${applicationName} 卸载所有磁盘";
+"Mount a network share with ${applicationName}" = "用 ${applicationName} 挂载网络共享";

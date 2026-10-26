@@ -1,0 +1,5 @@
+"Mount all volumes with ${applicationName}" = "Підключити всі томи в ${applicationName}";
+"Mount all drives with ${applicationName}" = "Підключити всі диски в ${applicationName}";
+"Unmount all volumes with ${applicationName}" = "Відключити всі томи в ${applicationName}";
+"Unmount all drives with ${applicationName}" = "Відключити всі диски в ${applicationName}";
+"Mount a network share with ${applicationName}" = "Підключити мережеву папку в ${applicationName}";
