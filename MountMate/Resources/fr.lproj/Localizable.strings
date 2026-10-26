@@ -411,3 +411,7 @@
 "Copy Path" = "Copier le chemin";
 "Open in Terminal" = "Ouvrir dans le Terminal";
 "Automatically check for updates" = "Rechercher automatiquement les mises à jour";
+
+/* Network share connected outside MountMate whose server or share name is unknown */
+"Unknown Server" = "Serveur inconnu";
+"Shared Folder" = "Dossier partagé";

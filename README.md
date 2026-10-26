@@ -148,6 +148,8 @@ The disk list is built by `DiskListParser` (`MountMate/Managers/DiskListParser.s
 
 `/etc/fstab` code is split in three: `FstabRules` (`MountMate/Managers/FstabRules.swift`) builds, finds and removes MountMate's lines and validates every field, as pure functions without file access; `FstabVolumeLookup` asks `diskutil` for the file system and startup-block eligibility of a volume; `FstabWriter` reads `/etc/fstab` and writes it through the administrator prompt. Test rule changes in `FstabRulesTests` and `BlockedFstabRuleTests`; the privileged command is tested against a temporary file, never the real `/etc/fstab`.
 
+Network shares are read from the kernel mount table by `MountTable` (`MountMate/Utilities/MountTable.swift`, `getfsstat` with `MNT_NOWAIT`: no process, never waits on a server). `MountedNetworkShare` (`MountMate/Models/`) is one SMB/NFS/AFP entry and knows which saved share it is; `NetworkMountManager.importedShare(from:)` turns a share connected in Finder into an importable `NetworkShare`, and the NetFS error texts live in `MountMate/Utilities/NetFSErrorMessages.swift`. Tests: `MountTableTests` and `NetworkShareParsingTests`.
+
 CI runs both on every pull request and push to `main`; the style check is strict. See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions.
 
 ### Releasing

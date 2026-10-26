@@ -411,3 +411,7 @@
 "Copy Path" = "拷貝路徑";
 "Open in Terminal" = "在終端機中開啟";
 "Automatically check for updates" = "自動檢查更新";
+
+/* Network share connected outside MountMate whose server or share name is unknown */
+"Unknown Server" = "未知伺服器";
+"Shared Folder" = "共享檔案夾";

@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Network share status is now read straight from the system mount table instead of running `/sbin/mount` and parsing its text on every refresh, so Keep Alive checks start no process and mount folders whose names contain " on " or parentheses can no longer confuse it. A share connected in Finder whose server or share name cannot be read now shows "Unknown Server" / "Shared Folder" in your language, and NFS shares on an IPv6 server are imported with the right server and path.
 - A busy network share no longer gets a pointless second mount attempt after a network change: if the unmount fails and the share is still mounted, MountMate keeps it and logs why. Mount All and the error alerts now agree on what a locked encrypted volume looks like.
 - The update window now shows what is new in the offered version (its notes from this changelog), and the update feed keeps the last three versions instead of only the newest one.
 - Release scripts: `scripts/3-release.sh` is removed (the release workflow tags and publishes), `scripts/0-run-all.sh` only builds locally, and `scripts/2-build.sh --dry-run` builds the zip and update feed without a DMG, signing or notarization.

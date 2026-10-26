@@ -411,3 +411,7 @@
 "Copy Path" = "Sao chép đường dẫn";
 "Open in Terminal" = "Mở trong Terminal";
 "Automatically check for updates" = "Tự động kiểm tra cập nhật";
+
+/* Network share connected outside MountMate whose server or share name is unknown */
+"Unknown Server" = "Máy chủ không rõ";
+"Shared Folder" = "Thư mục chia sẻ";

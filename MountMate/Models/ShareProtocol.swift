@@ -27,7 +27,7 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     }
   }
 
-  /// Filesystem name reported by `/sbin/mount` for mounts of this protocol.
+  /// Filesystem type (`f_fstypename`, as `/sbin/mount` prints it) of mounts of this protocol.
   var mountFilesystemName: String {
     switch self {
     case .smb: return "smbfs"

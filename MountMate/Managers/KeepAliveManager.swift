@@ -574,7 +574,7 @@ class KeepAliveManager: ObservableObject {
   /// it reads are main-thread bound, and `isSweeping` serializes sweeps.
   private func sweep() {
     guard isEnabled, !isSweeping else { return }
-    // Nothing to keep alive: skip the `/sbin/mount` scan entirely so the
+    // Nothing to keep alive: skip the mount table scan entirely so the
     // periodic timer costs nothing for most users.
     let hasShareTargets = !keepAliveShares.isEmpty
     guard hasShareTargets || !PersistenceManager.shared.keepAliveVolumes.isEmpty

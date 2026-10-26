@@ -30,51 +30,60 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertTrue(ShareProtocol.afp.supportsUserCredentials)
   }
 
-  func testSMBMountOutputLineMatchesSavedShare() throws {
+  func testSMBMountEntryMatchesSavedShare() throws {
     let share = NetworkShare(
       name: "public", server: "192.168.1.100", sharePath: "public", username: "user",
       mountAtLogin: false)
 
-    let line =
-      "//user@192.168.1.100/public on /Users/me/mountmate/public (smbfs, nodev, nosuid, mounted by me)"
-    let mounted = try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "//user@192.168.1.100/public", mountPoint: "/Users/me/mountmate/public",
+        fileSystemType: "smbfs"))
 
     XCTAssertEqual(mounted.shareProtocol, .smb)
     XCTAssertTrue(mounted.matches(share))
   }
 
-  func testNFSMountOutputLineIsRecognized() throws {
-    let line = "192.168.1.10:/exports/public on /Users/me/mountmate/public (nfs)"
-    let mounted = try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+  func testNFSMountEntryIsRecognized() throws {
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "192.168.1.10:/exports/public", mountPoint: "/Users/me/mountmate/public",
+        fileSystemType: "nfs"))
 
     XCTAssertEqual(mounted.shareProtocol, .nfs)
     XCTAssertEqual(mounted.source, "192.168.1.10:/exports/public")
     XCTAssertEqual(mounted.mountPoint, "/Users/me/mountmate/public")
   }
 
-  func testAFPMountOutputLineIsRecognized() throws {
-    let line = "//admin@tc.local/Data on /Volumes/Data (afpfs, nodev, nosuid)"
-    let mounted = try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+  func testAFPMountEntryIsRecognized() throws {
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "//admin@tc.local/Data", mountPoint: "/Volumes/Data", fileSystemType: "afpfs"))
 
     XCTAssertEqual(mounted.shareProtocol, .afp)
   }
 
-  func testLocalFilesystemLinesAreIgnored() {
-    let line = "/dev/disk5s1 on /Volumes/USB (apfs, local, nodev, nosuid, read-only)"
-    XCTAssertNil(MountedNetworkShare(mountOutputLine: line))
+  func testLocalFilesystemEntriesAreIgnored() {
+    XCTAssertNil(
+      MountedNetworkShare(
+        entry: MountEntry(
+          source: "/dev/disk5s1", mountPoint: "/Volumes/USB", fileSystemType: "apfs")
+      ))
   }
 
   func testMountPointContainingFilesystemWordIsNotMismapped() {
-    // A mount point like "/Volumes/smbfs Backup" must not fool the parser:
-    // the filesystem name is only read from the trailing options.
-    let line = "//user@192.168.1.100/public on /Volumes/smbfs Backup (apfs, local)"
-    XCTAssertNil(MountedNetworkShare(mountOutputLine: line))
+    // Only the filesystem type decides the protocol, never the mount point.
+    XCTAssertNil(
+      MountedNetworkShare(
+        source: "//user@192.168.1.100/public", mountPoint: "/Volumes/smbfs Backup",
+        fileSystemType: "apfs"))
   }
 
   func testMountPointContainingOnAndParenthesesIsParsed() throws {
-    let line =
-      "//user@nas/public on /Users/me/Shares on NAS (old) (2) (smbfs, nodev, nosuid, mounted by me)"
-    let mounted = try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "//user@nas/public", mountPoint: "/Users/me/Shares on NAS (old) (2)",
+        fileSystemType: "smbfs"))
 
     XCTAssertEqual(mounted.shareProtocol, .smb)
     XCTAssertEqual(mounted.source, "//user@nas/public")
@@ -84,9 +93,10 @@ final class NetworkShareParsingTests: XCTestCase {
   func testPercentEncodedSourceIsDecodedForMatching() throws {
     let share = NetworkShare(
       name: "Photos", server: "nas.local", sharePath: "Family Photos", username: "j@doe")
-    let line =
-      "//j%40doe@nas.local/Family%20Photos on /Users/me/mountmate/Photos (smbfs, nodev, nosuid)"
-    let mounted = try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "//j%40doe@nas.local/Family%20Photos", mountPoint: "/Users/me/mountmate/Photos",
+        fileSystemType: "smbfs"))
     XCTAssertTrue(mounted.matches(share))
   }
 
@@ -96,7 +106,7 @@ final class NetworkShareParsingTests: XCTestCase {
     func source(_ host: String) throws -> MountedNetworkShare {
       try XCTUnwrap(
         MountedNetworkShare(
-          mountOutputLine: "//user@\(host)/public on /Volumes/public (smbfs, nodev, nosuid)"))
+          source: "//user@\(host)/public", mountPoint: "/Volumes/public", fileSystemType: "smbfs"))
     }
 
     XCTAssertTrue(try source("nas").matches(share))
@@ -119,7 +129,7 @@ final class NetworkShareParsingTests: XCTestCase {
     func source(_ host: String) throws -> MountedNetworkShare {
       try XCTUnwrap(
         MountedNetworkShare(
-          mountOutputLine: "//user@\(host)/public on /Volumes/public (smbfs, nodev, nosuid)"))
+          source: "//user@\(host)/public", mountPoint: "/Volumes/public", fileSystemType: "smbfs"))
     }
 
     XCTAssertTrue(try source("NAS._smb._tcp.local").matches(share))
@@ -136,11 +146,13 @@ final class NetworkShareParsingTests: XCTestCase {
     let share = NetworkShare(name: "sub", server: "nas", sharePath: "share/sub", username: "")
     let sub = try XCTUnwrap(
       MountedNetworkShare(
-        mountOutputLine: "//user@nas/share/sub on /Users/me/mountmate/sub (smbfs, nodev)"))
+        source: "//user@nas/share/sub", mountPoint: "/Users/me/mountmate/sub",
+        fileSystemType: "smbfs"))
     XCTAssertTrue(sub.matches(share))
 
     let root = try XCTUnwrap(
-      MountedNetworkShare(mountOutputLine: "//user@nas/share on /Volumes/share (smbfs, nodev)"))
+      MountedNetworkShare(
+        source: "//user@nas/share", mountPoint: "/Volumes/share", fileSystemType: "smbfs"))
     XCTAssertFalse(root.matches(share))
   }
 
@@ -150,7 +162,7 @@ final class NetworkShareParsingTests: XCTestCase {
     func source(_ path: String) throws -> MountedNetworkShare {
       try XCTUnwrap(
         MountedNetworkShare(
-          mountOutputLine: "//nas/\(path) on /Volumes/x (smbfs, nodev, nosuid)"))
+          source: "//nas/\(path)", mountPoint: "/Volumes/x", fileSystemType: "smbfs"))
     }
 
     XCTAssertTrue(try source("public").matches(share))
@@ -163,11 +175,12 @@ final class NetworkShareParsingTests: XCTestCase {
   func testIPv6AndNFSSourcesAreParsed() throws {
     let smb = try XCTUnwrap(
       MountedNetworkShare(
-        mountOutputLine: "//user@[fe80::1]:445/data on /Volumes/data (smbfs, nodev, nosuid)"))
+        source: "//user@[fe80::1]:445/data", mountPoint: "/Volumes/data", fileSystemType: "smbfs"))
     XCTAssertEqual(smb.endpoint, MountedNetworkShare.Endpoint(host: "fe80::1", path: "data"))
 
     let nfs = try XCTUnwrap(
-      MountedNetworkShare(mountOutputLine: "[fd00::2]:/exports/public on /Volumes/p (nfs)"))
+      MountedNetworkShare(
+        source: "[fd00::2]:/exports/public", mountPoint: "/Volumes/p", fileSystemType: "nfs"))
     XCTAssertEqual(
       nfs.endpoint, MountedNetworkShare.Endpoint(host: "fd00::2", path: "exports/public"))
 
@@ -177,7 +190,8 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertTrue(nfs.matches(nfsShare))
 
     let nfsV4 = try XCTUnwrap(
-      MountedNetworkShare(mountOutputLine: "10.0.0.5:/exports/public on /Volumes/p (nfs)"))
+      MountedNetworkShare(
+        source: "10.0.0.5:/exports/public", mountPoint: "/Volumes/p", fileSystemType: "nfs"))
     XCTAssertEqual(
       nfsV4.endpoint, MountedNetworkShare.Endpoint(host: "10.0.0.5", path: "exports/public"))
   }
@@ -191,8 +205,11 @@ final class NetworkShareParsingTests: XCTestCase {
 
   // MARK: - Attribution (exact matches first, then adoptions)
 
-  private func mount(_ line: String) throws -> MountedNetworkShare {
-    try XCTUnwrap(MountedNetworkShare(mountOutputLine: line))
+  private func mount(_ source: String, at mountPoint: String, _ fileSystemType: String)
+    throws -> MountedNetworkShare
+  {
+    try XCTUnwrap(
+      MountedNetworkShare(source: source, mountPoint: mountPoint, fileSystemType: fileSystemType))
   }
 
   private func adoption(for share: NetworkShare, at mountPoint: String)
@@ -207,7 +224,7 @@ final class NetworkShareParsingTests: XCTestCase {
     // Y is listed first and was once adopted onto X's mount point.
     let y = NetworkShare(name: "Y", server: "serverY", sharePath: "public", username: "")
     let x = NetworkShare(name: "X", server: "serverX", sharePath: "public", username: "")
-    let xMount = try mount("//serverX/public on /Users/me/mountmate/X (smbfs, nodev)")
+    let xMount = try mount("//serverX/public", at: "/Users/me/mountmate/X", "smbfs")
 
     let result = NetworkMountManager.attributeMounts(
       [xMount], to: [y, x], adoptions: [y.id: adoption(for: y, at: "/Users/me/mountmate/X")])
@@ -219,7 +236,7 @@ final class NetworkShareParsingTests: XCTestCase {
   func testAdoptionClaimsOnlyUnmatchedMounts() throws {
     let share = NetworkShare(name: "NAS", server: "nas", sharePath: "public", username: "")
     // Mounted under its IP address (host differs), adopted at /Volumes/public.
-    let ipMount = try mount("//192.168.1.5/public on /Volumes/public (smbfs, nodev)")
+    let ipMount = try mount("//192.168.1.5/public", at: "/Volumes/public", "smbfs")
     let adoptions = [share.id: adoption(for: share, at: "/Volumes/public")]
 
     let result = NetworkMountManager.attributeMounts([ipMount], to: [share], adoptions: adoptions)
@@ -227,7 +244,7 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertEqual(result.adoptions, adoptions)
 
     // Once the share also has an exact match, the adoption is not used.
-    let exact = try mount("//nas/public on /Users/me/mountmate/NAS (smbfs, nodev)")
+    let exact = try mount("//nas/public", at: "/Users/me/mountmate/NAS", "smbfs")
     let both = NetworkMountManager.attributeMounts(
       [ipMount, exact], to: [share], adoptions: adoptions)
     XCTAssertEqual(both.owners, [nil, share.id])
@@ -236,7 +253,7 @@ final class NetworkShareParsingTests: XCTestCase {
 
   func testAdoptionIsDroppedWhenEndpointChangesOrMountDisappears() throws {
     let share = NetworkShare(name: "NAS", server: "nas", sharePath: "public", username: "")
-    let ipMount = try mount("//192.168.1.5/public on /Volumes/public (smbfs, nodev)")
+    let ipMount = try mount("//192.168.1.5/public", at: "/Volumes/public", "smbfs")
     let adoptions = [share.id: adoption(for: share, at: "/Volumes/public")]
 
     var editedServer = share
@@ -374,9 +391,10 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertNil(NetworkMountManager.netFSStatusName(-36))
   }
 
-  func testMalformedLinesAreIgnored() {
-    XCTAssertNil(MountedNetworkShare(mountOutputLine: "no separator here (smbfs)"))
-    XCTAssertNil(MountedNetworkShare(mountOutputLine: "unclosed paren (smbfs"))
-    XCTAssertNil(MountedNetworkShare(mountOutputLine: ""))
+  func testEntriesWithoutSourceOrMountPointAreIgnored() {
+    XCTAssertNil(MountedNetworkShare(source: "", mountPoint: "/Volumes/x", fileSystemType: "smbfs"))
+    XCTAssertNil(MountedNetworkShare(source: "//nas/x", mountPoint: "", fileSystemType: "smbfs"))
+    XCTAssertNil(
+      MountedNetworkShare(source: "//nas/x", mountPoint: "/Volumes/x", fileSystemType: ""))
   }
 }

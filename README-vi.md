@@ -151,6 +151,8 @@ Danh sách ổ được dựng bởi `DiskListParser` (`MountMate/Managers/DiskL
 
 Mã cho `/etc/fstab` chia làm ba: `FstabRules` (`MountMate/Managers/FstabRules.swift`) dựng, tìm, xoá các dòng của MountMate và kiểm từng trường, toàn hàm thuần không đụng file; `FstabVolumeLookup` hỏi `diskutil` định dạng của volume và volume có được chặn lúc khởi động không; `FstabWriter` đọc `/etc/fstab` và ghi nó qua hộp thoại mật khẩu quản trị. Kiểm thay đổi quy tắc trong `FstabRulesTests` và `BlockedFstabRuleTests`; lệnh đặc quyền được kiểm trên một file tạm, không bao giờ trên `/etc/fstab` thật.
 
+Share mạng được đọc từ bảng mount của kernel bởi `MountTable` (`MountMate/Utilities/MountTable.swift`, `getfsstat` với `MNT_NOWAIT`: không chạy tiến trình, không bao giờ chờ server). `MountedNetworkShare` (`MountMate/Models/`) là một mục SMB/NFS/AFP và biết nó là share đã lưu nào; `NetworkMountManager.importedShare(from:)` biến share kết nối trong Finder thành `NetworkShare` để nhập, còn câu lỗi NetFS nằm ở `MountMate/Utilities/NetFSErrorMessages.swift`. Test: `MountTableTests` và `NetworkShareParsingTests`.
+
 CI chạy cả hai trên mỗi pull request và mỗi push vào `main`; kiểm tra style ở chế độ strict. Xem quy ước trong [CONTRIBUTING.md](CONTRIBUTING.md) (bằng tiếng Anh).
 
 ### Phát hành

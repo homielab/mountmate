@@ -4,158 +4,6 @@ import AppKit
 import Foundation
 import NetFS
 
-/// A network mount reported by `/sbin/mount`, independent of protocol.
-struct MountedNetworkShare {
-  let source: String
-  let mountPoint: String
-  let shareProtocol: ShareProtocol
-
-  init?(mountOutputLine: String) {
-    // `/sbin/mount` prints `<source> on <mount point> (<fs>, <options>)`.
-    // The mount point is printed verbatim and may itself contain " on " or
-    // parentheses, so the options are the LAST " (" group, which must close
-    // at the end of the line, and the source ends at the FIRST " on " (SMB
-    // and AFP sources are percent-encoded and never contain a literal space).
-    // Matching the filesystem name only inside that trailing group means a
-    // mount point containing e.g. "smbfs" is never mistaken for one.
-    let line = mountOutputLine.trimmingCharacters(in: .whitespaces)
-    guard line.hasSuffix(")"),
-      let openRange = line.range(of: " (", options: .backwards)
-    else { return nil }
-
-    let options = line[openRange.upperBound..<line.index(before: line.endIndex)]
-    let fileSystem =
-      options
-      .split(separator: ",")
-      .first?
-      .trimmingCharacters(in: .whitespaces)
-      .lowercased() ?? ""
-
-    guard let shareProtocol = ShareProtocol.from(mountFilesystemName: fileSystem) else {
-      return nil
-    }
-
-    let mountPart = line[..<openRange.lowerBound]
-    guard let onRange = mountPart.range(of: " on ") else { return nil }
-
-    let source = mountPart[..<onRange.lowerBound].trimmingCharacters(in: .whitespaces)
-    let mountPoint = mountPart[onRange.upperBound...].trimmingCharacters(in: .whitespaces)
-    guard !source.isEmpty, !mountPoint.isEmpty else { return nil }
-
-    self.source = source
-    self.mountPoint = mountPoint
-    self.shareProtocol = shareProtocol
-  }
-
-  /// Normalized server + path of a network share, compared exactly (never by
-  /// substring, so "nas" does not match "nas2" or "nas.backup.lan").
-  struct Endpoint: Equatable {
-    let host: String
-    let path: String
-  }
-
-  /// The endpoint this mount is connected to, parsed from its mount source.
-  var endpoint: Endpoint? {
-    Self.endpoint(fromMountSource: source, shareProtocol: shareProtocol)
-  }
-
-  /// True when this mount is the given saved share (same host and share path).
-  func matches(_ share: NetworkShare) -> Bool {
-    guard let mounted = endpoint, !mounted.host.isEmpty else { return false }
-    return mounted == Self.endpoint(for: share)
-  }
-
-  /// Parses a `/sbin/mount` source:
-  /// - SMB/AFP: `//[user[;domain]@]host[:port]/share[/sub]` (percent-encoded)
-  /// - NFS: `host:/export/path` or `[v6addr]:/export/path`
-  static func endpoint(fromMountSource source: String, shareProtocol: ShareProtocol)
-    -> Endpoint?
-  {
-    switch shareProtocol {
-    case .nfs:
-      var rest = Substring(source)
-      let host: Substring
-      if rest.hasPrefix("[") {
-        guard let close = rest.firstIndex(of: "]") else { return nil }
-        host = rest[rest.index(after: rest.startIndex)..<close]
-        rest = rest[rest.index(after: close)...]
-        guard rest.hasPrefix(":") else { return nil }
-        rest = rest.dropFirst()
-      } else {
-        guard let colon = rest.firstIndex(of: ":") else { return nil }
-        host = rest[..<colon]
-        rest = rest[rest.index(after: colon)...]
-      }
-      return Endpoint(host: normalizedHost(String(host)), path: normalizedPath(String(rest)))
-    case .smb, .afp:
-      var rest = Substring(source)
-      while rest.hasPrefix("/") { rest = rest.dropFirst() }
-      let authority: Substring
-      let path: Substring
-      if let slash = rest.firstIndex(of: "/") {
-        authority = rest[..<slash]
-        path = rest[slash...]
-      } else {
-        authority = rest
-        path = ""
-      }
-      return Endpoint(host: normalizedHost(String(authority)), path: normalizedPath(String(path)))
-    }
-  }
-
-  /// The endpoint a saved share points at, normalized like a mount source.
-  static func endpoint(for share: NetworkShare) -> Endpoint {
-    Endpoint(host: normalizedHost(share.server), path: normalizedPath(share.sharePath))
-  }
-
-  /// Reduces a host (as typed by the user or printed in a mount source) to a
-  /// comparable form: drops any scheme, path, `user@` and `:port`, removes
-  /// IPv6 brackets, percent-decodes, drops a trailing dot and lowercases.
-  static func normalizedHost(_ raw: String) -> String {
-    var host = Substring(raw.trimmingCharacters(in: .whitespacesAndNewlines))
-    if let schemeEnd = host.range(of: "://") {
-      host = host[schemeEnd.upperBound...]
-    }
-    while host.hasPrefix("/") { host = host.dropFirst() }
-    if let slash = host.firstIndex(of: "/") {
-      host = host[..<slash]
-    }
-    // Usernames are percent-encoded in mount sources, so the last literal
-    // "@" always separates user info from the host.
-    if let at = host.lastIndex(of: "@") {
-      host = host[host.index(after: at)...]
-    }
-
-    var result: String
-    if host.hasPrefix("["), let close = host.firstIndex(of: "]") {
-      result = String(host[host.index(after: host.startIndex)..<close])
-    } else if host.filter({ $0 == ":" }).count == 1, let colon = host.firstIndex(of: ":") {
-      // `host:port`. A bare IPv6 address has several colons and is kept.
-      result = String(host[..<colon])
-    } else {
-      result = String(host)
-    }
-    result = result.removingPercentEncoding ?? result
-    while result.hasSuffix(".") { result.removeLast() }
-    result = result.lowercased()
-    // Finder mounts found via Bonjour use the service name
-    // ("NAS._smb._tcp.local"): treat it, "nas.local" and "nas" as one host.
-    for suffix in ["._smb._tcp.local", "._afpovertcp._tcp.local", ".local"]
-    where result.hasSuffix(suffix) {
-      result.removeLast(suffix.count)
-      break
-    }
-    return result
-  }
-
-  /// Percent-decodes a share path, strips surrounding slashes and lowercases
-  /// it (SMB/AFP share names are case-insensitive).
-  static func normalizedPath(_ raw: String) -> String {
-    let decoded = raw.removingPercentEncoding ?? raw
-    return decoded.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-  }
-}
-
 struct ShareUsage: Equatable {
   let totalBytes: Int64
   let freeBytes: Int64
@@ -225,7 +73,7 @@ class NetworkMountManager: ObservableObject {
     refreshMountStatus()
 
     // Refresh share status on mount/unmount events (debounced so a burst of
-    // events runs `/sbin/mount` once), instead of on every disk refresh.
+    // events reads the mount table once), instead of on every disk refresh.
     let center = NSWorkspace.shared.notificationCenter
     for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification] {
       workspaceObservers.append(
@@ -264,14 +112,15 @@ class NetworkMountManager: ObservableObject {
   private func refreshMountStatus(
     savedShares: [NetworkShare], ticket: Int, completion: (() -> Void)?
   ) {
-    let result = runProcess(executable: "/sbin/mount", arguments: [])
-    guard result.succeeded, !result.stdout.isEmpty else {
+    guard let mountedShares = MountTable.networkShares() else {
+      Log.network.error("Could not read the mount table (getfsstat failed).")
       DispatchQueue.main.async { completion?() }
       return
     }
-    let output = result.stdout
+    Log.network.debug(
+      "Mount table: \(mountedShares.count, privacy: .public) network share(s).")
 
-    let parsedData = self.parseMountedShares(from: output, savedShares: savedShares)
+    let parsedData = self.parseMountedShares(mountedShares, savedShares: savedShares)
 
     DispatchQueue.main.async {
       guard self.mountStatusGate.shouldApply(ticket) else {
@@ -342,9 +191,9 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
-  private func parseMountedShares(from mountOutput: String, savedShares shares: [NetworkShare])
-    -> (mountedUUIDs: Set<UUID>, manualShares: [NetworkShare], mountPoints: [UUID: String])
-  {
+  private func parseMountedShares(
+    _ mountedShares: [MountedNetworkShare], savedShares shares: [NetworkShare]
+  ) -> (mountedUUIDs: Set<UUID>, manualShares: [NetworkShare], mountPoints: [UUID: String]) {
     // Refreshes can run concurrently on background threads.
     parseLock.lock()
     defer { parseLock.unlock() }
@@ -353,10 +202,6 @@ class NetworkMountManager: ObservableObject {
     var mountPoints = [UUID: String]()
     var currentManualShareMountPoints = Set<String>()
     var manualShares = [NetworkShare]()
-
-    let mountedShares = mountOutput.components(separatedBy: .newlines).compactMap {
-      MountedNetworkShare(mountOutputLine: $0)
-    }
 
     // Which saved share each mount is; also drops stale adoptions.
     let attribution = Self.attributeMounts(mountedShares, to: shares, adoptions: adoptions)
@@ -371,68 +216,16 @@ class NetworkMountManager: ObservableObject {
         if mountPoints[savedShare.id] == nil {
           mountPoints[savedShare.id] = mountedShare.mountPoint
         }
-      } else {
-        // It's a manually connected share
-        currentManualShareMountPoints.insert(mountedShare.mountPoint)
-
-        if let existing = manualSharesDictionary[mountedShare.mountPoint] {
-          manualShares.append(existing)
-          mountPoints[existing.id] = mountedShare.mountPoint
-        } else {
-          // Parse the source
-          var username = ""
-          var server = ""
-          var sharePath = ""
-
-          switch mountedShare.shareProtocol {
-          case .nfs:
-            // NFS sources look like `server:/export/path`.
-            let withoutSlashes = mountedShare.source
-              .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            let components = withoutSlashes.components(separatedBy: ":")
-            server = components.first ?? ""
-            sharePath = components.dropFirst().joined(separator: ":")
-              .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-          default:
-            let urlString = mountedShare.source.replacingOccurrences(
-              of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
-            if let url = URL(string: urlString) {
-              username = url.user ?? ""
-              server = url.host ?? ""
-              sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            } else {
-              server = "Unknown"
-              sharePath = "Share"
-            }
-          }
-
-          if sharePath.isEmpty {
-            sharePath = mountedShare.mountPoint.components(separatedBy: "/").last ?? "Share"
-          }
-
-          // The last path component, so the name (the default mount folder
-          // if imported) never contains "/" ("volume1/data" → "data").
-          let name = sharePath.split(separator: "/").last.map(String.init) ?? sharePath
-          let newShare = NetworkShare(
-            id: UUID(),
-            name: name,
-            server: server,
-            sharePath: sharePath,
-            username: username,
-            mountAtLogin: false,
-            keepMounted: false,
-            shareProtocol: mountedShare.shareProtocol,
-            // Not the current mount path: if this share is imported, its
-            // later mounts must use MountMate's default user-owned location
-            // (e.g. not /Volumes/public, which needs admin rights). The
-            // current location is tracked in `mountPointsByShareID`.
-            customMountPoint: nil
-          )
-          manualSharesDictionary[mountedShare.mountPoint] = newShare
-          manualShares.append(newShare)
-          mountPoints[newShare.id] = mountedShare.mountPoint
-        }
+        continue
       }
+      // A share connected outside MountMate (Finder, Terminal…). Keep the
+      // same NetworkShare (and ID) while it stays mounted at this path.
+      currentManualShareMountPoints.insert(mountedShare.mountPoint)
+      let manualShare =
+        manualSharesDictionary[mountedShare.mountPoint] ?? Self.importedShare(from: mountedShare)
+      manualSharesDictionary[mountedShare.mountPoint] = manualShare
+      manualShares.append(manualShare)
+      mountPoints[manualShare.id] = mountedShare.mountPoint
     }
 
     // Clean up old manual shares that are no longer mounted
@@ -441,6 +234,74 @@ class NetworkMountManager: ObservableObject {
     }
 
     return (mountedUUIDs, manualShares, mountPoints)
+  }
+
+  /// The share MountMate offers to import for a mount it did not make:
+  /// server, share path and user from the mount source (`server:/export`
+  /// for NFS, `//[user@]server/share` for SMB and AFP), named after the last
+  /// path component. When the source cannot be read, the server is
+  /// "Unknown Server" and the share path the mount folder's name (or
+  /// "Shared Folder"). `localize` is replaceable so tests are independent of
+  /// the system language.
+  static func importedShare(
+    from mountedShare: MountedNetworkShare,
+    localize: (String) -> String = { NSLocalizedString($0, comment: "Imported network share") }
+  ) -> NetworkShare {
+    var username = ""
+    var server = ""
+    var sharePath = ""
+
+    switch mountedShare.shareProtocol {
+    case .nfs:
+      // NFS sources look like `server:/export/path` or `[v6addr]:/export`.
+      var rest = Substring(mountedShare.source)
+      if rest.hasPrefix("["), let close = rest.firstIndex(of: "]") {
+        server = String(rest[rest.index(after: rest.startIndex)..<close])
+        rest = rest[rest.index(after: close)...]
+      } else if let colon = rest.firstIndex(of: ":") {
+        server = String(rest[..<colon])
+        rest = rest[colon...]
+      } else {
+        server = String(rest)
+        rest = ""
+      }
+      if rest.hasPrefix(":") { rest = rest.dropFirst() }
+      sharePath = rest.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    case .smb, .afp:
+      let urlString = mountedShare.source.replacingOccurrences(
+        of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
+      if let url = URL(string: urlString) {
+        username = url.user ?? ""
+        server = url.host ?? ""
+        sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      }
+    }
+
+    if server.isEmpty {
+      server = localize("Unknown Server")
+    }
+    if sharePath.isEmpty {
+      let folder = (mountedShare.mountPoint as NSString).lastPathComponent
+      sharePath = folder.isEmpty || folder == "/" ? localize("Shared Folder") : folder
+    }
+
+    // The last path component, so the name (the default mount folder if
+    // imported) never contains "/" ("volume1/data" → "data").
+    let name = sharePath.split(separator: "/").last.map(String.init) ?? sharePath
+    return NetworkShare(
+      name: name,
+      server: server,
+      sharePath: sharePath,
+      username: username,
+      mountAtLogin: false,
+      keepMounted: false,
+      shareProtocol: mountedShare.shareProtocol,
+      // Not the current mount path: if this share is imported, its later
+      // mounts must use MountMate's default user-owned location (e.g. not
+      // /Volumes/public, which needs admin rights). The current location is
+      // tracked in `mountPointsByShareID`.
+      customMountPoint: nil
+    )
   }
 
   /// Mounts a saved share. Concurrent requests for the same share share one
@@ -484,7 +345,7 @@ class NetworkMountManager: ObservableObject {
       }
     }
 
-    // Everything below can block (`/sbin/mount`, the Keychain, NetFS), so
+    // Everything below can block (`mount_nfs`, the Keychain, NetFS), so
     // keep it all off the main thread and the menu never freezes.
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard let self else { return }
@@ -920,182 +781,6 @@ class NetworkMountManager: ObservableObject {
     return finalStatus
   }
 
-  /// Symbolic name of a NetFS / errno status, shown next to the number in
-  /// error details and logs; nil for codes without a well-known name.
-  static func netFSStatusName(_ status: Int32) -> String? {
-    switch status {
-    case EPERM: return "EPERM"
-    case ENOENT: return "ENOENT"
-    case EACCES: return "EACCES"
-    case EBUSY: return "EBUSY"
-    case EEXIST: return "EEXIST"
-    case ETIMEDOUT: return "ETIMEDOUT"
-    case ECONNREFUSED: return "ECONNREFUSED"
-    case ENETDOWN: return "ENETDOWN"
-    case ENETUNREACH: return "ENETUNREACH"
-    case EHOSTDOWN: return "EHOSTDOWN"
-    case EHOSTUNREACH: return "EHOSTUNREACH"
-    case EAUTH: return "EAUTH"
-    case -128: return "userCanceledErr"
-    case -5045: return "ENETFSPWDNEEDSCHANGE"
-    case -5046: return "ENETFSPWDPOLICY"
-    case -5999: return "ENETFSACCOUNTRESTRICTED"
-    case -5998: return "ENETFSNOSHARESAVAIL"
-    case -5997: return "ENETFSNOAUTHMECHSUPP"
-    case -5996: return "ENETFSNOPROTOVERSSUPP"
-    default: return nil
-    }
-  }
-
-  /// Splits an SMB login into domain and user name. Accepts the Windows
-  /// form "DOMAIN\user", the smbfs form "DOMAIN;user" and the UPN form
-  /// "user@domain" (split at the last "@"). Without a domain, or when one
-  /// side of the separator is empty, `domain` is nil and `user` is the input.
-  static func smbLoginParts(_ username: String) -> (domain: String?, user: String) {
-    if let separator = username.firstIndex(where: { $0 == "\\" || $0 == ";" }) {
-      let domain = String(username[..<separator])
-      let user = String(username[username.index(after: separator)...])
-      if !domain.isEmpty, !user.isEmpty { return (domain, user) }
-    } else if let at = username.lastIndex(of: "@") {
-      let user = String(username[..<at])
-      let domain = String(username[username.index(after: at)...])
-      if !domain.isEmpty, !user.isEmpty { return (domain, user) }
-    }
-    return (nil, username)
-  }
-
-  /// Maps a failed NetFS / errno status to a readable message: the cause,
-  /// what to check, and the original code as detail ("Error code: 80
-  /// (EAUTH)"). `localize` is replaceable so tests are independent of the
-  /// system language.
-  static func netFSErrorMessage(
-    _ status: Int32, share: NetworkShare, mountPoint: String,
-    homeDirectory: String = FileManager.default.homeDirectoryForCurrentUser.path,
-    localize: (String) -> String = { NSLocalizedString($0, comment: "Network share mount error") }
-  ) -> String {
-    func text(_ key: String, _ arguments: CVarArg...) -> String {
-      String(format: localize(key), arguments: arguments)
-    }
-    // How the user name was understood, or how to give a domain.
-    var loginHint: String? {
-      guard share.shareProtocol == .smb, !share.username.isEmpty else { return nil }
-      let login = smbLoginParts(share.username)
-      if let domain = login.domain {
-        return text("MountMate tried to sign in as “%@” in the domain “%@”.", login.user, domain)
-      }
-      return localize(
-        "If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain."
-      )
-    }
-    let details: String = {
-      if let name = netFSStatusName(status) {
-        return text("Error code: %d (%@)", status, name)
-      }
-      return text("Error code: %d", status)
-    }()
-    func message(_ paragraphs: String?...) -> String {
-      (paragraphs.compactMap { $0 } + [details]).joined(separator: "\n\n")
-    }
-
-    switch status {
-    case EAUTH:
-      return message(
-        text("Authentication failed for “%@”. Check the username and password.", share.name),
-        loginHint)
-    case -128:  // userCanceledErr: NetFS wanted to ask for a login
-      return message(
-        text(
-          "The server “%@” requires a username and password. Enter them in the share’s settings.",
-          share.server))
-    case -5045:  // ENETFSPWDNEEDSCHANGE
-      return message(
-        text(
-          "The password for “%@” has expired or must be changed. Change it on the server (for example by signing in on a Windows PC of the domain), then enter the new password in MountMate.",
-          share.name))
-    case -5046:  // ENETFSPWDPOLICY
-      return message(
-        text(
-          "The server rejected the password for “%@” because of its password policy. Ask the server’s administrator.",
-          share.name))
-    case -5999:  // ENETFSACCOUNTRESTRICTED
-      return message(
-        text(
-          "The account for “%@” is restricted: it may be locked, disabled or not allowed to sign in at this time. Ask the server’s administrator.",
-          share.name))
-    case -5997:  // ENETFSNOAUTHMECHSUPP
-      return message(
-        text(
-          "The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in.",
-          share.server))
-    case -5996:  // ENETFSNOPROTOVERSSUPP
-      return message(
-        text(
-          "The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3.",
-          share.server))
-    case ECONNREFUSED:
-      return message(
-        text(
-          "The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server.",
-          share.server, share.shareProtocol.displayName))
-    case EHOSTUNREACH, EHOSTDOWN, ENETUNREACH, ENETDOWN:
-      return message(
-        text(
-          "Could not connect to the server “%@”. Check that it is turned on and reachable from this network.",
-          share.server))
-    case ETIMEDOUT:
-      return message(
-        text(
-          "Mounting “%@” timed out. Check that the server is reachable and try again.", share.name))
-    case ENOENT:
-      return message(
-        text("The share “%@” was not found on the server “%@”.", share.sharePath, share.server),
-        localize(
-          "Check the spelling of the share name; it is the name the server shares, not a folder path on its disk."
-        ))
-    case -5998:  // ENETFSNOSHARESAVAIL
-      return message(
-        text("The server “%@” has no shares available to this account.", share.server),
-        loginHint)
-    case EEXIST:
-      return message(
-        text(
-          "“%@” is already connected, probably under a different server name (for example in Finder). Disconnect it there and try again.",
-          share.name))
-    case EBUSY:
-      return message(text("Another volume is already mounted at “%@”.", mountPoint))
-    case EPERM, EACCES:
-      if !mountPoint.hasPrefix(homeDirectory + "/") {
-        return message(
-          mountLocationPermissionMessage(share: share, mountPoint: mountPoint, localize: localize))
-      }
-      return message(
-        text("Access to the share “%@” was denied by the server.", share.name),
-        localize("Check that this account is allowed to use the share."),
-        loginHint,
-        share.shareProtocol == .smb
-          ? localize(
-            "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in."
-          ) : nil)
-    default:
-      if status > 0, let description = strerror(status) {
-        return text(
-          "Could not mount “%@”: %@ (error %d).", share.name, String(cString: description), status)
-      }
-      return text("Could not mount “%@” (error %d).", share.name, status)
-    }
-  }
-
-  static func mountLocationPermissionMessage(
-    share: NetworkShare, mountPoint: String,
-    localize: (String) -> String = { NSLocalizedString($0, comment: "Network share mount error") }
-  ) -> String {
-    String(
-      format: localize(
-        "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location."
-      ),
-      share.name, mountPoint)
-  }
-
   private func timeoutMessage(for share: NetworkShare) -> String {
     String(
       format: NSLocalizedString(
@@ -1337,16 +1022,11 @@ class NetworkMountManager: ObservableObject {
     return standardized.lowercased()
   }
 
-  /// Network mounts listed by `/sbin/mount`, or nil if it could not be read.
-  /// This only reads the kernel mount table and never touches the mount
-  /// points themselves, so it cannot hang on an unresponsive server.
+  /// Network mounts in the kernel mount table, or nil if it could not be
+  /// read. This never touches the mount points themselves, so it cannot hang
+  /// on an unresponsive server.
   private func currentMountTable() -> [MountedNetworkShare]? {
-    let result = runProcess(executable: "/sbin/mount", arguments: [])
-    guard result.succeeded, !result.stdout.isEmpty else { return nil }
-    return
-      result.stdout
-      .components(separatedBy: .newlines)
-      .compactMap { MountedNetworkShare(mountOutputLine: $0) }
+    MountTable.networkShares()
   }
 
   /// A mount accepted as a saved share's although its host is spelled
