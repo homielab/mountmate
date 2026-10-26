@@ -500,7 +500,8 @@ class KeepAliveManager: ObservableObject {
     }
   }
 
-  private func recordAttempt(volumeID: String) {
+  /// Internal (not private) for unit tests.
+  func recordAttempt(volumeID: String) {
     retryStateLock.withLock {
       volumeRetries.recordAttempt(volumeID, backoff: backoffDelay(forAttempt:))
     }
@@ -511,9 +512,14 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.withLock { shareRetries.attempt(for: shareID) }
   }
 
-  /// When the share may next be retried (nil: right away). For tests.
+  /// When the share may next be retried (nil: right away).
   func nextRetryDate(forShareID shareID: UUID) -> Date? {
     retryStateLock.withLock { shareRetries.nextFireDate(for: shareID) }
+  }
+
+  /// When the volume may next be retried (nil: right away).
+  func nextRetryDate(forVolumeID volumeID: String) -> Date? {
+    retryStateLock.withLock { volumeRetries.nextFireDate(for: volumeID) }
   }
 
   /// Notification throttle keys: one per keep-alive target.

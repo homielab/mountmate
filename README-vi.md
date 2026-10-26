@@ -40,7 +40,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI
 - **Ignore, Protect, Pin**: chuột phải một phân vùng để **Ignore** (ẩn đi, ví dụ phân vùng hệ thống), **Protect** (không bị "Unmount All" và unmount khi ngủ) hoặc **Pin to Top** (xếp lên đầu); xem lại các danh sách trong Settings → Management
 - **Network Shares**: tự mount SMB, NFS và AFP khi đăng nhập
-- **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập
+- **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập; share hoặc ổ đang chờ sẽ hiện lúc thử lại kế tiếp và nút "Reconnect Now" (kết nối lại ngay)
 - **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
 - **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount mọi ổ tháo được trước khi máy ngủ. **Mount Again on Wake** (mặc định bật, chỉ hiện khi bật unmount khi ngủ) mount lại các ổ đó sau khi thức dậy; ổ bạn tự unmount, ổ đã rút và ổ bị chặn vẫn không được mount. Khi bật thông báo, app báo những ổ không kịp unmount trước khi ngủ

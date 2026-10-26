@@ -248,6 +248,7 @@
 "Keep Alive Footer" = "當標記為「保持掛載」的網路共享或卷宗中斷連線時、網路變更後、系統喚醒時以及登入時，自動重新掛載。";
 "Keep Mounted" = "保持掛載";
 "Reconnecting…" = "正在重新連線…";
+"Reconnect Now" = "立即重新連線";
 "Keep Mounted (Auto-Reconnect)" = "保持掛載（自動重連）";
 "Disable Keep Mounted" = "停用保持掛載";
 "Protocol" = "通訊協定";

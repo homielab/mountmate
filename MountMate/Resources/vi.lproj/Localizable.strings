@@ -248,6 +248,7 @@
 "Keep Alive Footer" = "Tự động kết nối lại sẽ gắn kết lại các ổ đĩa mạng và phân vùng được đánh dấu \"Giữ gắn kết\" khi bị ngắt kết nối, sau khi thay đổi mạng, khi đánh thức máy và khi đăng nhập.";
 "Keep Mounted" = "Giữ gắn kết";
 "Reconnecting…" = "Đang kết nối lại…";
+"Reconnect Now" = "Kết nối lại ngay";
 "Keep Mounted (Auto-Reconnect)" = "Giữ gắn kết (tự động)";
 "Disable Keep Mounted" = "Tắt giữ gắn kết";
 "Protocol" = "Giao thức";

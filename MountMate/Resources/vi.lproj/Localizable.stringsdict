@@ -44,6 +44,34 @@
 			<string>Bị chặn khi khởi động: %d ổ đĩa.</string>
 		</dict>
 	</dict>
+	<key>retry.in.seconds</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>Thử lại sau %d giây</string>
+		</dict>
+	</dict>
+	<key>retry.in.minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>Thử lại sau %d phút</string>
+		</dict>
+	</dict>
 	<key>retry.seconds</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

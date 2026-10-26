@@ -44,6 +44,34 @@
 			<string>啟動時阻止：%d 個磁碟。</string>
 		</dict>
 	</dict>
+	<key>retry.in.seconds</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d 秒後重試</string>
+		</dict>
+	</dict>
+	<key>retry.in.minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d 分鐘後重試</string>
+		</dict>
+	</dict>
 	<key>retry.seconds</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

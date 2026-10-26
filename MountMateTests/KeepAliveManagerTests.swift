@@ -108,6 +108,22 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertEqual(manager.retryAttempt(forShareID: id), 2)
   }
 
+  func testNextRetryDateForVolumeFollowsBackoffAndReconnectNowClearsIt() {
+    let manager = KeepAliveManager.shared
+    let id = "test-volume-\(UUID().uuidString)"
+    XCTAssertNil(manager.nextRetryDate(forVolumeID: id))
+
+    manager.recordAttempt(volumeID: id)
+    let next = manager.nextRetryDate(forVolumeID: id)
+    XCTAssertGreaterThan(next ?? .distantPast, Date())
+
+    manager.sweepNow(resetBackoff: true)
+    let done = expectation(description: "sweep scheduled")
+    DispatchQueue.main.async { done.fulfill() }
+    wait(for: [done], timeout: 5)
+    XCTAssertNil(manager.nextRetryDate(forVolumeID: id))
+  }
+
   func testInterfaceChangeDetectionIgnoresTunnels() {
     typealias Snapshot = KeepAliveManager.InterfaceSnapshot
     let wifi = Snapshot(name: "en0", type: .wifi)

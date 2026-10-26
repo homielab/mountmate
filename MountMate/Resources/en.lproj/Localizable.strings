@@ -252,6 +252,7 @@
 "Keep Alive Footer" = "Keep Alive automatically remounts network shares marked \"Keep Mounted\" and volumes marked \"Keep Mounted\" when they drop, after network changes, on wake, and at login.";
 "Keep Mounted" = "Keep Mounted";
 "Reconnecting…" = "Reconnecting…";
+"Reconnect Now" = "Reconnect Now";
 "Keep Mounted (Auto-Reconnect)" = "Keep Mounted (Auto-Reconnect)";
 "Disable Keep Mounted" = "Disable Keep Mounted";
 "Protocol" = "Protocol";

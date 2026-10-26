@@ -14,6 +14,10 @@ struct NetworkShareMainRow: View {
     isManual || networkManager.mountedShareIDs.contains(share.id)
   }
 
+  private var isReconnecting: Bool {
+    !isMounted && keepAliveManager.reconnectingShareIDs.contains(share.id)
+  }
+
   private var usage: ShareUsage? {
     isMounted ? networkManager.usageByShareID[share.id] : nil
   }
@@ -107,6 +111,12 @@ struct NetworkShareMainRow: View {
             Text(statusText)
               .font(.caption)
               .foregroundStyle(.secondary)
+
+            if isReconnecting {
+              ReconnectStatusLine(
+                nextRetry: { keepAliveManager.nextRetryDate(forShareID: share.id) },
+                reconnectNow: { keepAliveManager.sweepNow(resetBackoff: true) })
+            }
           }
           Spacer()
         }
@@ -121,6 +131,9 @@ struct NetworkShareMainRow: View {
         .rowKeyboardNavigation(primaryAction: toggleMount)
         .accessibilityAction(named: Text(isMounted ? "Eject" : "Mount")) { toggleMount() }
         .accessibilityActions {
+          if isReconnecting {
+            Button("Reconnect Now") { keepAliveManager.sweepNow(resetBackoff: true) }
+          }
           if isMounted {
             let path = NetworkMountManager.shared.getMountPoint(for: share)
             Button("Open in Finder") {
@@ -161,6 +174,13 @@ struct NetworkShareMainRow: View {
       .padding(.vertical, 4)
       .padding(.horizontal, 4)
       .contextMenu {
+        if isReconnecting {
+          Button {
+            keepAliveManager.sweepNow(resetBackoff: true)
+          } label: {
+            Label("Reconnect Now", systemImage: "arrow.clockwise")
+          }
+        }
         if isMounted {
           let path = NetworkMountManager.shared.getMountPoint(for: share)
           Button {

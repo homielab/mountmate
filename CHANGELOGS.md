@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Reconnect Now**: a share or volume that Keep Alive is waiting to reconnect now shows "Retrying in N seconds" under "Reconnecting…", with a "Reconnect Now" button (also in the right-click menu) that retries right away instead of waiting out the backoff. The countdown only updates while the popover is open.
 - **Reconnecting icon**: while Keep Alive is reconnecting a share or volume, the menu bar icon shows a Wi-Fi badge (VoiceOver says "Reconnecting") and returns to normal once everything is connected.
 
 - **Copy Diagnostics**: Settings → General → Logs has a "Copy Diagnostics" button that puts the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log on the clipboard, ready to paste into a bug report. Passwords, paths, and disk and share names are left out.

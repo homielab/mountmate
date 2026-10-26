@@ -248,6 +248,7 @@
 "Keep Alive Footer" = "Le maintien actif remonte automatiquement les partages réseau marqués « Maintenir monté » et les volumes marqués « Maintenir monté » lorsqu'ils se déconnectent, après un changement de réseau, au réveil et à l'ouverture de session.";
 "Keep Mounted" = "Maintenir monté";
 "Reconnecting…" = "Reconnexion…";
+"Reconnect Now" = "Reconnecter maintenant";
 "Keep Mounted (Auto-Reconnect)" = "Maintenir monté (reconnexion auto)";
 "Disable Keep Mounted" = "Désactiver le maintien monté";
 "Protocol" = "Protocole";

@@ -248,6 +248,7 @@
 "Keep Alive Footer" = "当标记为“保持挂载”的网络共享或宗卷断开时、网络切换后、系统唤醒时以及登录时，自动重新挂载它们。";
 "Keep Mounted" = "保持挂载";
 "Reconnecting…" = "正在重新连接…";
+"Reconnect Now" = "立即重新连接";
 "Keep Mounted (Auto-Reconnect)" = "保持挂载（自动重连）";
 "Disable Keep Mounted" = "停用保持挂载";
 "Protocol" = "协议";

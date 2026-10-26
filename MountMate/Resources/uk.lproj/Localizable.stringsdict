@@ -62,6 +62,46 @@
 			<string>Блокується під час запуску: %d диска.</string>
 		</dict>
 	</dict>
+	<key>retry.in.seconds</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Повтор через %d секунду</string>
+			<key>few</key>
+			<string>Повтор через %d секунди</string>
+			<key>many</key>
+			<string>Повтор через %d секунд</string>
+			<key>other</key>
+			<string>Повтор через %d секунди</string>
+		</dict>
+	</dict>
+	<key>retry.in.minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Повтор через %d хвилину</string>
+			<key>few</key>
+			<string>Повтор через %d хвилини</string>
+			<key>many</key>
+			<string>Повтор через %d хвилин</string>
+			<key>other</key>
+			<string>Повтор через %d хвилини</string>
+		</dict>
+	</dict>
 	<key>retry.seconds</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

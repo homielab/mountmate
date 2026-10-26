@@ -50,6 +50,38 @@
 			<string>Blocked at startup: %d disks.</string>
 		</dict>
 	</dict>
+	<key>retry.in.seconds</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Retrying in %d second</string>
+			<key>other</key>
+			<string>Retrying in %d seconds</string>
+		</dict>
+	</dict>
+	<key>retry.in.minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Retrying in %d minute</string>
+			<key>other</key>
+			<string>Retrying in %d minutes</string>
+		</dict>
+	</dict>
 	<key>retry.seconds</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

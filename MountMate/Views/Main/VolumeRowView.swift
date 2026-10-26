@@ -159,6 +159,11 @@ struct VolumeRowView: View {
                 Text("Reconnecting…")
                   .font(.caption)
                   .foregroundStyle(.secondary)
+                if let id = currentVolume.compositeId {
+                  ReconnectStatusLine(
+                    nextRetry: { KeepAliveManager.shared.nextRetryDate(forVolumeID: id) },
+                    reconnectNow: { KeepAliveManager.shared.sweepNow(resetBackoff: true) })
+                }
               } else {
                 Text("Unmounted")
                   .font(.caption)
@@ -204,6 +209,9 @@ struct VolumeRowView: View {
           toggleMount()
         }
         .accessibilityActions {
+          if state.isReconnecting, !currentVolume.isMounted {
+            Button("Reconnect Now") { KeepAliveManager.shared.sweepNow(resetBackoff: true) }
+          }
           if currentVolume.isMounted, let path = currentVolume.mountPoint {
             Button("Open in Finder") {
               NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
@@ -305,6 +313,13 @@ struct VolumeRowView: View {
 
   @ViewBuilder
   private var contextMenuItems: some View {
+    if state.isReconnecting, !volume.isMounted {
+      Button {
+        KeepAliveManager.shared.sweepNow(resetBackoff: true)
+      } label: {
+        Label("Reconnect Now", systemImage: "arrow.clockwise")
+      }
+    }
     if volume.isMounted {
       Button {
         manager.unmount(volume: volume)
