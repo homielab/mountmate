@@ -420,3 +420,11 @@
 "MountMate %@ is available" = "Đã có MountMate %@";
 "View…" = "Xem…";
 "Accessibility Update Available" = "Có bản cập nhật";
+
+/* Usage ring VoiceOver, Full Disk Access status in Settings */
+"Accessibility Percent Used" = "Đã dùng %d%%";
+"Full Disk Access" = "Truy cập Toàn bộ Đĩa";
+"Granted" = "Đã cấp";
+"Not Granted" = "Chưa cấp";
+"Permissions" = "Quyền";
+"Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Truy cập Toàn bộ Đĩa cho phép MountMate thấy mọi loại ổ đĩa và đọc thông tin lưu trữ. Bật cho MountMate trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";

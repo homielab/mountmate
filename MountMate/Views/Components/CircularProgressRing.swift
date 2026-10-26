@@ -31,5 +31,16 @@ struct CircularProgressRing: View {
         .rotationEffect(.degrees(-90))
         .animation(.easeInOut(duration: 0.3), value: progress)
     }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(Text(Self.usedLabel(for: progress)))
+  }
+
+  /// VoiceOver text such as "42% used".
+  static func usedLabel(for progress: Double, bundle: Bundle = .main) -> String {
+    let percent = Int((max(0.0, min(1.0, progress)) * 100).rounded())
+    return String(
+      format: NSLocalizedString(
+        "Accessibility Percent Used", bundle: bundle, comment: "VoiceOver value of a usage ring"),
+      percent)
   }
 }

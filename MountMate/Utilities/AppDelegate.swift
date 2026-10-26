@@ -158,11 +158,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     Log.app.info("Checking for Full Disk Access permission")
 
     DispatchQueue.global(qos: .userInitiated).async {
-      do {
-        _ = try FileManager.default.contentsOfDirectory(
-          atPath: "/Library/Application Support/com.apple.TCC")
+      if FullDiskAccessChecker.currentlyGranted() {
         Log.app.info("Full Disk Access is already granted.")
-      } catch {
+      } else {
         Log.app.notice("Full Disk Access not granted. Prompting user.")
 
         DispatchQueue.main.async {
@@ -187,11 +185,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let response = alert.runModal()
 
     if response == .alertFirstButtonReturn {
-      if let url = URL(
-        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
-      {
-        NSWorkspace.shared.open(url)
-      }
+      FullDiskAccessChecker.openSystemSettings()
     }
   }
 

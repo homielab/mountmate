@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Full Disk Access** now shows in Settings → General → Permissions as "Granted" or "Not Granted", with an "Open System Settings" button when it is missing. It updates when you come back from System Settings, so declining the one-time prompt no longer hides the problem.
 - Network share status is now read straight from the system mount table instead of running `/sbin/mount` and parsing its text on every refresh, so Keep Alive checks start no process and mount folders whose names contain " on " or parentheses can no longer confuse it. A share connected in Finder whose server or share name cannot be read now shows "Unknown Server" / "Shared Folder" in your language, and NFS shares on an IPv6 server are imported with the right server and path.
 - A busy network share no longer gets a pointless second mount attempt after a network change: if the unmount fails and the share is still mounted, MountMate keeps it and logs why. Mount All and the error alerts now agree on what a locked encrypted volume looks like.
 - The update window now shows what is new in the offered version (its notes from this changelog), and the update feed keeps the last three versions instead of only the newest one.
@@ -35,6 +36,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **VoiceOver**: each volume, disk and network share row is now read as one item, and the usage ring ("42% used"), the warning triangle (with the error text) and the "Reconnecting…" spinner have spoken labels. The dot on a network share is filled when mounted and hollow when not, instead of relying on colour.
 - When reading the disk list fails (for example a slow or unresponsive disk), MountMate keeps showing the last known disks with the error banner instead of an empty list, and a slow network share check can no longer overwrite a newer one with outdated mount status.
 - Share passwords are now hidden in every kind of share URL shown in error messages (also `//user:password@server/share`), "Mount All" no longer skips a volume just because it is named "EFI", and the remaining English-only network share errors and the "Could not eject" alert are translated.
 - Counts and durations in the interface (blocked disks, imported shares, retry intervals, the idle-unmount notice) now use proper plural forms, including the three forms Russian and Ukrainian need ("1 диск", "2 диска", "5 дисков") and "Every 1 minute" instead of "Every 1 minutes". Failed mount, unmount and eject alerts are now complete translated sentences instead of a sentence with a translated verb inserted, which read wrongly in French, Russian, Ukrainian and Vietnamese.

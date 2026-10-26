@@ -94,6 +94,7 @@ struct VolumeRowView: View {
                 .font(.caption)
                 .foregroundStyle(.orange)
                 .help(error)
+                .accessibilityLabel(Text(error))
             } else if currentVolume.isMounted, let percentage = currentVolume.usagePercentage {
               CircularProgressRing(
                 progress: percentage, color: CircularProgressRing.usageColor(for: percentage),
@@ -104,7 +105,12 @@ struct VolumeRowView: View {
                 .controlSize(.mini)
                 .help(
                   NSLocalizedString(
-                    "Reconnecting…", comment: "Keep-alive reconnect tooltip"))
+                    "Reconnecting…", comment: "Keep-alive reconnect tooltip")
+                )
+                .accessibilityLabel(
+                  Text(
+                    NSLocalizedString(
+                      "Reconnecting…", comment: "Keep-alive reconnect tooltip")))
             }
           }
           .frame(width: 24, alignment: .center)
@@ -177,6 +183,7 @@ struct VolumeRowView: View {
           }
           Spacer()
         }
+        .accessibilityElement(children: .combine)
         .contentShape(Rectangle())
         .onTapGesture {
           if currentVolume.isMounted, let mountPoint = currentVolume.mountPoint {

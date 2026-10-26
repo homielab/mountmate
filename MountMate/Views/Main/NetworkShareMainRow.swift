@@ -47,10 +47,18 @@ struct NetworkShareMainRow: View {
               .foregroundStyle(isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
               .overlay(alignment: .bottomTrailing) {
                 if usage == nil {
-                  Circle()
-                    .fill(isMounted ? Color.green : Color.secondary.opacity(0.4))
-                    .frame(width: 6, height: 6)
-                    .offset(x: 2, y: 2)
+                  // Filled when mounted, hollow when not, so the state does not
+                  // depend on colour. The status line below says it in words.
+                  Group {
+                    if isMounted {
+                      Circle().fill(Color.green)
+                    } else {
+                      Circle().strokeBorder(Color.secondary.opacity(0.6), lineWidth: 1)
+                    }
+                  }
+                  .frame(width: 6, height: 6)
+                  .offset(x: 2, y: 2)
+                  .accessibilityHidden(true)
                 }
               }
 
@@ -77,6 +85,7 @@ struct NetworkShareMainRow: View {
           }
           Spacer()
         }
+        .accessibilityElement(children: .combine)
         .contentShape(Rectangle())
         .onTapGesture {
           if isMounted {

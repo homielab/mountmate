@@ -55,6 +55,7 @@ struct GeneralSettingsView: View {
     return "en"
   }
 
+  @State private var fullDiskAccessGranted: Bool?
   @State private var selectedLanguage: String = GeneralSettingsView.currentLanguageSelection()
 
   @State private var showRestartAlert = false
@@ -127,6 +128,30 @@ struct GeneralSettingsView: View {
         }
       } header: {
         Label("Display", systemImage: "macwindow")
+      }
+
+      if FullDiskAccessChecker.isApplicable, let granted = fullDiskAccessGranted {
+        Section {
+          LabeledContent {
+            HStack(spacing: 8) {
+              Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(granted ? Color.green : Color.orange)
+                .accessibilityHidden(true)
+              Text(granted ? "Granted" : "Not Granted")
+              if !granted {
+                Button("Open System Settings") { FullDiskAccessChecker.openSystemSettings() }
+                  .controlSize(.small)
+              }
+            }
+          } label: {
+            Label("Full Disk Access", systemImage: "lock.shield")
+          }
+          .help(
+            "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security."
+          )
+        } header: {
+          Label("Permissions", systemImage: "hand.raised")
+        }
       }
 
       Section {
@@ -305,10 +330,15 @@ struct GeneralSettingsView: View {
     .formStyle(.grouped)
     .padding(.horizontal)
     // Pick up a Login Items approval made in System Settings.
-    .onAppear { launchManager.refreshStatus() }
+    .onAppear {
+      launchManager.refreshStatus()
+      refreshFullDiskAccess()
+    }
     .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))
     {
-      _ in launchManager.refreshStatus()
+      _ in
+      launchManager.refreshStatus()
+      refreshFullDiskAccess()
     }
 
     .alert("Restart Required", isPresented: $showRestartAlert) {
@@ -401,5 +431,16 @@ struct GeneralSettingsView: View {
       return
     }
     NSApplication.shared.terminate(nil)
+  }
+}
+
+extension GeneralSettingsView {
+  /// Re-reads the permission, e.g. after it was granted in System Settings.
+  fileprivate func refreshFullDiskAccess() {
+    guard FullDiskAccessChecker.isApplicable else { return }
+    DispatchQueue.global(qos: .userInitiated).async {
+      let granted = FullDiskAccessChecker.currentlyGranted()
+      DispatchQueue.main.async { fullDiskAccessGranted = granted }
+    }
   }
 }

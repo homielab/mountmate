@@ -420,3 +420,11 @@
 "MountMate %@ is available" = "Доступна версія MountMate %@";
 "View…" = "Відкрити…";
 "Accessibility Update Available" = "Доступне оновлення";
+
+/* Usage ring VoiceOver, Full Disk Access status in Settings */
+"Accessibility Percent Used" = "Використано: %d%%";
+"Full Disk Access" = "Повний доступ до дисків";
+"Granted" = "Надано";
+"Not Granted" = "Не надано";
+"Permissions" = "Дозволи";
+"Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Повний доступ до дисків дозволяє MountMate бачити всі типи дисків і читати дані про зберігання. Увімкніть його для MountMate в Системних налаштуваннях > Конфіденційність і безпека.";

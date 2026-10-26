@@ -34,6 +34,7 @@ struct DiskHeaderRow: View {
             Image(systemName: "exclamationmark.triangle.fill")
               .foregroundStyle(.orange)
               .help(error)
+              .accessibilityLabel(Text(error))
           } else if let percentage = disk.usagePercentage {
             CircularProgressRing(progress: percentage, color: .purple, lineWidth: 3.5)
               .frame(width: 32, height: 32)
@@ -69,6 +70,7 @@ struct DiskHeaderRow: View {
           }
         }
       }
+      .accessibilityElement(children: .combine)
       .contentShape(Rectangle())
       .onTapGesture {
         withAnimation(.easeInOut(duration: 0.2)) {

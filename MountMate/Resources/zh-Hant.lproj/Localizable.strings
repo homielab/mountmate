@@ -420,3 +420,11 @@
 "MountMate %@ is available" = "MountMate %@ 現已可用";
 "View…" = "檢視…";
 "Accessibility Update Available" = "有可用的更新";
+
+/* Usage ring VoiceOver, Full Disk Access status in Settings */
+"Accessibility Percent Used" = "已使用 %d%%";
+"Full Disk Access" = "完整磁碟存取權限";
+"Granted" = "已授予";
+"Not Granted" = "未授予";
+"Permissions" = "權限";
+"Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "完整磁碟存取權限可讓 MountMate 看到所有類型的磁碟並讀取儲存空間詳情。請在「系統設定 > 隱私與安全性」中為 MountMate 開啟。";

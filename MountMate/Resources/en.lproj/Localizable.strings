@@ -420,3 +420,11 @@
 "MountMate %@ is available" = "MountMate %@ is available";
 "View…" = "View…";
 "Accessibility Update Available" = "Update available";
+
+/* Usage ring VoiceOver, Full Disk Access status in Settings */
+"Accessibility Percent Used" = "%d%% used";
+"Full Disk Access" = "Full Disk Access";
+"Granted" = "Granted";
+"Not Granted" = "Not Granted";
+"Permissions" = "Permissions";
+"Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security.";
