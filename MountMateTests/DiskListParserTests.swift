@@ -33,7 +33,7 @@ final class DiskListParserTests: XCTestCase {
 
   private func parser(
     showInternalDisks: Bool = false, filters: DiskListParser.Filters = .init(),
-    usage: DriveManager.FileSystemUsageResult? = nil,
+    usage: FileSystemUsage.Outcome? = nil,
     fallback: [String: DiskListParser.FallbackDiskKind] = ["disk7": .external]
   ) -> DiskListParser {
     let usage = usage ?? .usage(total: Self.samsungTotal, free: Self.samsungFree)

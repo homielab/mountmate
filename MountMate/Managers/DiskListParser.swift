@@ -44,7 +44,7 @@ struct DiskListParser {
   var showInternalDisks = false
   /// Used and free space of a mounted volume whose list entry has no
   /// `CapacityInUse` (non-APFS volumes).
-  var fileSystemUsage: (String) -> DriveManager.FileSystemUsageResult = { _ in .failed }
+  var fileSystemUsage: (String) -> FileSystemUsage.Outcome = { _ in .failed }
   /// Mount points of the file systems that are mounted read-only.
   var readOnlyMountPoints: Set<String> = []
   /// Second opinion for whole disks without `diskutil info`; disks missing
@@ -477,9 +477,8 @@ extension DiskListParser {
   private static func externalWholeDiskIdentifiers() -> Set<String>? {
     let result = runProcess(
       executable: "/usr/sbin/diskutil", arguments: ["list", "-plist", "external"], timeout: 8)
-    guard result.succeeded, let data = result.stdout.data(using: .utf8),
-      let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-        as? [String: Any],
+    guard result.succeeded,
+      let plist = PlistDecoding.decode(result.stdout, context: "diskutil list external"),
       let wholeDisks = plist["WholeDisks"] as? [String]
     else { return nil }
     return Set(wholeDisks)

@@ -16,7 +16,7 @@ final class MountPointPathTests: XCTestCase {
   }
 
   private func error(_ path: String, mountedVolume: String? = nil) -> String? {
-    DriveManager.customMountPointValidationError(for: path) { _ in mountedVolume }
+    CustomMountPointValidator.validationError(for: path) { _ in mountedVolume }
   }
 
   private func localized(_ key: String) -> String {
@@ -27,9 +27,9 @@ final class MountPointPathTests: XCTestCase {
 
   func testNormalizedPathTrimsAndExpandsTilde() {
     XCTAssertEqual(
-      DriveManager.normalizedMountPointPath("  ~/Mounts/Backup \n"),
+      CustomMountPointValidator.normalizedPath("  ~/Mounts/Backup \n"),
       NSHomeDirectory() + "/Mounts/Backup")
-    XCTAssertEqual(DriveManager.normalizedMountPointPath("/Volumes/X"), "/Volumes/X")
+    XCTAssertEqual(CustomMountPointValidator.normalizedPath("/Volumes/X"), "/Volumes/X")
   }
 
   func testRejectsEmptyRelativeAndRootPaths() {
@@ -45,7 +45,7 @@ final class MountPointPathTests: XCTestCase {
 
   func testRejectsPathInUseByAnotherVolume() {
     var lookedUp: String?
-    let message = DriveManager.customMountPointValidationError(for: " ~/Backup ") { path in
+    let message = CustomMountPointValidator.validationError(for: " ~/Backup ") { path in
       lookedUp = path
       return "Other Disk"
     }
@@ -117,7 +117,7 @@ final class MountPointPathTests: XCTestCase {
 final class MountPointCheckTimeoutTests: XCTestCase {
   func testFastWorkDeliversItsResultOnTheMainThread() {
     let done = expectation(description: "completion")
-    DriveManager.runWithTimeout(
+    CustomMountPointValidator.runWithTimeout(
       2, work: { 42 },
       completion: { value in
         XCTAssertEqual(value, 42)
@@ -132,7 +132,7 @@ final class MountPointCheckTimeoutTests: XCTestCase {
     final class Counter: @unchecked Sendable { var value = 0 }
     let calls = Counter()
     let started = Date()
-    DriveManager.runWithTimeout(
+    CustomMountPointValidator.runWithTimeout(
       0.2,
       work: {
         Thread.sleep(forTimeInterval: 1)
@@ -158,7 +158,7 @@ final class MountPointCheckTimeoutTests: XCTestCase {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: folder) }
     let done = expectation(description: "check")
-    DriveManager.shared.checkCustomMountPoint(folder.path) { check in
+    CustomMountPointValidator.check(folder.path) { check in
       guard case .directory(let exists, let isDirectory, let isEmpty) = check else {
         return XCTFail("unexpected \(check)")
       }

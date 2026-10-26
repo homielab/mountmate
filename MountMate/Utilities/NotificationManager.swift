@@ -57,6 +57,37 @@ struct BackgroundEventThrottle: Sendable {
   }
 }
 
+/// The part of `UNUserNotificationCenter` MountMate uses, so tests can stand
+/// in for the system.
+protocol NotificationCentering: AnyObject {
+  func setDelegate(_ delegate: UNUserNotificationCenterDelegate)
+  func requestAuthorization(completion: @escaping (_ granted: Bool, _ error: Error?) -> Void)
+  func authorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void)
+  func add(_ request: UNNotificationRequest, completion: @escaping (Error?) -> Void)
+}
+
+/// The real notification center. Looked up on each use, so creating one
+/// outside an app bundle (unit tests) is harmless.
+final class SystemNotificationCenter: NotificationCentering {
+  private var center: UNUserNotificationCenter { .current() }
+
+  func setDelegate(_ delegate: UNUserNotificationCenterDelegate) {
+    center.delegate = delegate
+  }
+
+  func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
+    center.requestAuthorization(options: [.alert, .sound], completionHandler: completion)
+  }
+
+  func authorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void) {
+    center.getNotificationSettings { completion($0.authorizationStatus) }
+  }
+
+  func add(_ request: UNNotificationRequest, completion: @escaping (Error?) -> Void) {
+    center.add(request, withCompletionHandler: completion)
+  }
+}
+
 /// Optional macOS notifications for events that happen in the background:
 /// keep-alive reconnect failures and recoveries, blocked volumes that could
 /// not be unmounted, unmount-on-sleep running out of time, and idle unmounts.
@@ -72,7 +103,7 @@ final class NotificationManager: NSObject, ObservableObject {
   @Published var isEnabled: Bool {
     didSet {
       guard oldValue != isEnabled else { return }
-      UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey)
+      defaults.set(isEnabled, forKey: Self.enabledKey)
       if isEnabled {
         requestAuthorization()
       } else {
@@ -89,17 +120,23 @@ final class NotificationManager: NSObject, ObservableObject {
   private var keepAliveThrottle = BackgroundEventThrottle()
   private var cancellables = Set<AnyCancellable>()
 
-  private var center: UNUserNotificationCenter { .current() }
+  private let center: NotificationCentering
+  private let defaults: UserDefaults
 
-  private override init() {
-    isEnabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+  init(
+    center: NotificationCentering = SystemNotificationCenter(),
+    defaults: UserDefaults = .standard
+  ) {
+    self.center = center
+    self.defaults = defaults
+    isEnabled = defaults.bool(forKey: Self.enabledKey)
     super.init()
   }
 
   /// Called once at launch: becomes the notification center's delegate and
   /// reads the current permission.
   func start() {
-    center.delegate = self
+    center.setDelegate(self)
     if isEnabled { refreshAuthorizationStatus() }
     // Permission can change in System Settings while MountMate runs.
     NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
@@ -227,7 +264,7 @@ final class NotificationManager: NSObject, ObservableObject {
   }
 
   private func requestAuthorization() {
-    center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, error in
+    center.requestAuthorization { [weak self] granted, error in
       if let error {
         Log.app.error(
           "Notification permission request failed: \(error.localizedDescription, privacy: .public)")
@@ -240,8 +277,7 @@ final class NotificationManager: NSObject, ObservableObject {
   }
 
   private func refreshAuthorizationStatus() {
-    center.getNotificationSettings { [weak self] settings in
-      let status = settings.authorizationStatus
+    center.authorizationStatus { [weak self] status in
       DispatchQueue.main.async {
         guard let self else { return }
         switch status {

@@ -135,7 +135,7 @@ struct InlineCustomMountPointEditor: View {
     panel.prompt = NSLocalizedString("Choose", comment: "Choose button")
     editorState.isChoosingFolder = true
 
-    let currentPath = driveManager.normalizedMountPointPath(editorState.mountPointPath)
+    let currentPath = CustomMountPointValidator.normalizedPath(editorState.mountPointPath)
     if !currentPath.isEmpty {
       panel.directoryURL = URL(fileURLWithPath: currentPath)
     }
@@ -161,7 +161,7 @@ struct InlineCustomMountPointEditor: View {
     guard !isSaving else { return }
     editorState.inlineError = nil
 
-    let normalizedPath = driveManager.normalizedMountPointPath(editorState.mountPointPath)
+    let normalizedPath = CustomMountPointValidator.normalizedPath(editorState.mountPointPath)
     editorState.mountPointPath = normalizedPath
 
     guard !normalizedPath.isEmpty else {
@@ -182,7 +182,7 @@ struct InlineCustomMountPointEditor: View {
     // a network share: they run off the main thread (the spinner shows
     // meanwhile) and give up after 2 seconds.
     editorState.savingVolumeIDs.insert(volume.id)
-    driveManager.checkCustomMountPoint(normalizedPath, excluding: volume) { check in
+    CustomMountPointValidator.check(normalizedPath, excluding: volume) { check in
       editorState.savingVolumeIDs.remove(volume.id)
       // The editor may have been closed or reopened for another row meanwhile.
       guard editorState.expandedRowID == rowID else { return }
@@ -190,7 +190,7 @@ struct InlineCustomMountPointEditor: View {
     }
   }
 
-  private func continueSave(with check: DriveManager.MountPointCheck, path: String) {
+  private func continueSave(with check: CustomMountPointValidator.Check, path: String) {
     switch check {
     case .invalid(let validationError):
       editorState.inlineError = validationError

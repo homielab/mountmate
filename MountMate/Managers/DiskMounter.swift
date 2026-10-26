@@ -322,9 +322,7 @@ class DiskMounter: ObservableObject {
         let infoResult = runProcess(
           executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", volumeUUID])
         guard infoResult.succeeded,
-          let data = infoResult.stdout.data(using: .utf8),
-          let plist = try? PropertyListSerialization.propertyList(
-            from: data, options: [], format: nil) as? [String: Any],
+          let plist = PlistDecoding.decode(infoResult.stdout, context: "diskutil info"),
           let device = plist["DeviceIdentifier"] as? String,
           let mountPoint = plist["MountPoint"] as? String
         else { continue }

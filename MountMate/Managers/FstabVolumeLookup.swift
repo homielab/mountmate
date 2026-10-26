@@ -40,9 +40,8 @@ final class FstabVolumeLookup {
   private func apfsRoles(forVolumeUUID uuid: String, container: String) -> [String]? {
     let result = runProcess(
       executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist", container])
-    guard result.succeeded, let data = result.stdout.data(using: .utf8),
-      let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-        as? [String: Any],
+    guard result.succeeded,
+      let plist = PlistDecoding.decode(result.stdout, context: "diskutil apfs list"),
       let containers = plist["Containers"] as? [[String: Any]]
     else { return nil }
 
@@ -63,8 +62,7 @@ final class FstabVolumeLookup {
     let result = runProcess(
       executable: "/usr/sbin/diskutil",
       arguments: ["info", "-plist", deviceIdentifier])
-    guard result.succeeded, let data = result.stdout.data(using: .utf8) else { return nil }
-    return try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-      as? [String: Any]
+    guard result.succeeded else { return nil }
+    return PlistDecoding.decode(result.stdout, context: "diskutil info")
   }
 }

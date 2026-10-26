@@ -119,7 +119,7 @@ class DriveManager: ObservableObject {
     }
   }
 
-  private func setEjecting(_ diskID: String, _ busy: Bool) {
+  func setEjecting(_ diskID: String, _ busy: Bool) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async { self.setEjecting(diskID, busy) }
       return
@@ -311,14 +311,12 @@ class DriveManager: ObservableObject {
   /// unmount-on-sleep) act on. Disks whose type could not be confirmed this
   /// refresh are left alone.
   var bulkActionDisks: [PhysicalDisk] {
-    (physicalDisks ?? []).filter { $0.isRemovable && !unverifiedDiskIDs.contains($0.id) }
+    BulkVolumeActions.actionableDisks(physicalDisks, unverifiedDiskIDs: unverifiedDiskIDs)
   }
 
   /// The volumes "Unmount All" would unmount right now.
   var unmountAllCandidates: [Volume] {
-    bulkActionDisks
-      .flatMap(\.allVolumes)
-      .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
+    BulkVolumeActions.unmountCandidates(in: bulkActionDisks)
   }
 
   /// - Parameter suppressReconnect: `false` when the unmount is not a user
@@ -362,12 +360,8 @@ class DriveManager: ObservableObject {
     isUnmountingAll = true
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let failures = Self.runConcurrently(drivesToUnmount) { volume in
-        runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["unmount", volume.deviceIdentifier],
-          timeout: Self.mountUnmountTimeout
-        ).succeeded
-      }
+      let failures = BulkVolumeActions.runConcurrently(
+        drivesToUnmount, runner: BulkVolumeActions.diskutilUnmount)
       DispatchQueue.main.async {
         unmountResult?(failures)
         completion?()
@@ -395,15 +389,9 @@ class DriveManager: ObservableObject {
   func mountAllVolumes(
     reportFailures: Bool = true, completion: (([String]) -> Void)? = nil
   ) {
-    let volumesToMount =
-      bulkActionDisks
-      .flatMap(\.allVolumes)
-      .filter {
-        // `.user` leaves out EFI partitions (category `.system`), which
-        // diskutil cannot mount (see .mountEFIVolume).
-        !$0.isMounted && $0.category == .user
-          && !PersistenceManager.shared.isVolumeBlocked($0)
-      }
+    let volumesToMount = BulkVolumeActions.mountCandidates(in: bulkActionDisks) {
+      PersistenceManager.shared.isVolumeBlocked($0)
+    }
 
     guard !volumesToMount.isEmpty else {
       completion?([])
@@ -418,14 +406,8 @@ class DriveManager: ObservableObject {
     }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let failures = Self.runConcurrently(volumesToMount) { volume in
-        let result = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier],
-          timeout: Self.mountUnmountTimeout)
-        // Locked (encrypted) volumes are expected to stay unmounted here;
-        // they are skipped rather than reported as failures.
-        return result.succeeded || DiskUtilErrorClassifier.isLockedVolumeFailure(result)
-      }
+      let failures = BulkVolumeActions.runConcurrently(
+        volumesToMount, runner: BulkVolumeActions.diskutilMount)
       DispatchQueue.main.async {
         guard let self else { return }
         if reportFailures {
@@ -442,138 +424,10 @@ class DriveManager: ObservableObject {
     }
   }
 
-  /// Runs `operation` for every volume in parallel (at most one per CPU core)
-  /// and returns the volumes it failed for, in the original order. Blocks
-  /// until all are done; call off the main thread.
-  private static func runConcurrently(
-    _ volumes: [Volume], operation: (Volume) -> Bool
-  ) -> [Volume] {
-    final class Results: @unchecked Sendable {
-      private let lock = NSLock()
-      private var succeeded: [Bool]
-      init(count: Int) { succeeded = Array(repeating: false, count: count) }
-      func set(_ index: Int, _ ok: Bool) { lock.withLock { succeeded[index] = ok } }
-      var values: [Bool] { lock.withLock { succeeded } }
-    }
-    let results = Results(count: volumes.count)
-    DispatchQueue.concurrentPerform(iterations: volumes.count) { index in
-      results.set(index, operation(volumes[index]))
-    }
-    return zip(volumes, results.values).filter { !$0.1 }.map(\.0)
-  }
-
   private func reportBulkFailures(_ failures: [Volume], title: String, format: String) {
-    guard !failures.isEmpty else { return }
-    let names = failures.map(\.name).joined(separator: ", ")
-    userActionError = AppAlert(
-      title: title, message: String(format: format, names), kind: .basic)
-  }
-
-  func eject(disk: PhysicalDisk) {
-    // Nothing could confirm what this disk is (it may be the internal
-    // disk). Never refuse silently. Disk images are never internal.
-    guard disk.type == .diskImage || !unverifiedDiskIDs.contains(disk.id) else {
-      userActionError = AppAlert(
-        title: NSLocalizedString("Eject Failed", comment: "Alert title"),
-        message: String(
-          format: NSLocalizedString(
-            "MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment.",
-            comment: "Eject refused because the disk type is unknown; disk name"),
-          disk.name ?? disk.id),
-        kind: .basic)
-      return
-    }
-    KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
-    setEjecting(disk.id, true)
-    DispatchQueue.global(qos: .userInitiated).async {
-      // A RAID master is a virtual logical disk. `eject` is only valid for a
-      // physical device, while unmountDisk safely unmounts every volume in the
-      // set and produces the same Finder-visible result.
-      let ejectArgs = disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
-      // A sleeping (spun-down) disk has to wake before it can be ejected,
-      // which can take well over the default 15s. The first attempt often
-      // unmounts the volumes but fails the eject while the drive spins up,
-      // so allow more time and retry once before reporting an error (#70).
-      let ejectTimeout: TimeInterval = 60
-      var result = runProcess(
-        executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-      if !result.succeeded && !result.timedOut
-        && !DiskUtilErrorClassifier.isBusyFailure(stderr: result.stderr)
-      {
-        Thread.sleep(forTimeInterval: 2)
-        result = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-      }
-      DispatchQueue.main.async {
-        if !result.succeeded {
-          self.setEjecting(disk.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout),
-            for: disk.name ?? disk.id, disk: disk, operation: .eject)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }
-        }
-      }
-    }
-  }
-
-  func forceEject(disk: PhysicalDisk) {
-    KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
-    setEjecting(disk.id, true)
-    DispatchQueue.global(qos: .userInitiated).async {
-      let timeout = Self.mountUnmountTimeout
-      let forceUnmountResult = runProcess(
-        executable: "/usr/sbin/diskutil", arguments: ["unmountDisk", "force", disk.id],
-        timeout: timeout)
-      // A failed force unmount is the real reason the disk stays: report it
-      // and do not eject on top of it.
-      let ejectResult: ProcessResult? =
-        disk.isRAIDSet || !ForceEjectOutcome.shouldEject(afterUnmount: forceUnmountResult)
-        ? nil
-        : runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["eject", disk.id], timeout: timeout)
-      let outcome = ForceEjectOutcome.choose(
-        unmountResult: forceUnmountResult, ejectResult: ejectResult)
-      DispatchQueue.main.async {
-        let failure: (result: ProcessResult, operation: DiskOperation)? =
-          switch outcome {
-          case .succeeded: nil
-          case .unmountFailed(let result): (result, .unmount)
-          case .ejectFailed(let result): (result, .eject)
-          }
-        if let failure {
-          self.setEjecting(disk.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: timeout),
-            for: disk.name ?? disk.id, disk: disk, operation: failure.operation)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }
-        }
-      }
-    }
-  }
-
-  func forceUnmount(volume: Volume) {
-    KeepAliveManager.shared.suppress(volume: volume)
-    setBusy(volume.id, true)
-    DispatchQueue.global(qos: .userInitiated).async {
-      let result = runProcess(
-        executable: "/usr/sbin/diskutil", arguments: ["unmount", "force", volume.deviceIdentifier],
-        timeout: Self.mountUnmountTimeout)
-      DispatchQueue.main.async {
-        if !result.succeeded {
-          self.setBusy(volume.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
-            for: volume.name, volume: volume, operation: .unmount)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setBusy(volume.id, false) }
-        }
-      }
-    }
+    guard let alert = BulkVolumeActions.failureAlert(for: failures, title: title, format: format)
+    else { return }
+    userActionError = alert
   }
 
   /// Delay before retrying a mount that failed right after the disk appeared.
@@ -793,139 +647,6 @@ class DriveManager: ObservableObject {
     }
   }
 
-  func normalizedMountPointPath(_ rawPath: String) -> String {
-    Self.normalizedMountPointPath(rawPath)
-  }
-
-  /// Trims surrounding whitespace and expands `~`.
-  static func normalizedMountPointPath(_ rawPath: String) -> String {
-    (rawPath.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
-  }
-
-  func customMountPointValidationError(for rawPath: String, excluding volume: Volume? = nil)
-    -> String?
-  {
-    Self.customMountPointValidationError(for: rawPath) { path in
-      self.mountedVolumeName(at: path, excluding: volume)
-    }
-  }
-
-  /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.
-  /// - Parameter mountedVolumeName: the name of another volume already
-  ///   mounted at the (normalized) path, if any.
-  static func customMountPointValidationError(
-    for rawPath: String, mountedVolumeName: (String) -> String?
-  ) -> String? {
-    let path = normalizedMountPointPath(rawPath)
-
-    guard !path.isEmpty else {
-      return NSLocalizedString(
-        "Custom Mount Point Empty Path",
-        comment: "Custom mount point validation")
-    }
-    guard path.hasPrefix("/") else {
-      return NSLocalizedString(
-        "Custom Mount Point Must Be Absolute",
-        comment: "Custom mount point validation")
-    }
-    guard path != "/" else {
-      return NSLocalizedString(
-        "Custom Mount Point Cannot Be Root",
-        comment: "Custom mount point validation")
-    }
-    // A control character (a line break above all) could end the field in the
-    // root-written /etc/fstab rule and start a line of its own.
-    if FstabRules.containsUnsafeFstabCharacter(path) {
-      return NSLocalizedString(
-        "Custom Mount Point Control Characters",
-        comment: "Custom mount point validation")
-    }
-    if let mountedVolumeName = mountedVolumeName(path) {
-      return String(
-        format: NSLocalizedString(
-          "Custom Mount Point In Use",
-          comment: "Custom mount point validation"), mountedVolumeName)
-    }
-
-    var isDirectory = ObjCBool(false)
-    if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
-      !isDirectory.boolValue
-    {
-      return NSLocalizedString(
-        "Custom Mount Point Must Be Folder",
-        comment: "Custom mount point validation")
-    }
-
-    return nil
-  }
-
-  /// What checking a folder chosen as a custom mount point found.
-  enum MountPointCheck {
-    case invalid(String)
-    case directory(exists: Bool, isDirectory: Bool, isEmpty: Bool)
-    case inspectFailed(String)
-    /// The file system did not answer within the timeout (a hung network share).
-    case timedOut
-  }
-
-  /// Validates and inspects `rawPath` off the main thread and calls
-  /// `completion` on the main thread, after `timeout` at the latest. The folder
-  /// may sit on a network share that no longer answers.
-  func checkCustomMountPoint(
-    _ rawPath: String, excluding volume: Volume? = nil, timeout: TimeInterval = 2,
-    completion: @escaping (MountPointCheck) -> Void
-  ) {
-    Self.runWithTimeout(
-      timeout,
-      work: { [self] () -> MountPointCheck in
-        if let error = customMountPointValidationError(for: rawPath, excluding: volume) {
-          return .invalid(error)
-        }
-        do {
-          let state = try inspectDirectory(at: rawPath)
-          return .directory(
-            exists: state.exists, isDirectory: state.isDirectory, isEmpty: state.isEmpty)
-        } catch {
-          return .inspectFailed(error.localizedDescription)
-        }
-      },
-      completion: { completion($0 ?? .timedOut) })
-  }
-
-  /// Runs `work` on a background queue; `completion` runs once on the main
-  /// thread with its result, or with nil when it takes longer than `timeout`
-  /// (the work then finishes unobserved).
-  static func runWithTimeout<T: Sendable>(
-    _ timeout: TimeInterval, work: @escaping @Sendable () -> T,
-    completion: @escaping @Sendable (T?) -> Void
-  ) {
-    let lock = NSLock()
-    nonisolated(unsafe) var finished = false
-    let finish: @Sendable (T?) -> Void = { value in
-      let isFirst = lock.withLock { () -> Bool in
-        defer { finished = true }
-        return !finished
-      }
-      guard isFirst else { return }
-      DispatchQueue.main.async { completion(value) }
-    }
-    DispatchQueue.global(qos: .userInitiated).async { finish(work()) }
-    DispatchQueue.global().asyncAfter(deadline: .now() + timeout) { finish(nil) }
-  }
-
-  func inspectDirectory(at rawPath: String) throws -> (
-    exists: Bool, isDirectory: Bool, isEmpty: Bool
-  ) {
-    let path = normalizedMountPointPath(rawPath)
-    var isDirectory = ObjCBool(false)
-    let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
-    guard exists else { return (false, false, true) }
-    guard isDirectory.boolValue else { return (true, false, false) }
-
-    let contents = try FileManager.default.contentsOfDirectory(atPath: path)
-    return (true, true, contents.isEmpty)
-  }
-
   // MARK: - Disk List
 
   /// Reads `diskutil info` for the whole disks that need it (see
@@ -954,7 +675,7 @@ class DriveManager: ObservableObject {
       let parser = DiskListParser(
         filters: filters,
         showInternalDisks: UserDefaults.standard.bool(forKey: "showInternalDisks"),
-        fileSystemUsage: { Self.fileSystemUsage(atPath: $0) },
+        fileSystemUsage: { FileSystemUsage.read(atPath: $0) },
         readOnlyMountPoints: MountTable.readOnlyMountPoints(in: MountTable.entries() ?? []),
         classifyDisksWithoutInfo: DiskListParser.classifyWithSystem)
       completion(
@@ -974,97 +695,7 @@ class DriveManager: ObservableObject {
     guard !identifier.isEmpty else { return nil }
     let result = runProcess(
       executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier], timeout: timeout)
-    return result.stdout.data(using: .utf8).flatMap {
-      try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil)
-        as? [String: Any]
-    }
-  }
-
-  // MARK: - Error Handling
-
-  func handleDiskUtilError(
-    _ error: String, for name: String, volume: Volume? = nil, disk: PhysicalDisk? = nil,
-    operation: DiskOperation
-  ) {
-    let parsedError = DiskUtilErrorClassifier.classify(error, for: name, operation: operation)
-
-    if parsedError == .mountLockedVolume {
-      guard let volume else {
-        userActionError = AppAlert(
-          title: String(
-            format: NSLocalizedString("“%@” is locked", comment: "Alert title"), name),
-          message: String(
-            format: NSLocalizedString(
-              "Enter the password to unlock “%@”", comment: "Alert message"), name),
-          kind: .basic)
-        return
-      }
-      if !unlocker.unlockWithSavedPassword(volume) {
-        unlocker.presentUnlockPrompt(for: volume, passwordFailed: false)
-      }
-      return
-    }
-    guard
-      let text = DiskUtilErrorClassifier.presentation(
-        for: parsedError, name: name, operation: operation, details: error)
-    else { return }
-
-    let kind: AppAlertKind
-    switch parsedError {
-    case .unmountBusyVolume:
-      kind = disk.map { disk in .forceEject { self.forceEject(disk: disk) } } ?? .basic
-    case .inUse where operation == .eject:
-      kind = disk.map { disk in .forceEject { self.forceEject(disk: disk) } } ?? .basic
-    case .inUse where operation == .unmount:
-      kind = volume.map { volume in .forceUnmount { self.forceUnmount(volume: volume) } } ?? .basic
-    default:
-      kind = .basic
-    }
-    userActionError = AppAlert(title: text.title, message: text.message, kind: kind)
-  }
-
-  /// Mount points whose statfs has not returned yet. While one is still
-  /// blocked (unresponsive disk), later refreshes skip it immediately
-  /// instead of piling up more blocked threads.
-  private static var statfsInFlight = Set<String>()
-  private static let statfsLock = NSLock()
-  private static let statfsQueue = DispatchQueue(
-    label: "com.homielab.mountmate.statfs", qos: .utility, attributes: .concurrent)
-
-  enum FileSystemUsageResult {
-    case usage(total: Int64, free: Int64)
-    /// No answer within the timeout (or still blocked from an earlier call).
-    case timedOut
-    case failed
-  }
-
-  /// Total and available bytes of the file system mounted at `path`. Never
-  /// blocks the caller for longer than `timeout`.
-  static func fileSystemUsage(atPath path: String, timeout: TimeInterval = 2)
-    -> FileSystemUsageResult
-  {
-    let started = statfsLock.withLock { statfsInFlight.insert(path).inserted }
-    guard started else { return .timedOut }
-
-    final class Box: @unchecked Sendable {
-      var value: (total: Int64, free: Int64)?
-    }
-    let box = Box()
-    let done = DispatchSemaphore(value: 0)
-    statfsQueue.async {
-      var stats = statfs()
-      if statfs(path, &stats) == 0 {
-        let blockSize = Int64(stats.f_bsize)
-        // Same values FileManager reports as systemSize / systemFreeSize.
-        box.value = (Int64(stats.f_blocks) * blockSize, Int64(stats.f_bavail) * blockSize)
-      }
-      Self.statfsLock.withLock { _ = Self.statfsInFlight.remove(path) }
-      done.signal()
-    }
-    // The semaphore orders the write to `box` before this read.
-    guard done.wait(timeout: .now() + timeout) == .success else { return .timedOut }
-    guard let value = box.value else { return .failed }
-    return .usage(total: value.total, free: value.free)
+    return PlistDecoding.decode(result.stdout, context: "diskutil info")
   }
 
   // MARK: - Notification Handling
@@ -1106,34 +737,5 @@ class DriveManager: ObservableObject {
       }
       self?.refreshDrives()
     }
-  }
-
-  private func mountedVolumeName(at rawPath: String, excluding volume: Volume? = nil) -> String? {
-    let targetPath = URL(fileURLWithPath: normalizedMountPointPath(rawPath)).standardizedFileURL
-      .path
-    let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeUUIDStringKey]
-    let mountedURLs =
-      FileManager.default.mountedVolumeURLs(
-        includingResourceValuesForKeys: Array(keys), options: []) ?? []
-
-    for url in mountedURLs {
-      guard url.standardizedFileURL.path == targetPath else { continue }
-
-      if let volume,
-        let currentMountPoint = volume.mountPoint,
-        URL(fileURLWithPath: currentMountPoint).standardizedFileURL.path == targetPath
-      {
-        continue
-      }
-
-      let values = try? url.resourceValues(forKeys: keys)
-      if let volume, values?.volumeUUIDString == volume.id {
-        continue
-      }
-
-      return values?.volumeName ?? url.lastPathComponent
-    }
-
-    return nil
   }
 }

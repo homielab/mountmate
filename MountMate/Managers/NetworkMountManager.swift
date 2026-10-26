@@ -127,10 +127,10 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     // keep-alive sweeps. statfs each share in parallel: an unreachable server
     // costs one timeout, not one per share.
     let mounts = Array(parsedData.mountPoints)
-    var results = [DriveManager.FileSystemUsageResult?](repeating: nil, count: mounts.count)
+    var results = [FileSystemUsage.Outcome?](repeating: nil, count: mounts.count)
     let lock = NSLock()
     DispatchQueue.concurrentPerform(iterations: mounts.count) { index in
-      let result = DriveManager.fileSystemUsage(atPath: mounts[index].value)
+      let result = FileSystemUsage.read(atPath: mounts[index].value)
       lock.withLock { results[index] = result }
     }
 
