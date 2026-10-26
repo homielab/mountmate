@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Keep Alive's network-change handling is split out of `KeepAliveManager`: `NetworkChangeMonitor` wraps the system path monitor and `NetworkChangeRules` holds the remount decisions (Wi-Fi → Ethernet, a lost interface, VPN tunnels ignored), now unit-tested with an injected monitor. The behaviour is unchanged.
 - The volume right-click menu is split out of `VolumeRowView` into `VolumeContextMenu`, with the show/hide conditions in `VolumeMenuRules` (unit-tested). The menu itself is unchanged.
 - **Force Eject** now stops when the force unmount fails and shows that error (for example the process holding the disk), instead of ejecting anyway and showing the eject error. If the unmount works, it ejects as before.
 - Internal: the rules that decide which mounts of blocked volumes are allowed (one-time approvals that expire after 60 seconds, matching by device name or volume/disk UUID, the 15 second auto-mount window) moved into `MountApprovalLedger` with unit tests. No change in behavior.

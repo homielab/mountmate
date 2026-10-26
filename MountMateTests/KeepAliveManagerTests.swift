@@ -1,6 +1,5 @@
 //  Created by homielab.com
 
-import Network
 import XCTest
 
 @testable import MountMate
@@ -124,30 +123,76 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertNil(manager.nextRetryDate(forVolumeID: id))
   }
 
-  func testInterfaceChangeDetectionIgnoresTunnels() {
-    typealias Snapshot = KeepAliveManager.InterfaceSnapshot
-    let wifi = Snapshot(name: "en0", type: .wifi)
-    let ethernet = Snapshot(name: "en5", type: .wiredEthernet)
+  // MARK: - Network changes
 
-    // First observation / recovery from offline: sweep, don't remount.
-    XCTAssertFalse(
-      KeepAliveManager.shouldRemountShares(previous: nil, current: wifi, available: [wifi]))
-    // Same physical interface (VPN tunnels come and go, but are filtered
-    // out before this point): no remount.
-    XCTAssertFalse(
-      KeepAliveManager.shouldRemountShares(previous: wifi, current: wifi, available: [wifi]))
-    // Ethernet plugged in while Wi-Fi stays up: primary kind changed.
-    XCTAssertTrue(
-      KeepAliveManager.shouldRemountShares(
-        previous: wifi, current: ethernet, available: [ethernet, wifi]))
-    // The interface the shares used disappeared.
-    XCTAssertTrue(
-      KeepAliveManager.shouldRemountShares(
-        previous: ethernet, current: wifi, available: [wifi]))
-    // Another Wi-Fi interface became primary while the old one is gone.
-    let wifi2 = Snapshot(name: "en1", type: .wifi)
-    XCTAssertTrue(
-      KeepAliveManager.shouldRemountShares(previous: wifi, current: wifi2, available: [wifi2]))
+  private final class FakeNetworkMonitor: NetworkChangeMonitoring {
+    var onChange: ((NetworkPathSnapshot) -> Void)?
+    private(set) var isStarted = false
+    func start() { isStarted = true }
+    func stop() { isStarted = false }
+    func send(_ path: NetworkPathSnapshot) { onChange?(path) }
+  }
+
+  private let wifi = InterfaceSnapshot(name: "en0", type: .wifi)
+  private let ethernet = InterfaceSnapshot(name: "en5", type: .wiredEthernet)
+
+  private func path(_ interfaces: [InterfaceSnapshot], satisfied: Bool = true)
+    -> NetworkPathSnapshot
+  {
+    NetworkPathSnapshot(isSatisfied: satisfied, interfaces: interfaces)
+  }
+
+  func testInjectedMonitorIsStartedAndStoppedWithTheManager() {
+    let monitor = FakeNetworkMonitor()
+    var manager: KeepAliveManager? = KeepAliveManager(networkMonitor: monitor)
+    XCTAssertTrue(monitor.isStarted)
+    XCTAssertNotNil(manager)
+    manager = nil
+    XCTAssertFalse(monitor.isStarted)
+  }
+
+  func testRemountRunsOnlyWhenTheInterfaceChanges() {
+    let monitor = FakeNetworkMonitor()
+    var remounts = 0
+    let manager = KeepAliveManager(
+      networkMonitor: monitor, interfaceChangeAction: { remounts += 1 })
+    manager.isEnabled = true
+    manager.remountOnNetworkChange = true
+
+    monitor.send(path([wifi]))  // first observation: sweep, no remount
+    monitor.send(path([wifi]))  // unchanged
+    XCTAssertEqual(remounts, 0)
+    monitor.send(path([ethernet, wifi]))  // Ethernet becomes primary
+    XCTAssertEqual(remounts, 1)
+    monitor.send(path([ethernet]))  // Wi-Fi left, Ethernet stays
+    XCTAssertEqual(remounts, 1)
+    monitor.send(path([], satisfied: false))  // offline
+    monitor.send(path([wifi]))  // back online: sweep, no remount
+    XCTAssertEqual(remounts, 1)
+  }
+
+  func testNoRemountWhenTheSettingIsOffOrKeepAliveIsDisabled() {
+    let monitor = FakeNetworkMonitor()
+    var remounts = 0
+    let manager = KeepAliveManager(
+      networkMonitor: monitor, interfaceChangeAction: { remounts += 1 })
+    let enabled = manager.isEnabled
+    let setting = manager.remountOnNetworkChange
+    defer {
+      manager.isEnabled = enabled
+      manager.remountOnNetworkChange = setting
+    }
+
+    manager.isEnabled = true
+    manager.remountOnNetworkChange = false
+    monitor.send(path([wifi]))
+    monitor.send(path([ethernet]))
+    XCTAssertEqual(remounts, 0)
+
+    manager.remountOnNetworkChange = true
+    manager.isEnabled = false
+    monitor.send(path([wifi]))
+    XCTAssertEqual(remounts, 0)
   }
 
   // MARK: - Remounting volumes
