@@ -10,9 +10,9 @@ BUILD_DIR="$PROJECT_ROOT/Dist/Build"
 DIST_DIR="$PROJECT_ROOT/Dist/Release"
 APP_NAME="MountMate"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
-BUNDLE_ID="com.homielab.mountmate"
 
 if [[ -f "$PROJECT_ROOT/.env.local" ]]; then
+  # shellcheck source=/dev/null
   source "$PROJECT_ROOT/.env.local"
 else
   echo "❌ .env.local not found in root directory."

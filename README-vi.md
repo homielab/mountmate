@@ -141,6 +141,19 @@ Mã cho `/etc/fstab` chia làm ba: `FstabRules` (`MountMate/Managers/FstabRules.
 
 CI chạy cả hai trên mỗi pull request và mỗi push vào `main`. Kiểm tra style chỉ báo cáo, chưa làm hỏng build cho tới khi dọn xong các lỗi cũ.
 
+### Phát hành
+
+Push một tag phiên bản (`git tag v6.4 && git push origin v6.4`, hoặc `scripts/create-draft-release.sh`): workflow release đặt version và build number, build, ký và notarize app và DMG, cập nhật `docs/appcast.xml` và cask Homebrew trên `main`, rồi đăng GitHub release với mục của phiên bản đó trong `CHANGELOGS.md`. Hãy viết mục đó cho người dùng: `scripts/2-build.sh` chuyển nó sang HTML (`scripts/changelog-to-html.sh`) và nhúng vào item mới của appcast, nên cửa sổ cập nhật của Sparkle hiện nó. Appcast giữ ba phiên bản mới nhất.
+
+Kiểm zip và appcast trên máy mà không tạo DMG, không ký, không notarize (`docs/appcast.xml` giữ nguyên; kết quả ở `Dist/Final/`):
+
+```bash
+# Dist/Release/MountMate.app = một bản build Release bất kỳ trên máy; dùng một file khoá EdDSA thử
+SPARKLE_PRIVATE_KEY=/path/to/test_key scripts/2-build.sh --dry-run
+```
+
+`scripts/0-run-all.sh` chạy toàn bộ bước build trên máy (cần `.env.local` có chứng chỉ ký, notary profile và khoá Sparkle) và không đăng gì cả.
+
 ## 📫 Đóng góp & phản hồi
 
 MountMate được tạo để giải quyết nhu cầu cá nhân của tôi – nhưng tôi rất sẵn lòng cải thiện nó cho cộng đồng.

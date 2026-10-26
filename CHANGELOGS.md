@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- The update window now shows what is new in the offered version (its notes from this changelog), and the update feed keeps the last three versions instead of only the newest one.
+- Release scripts: `scripts/3-release.sh` is removed (the release workflow tags and publishes), `scripts/0-run-all.sh` only builds locally, and `scripts/2-build.sh --dry-run` builds the zip and update feed without a DMG, signing or notarization.
 - The `/etc/fstab` code is split out of the settings store into `FstabRules` (pure text rules), `FstabVolumeLookup` and `FstabWriter`, with new unit tests for custom mount point rules (escaped paths, conflicts, replacing and removing an entry). The behaviour and the administrator command are unchanged.
 - `brew uninstall --zap mountmate` now also removes the app's cache, HTTP storage and saved window state, not only its preferences file.
 - README and README-vi now describe the same features and match the app: the default shortcuts (Unmount All `⌘⌥⇧U`, Mount All `⌘⇧M`), the admin password asked only for `/etc/fstab` (Block at Startup, custom mount points), Sparkle as the update mechanism, and the newer features; README-vi also gains the network share errors and development sections.

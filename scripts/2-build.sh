@@ -1,20 +1,44 @@
 #!/bin/bash
+# Builds the Sparkle zip, the update feed (docs/appcast.xml) and the signed,
+# notarized DMG from Dist/Release/MountMate.app.
+#
+# Usage: scripts/2-build.sh [--dry-run]
+#
+# The feed keeps the existing items of docs/appcast.xml (the newest 3 versions)
+# and embeds the new version's CHANGELOGS.md section as its release notes.
+#
+# --dry-run builds only the zip and the feed into Dist/Final: no DMG, no code
+# signing or notarization, and docs/appcast.xml is left untouched. It still
+# needs SPARKLE_PRIVATE_KEY, taken from the environment and not from
+# .env.local: use a throwaway key file for local checks.
 
 set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname -- "${SCRIPT_DIR}")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_FOLDER="${PROJECT_ROOT}/Dist/Release"
 FINAL_DIR="${PROJECT_ROOT}/Dist/Final"
 APP_NAME="MountMate"
 
-if [[ -f "$PROJECT_ROOT/.env.local" ]]; then
-  source "$PROJECT_ROOT/.env.local"
-else
-  echo "❌ .env.local not found in root directory."
-  exit 1
+DRY_RUN=false
+case "${1:-}" in
+  "") ;;
+  --dry-run) DRY_RUN=true ;;
+  *) echo "Usage: $0 [--dry-run]" >&2; exit 2 ;;
+esac
+
+# A dry run reads SPARKLE_PRIVATE_KEY from the environment only, so it never
+# picks up the release key from .env.local.
+if [[ "${DRY_RUN}" == false ]]; then
+  if [[ -f "$PROJECT_ROOT/.env.local" ]]; then
+    # shellcheck source=/dev/null
+    source "$PROJECT_ROOT/.env.local"
+  else
+    echo "❌ .env.local not found in root directory."
+    exit 1
+  fi
+  : "${CERTIFICATE_NAME:?CERTIFICATE_NAME is required}"
+  : "${NOTARY_PROFILE:?NOTARY_PROFILE is required}"
 fi
-: "${CERTIFICATE_NAME:?CERTIFICATE_NAME is required}"
-: "${NOTARY_PROFILE:?NOTARY_PROFILE is required}"
 : "${SPARKLE_PRIVATE_KEY:?SPARKLE_PRIVATE_KEY is required}"
 
 APP_PATH="${SOURCE_FOLDER}/${APP_NAME}.app"
@@ -30,6 +54,7 @@ if [[ -z "${VERSION}" ]]; then
 fi
 ZIP_NAME="${APP_NAME}_${VERSION}.zip"
 DMG_NAME="${APP_NAME}_${VERSION}.dmg"
+NOTES_NAME="${APP_NAME}_${VERSION}.html"
 
 # Build Release
 
@@ -49,12 +74,38 @@ echo "📦 Creating Sparkle-compatible zip..."
 zip -r --symlinks "${ZIP_NAME}" "${APP_NAME}.app"
 mv "${ZIP_NAME}" "${FINAL_DIR}/"
 
+# Release notes next to the zip with the same base name; generate_appcast
+# embeds them in the new item's <description>.
+echo "📝 Writing release notes..."
+if "${PROJECT_ROOT}/scripts/changelog-to-html.sh" "${VERSION}" > "${FINAL_DIR}/${NOTES_NAME}"; then
+  echo "   ${NOTES_NAME} from the \"## ${VERSION}\" section of CHANGELOGS.md"
+else
+  echo "⚠️ No release notes for ${VERSION}; the update will show none."
+  rm -f "${FINAL_DIR}/${NOTES_NAME}"
+fi
+
+# Start from the published feed so earlier versions stay in it.
+if [[ -f "${DOCS_DIR}/${APPCAST_NAME}" ]]; then
+  cp "${DOCS_DIR}/${APPCAST_NAME}" "${FINAL_DIR}/${APPCAST_NAME}"
+fi
+
 echo "🛰️ Generating Sparkle appcast..."
 generate_appcast "${FINAL_DIR}" \
   --download-url-prefix "${UPDATE_URL}" \
   --ed-key-file "${SPARKLE_PRIVATE_KEY}" \
-  -o "${APPCAST_NAME}"
-mv "${APPCAST_NAME}" "${DOCS_DIR}/${APPCAST_NAME}"
+  --embed-release-notes \
+  --maximum-versions 3 \
+  -o "${FINAL_DIR}/${APPCAST_NAME}"
+
+if [[ "${DRY_RUN}" == true ]]; then
+  echo ""
+  echo "✅ Dry run complete. Files are in '${FINAL_DIR}' (no DMG; docs/${APPCAST_NAME} unchanged):"
+  echo "  - ${ZIP_NAME}"
+  echo "  - ${APPCAST_NAME}"
+  exit 0
+fi
+
+cp "${FINAL_DIR}/${APPCAST_NAME}" "${DOCS_DIR}/${APPCAST_NAME}"
 
 echo "📀 Creating DMG..."
 create-dmg \
@@ -79,6 +130,5 @@ echo ""
 echo "✅ Build complete! Files are in the '${FINAL_DIR}' directory:"
 echo "  - ${ZIP_NAME} (for Sparkle updates)"
 echo "  - ${DMG_NAME} (for manual download)"
-echo "  - ${APPCAST_NAME} (Sparkle feed)"
+echo "  - ${APPCAST_NAME} (Sparkle feed, copied to docs/)"
 echo ""
-

@@ -148,6 +148,19 @@ The disk list is built by `DiskListParser` (`MountMate/Managers/DiskListParser.s
 
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
 
+### Releasing
+
+Push a version tag (`git tag v6.4 && git push origin v6.4`, or `scripts/create-draft-release.sh`): the release workflow sets the version and build number, builds, signs and notarizes the app and DMG, updates `docs/appcast.xml` and the Homebrew cask on `main`, and publishes the GitHub release with the version's `CHANGELOGS.md` section. Write that section for users: `scripts/2-build.sh` turns it into HTML (`scripts/changelog-to-html.sh`) and embeds it in the new appcast item, so Sparkle's update window shows it. The appcast keeps the newest three versions.
+
+To check the zip and appcast locally without a DMG, signing or notarization (`docs/appcast.xml` stays unchanged; output in `Dist/Final/`):
+
+```bash
+# Dist/Release/MountMate.app = any local Release build; use a throwaway EdDSA key file
+SPARKLE_PRIVATE_KEY=/path/to/test_key scripts/2-build.sh --dry-run
+```
+
+`scripts/0-run-all.sh` runs the whole build locally (needs `.env.local` with the signing identity, notary profile and Sparkle key) and publishes nothing.
+
 ## 🔐 Network Share Errors
 
 When an SMB or AFP share fails to mount, MountMate names the cause and what to check, followed by the original error code (for example `Error code: 80 (EAUTH)`). Please include that line when you report a problem.
