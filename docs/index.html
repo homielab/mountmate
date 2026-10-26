@@ -473,6 +473,75 @@
         order: 1;
       }
 
+      .section-alt {
+        background-color: var(--bg-color);
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        text-align: left;
+      }
+
+      .card {
+        background-color: var(--section-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 28px;
+      }
+
+      .section-alt .card {
+        background-color: var(--section-bg);
+      }
+
+      .card h3 {
+        font-size: 21px;
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+
+      .section .card p {
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0;
+        max-width: 100%;
+      }
+
+      .faq {
+        max-width: 760px;
+        margin: 0 auto;
+        text-align: left;
+      }
+
+      .faq details {
+        border-bottom: 1px solid var(--border-color);
+        padding: 18px 0;
+      }
+
+      .faq summary {
+        cursor: pointer;
+        font-size: 19px;
+        font-weight: 600;
+        list-style-position: outside;
+      }
+
+      .faq details p {
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 12px 0 0;
+        max-width: 100%;
+      }
+
+      .faq code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+
+      .faq a {
+        color: var(--link-color);
+      }
+
       footer {
         background-color: var(--footer-bg);
         color: var(--text-secondary);
@@ -818,6 +887,150 @@
               class="dark-img"
             />
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="features">
+      <div class="section-inner">
+        <h2>More than a mount button.</h2>
+        <p>
+          Network shares, automatic reconnects and shortcuts for the drives you
+          keep plugged in all day.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Network shares</h3>
+            <p>
+              Mount SMB, NFS and AFP shares from the menu bar and auto-mount
+              them at login. Mounted shares show how much space is used and
+              free.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Keep Alive</h3>
+            <p>
+              Mark a share or volume as Keep Mounted and MountMate reconnects it
+              when it drops, after a network change, on wake and at login.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Unmount When Idle</h3>
+            <p>
+              Unmount a volume on an external drive after 1 to 60 minutes
+              without reads or writes. Never forced, so a volume in use stays
+              mounted.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Keyboard shortcuts</h3>
+            <p>
+              Unmount All with <code>⌘⌥⇧U</code> and Mount All with
+              <code>⌘⇧M</code> by default. Change both in Settings; the keys
+              shown follow your keyboard layout.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Block at Startup</h3>
+            <p>
+              Stop selected disks from mounting when plugged in or at login.
+              Optionally add a rule to <code>/etc/fstab</code> so macOS leaves
+              them alone even before MountMate opens.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Notifications</h3>
+            <p>
+              Optional, off by default. Get told once when a mount cannot be
+              reconnected and when it is back, instead of on every retry.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="section-inner">
+        <h2>Questions, answered.</h2>
+        <p>The ones we hear most often.</p>
+
+        <div class="faq">
+          <details>
+            <summary>Why does MountMate ask for my administrator password?</summary>
+            <p>
+              Only to change <code>/etc/fstab</code>, which is needed for
+              "Also Block at Startup" and for custom mount points of volumes.
+              Mounting, unmounting and everything else never ask. Since macOS
+              27 the standard system prompt can no longer write
+              <code>/etc/fstab</code>, so MountMate shows its own password
+              dialog and hands the password to <code>sudo</code>; it is never
+              stored or logged. If macOS still refuses (“Operation not
+              permitted”), MountMate says so and you can add the rule yourself
+              in Terminal with <code>sudo vifs</code>. This needs version 6.2.1
+              or later.
+            </p>
+          </details>
+          <details>
+            <summary>A share fails with “access denied”. What can I check?</summary>
+            <p>
+              The server accepted the connection but refused this account for
+              the share (<code>EACCES</code>). Check the account's permissions
+              on the server. For a Windows domain account, enter the username
+              as <code>DOMAIN\user</code> or <code>user@domain</code>. If it
+              started after a server update, ask the administrator whether the
+              server still accepts SMB 2 or 3 with NTLMv2 sign-in. The alert
+              ends with the original error code (for example
+              <code>Error code: 80 (EAUTH)</code>); please include it when you
+              <a
+                href="https://github.com/homielab/mountmate/issues"
+                target="_blank"
+                >open an issue</a
+              >.
+            </p>
+          </details>
+          <details>
+            <summary>Where are my passwords stored?</summary>
+            <p>
+              In the macOS Keychain, never in a file and never in the logs.
+              For an encrypted APFS volume the password is saved only if you
+              choose to remember it, and only after it has unlocked the
+              volume; right-click the volume and pick “Forget Saved Password”
+              to remove it. Items are labeled “MountMate – name”, so they are
+              easy to find in Keychain Access.
+            </p>
+          </details>
+          <details>
+            <summary>How does Keep Alive decide when to reconnect?</summary>
+            <p>
+              For every share or volume marked “Keep Mounted”, MountMate
+              retries at the interval you choose in Settings (10 seconds to 5
+              minutes), and also right after a network change, after the Mac
+              wakes and at login. With Notifications on you get one message
+              when a mount stays down and one when it is back.
+            </p>
+          </details>
+          <details>
+            <summary>Why was my volume not unmounted when idle?</summary>
+            <p>
+              Unmount When Idle watches reads and writes on the whole disk, so
+              any other volume or Spotlight activity on the same disk counts
+              as use. The unmount is never forced: if the volume is busy it
+              stays mounted and is tried again after another idle period. It
+              only applies to volumes on external drives, never to internal
+              disks, disk images, network shares or volumes marked Keep
+              Mounted.
+            </p>
+          </details>
+          <details>
+            <summary>Can I change the keyboard shortcuts?</summary>
+            <p>
+              Yes. Open Settings, click a shortcut and press the new keys. It
+              must include ⌘ or ⌃, and some combinations are reserved by macOS
+              or another app. The defaults are <code>⌘⌥⇧U</code> to unmount
+              all disks and <code>⌘⇧M</code> to mount them.
+            </p>
+          </details>
         </div>
       </div>
     </section>
