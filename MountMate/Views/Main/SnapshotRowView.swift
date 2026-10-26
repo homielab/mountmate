@@ -8,6 +8,7 @@ struct SnapshotRowView: View {
   var body: some View {
     HStack(spacing: 6) {
       Image(systemName: "camera.fill")
+        .accessibilityHidden(true)
         .font(.caption)
         .foregroundStyle(.secondary)
       Text(snapshot.name)

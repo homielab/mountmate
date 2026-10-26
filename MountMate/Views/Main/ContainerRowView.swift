@@ -7,6 +7,7 @@ struct ContainerRowView: View {
   var body: some View {
     HStack {
       Image(systemName: "shippingbox.fill")
+        .accessibilityHidden(true)
         .font(.body)
         .foregroundStyle(.secondary)
         .frame(width: 24, alignment: .center)

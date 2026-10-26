@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- VoiceOver no longer reads the decorative icons in snapshot and container rows.
 - Mounting, unmounting or reconnecting (Keep Alive) a network share no longer re-reads all disks, so the menu updates with less background work.
 
 - A failure to save a setting, to keep the Mount Again on Wake plan or to build Copy Diagnostics is now written to the log, and if MountMate cannot restart itself after a language change, it says so and asks you to open it again.

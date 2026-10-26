@@ -24,6 +24,7 @@ Add tests for new logic in `MountMateTests/`. Code that talks to `diskutil`, the
 
 ## Code guidelines
 
+- Settings → General is one view per section in `MountMate/Views/Settings/` (`DisplaySettingsSection`, `PermissionsSettingsSection`, `BehaviorSettingsSection`, `KeepAliveSettingsSection`, `ShortcutsLanguageSettingsSection`, `LogsSettingsSection`, `AboutSettingsSection`); `GeneralSettingsView` only assembles them. Add a setting to the section it belongs to, with its state in that section, and keep shared pieces (such as `ShortcutRow`) in their own file.
 - Log with `Log.<category>`, not `print()`. Never log passwords; share names, paths and error details use `privacy: .private`.
 - Value types passed between queues are `Sendable`; keep the build free of concurrency warnings.
 - Add a dependency only with a clear reason; Sparkle is the only one today.
