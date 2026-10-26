@@ -1084,6 +1084,11 @@ class DriveManager: ObservableObject {
     NotificationCenter.default.addObserver(
       self, selector: #selector(handleDiskNotification),
       name: .diskAppearanceDidChange, object: nil)
+    // The list can be stale after sleep (disks removed or changed meanwhile).
+    notificationCenter.addObserver(
+      self, selector: #selector(handleDiskNotification),
+      name: NSWorkspace.didWakeNotification,
+      object: nil)
   }
 
   @objc private func handleDiskNotification(notification: NSNotification) {

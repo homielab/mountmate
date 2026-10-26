@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Reconnecting icon**: while Keep Alive is reconnecting a share or volume, the menu bar icon shows a Wi-Fi badge (VoiceOver says "Reconnecting") and returns to normal once everything is connected.
+
 - **Copy Diagnostics**: Settings → General → Logs has a "Copy Diagnostics" button that puts the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log on the clipboard, ready to paste into a bug report. Passwords, paths, and disk and share names are left out.
 - **Mount Again on Wake**: with "Unmount All Disks on Sleep" on, a new switch (Settings → General → Behavior, on by default) mounts the unmounted disks again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted. If a disk could not be unmounted before sleep in time, a notification (when notifications are on) names it after wake.
 - **Shortcuts**: the Shortcuts app now has three MountMate actions: Mount All Volumes, Unmount All Volumes and Mount Network Share (choose one of your saved shares). Use them in automations, for example mounting a NAS when you arrive home or unmounting everything before bed. A volume or share that cannot be mounted or unmounted is reported as the shortcut's error instead of an alert, and no popover opens.
@@ -47,6 +49,8 @@ All notable changes to this project will be documented in this file.
 - Docs: added a CONTRIBUTING guide, GitHub issue forms (bug reports ask for the version and the error code) and a pull request template; both READMEs now list the display options (menu bar count, internal disks, only volumes) and Ignore, Protect and Pin, and the Vietnamese README has a Quick Start.
 
 ### Fixed
+
+- The drive and share lists refresh when the Mac wakes from sleep, so they no longer show disks or shares that changed while it slept.
 
 - A drive whose APFS container spans several physical disks (for example a Fusion drive) is listed once instead of under each disk, and its used space is no longer counted twice.
 - The drive list now updates within a second when a disk is plugged in or removed even if it never mounts (blocked or not formatted), without reopening the popover.

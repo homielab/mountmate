@@ -421,6 +421,7 @@
 "MountMate %@ is available" = "MountMate %@ 现已可用";
 "View…" = "查看…";
 "Accessibility Update Available" = "有可用更新";
+"Accessibility Reconnecting" = "正在重新连接";
 
 /* Usage ring VoiceOver, Full Disk Access status in Settings */
 "Accessibility Percent Used" = "已使用 %d%%";

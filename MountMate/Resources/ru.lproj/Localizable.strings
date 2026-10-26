@@ -421,6 +421,7 @@
 "MountMate %@ is available" = "Доступна версия MountMate %@";
 "View…" = "Открыть…";
 "Accessibility Update Available" = "Доступно обновление";
+"Accessibility Reconnecting" = "Повторное подключение";
 
 /* Usage ring VoiceOver, Full Disk Access status in Settings */
 "Accessibility Percent Used" = "Использовано: %d%%";

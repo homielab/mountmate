@@ -2,32 +2,70 @@
 
 import SwiftUI
 
+// MARK: - Menu Bar Icon State
+
+/// What the menu bar icon shows. Priority: error, busy, reconnecting, idle.
+enum MenuBarIconState: Equatable {
+  case idle
+  case busy
+  case reconnecting
+  case error
+
+  init(
+    isUnmountingAll: Bool, busyVolume: Bool, busyEject: Bool, error: Bool, reconnecting: Bool
+  ) {
+    if error {
+      self = .error
+    } else if isUnmountingAll || busyVolume || busyEject {
+      self = .busy
+    } else if reconnecting {
+      self = .reconnecting
+    } else {
+      self = .idle
+    }
+  }
+
+  var symbolName: String {
+    switch self {
+    case .idle: return "externaldrive.fill"
+    case .busy: return "externaldrive.fill.badge.timemachine"
+    case .reconnecting: return "externaldrive.fill.badge.wifi"
+    case .error: return "externaldrive.fill.trianglebadge.exclamationmark"
+    }
+  }
+
+  /// Localizable key spoken by VoiceOver; nil when idle.
+  var accessibilityKey: String? {
+    switch self {
+    case .idle: return nil
+    case .busy: return "Accessibility Busy"
+    case .reconnecting: return "Accessibility Reconnecting"
+    case .error: return "Accessibility Error"
+    }
+  }
+}
+
 // MARK: - Dynamic Menu Bar Icon
 
 struct MenuBarIconView: View {
   @ObservedObject var driveManager: DriveManager
   @ObservedObject var networkManager = NetworkMountManager.shared
+  @ObservedObject var keepAlive = KeepAliveManager.shared
   @ObservedObject var updater: UpdaterController
   @AppStorage("showCountInMenuBar") private var showCountInMenuBar = false
 
-  /// Determines the appropriate icon based on current state
-  var currentIcon: String {
-    // Priority 1: Show busy state during operations
-    if driveManager.isUnmountingAll
-      || driveManager.busyVolumeIdentifier != nil
-      || driveManager.busyEjectingIdentifier != nil
-    {
-      return "externaldrive.fill.badge.timemachine"
-    }
-
-    // Priority 2: Show error state if there's an error
-    if driveManager.userActionError != nil {
-      return "externaldrive.fill.trianglebadge.exclamationmark"
-    }
-
-    // Default: normal icon
-    return "externaldrive.fill"
+  /// The state shown by the icon, from the manager flags.
+  var iconState: MenuBarIconState {
+    MenuBarIconState(
+      isUnmountingAll: driveManager.isUnmountingAll,
+      busyVolume: driveManager.busyVolumeIdentifier != nil,
+      busyEject: driveManager.busyEjectingIdentifier != nil,
+      error: driveManager.userActionError != nil,
+      reconnecting: !keepAlive.reconnectingShareIDs.isEmpty
+        || !keepAlive.reconnectingVolumeIDs.isEmpty)
   }
+
+  var currentIcon: String { iconState.symbolName }
 
   var mountedCount: Int {
     let physicalCount = (driveManager.physicalDisks ?? [])
@@ -42,10 +80,8 @@ struct MenuBarIconView: View {
   /// Spoken by VoiceOver: the icon and the count are one element, so the count is a value, not a label.
   var accessibilityStatus: String {
     var parts = [PluralizedString.format("menubar.mounted.count", mountedCount)]
-    if driveManager.userActionError != nil {
-      parts.append(NSLocalizedString("Accessibility Error", comment: "Accessibility value"))
-    } else if currentIcon == "externaldrive.fill.badge.timemachine" {
-      parts.append(NSLocalizedString("Accessibility Busy", comment: "Accessibility value"))
+    if let key = iconState.accessibilityKey {
+      parts.append(NSLocalizedString(key, comment: "Accessibility value"))
     }
     if updater.reminder.hasPendingUpdate {
       parts.append(

@@ -421,6 +421,7 @@
 "MountMate %@ is available" = "MountMate %@ est disponible";
 "View…" = "Afficher…";
 "Accessibility Update Available" = "Mise à jour disponible";
+"Accessibility Reconnecting" = "Reconnexion en cours";
 
 /* Usage ring VoiceOver, Full Disk Access status in Settings */
 "Accessibility Percent Used" = "%d %% utilisé";

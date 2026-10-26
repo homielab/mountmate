@@ -52,10 +52,13 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     // Initial check
     refreshMountStatus()
 
-    // Refresh share status on mount/unmount events (debounced so a burst of
+    // Refresh share status on mount/unmount/wake events (debounced so a burst of
     // events reads the mount table once), instead of on every disk refresh.
     let center = NSWorkspace.shared.notificationCenter
-    for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification] {
+    for name in [
+      NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+      NSWorkspace.didWakeNotification,
+    ] {
       workspaceObservers.append(
         center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
           self?.scheduleMountEventRefresh()

@@ -421,6 +421,7 @@
 "MountMate %@ is available" = "Đã có MountMate %@";
 "View…" = "Xem…";
 "Accessibility Update Available" = "Có bản cập nhật";
+"Accessibility Reconnecting" = "Đang kết nối lại";
 
 /* Usage ring VoiceOver, Full Disk Access status in Settings */
 "Accessibility Percent Used" = "Đã dùng %d%%";
