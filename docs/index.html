@@ -76,6 +76,23 @@
       property="twitter:image"
       content="https://mountmate.homielab.com/assets/og-image.png"
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MountMate",
+        "description": "A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly.",
+        "url": "https://mountmate.homielab.com/",
+        "image": "https://mountmate.homielab.com/assets/og-image.png",
+        "operatingSystem": "macOS 13.0 or later",
+        "applicationCategory": "UtilitiesApplication",
+        "softwareVersion": "6.3",
+        "downloadUrl": "https://github.com/homielab/mountmate/releases/latest",
+        "inLanguage": ["en", "fr", "ru", "uk", "vi", "zh-Hans", "zh-Hant"],
+        "author": { "@type": "Organization", "name": "homielab" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
     <style>
       :root {
         --bg-color: #f5f5f7;
@@ -884,7 +901,10 @@
           Copy
         </button>
       </div>
-      <p class="requirements">Requires macOS 13 Ventura or later.</p>
+      <p class="requirements">
+        Requires macOS 13 Ventura or later. Available in English, Français,
+        Русский, Українська, Tiếng Việt, 简体中文 and 繁體中文.
+      </p>
 
       <div class="hero-image-container">
         <!-- Using full screenshots for the hero -->
@@ -997,6 +1017,14 @@
               Stop selected disks from mounting when plugged in or at login.
               Optionally add a rule to <code>/etc/fstab</code> so macOS leaves
               them alone even before MountMate opens.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Encrypted volumes</h3>
+            <p>
+              Unlock encrypted APFS volumes from the menu bar and optionally
+              remember the password in your Keychain; it is saved only after the
+              volume unlocks, and you can forget it at any time.
             </p>
           </div>
           <div class="card">

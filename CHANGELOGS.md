@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
 - Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
 - Docs: the website and README now show `brew install mountmate` (with a copy button on the site), the macOS 13 requirement and first-launch notes; the Homebrew cask points to mountmate.homielab.com.
+- Website: added `robots.txt`, `sitemap.xml` and SoftwareApplication structured data so search engines describe MountMate correctly, a line listing the seven interface languages, and an Encrypted volumes feature card.
 - Docs: added a CONTRIBUTING guide, GitHub issue forms (bug reports ask for the version and the error code) and a pull request template; both READMEs now list the display options (menu bar count, internal disks, only volumes) and Ignore, Protect and Pin, and the Vietnamese README has a Quick Start.
 
 ### Fixed
