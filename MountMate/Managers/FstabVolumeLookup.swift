@@ -7,6 +7,19 @@ import Foundation
 /// themselves are in `FstabRules`. Not thread-safe: `PersistenceManager`
 /// only uses it on the startup-block queue.
 final class FstabVolumeLookup {
+  /// Runs `executable` with `arguments`; tests pass a fake.
+  typealias Runner = (String, [String]) -> ProcessResult
+
+  private let runner: Runner
+
+  init(
+    runner: @escaping Runner = { executable, arguments in
+      runProcess(executable: executable, arguments: arguments)
+    }
+  ) {
+    self.runner = runner
+  }
+
   /// Boot volume's APFS container (e.g. "disk3"), resolved once per launch.
   /// A failed lookup is not cached.
   private var cachedBootAPFSContainer: String?
@@ -38,8 +51,8 @@ final class FstabVolumeLookup {
 
   /// APFS roles of a volume, or nil when they cannot be determined.
   private func apfsRoles(forVolumeUUID uuid: String, container: String) -> [String]? {
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist", container])
+    let result = runner(
+      "/usr/sbin/diskutil", ["apfs", "list", "-plist", container])
     guard result.succeeded,
       let plist = PlistDecoding.decode(result.stdout, context: "diskutil apfs list"),
       let containers = plist["Containers"] as? [[String: Any]]
@@ -59,9 +72,8 @@ final class FstabVolumeLookup {
 
   private func diskInfo(for deviceIdentifier: String) -> [String: Any]? {
     guard !deviceIdentifier.isEmpty else { return nil }
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil",
-      arguments: ["info", "-plist", deviceIdentifier])
+    let result = runner(
+      "/usr/sbin/diskutil", ["info", "-plist", deviceIdentifier])
     guard result.succeeded else { return nil }
     return PlistDecoding.decode(result.stdout, context: "diskutil info")
   }

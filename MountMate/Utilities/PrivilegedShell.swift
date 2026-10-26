@@ -22,24 +22,41 @@ enum PrivilegedShell {
   /// Runs `command` with `/bin/sh -c` as root. Blocking; call it off the main
   /// thread (the password prompt itself is shown on the main thread).
   static func run(_ command: String, prompt: String) -> ProcessResult {
+    run(
+      command, prompt: prompt, usesSudo: usesSudo,
+      runner: { executable, arguments, input, timeout in
+        runProcess(executable: executable, arguments: arguments, input: input, timeout: timeout)
+      },
+      askPassword: { prompt, retry in askPassword(prompt: prompt, retry: retry) })
+  }
+
+  /// Starts a process: executable, arguments, standard input, timeout.
+  typealias Runner = (String, [String], Data?, TimeInterval) -> ProcessResult
+
+  /// `run` with the process runner and the password prompt passed in, so
+  /// tests never reach sudo, osascript or a dialog. The commands are the same.
+  static func run(
+    _ command: String, prompt: String, usesSudo: Bool,
+    runner: Runner, askPassword: (_ prompt: String, _ retry: Bool) -> String?
+  ) -> ProcessResult {
     guard usesSudo else {
       let script =
         "do shell script \(command.appleScriptStringLiteral) with prompt \(prompt.appleScriptStringLiteral) with administrator privileges"
-      return runProcess(executable: "/usr/bin/osascript", arguments: ["-e", script], timeout: 300)
+      return runner("/usr/bin/osascript", ["-e", script], nil, 300)
     }
 
     for attempt in 1...3 {
-      guard let password = askPassword(prompt: prompt, retry: attempt > 1) else {
+      guard let password = askPassword(prompt, attempt > 1) else {
         return ProcessResult(stdout: "", stderr: cancelledMarker, exitCode: 1, timedOut: false)
       }
       // -S: read the password from stdin. -k: ignore any cached credentials,
       // so the password typed here is always the one checked. -p "": no
       // prompt text on stderr.
-      let result = runProcess(
-        executable: "/usr/bin/sudo",
-        arguments: ["-S", "-k", "-p", "", "/bin/sh", "-c", command],
-        input: Data((password + "\n").utf8),
-        timeout: 60)
+      let result = runner(
+        "/usr/bin/sudo",
+        ["-S", "-k", "-p", "", "/bin/sh", "-c", command],
+        Data((password + "\n").utf8),
+        60)
       if result.succeeded || !isWrongPassword(result) { return result }
     }
     return ProcessResult(

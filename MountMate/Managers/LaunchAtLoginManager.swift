@@ -33,7 +33,7 @@ class LaunchAtLoginManager: ObservableObject {
 
   /// A login item waiting for approval counts as on: it is registered and
   /// starts at login once allowed.
-  private static func isOn(_ status: SMAppService.Status) -> Bool {
+  static func isOn(_ status: SMAppService.Status) -> Bool {
     status == .enabled || status == .requiresApproval
   }
 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Containers</key>
+	<array>
+		<dict>
+			<key>ContainerReference</key>
+			<string>disk5</string>
+			<key>Volumes</key>
+			<array>
+				<dict>
+					<key>APFSVolumeUUID</key>
+					<string>11111111-2222-3333-4444-555555555555</string>
+					<key>Roles</key>
+					<array/>
+				</dict>
+				<dict>
+					<key>APFSVolumeUUID</key>
+					<string>99999999-2222-3333-4444-555555555555</string>
+					<key>Roles</key>
+					<array>
+						<string>Preboot</string>
+					</array>
+				</dict>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
