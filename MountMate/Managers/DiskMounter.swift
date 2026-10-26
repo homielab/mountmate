@@ -310,60 +310,23 @@ class DiskMounter: ObservableObject {
 
   /// Unmounts blocked volumes that are already mounted — typically because
   /// the OS mounted them before MountMate's user-session callback was active.
-  /// A few retries absorb transient busyness (Spotlight indexing right after
-  /// login). Never forces: a persistently busy volume is left mounted.
+  /// The decisions live in `BlockedVolumeSweep`; this only supplies the real
+  /// process runner, sleep and notification.
   private func unmountBlockedVolumes(_ blockedInfos: [ManagedVolumeInfo]) {
     DispatchQueue.global(qos: .utility).async {
-      for info in blockedInfos {
-        guard
-          let volumeUUID = PersistenceManager.normalizedSystemVolumeUUID(info.volumeUUID)
-        else { continue }
-
-        let infoResult = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", volumeUUID])
-        guard infoResult.succeeded,
-          let plist = PlistDecoding.decode(infoResult.stdout, context: "diskutil info"),
-          let device = plist["DeviceIdentifier"] as? String,
-          let mountPoint = plist["MountPoint"] as? String
-        else { continue }
-
-        let trimmedMountPoint = mountPoint.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedMountPoint.isEmpty,
-          trimmedMountPoint.caseInsensitiveCompare("Not Mounted") != .orderedSame
-        else { continue }
-
-        for attempt in 1...3 {
-          let result = runProcess(
-            executable: "/usr/sbin/diskutil", arguments: ["unmount", device])
-          if result.succeeded {
-            Log.mounter.notice(
-              "Unmounted blocked volume “\(info.name, privacy: .private)” after startup.")
-            break
+      BlockedVolumeSweep.run(
+        infos: blockedInfos,
+        run: { executable, arguments in
+          runProcess(executable: executable, arguments: arguments)
+        },
+        sleep: { Thread.sleep(forTimeInterval: $0) },
+        notify: { name, volumeUUID in
+          DispatchQueue.main.async {
+            NotificationManager.shared.blockedVolumeStillMounted(
+              name: name, volumeUUID: volumeUUID)
           }
-          if Self.isAlreadyUnmounted(result) {
-            Log.mounter.info(
-              "Blocked volume “\(info.name, privacy: .private)” was already unmounted.")
-            break
-          }
-          Log.mounter.error(
-            "Could not unmount blocked volume “\(info.name, privacy: .private)” (attempt \(attempt, privacy: .public)/3): \(result.stderr, privacy: .private)"
-          )
-          if attempt < 3 {
-            Thread.sleep(forTimeInterval: 3.0)
-          } else {
-            DispatchQueue.main.async {
-              NotificationManager.shared.blockedVolumeStillMounted(
-                name: info.name, volumeUUID: volumeUUID)
-            }
-          }
-        }
-      }
+        })
     }
-  }
-
-  private static func isAlreadyUnmounted(_ result: ProcessResult) -> Bool {
-    let output = "\(result.stdout)\n\(result.stderr)".lowercased()
-    return output.contains("already unmounted") || output.contains("not mounted")
   }
 
   private func stopDiskArbitration() {
