@@ -4,7 +4,7 @@ name: release
 #   git tag v5.21 && git push origin v5.21
 # The version comes from the tag, the build number is bumped automatically,
 # and the GitHub release is published with that version's CHANGELOGS.md
-# section only after the app is built, signed and notarized.
+# section only after the tests pass and the app is built, signed and notarized.
 
 on:
   push:
@@ -15,7 +15,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Unit tests and the style check; nothing is built or signed if they fail.
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test.yml
+
   build:
+    needs: test
     runs-on: macos-latest
     permissions:
       contents: write # commit the version bump, move the tag, publish the release

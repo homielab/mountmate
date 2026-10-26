@@ -1,11 +1,13 @@
 name: test
 
-# Unit tests and code-style check for every pull request and push to main.
+# Unit tests and code-style check for every pull request and push to main,
+# and as a gate that the release workflow runs before it builds anything.
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call:
 
 concurrency:
   group: test-${{ github.ref }}
@@ -19,7 +21,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Lint (swift-format)
         run: swift format lint --strict -r MountMate MountMateTests

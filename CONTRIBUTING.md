@@ -41,4 +41,4 @@ Every user-facing string exists in all 7 languages under `MountMate/Resources/<l
 
 ## Releases
 
-Maintainers release by pushing a version tag; the release workflow builds, signs, notarizes and publishes. Please do not bump versions, create tags or edit `docs/appcast.xml` or `Casks/mountmate.rb` in a pull request.
+Maintainers release by pushing a version tag; the release workflow first runs the same unit tests and style check as CI, and only if they pass builds, signs, notarizes and publishes. Please do not bump versions, create tags or edit `docs/appcast.xml` or `Casks/mountmate.rb` in a pull request.
