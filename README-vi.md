@@ -6,6 +6,39 @@ _Một ứng dụng đơn giản trên thanh menu macOS giúp bạn quản lý �
 
 <img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/assets/icon.png" alt="MountMate Icon" width="100" height="100" style="border-radius: 22%; border: 0.5px solid rgba(0,0,0,0.1);" />
 
+## ⚡️ Bắt đầu nhanh
+
+Cài bằng [Homebrew](https://brew.sh):
+
+```bash
+brew install mountmate
+```
+
+Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/releases) rồi kéo MountMate.app vào thư mục Applications.
+
+## 🖼️ Hình ảnh minh họa
+
+<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light.png" width="300" /><img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/dark.png" width="300" />
+
+![Toàn bộ giao diện](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
+
+## ✅ Tính năng nổi bật
+
+- Mount, unmount, mount chỉ đọc và ép eject mọi ổ ngoài chỉ với một cú click trên thanh menu.
+- Xem dung lượng trống của ổ và của network share đã mount ngay trong popover.
+- Unmount All, Mount All và Eject All External Disks bằng nút hoặc phím tắt toàn cục.
+- Tự unmount khi máy ngủ hoặc khi ổ không dùng, và mount lại khi máy thức dậy.
+- Chặn ổ USB tự mount khi cắm hoặc khi đăng nhập, tuỳ chọn chặn cả lúc khởi động (`/etc/fstab`).
+- Mount phân vùng hoặc network share tại điểm mount bạn chọn.
+- Mở khoá ổ APFS mã hoá, có thể lưu mật khẩu vào Keychain.
+- Tự mount SMB, NFS, AFP khi đăng nhập và để Keep Alive nối lại khi bị rớt.
+- Cảnh báo "Almost full" và SMART, cùng thông báo tuỳ chọn.
+- Ignore, Protect hoặc Pin phân vùng, hiện Apple RAID thành một ổ, tuỳ chỉnh danh sách trong popover.
+- Tự động hoá bằng 7 hành động Shortcuts (cả Spotlight, Siri, Automator).
+- 100% native (không Electron), 7 ngôn ngữ, hỗ trợ bàn phím và VoiceOver; phụ thuộc duy nhất là Sparkle để cập nhật.
+
+Xem [Chi tiết tính năng](#-chi-tiết-tính-năng) để biết từng mục làm gì.
+
 ## 🧩 MountMate là gì?
 
 MountMate là một tiện ích nhẹ dành cho macOS, chạy trên thanh menu và cho phép bạn **mount (gắn) hoặc unmount (tháo) ổ đĩa ngoài chỉ với một cú nhấp chuột** – không cần Terminal, không cần mở Disk Utility, hoàn toàn đơn giản.
@@ -24,7 +57,29 @@ Các giải pháp:
 
 Vì vậy, tôi đã tạo **MountMate**.
 
-## ✅ Tính năng nổi bật
+
+## ✨ MountMate dành cho ai?
+
+macOS sẽ tự động mount ổ đĩa khi bạn cắm vào – nhưng **không cho phép bạn mount lại một cách dễ dàng nếu đã unmount**. MountMate đặc biệt hữu ích nếu bạn:
+
+- Sử dụng ổ ngoài chỉ để sao lưu hoặc lưu trữ tạm thời
+- Không muốn ổ cứng quay suốt cả ngày
+- Muốn giảm tiếng ồn, tăng hiệu năng hệ thống
+
+## 🔐 An toàn, nhanh, và riêng tư
+
+MountMate hoạt động **hoàn toàn ngoại tuyến**, sử dụng lệnh và API tích hợp sẵn của macOS. Ứng dụng:
+
+- **Không theo dõi** hay gửi dữ liệu
+- **Không cần internet**, trừ khi kiểm tra bản cập nhật (Sparkle)
+- **Không truy cập dữ liệu cá nhân**
+- **Không chạy với quyền root**: chỉ hỏi mật khẩu quản trị khi ghi `/etc/fstab` (điểm mount tuỳ chỉnh của phân vùng, Block at Startup)
+
+Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm tốt.
+
+## 📖 Chi tiết tính năng
+
+Đầy đủ các tính năng trong danh sách trên:
 
 - Xem tất cả ổ đĩa ngoài đang kết nối
 - Biết được ổ nào đang được **mount**
@@ -54,41 +109,6 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
 - Chạy gọn nhẹ trên **thanh menu**
 - 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates, nơi tắt được kiểm tra tự động; header popover có nút Check for Updates). Bản cập nhật tìm thấy khi kiểm tra tự động không bật cửa sổ đè lên việc đang làm: icon menu bar có chấm nhỏ và popover hiện dòng "MountMate X.Y is available — View…"; bấm View… mới mở cửa sổ cập nhật
-
-## ✨ MountMate dành cho ai?
-
-macOS sẽ tự động mount ổ đĩa khi bạn cắm vào – nhưng **không cho phép bạn mount lại một cách dễ dàng nếu đã unmount**. MountMate đặc biệt hữu ích nếu bạn:
-
-- Sử dụng ổ ngoài chỉ để sao lưu hoặc lưu trữ tạm thời
-- Không muốn ổ cứng quay suốt cả ngày
-- Muốn giảm tiếng ồn, tăng hiệu năng hệ thống
-
-## 🔐 An toàn, nhanh, và riêng tư
-
-MountMate hoạt động **hoàn toàn ngoại tuyến**, sử dụng lệnh và API tích hợp sẵn của macOS. Ứng dụng:
-
-- **Không theo dõi** hay gửi dữ liệu
-- **Không cần internet**, trừ khi kiểm tra bản cập nhật (Sparkle)
-- **Không truy cập dữ liệu cá nhân**
-- **Không chạy với quyền root**: chỉ hỏi mật khẩu quản trị khi ghi `/etc/fstab` (điểm mount tuỳ chỉnh của phân vùng, Block at Startup)
-
-Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm tốt.
-
-## 🖼️ Hình ảnh minh họa
-
-<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light.png" width="300" /><img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/dark.png" width="300" />
-
-![Toàn bộ giao diện](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
-
-## ⚡️ Bắt đầu nhanh
-
-Cài bằng [Homebrew](https://brew.sh):
-
-```bash
-brew install mountmate
-```
-
-Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/releases) rồi kéo MountMate.app vào thư mục Applications.
 
 ## 🛠️ Hướng dẫn cài đặt
 

@@ -33,6 +33,29 @@ brew install mountmate
 
 Or [download the latest .dmg](https://github.com/homielab/mountmate/releases) and drag MountMate.app into your Applications folder.
 
+## 🖼️ Screenshots
+
+<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light.png" width="300" /><img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/dark.png" width="300" />
+
+![Full Screenshot](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
+
+## ✅ Features
+
+- Mount, unmount, mount read-only and force eject any external drive from the menu bar with one click.
+- See free space for drives and mounted network shares at a glance.
+- Unmount All, Mount All and Eject All External Disks from the popover or with global keyboard shortcuts.
+- Unmount disks when the Mac sleeps or after they sit idle, and mount them again on wake.
+- Stop USB disks from auto-mounting at plug-in or login, optionally also at startup (`/etc/fstab`).
+- Mount a volume or network share at a mount point you choose.
+- Unlock encrypted APFS volumes, with the password saved in the Keychain if you want.
+- Auto-mount SMB, NFS and AFP shares at login, and let Keep Alive reconnect them when they drop.
+- Get "Almost full" and SMART warnings, plus optional notifications.
+- Ignore, Protect or Pin volumes, show Apple RAID as one disk, and tune what the popover lists.
+- Automate it with seven Shortcuts actions (Spotlight, Siri and Automator too).
+- Fully native (no Electron), localized in 7 languages, with keyboard and VoiceOver support; the only dependency is Sparkle for updates.
+
+See [Feature Details](#-feature-details) for what each one does.
+
 ## 🧩 What is MountMate?
 
 MountMate is a lightweight macOS menu bar utility that lets you **mount and unmount external drives with a single click** – no Terminal, no Disk Utility, no hassle.
@@ -55,7 +78,31 @@ I tried:
 
 So I built **MountMate**.
 
-## ✅ Features
+
+## ✨ Why Use MountMate?
+
+macOS automatically mounts drives when they’re plugged in – but gives you **no easy way to remount them later** unless you use Terminal or Disk Utility. MountMate is perfect for:
+
+- External HDDs you don’t always need
+- Drives used only for backup
+- Reducing wear and tear or noise
+- Improving system responsiveness
+- Network shares that silently drop and need reconnecting
+
+## 🔐 Private, Fast, and Safe
+
+MountMate runs **entirely offline**, using native macOS APIs and command-line tools. It:
+
+- Does **not** track anything
+- Does **not** need the internet, except to check for updates (Sparkle)
+- Does **not** access your files
+- Does **not** run as root: it asks for your admin password only to write `/etc/fstab` (custom mount points of volumes, Block at Startup)
+
+Just a clean utility that does one job well.
+
+## 📖 Feature Details
+
+Everything in the list above, in full:
 
 - View all connected **external drives**
 - See which ones are **mounted**
@@ -85,33 +132,6 @@ So I built **MountMate**.
 - **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**
 - Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates, where you can switch automatic checks off; the popover header has a Check for Updates button). An update found by an automatic check never opens a window over your work: the menu bar icon gets a dot and the popover shows "MountMate X.Y is available — View…"; click View… to open the update window
-
-## ✨ Why Use MountMate?
-
-macOS automatically mounts drives when they’re plugged in – but gives you **no easy way to remount them later** unless you use Terminal or Disk Utility. MountMate is perfect for:
-
-- External HDDs you don’t always need
-- Drives used only for backup
-- Reducing wear and tear or noise
-- Improving system responsiveness
-- Network shares that silently drop and need reconnecting
-
-## 🔐 Private, Fast, and Safe
-
-MountMate runs **entirely offline**, using native macOS APIs and command-line tools. It:
-
-- Does **not** track anything
-- Does **not** need the internet, except to check for updates (Sparkle)
-- Does **not** access your files
-- Does **not** run as root: it asks for your admin password only to write `/etc/fstab` (custom mount points of volumes, Block at Startup)
-
-Just a clean utility that does one job well.
-
-## 🖼️ Screenshots
-
-<img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light.png" width="300" /><img src="https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/dark.png" width="300" />
-
-![Full Screenshot](https://raw.githubusercontent.com/homielab/mountmate/main/docs/screenshots/light-full.png)
 
 ## 🛠️ Installation
 
