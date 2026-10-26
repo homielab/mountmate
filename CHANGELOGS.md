@@ -46,6 +46,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- A drive whose APFS container spans several physical disks (for example a Fusion drive) is listed once instead of under each disk, and its used space is no longer counted twice.
+- The drive list now updates within a second when a disk is plugged in or removed even if it never mounts (blocked or not formatted), without reopening the popover.
+- If "Start MountMate at Login" cannot be changed, Settings shows the reason with an "Open Login Items" button instead of the switch silently flipping back.
 - **Encrypted volumes**: unlocking now stops after three wrong passwords with a message about what to check (Caps Lock, keyboard layout, Disk Utility) instead of asking forever. The password field has focus when the prompt opens and Unlock stays disabled until you type something. If a saved Keychain password is rejected and the one you type works, it replaces the saved one when "Remember" is ticked, or you can choose "Forget the saved password" (ticked by default); it is never deleted silently or after a timeout.
 
 - **Custom mount point**: saving a folder on a network share that no longer answers no longer freezes MountMate; the check runs in the background and stops after 2 seconds with a message.

@@ -90,6 +90,9 @@ struct DiskListParser {
     var newDisks: [PhysicalDisk] = []
     var unverifiedDiskIDs = Set<String>()
     var usageTimedOut = false
+    // A container spanning several physical stores (Fusion drive, or a
+    // container across disks) is listed once, under the first store's disk.
+    var listedContainerIDs = Set<String>()
 
     for diskData in Self.rootDisks(in: allDisksAndPartitions) {
       guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
@@ -122,6 +125,8 @@ struct DiskListParser {
             let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
             if let containerData = Self.findAPFSContainer(
               forStore: storeID, in: allDisksAndPartitions),
+              listedContainerIDs.insert(containerData["DeviceIdentifier"] as? String ?? storeID)
+                .inserted,
               let container = createContainer(
                 from: containerData, usageTimedOut: &usageTimedOut)
             {

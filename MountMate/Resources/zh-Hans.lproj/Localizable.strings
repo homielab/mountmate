@@ -447,3 +447,4 @@
 "Forget the saved password" = "忘记已保存的密码";
 "Could not unlock “%@”" = "无法解锁“%@”";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "密码已被拒绝 %d 次。请检查大写锁定是否关闭，键盘布局是否与设置密码时一致，或尝试在“磁盘工具”中解锁该宗卷。";
+"Login Item Error" = "无法更改登录时启动：%@";

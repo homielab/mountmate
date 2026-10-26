@@ -210,6 +210,38 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(result.disks.first?.partitions.first?.isProtected, true)
   }
 
+  // MARK: - Containers across several physical stores
+
+  /// A Fusion-style container backed by disk10s2 (SSD) and disk11s2 (HDD).
+  private func fusionDisks() throws -> [[String: Any]] {
+    let url = try XCTUnwrap(
+      Bundle(for: Self.self).url(forResource: "fusionDisks", withExtension: "plist"))
+    let plist = try XCTUnwrap(
+      try PropertyListSerialization.propertyList(
+        from: Data(contentsOf: url), options: [], format: nil) as? [String: Any])
+    return try XCTUnwrap(DiskListParser.allDisksAndPartitions(in: plist))
+  }
+
+  func testContainerOnTwoPhysicalStoresIsListedOnce() throws {
+    let result = parser().parse(
+      allDisksAndPartitions: try fusionDisks(), rootInfo: [:], unclassifiedDiskIDs: [])
+    XCTAssertEqual(result.disks.map(\.id), ["disk10", "disk11"])
+    let containers = result.disks.flatMap(\.containers)
+    XCTAssertEqual(containers.map(\.id), ["disk12"])
+    XCTAssertEqual(result.disks.first { $0.id == "disk10" }?.containers.count, 1)
+    XCTAssertEqual(result.disks.first { $0.id == "disk11" }?.containers.count, 0)
+    let volumeIDs = result.disks.flatMap(\.containers).flatMap(\.volumes).map(\.id)
+    XCTAssertEqual(Set(volumeIDs).count, volumeIDs.count)
+  }
+
+  func testContainerOnTwoStoresCountsItsUsageOnce() throws {
+    let result = parser().parse(
+      allDisksAndPartitions: try fusionDisks(), rootInfo: [:], unclassifiedDiskIDs: [])
+    let containerUsed = result.disks.flatMap(\.containers).flatMap(\.volumes)
+      .reduce(Int64(0)) { $0 + ($1.usedBytes ?? 0) }
+    XCTAssertEqual(containerUsed, 300_000_000_000)
+  }
+
   // MARK: - Helpers
 
   func testFindAPFSContainerMatchesPhysicalStore() {

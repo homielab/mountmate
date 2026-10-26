@@ -447,3 +447,4 @@
 "Forget the saved password" = "Забути збережений пароль";
 "Could not unlock “%@”" = "Не вдалося розблокувати «%@»";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Пароль не прийнято %d рази поспіль. Перевірте, що Caps Lock вимкнено і розкладка клавіатури та сама, що під час створення пароля, або спробуйте розблокувати том у Дисковій утиліті.";
+"Login Item Error" = "Не вдалося змінити запуск під час входу: %@";

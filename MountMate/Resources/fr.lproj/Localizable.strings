@@ -447,3 +447,4 @@
 "Forget the saved password" = "Oublier le mot de passe enregistré";
 "Could not unlock “%@”" = "Impossible de déverrouiller « %@ »";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Le mot de passe a été refusé %d fois. Vérifiez que le verrouillage des majuscules est désactivé et que la disposition du clavier est celle utilisée lors de la création du mot de passe, ou essayez de déverrouiller le volume dans Utilitaire de disque.";
+"Login Item Error" = "Impossible de modifier le lancement à l’ouverture de session : %@";

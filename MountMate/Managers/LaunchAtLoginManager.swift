@@ -15,6 +15,10 @@ class LaunchAtLoginManager: ObservableObject {
   /// System Settings → General → Login Items.
   @Published private(set) var requiresApproval = false
 
+  /// The system's message when registering or unregistering the login item
+  /// failed; cleared on the next attempt that succeeds.
+  @Published private(set) var lastError: String?
+
   private let service = SMAppService.mainApp
   /// Set while `isEnabled` mirrors the system state, so that does not
   /// register or unregister the login item.
@@ -54,7 +58,9 @@ class LaunchAtLoginManager: ObservableObject {
       } else {
         try service.unregister()
       }
+      lastError = nil
     } catch {
+      lastError = error.localizedDescription
       Log.app.error(
         "Failed to update login item status: \(error.localizedDescription, privacy: .public)")
     }

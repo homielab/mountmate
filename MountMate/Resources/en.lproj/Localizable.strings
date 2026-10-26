@@ -447,3 +447,4 @@
 "Forget the saved password" = "Forget the saved password";
 "Could not unlock “%@”" = "Could not unlock “%@”";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility.";
+"Login Item Error" = "Could not change Start at Login: %@";

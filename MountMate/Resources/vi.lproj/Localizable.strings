@@ -447,3 +447,4 @@
 "Forget the saved password" = "Quên mật khẩu đã lưu";
 "Could not unlock “%@”" = "Không thể mở khoá “%@”";
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "Mật khẩu bị từ chối %d lần. Hãy kiểm tra Caps Lock đã tắt và bố cục bàn phím giống lúc đặt mật khẩu, hoặc thử mở khoá ổ trong Disk Utility.";
+"Login Item Error" = "Không thể thay đổi Khởi động cùng máy: %@";

@@ -203,12 +203,14 @@ class DiskMounter: ObservableObject {
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
       let name = DADiskGetBSDName(disk).map { String(cString: $0) }
       this.withLedger { $0.recordAppearance(of: name) }
+      NotificationCenter.default.post(name: .diskAppearanceDidChange, object: nil)
     }
     let disappearedCallback: DADiskDisappearedCallback = { disk, context in
       guard let context = context else { return }
       let this = Unmanaged<DiskMounter>.fromOpaque(context).takeUnretainedValue()
       let name = DADiskGetBSDName(disk).map { String(cString: $0) }
       this.withLedger { $0.forgetAppearance(of: name) }
+      NotificationCenter.default.post(name: .diskAppearanceDidChange, object: nil)
     }
 
     let matching: [String: Any] = [kDADiskDescriptionVolumeMountableKey as String: kCFBooleanTrue!]

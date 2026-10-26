@@ -1072,6 +1072,11 @@ class DriveManager: ObservableObject {
       self, selector: #selector(handleDiskNotification),
       name: NSWorkspace.didUnmountNotification,
       object: nil)
+    // Disks that appear or vanish without ever mounting (blocked, not
+    // formatted) post no workspace notification.
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(handleDiskNotification),
+      name: .diskAppearanceDidChange, object: nil)
   }
 
   @objc private func handleDiskNotification(notification: NSNotification) {

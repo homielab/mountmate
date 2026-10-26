@@ -170,6 +170,22 @@ struct GeneralSettingsView: View {
               .controlSize(.small)
           }
         }
+        if let loginError = launchManager.lastError {
+          HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+              .foregroundStyle(.orange)
+              .accessibilityHidden(true)
+            Text(
+              String(
+                format: NSLocalizedString("Login Item Error", comment: "Login item failure"),
+                loginError)
+            )
+            .font(.caption)
+            Spacer()
+            Button("Open Login Items") { launchManager.openLoginItemsSettings() }
+              .controlSize(.small)
+          }
+        }
         Toggle(isOn: $diskMounter.blockUSBAutoMount) {
           Label("Block USB Auto-Mount", systemImage: "hand.raised.slash")
         }
