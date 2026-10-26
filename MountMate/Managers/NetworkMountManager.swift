@@ -1269,16 +1269,23 @@ class NetworkMountManager: ObservableObject {
   /// `~/mountmate/<name>`. Also used by the share editor to detect two saved
   /// shares that would use the same folder.
   func configuredMountPoint(for share: NetworkShare) -> String {
+    Self.configuredMountPoint(
+      for: share, homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path)
+  }
+
+  /// `configuredMountPoint(for:)` with the home folder passed in: a relative
+  /// custom path is taken from `homeDirectory`.
+  static func configuredMountPoint(for share: NetworkShare, homeDirectory homeDir: String)
+    -> String
+  {
     if let customPath = share.customMountPoint, !customPath.isEmpty {
       let expandedPath = (customPath as NSString).expandingTildeInPath
       if !expandedPath.hasPrefix("/") {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
         return "\(homeDir)/\(expandedPath)"
       } else {
         return expandedPath
       }
     } else {
-      let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
       let mountsDir = "\(homeDir)/mountmate"
       return "\(mountsDir)/\(share.name)"
     }

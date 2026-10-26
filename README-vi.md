@@ -135,6 +135,8 @@ Ghi log bằng `Log.<category>` (`MountMate/Utilities/Log.swift`), không dùng 
 
 Mỗi lần làm mới chỉ chạy `diskutil list` một lần và `diskutil info` cho những ổ mới, ổ đổi dung lượng hoặc bố cục phân vùng, hoặc ổ có thông tin cũ hơn 30 giây (`WholeDiskInfoCache`); các lệnh chạy song song, không chặn thread. Số lần chạy `diskutil info` được ghi ở mức debug: `log stream --predicate 'subsystem == "com.homielab.mountmate" AND category == "drive"' --level debug`.
 
+Danh sách ổ được dựng bởi `DiskListParser` (`MountMate/Managers/DiskListParser.swift`), vốn không tự chạy tiến trình nào: statfs và phương án dự phòng Disk Arbitration được truyền vào. `DiskListParserTests` chạy nó trên một bản `diskutil list -plist` ghi sẵn trong `MountMateTests/Fixtures/`; cần kiểm một bố cục ổ mới thì thêm fixture vào đó.
+
 CI chạy cả hai trên mỗi pull request và mỗi push vào `main`. Kiểm tra style chỉ báo cáo, chưa làm hỏng build cho tới khi dọn xong các lỗi cũ.
 
 ## 📫 Đóng góp & phản hồi

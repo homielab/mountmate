@@ -142,6 +142,8 @@ Log with `Log.<category>` (`MountMate/Utilities/Log.swift`), never `print()`. Ma
 
 A refresh runs `diskutil list` once and `diskutil info` only for whole disks that are new, whose size or partition layout changed, or whose cached info is older than 30 seconds (`WholeDiskInfoCache`); the fetches run concurrently without blocking a thread. Each refresh logs how many `diskutil info` runs it needed at debug level: `log stream --predicate 'subsystem == "com.homielab.mountmate" AND category == "drive"' --level debug`.
 
+The disk list is built by `DiskListParser` (`MountMate/Managers/DiskListParser.swift`), which runs no process itself: statfs and the Disk Arbitration fallback are passed in. `DiskListParserTests` run it against a recorded `diskutil list -plist` in `MountMateTests/Fixtures/`; add a fixture there when a new disk layout needs covering.
+
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
 
 ## 🔐 Network Share Errors

@@ -1,7 +1,6 @@
 //  Created by homielab.com
 
 import Combine
-import DiskArbitration
 import Foundation
 import SwiftUI
 
@@ -152,18 +151,14 @@ class DriveManager: ObservableObject {
 
     // PersistenceManager's lists are mutated on the main thread; parsing runs
     // on a background queue, so it gets an immutable copy.
-    let filters = VolumeFilterSnapshot(
+    let filters = DiskListParser.Filters(
       ignoredIDs: Set(PersistenceManager.shared.ignoredVolumes.map(\.id)),
       protectedIDs: Set(PersistenceManager.shared.protectedVolumes.map(\.id)))
 
     DispatchQueue.global(qos: qos).async { [weak self] in
       guard let self = self else { return }
 
-      // #if DEBUG
-      // let (output, error) = self.loadMockData()
-      // #else
       let listResult = runProcess(executable: "/usr/sbin/diskutil", arguments: ["list", "-plist"])
-      // #endif
 
       guard listResult.succeeded else {
         let errMsg = listResult.timedOut ? "diskutil timed out." : listResult.stderr
@@ -184,7 +179,7 @@ class DriveManager: ObservableObject {
           self.parseDisks(from: plist, filters: filters) { parsed in
             self.updateState(
               with: parsed.disks, unverifiedDiskIDs: parsed.unverifiedDiskIDs,
-              usageTimedOut: filters.usage.timedOut)
+              usageTimedOut: parsed.usageTimedOut)
           }
         } else {
           self.handleRefreshFailure(error: "diskutil returned an unexpected property list.")
@@ -301,22 +296,6 @@ class DriveManager: ObservableObject {
         }
       }
       finished.forEach { $0() }
-    }
-  }
-
-  private func loadMockData() -> (output: String?, error: String?) {
-    guard let url = Bundle.main.url(forResource: "testDisks", withExtension: "plist") else {
-      Log.drive.error("Mock data: testDisks.plist not found in the app bundle.")
-      return (nil, "testDisks.plist not found")
-    }
-    do {
-      let output = try String(contentsOf: url)
-      return (output, nil)
-    } catch {
-      Log.drive.error(
-        "Mock data: could not read testDisks.plist: \(error.localizedDescription, privacy: .public)"
-      )
-      return (nil, error.localizedDescription)
     }
   }
 
@@ -902,12 +881,28 @@ class DriveManager: ObservableObject {
   }
 
   func normalizedMountPointPath(_ rawPath: String) -> String {
+    Self.normalizedMountPointPath(rawPath)
+  }
+
+  /// Trims surrounding whitespace and expands `~`.
+  static func normalizedMountPointPath(_ rawPath: String) -> String {
     (rawPath.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
   }
 
   func customMountPointValidationError(for rawPath: String, excluding volume: Volume? = nil)
     -> String?
   {
+    Self.customMountPointValidationError(for: rawPath) { path in
+      self.mountedVolumeName(at: path, excluding: volume)
+    }
+  }
+
+  /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.
+  /// - Parameter mountedVolumeName: the name of another volume already
+  ///   mounted at the (normalized) path, if any.
+  static func customMountPointValidationError(
+    for rawPath: String, mountedVolumeName: (String) -> String?
+  ) -> String? {
     let path = normalizedMountPointPath(rawPath)
 
     guard !path.isEmpty else {
@@ -932,7 +927,7 @@ class DriveManager: ObservableObject {
         "Custom Mount Point Control Characters",
         comment: "Custom mount point validation")
     }
-    if let mountedVolumeName = mountedVolumeName(at: path, excluding: volume) {
+    if let mountedVolumeName = mountedVolumeName(path) {
       return String(
         format: NSLocalizedString(
           "Custom Mount Point In Use",
@@ -964,46 +959,19 @@ class DriveManager: ObservableObject {
     return (true, true, contents.isEmpty)
   }
 
-  // MARK: - Parsing and Data Creation Helpers
+  // MARK: - Disk List
 
-  /// Composite IDs of ignored and protected volumes, copied on the main
-  /// thread so background parsing never reads PersistenceManager's arrays
-  /// while the UI mutates them.
-  private struct VolumeFilterSnapshot {
-    let ignoredIDs: Set<String>
-    let protectedIDs: Set<String>
-    /// Filled in while parsing (on the parsing thread only).
-    let usage = UsageReport()
-  }
-
-  private final class UsageReport {
-    /// A statfs timed out (or was still blocked from an earlier refresh).
-    var timedOut = false
-  }
-
+  /// Reads `diskutil info` for the whole disks that need it (see
+  /// `WholeDiskInfoCache`), then builds the list with `DiskListParser`.
   private func parseDisks(
-    from plist: [String: Any], filters: VolumeFilterSnapshot,
-    completion: @escaping ((disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>)) -> Void
+    from plist: [String: Any], filters: DiskListParser.Filters,
+    completion: @escaping (DiskListParser.Result) -> Void
   ) {
-    guard let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
-      completion(([], []))
+    guard let allDisksAndPartitions = DiskListParser.allDisksAndPartitions(in: plist) else {
+      completion(.empty)
       return
     }
-
-    var childDeviceIDs = Set<String>()
-    for diskData in allDisksAndPartitions {
-      if let partitions = diskData["Partitions"] as? [[String: Any]] {
-        for partition in partitions {
-          childDeviceIDs.insert(partition["DeviceIdentifier"] as? String ?? "")
-        }
-      }
-    }
-
-    let rootDisks = allDisksAndPartitions.filter { diskData in
-      let deviceID = diskData["DeviceIdentifier"] as? String ?? ""
-      let isSynthesizedAPFS = diskData["APFSPhysicalStores"] != nil
-      return !childDeviceIDs.contains(deviceID) && !isSynthesizedAPFS
-    }
+    let rootDisks = DiskListParser.rootDisks(in: allDisksAndPartitions)
 
     // `diskutil info` only for new, changed or stale disks; runs off this
     // thread and calls back once every disk has its info (or none).
@@ -1016,214 +984,16 @@ class DriveManager: ObservableObject {
       Log.drive.debug(
         "Refresh: \(lookup.fetched.count, privacy: .public) diskutil info run(s), \(lookup.reused.count, privacy: .public) disk(s) from cache."
       )
+      let parser = DiskListParser(
+        filters: filters,
+        showInternalDisks: UserDefaults.standard.bool(forKey: "showInternalDisks"),
+        fileSystemUsage: { Self.fileSystemUsage(atPath: $0) },
+        classifyDisksWithoutInfo: DiskListParser.classifyWithSystem)
       completion(
-        self.buildDisks(
-          rootDisks: rootDisks, allDisksAndPartitions: allDisksAndPartitions,
-          rootInfo: lookup.info, unclassifiedDiskIDs: lookup.unclassified, filters: filters))
+        parser.parse(
+          allDisksAndPartitions: allDisksAndPartitions, rootInfo: lookup.info,
+          unclassifiedDiskIDs: lookup.unclassified))
     }
-  }
-
-  private func buildDisks(
-    rootDisks: [[String: Any]], allDisksAndPartitions: [[String: Any]],
-    rootInfo: [String: [String: Any]], unclassifiedDiskIDs: Set<String>,
-    filters: VolumeFilterSnapshot
-  ) -> (disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>) {
-    // Second opinions for disks without any info: Disk Arbitration first (no
-    // process), then `diskutil list external` once per refresh if needed.
-    var fallbackKinds = [String: FallbackDiskKind]()
-    if !unclassifiedDiskIDs.isEmpty {
-      let session = DASessionCreate(kCFAllocatorDefault)
-      var externalWholeDiskIDs: Set<String>?
-      var didListExternal = false
-      for identifier in unclassifiedDiskIDs {
-        var kind = session.map { Self.diskArbitrationKind(of: identifier, session: $0) } ?? .unknown
-        if kind == .unknown {
-          if !didListExternal {
-            didListExternal = true
-            externalWholeDiskIDs = Self.externalWholeDiskIdentifiers()
-          }
-          if externalWholeDiskIDs?.contains(identifier) == true { kind = .external }
-        }
-        fallbackKinds[identifier] = kind
-        Log.drive.info(
-          "Classified \(identifier, privacy: .public) without diskutil info as \(String(describing: kind), privacy: .public)."
-        )
-      }
-    }
-
-    let shouldShowInternalDisks = UserDefaults.standard.bool(forKey: "showInternalDisks")
-    var newDisks: [PhysicalDisk] = []
-    var unverifiedDiskIDs = Set<String>()
-
-    for diskData in rootDisks {
-      guard let physicalIdentifier = diskData["DeviceIdentifier"] as? String else { continue }
-      let infoPlist = rootInfo[physicalIdentifier]
-      let diskPartitions = diskData["Partitions"] as? [[String: Any]]
-      if DiskTopology.isRAIDMember(infoPlist, partitions: diskPartitions) { continue }
-
-      let isInternal: Bool
-      let fallbackKind = fallbackKinds[physicalIdentifier]
-      if let infoPlist {
-        isInternal = (infoPlist["Internal"] as? Bool) ?? false
-      } else {
-        // Only hide a disk positively known to be internal. A disk nothing
-        // could classify is listed (as unverified, never removable) rather
-        // than made to vanish.
-        isInternal = fallbackKind == .internalDisk
-      }
-      if isInternal && !shouldShowInternalDisks { continue }
-
-      var partitions: [Volume] = []
-      var containers: [APFSContainer] = []
-
-      if let diskPartitions = diskData["Partitions"] as? [[String: Any]] {
-        for partitionData in diskPartitions {
-          if let contentType = partitionData["Content"] as? String,
-            contentType == "Apple_APFS"
-          {
-            let storeID = partitionData["DeviceIdentifier"] as? String ?? ""
-            if let containerData = findAPFSContainer(
-              forStore: storeID, in: allDisksAndPartitions),
-              let container = createContainer(from: containerData, filters: filters)
-            {
-              containers.append(container)
-            }
-          } else {
-            if let volume = createVolume(
-              from: partitionData, snapshotsData: nil, filters: filters)
-            {
-              partitions.append(volume)
-            }
-          }
-        }
-      } else if diskData["APFSVolumes"] as? [[String: Any]] != nil {
-        if let container = createContainer(from: diskData, filters: filters) {
-          containers.append(container)
-        }
-      }
-
-      if partitions.isEmpty && containers.isEmpty, DiskTopology.hasWholeDiskVolume(diskData) {
-        if let volume = createVolume(from: diskData, snapshotsData: nil, filters: filters) {
-          partitions.append(volume)
-        }
-      }
-
-      if !partitions.isEmpty || !containers.isEmpty {
-        let connectionInfo =
-          infoPlist != nil
-          ? getConnectionInfo(from: infoPlist, isInternal: isInternal)
-          : Self.fallbackConnectionInfo(for: fallbackKind ?? .unknown)
-        let diskName =
-          infoPlist?["IORegistryEntryName"] as? String ?? infoPlist?["MediaName"]
-          as? String
-          ?? (partitions.first ?? containers.first?.volumes.first)?.name
-        let totalBytes = diskData["Size"] as? Int64 ?? 0
-
-        let allVolumesForStats = partitions + containers.flatMap { $0.volumes }
-        let stats = calculateParentDiskStats(
-          totalBytes: totalBytes, volumes: allVolumesForStats)
-
-        let physicalDisk = PhysicalDisk(
-          id: physicalIdentifier, diskUUID: infoPlist?["DiskUUID"] as? String,
-          connectionType: connectionInfo.type, name: diskName,
-          totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
-          usagePercentage: stats.percentage, type: connectionInfo.diskType,
-          isRAIDSet: DiskTopology.isRAIDMaster(infoPlist),
-          partitions: partitions, containers: containers, storageError: stats.error)
-        newDisks.append(physicalDisk)
-        if infoPlist == nil, fallbackKind == nil || fallbackKind == .unknown {
-          unverifiedDiskIDs.insert(physicalIdentifier)
-        }
-      }
-    }
-
-    let sortedDisks = newDisks.sorted {
-      let order: (PhysicalDiskType) -> Int = { type in
-        type == .internalDisk ? 0 : (type == .physical ? 1 : 2)
-      }
-      if order($0.type) != order($1.type) { return order($0.type) < order($1.type) }
-      return ($0.name ?? "") < ($1.name ?? "")
-    }
-    return (sortedDisks, unverifiedDiskIDs)
-  }
-
-  /// How a whole disk was classified when `diskutil info` was unavailable.
-  private enum FallbackDiskKind: CustomStringConvertible {
-    case internalDisk, external, diskImage, unknown
-    var description: String {
-      switch self {
-      case .internalDisk: "internal"
-      case .external: "external"
-      case .diskImage: "disk image"
-      case .unknown: "unknown"
-      }
-    }
-  }
-
-  /// Disk Arbitration's view of a whole disk: a fast, process-free second
-  /// opinion when `diskutil info` failed.
-  private static func diskArbitrationKind(of bsdName: String, session: DASession)
-    -> FallbackDiskKind
-  {
-    guard let disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, bsdName),
-      let description = DADiskCopyDescription(disk) as? [String: Any]
-    else { return .unknown }
-    if (description[kDADiskDescriptionDeviceModelKey as String] as? String) == "Disk Image" {
-      return .diskImage
-    }
-    guard let isInternal = description[kDADiskDescriptionDeviceInternalKey as String] as? Bool
-    else { return .unknown }
-    return isInternal ? .internalDisk : .external
-  }
-
-  /// Type for a disk without `diskutil info`. An unknown disk is typed as
-  /// internal so nothing treats it as removable (`PhysicalDisk.isRemovable`);
-  /// it is also in `unverifiedDiskIDs`.
-  private static func fallbackConnectionInfo(for kind: FallbackDiskKind) -> (
-    type: String, diskType: PhysicalDiskType
-  ) {
-    let unknown = NSLocalizedString("Unknown", comment: "Unknown connection type")
-    switch kind {
-    case .external: return (unknown, .physical)
-    case .diskImage: return (NSLocalizedString("Disk Image", comment: "Disk Image"), .diskImage)
-    case .internalDisk, .unknown: return (unknown, .internalDisk)
-    }
-  }
-
-  /// BSD names of the whole disks macOS reports as external
-  /// (`diskutil list -plist external`). A cheap second source used only for
-  /// disks whose `diskutil info` failed with nothing cached. Nil on failure.
-  private static func externalWholeDiskIdentifiers() -> Set<String>? {
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ["list", "-plist", "external"], timeout: 8)
-    guard result.succeeded, let data = result.stdout.data(using: .utf8),
-      let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-        as? [String: Any],
-      let wholeDisks = plist["WholeDisks"] as? [String]
-    else { return nil }
-    return Set(wholeDisks)
-  }
-
-  private func createContainer(
-    from containerData: [String: Any], filters: VolumeFilterSnapshot
-  ) -> APFSContainer? {
-    guard let containerID = containerData["DeviceIdentifier"] as? String,
-      let apfsVolumesData = containerData["APFSVolumes"] as? [[String: Any]]
-    else {
-      return nil
-    }
-
-    let volumes = apfsVolumesData.compactMap { apfsVolumeData -> Volume? in
-      guard
-        let deviceIdentifier = apfsVolumeData["DeviceIdentifier"] as? String,
-        !DiskTopology.isSealedSnapshotDevice(deviceIdentifier)
-      else { return nil }
-      return createVolume(
-        from: apfsVolumeData,
-        snapshotsData: apfsVolumeData["MountedSnapshots"] as? [[String: Any]],
-        filters: filters)
-    }
-    return APFSContainer(id: containerID, volumes: volumes)
   }
 
   public func getInfoForDisk(for identifier: String, timeout: TimeInterval = 8.0) -> [String: Any]?
@@ -1240,189 +1010,6 @@ class DriveManager: ObservableObject {
       try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil)
         as? [String: Any]
     }
-  }
-
-  /// The synthesized APFS container backed by `storeID`. A container can span
-  /// several physical stores (e.g. a Fusion drive), so any of them matches.
-  private func findAPFSContainer(forStore storeID: String, in allDisks: [[String: Any]])
-    -> [String:
-    Any]?
-  {
-    return allDisks.first { disk in
-      guard let physicalStores = disk["APFSPhysicalStores"] as? [[String: Any]] else {
-        return false
-      }
-      return physicalStores.contains { ($0["DeviceIdentifier"] as? String) == storeID }
-    }
-  }
-
-  private func calculateParentDiskStats(totalBytes: Int64, volumes: [Volume]) -> (
-    total: String?, free: String?, used: String?, percentage: Double?, error: String?
-  ) {
-    if let errorMessage = volumes.compactMap(\.storageError).first {
-      return (nil, nil, nil, nil, errorMessage)
-    }
-    guard totalBytes > 0 else { return (nil, nil, nil, nil, nil) }
-
-    let usedBytes = volumes.reduce(0) { $0 + ($1.usedBytes ?? 0) }
-
-    let formatter = ByteCountFormatter()
-    formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
-    formatter.countStyle = .file
-    let totalSizeStr = formatter.string(fromByteCount: totalBytes)
-    let freeBytes = totalBytes - usedBytes
-    let freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
-    let usedSpaceStr = formatter.string(fromByteCount: usedBytes)
-    let usagePercentage = totalBytes > 0 ? min(1.0, Double(usedBytes) / Double(totalBytes)) : 0
-
-    return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage, nil)
-  }
-
-  private func createVolume(
-    from volumeData: [String: Any],
-    snapshotsData: [[String: Any]]?,
-    filters: VolumeFilterSnapshot
-  ) -> Volume? {
-    guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
-
-    let contentType = volumeData["Content"] as? String
-    if contentType == "Apple_RAID" || contentType == "Apple_RAID_Offline" {
-      return nil
-    }
-
-    let volumeUUID = volumeData["VolumeUUID"] as? String ?? deviceIdentifier
-    let diskUUID = volumeData["DiskUUID"] as? String
-
-    let volumeName =
-      volumeData["VolumeName"] as? String ?? volumeData["Content"] as? String
-      ?? deviceIdentifier
-
-    let tempVolume = Volume(
-      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName,
-      isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
-      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: .user,
-      isProtected: false, snapshots: [], storageError: nil)
-    // Same matching as PersistenceManager.isVolumeIgnored/isVolumeProtected,
-    // against the main-thread snapshot.
-    let compositeId = tempVolume.compositeId
-    // Volumes without a volume UUID (e.g. Microsoft Reserved) are ignored by
-      // their partition UUID; see Volume.ignoreIdentifier.
-      if let ignoreID = tempVolume.ignoreIdentifier, filters.ignoredIDs.contains(ignoreID) {
-        return nil
-      }
-
-    let isProtected = compositeId.map { filters.protectedIDs.contains($0) } ?? false
-    let snapshots = snapshotsData?.compactMap { createSnapshot(from: $0) } ?? []
-
-    let category: DriveCategory = contentType == "EFI" ? .system : .user
-
-    let mountPoint: String?
-    if let path = volumeData["MountPoint"] as? String {
-      let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !trimmed.isEmpty && trimmed.caseInsensitiveCompare("Not Mounted") != .orderedSame {
-        mountPoint = path
-      } else {
-        mountPoint = nil
-      }
-    } else {
-      mountPoint = nil
-    }
-    let isMounted = mountPoint != nil
-    let fileSystemType = contentType ?? (volumeData["FilesystemName"] as? String) ?? "Unknown"
-
-    var freeSpaceStr: String?
-    var totalSizeStr: String?
-    var usedSpaceStr: String?
-    var usagePercentage: Double?
-    var usedBytes: Int64?
-    var storageError: String?
-
-    if let totalSize = volumeData["Size"] as? Int64, totalSize > 0 {
-      let formatter = ByteCountFormatter()
-      formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
-      formatter.countStyle = .file
-      totalSizeStr = formatter.string(fromByteCount: totalSize)
-
-      var calculatedUsedBytes: Int64?
-      if let capacityInUse = volumeData["CapacityInUse"] as? Int64 {
-        calculatedUsedBytes = capacityInUse
-      } else if isMounted, let mountPoint = mountPoint {
-        // Non-APFS volumes: `diskutil list` has no usage, so ask the file
-        // system. statfs needs no privacy permission, but it can block on an
-        // unresponsive disk, so it is bounded by a timeout.
-        switch Self.fileSystemUsage(atPath: mountPoint) {
-        case .usage(let total, let free):
-          calculatedUsedBytes = total - free
-        case .timedOut:
-          filters.usage.timedOut = true
-          fallthrough
-        case .failed:
-          Log.drive.error(
-            "Could not read file system usage for \(volumeName, privacy: .private) (failed or timed out)."
-          )
-          storageError = NSLocalizedString(
-            "Could not read storage details.",
-            comment: "Shown when a volume's used/free space cannot be read")
-        }
-      }
-
-      if let finalUsedBytes = calculatedUsedBytes {
-        usedBytes = finalUsedBytes
-
-        let freeBytes = totalSize - finalUsedBytes
-        freeSpaceStr = formatter.string(fromByteCount: freeBytes > 0 ? freeBytes : 0)
-        usedSpaceStr = formatter.string(fromByteCount: finalUsedBytes)
-        usagePercentage = Double(finalUsedBytes) / Double(totalSize)
-      }
-    }
-
-    return Volume(
-      id: volumeUUID, deviceIdentifier: deviceIdentifier, diskUUID: diskUUID, name: volumeName,
-      isMounted: isMounted, mountPoint: mountPoint, freeSpace: freeSpaceStr,
-      totalSize: totalSizeStr, usedSpace: usedSpaceStr, usedBytes: usedBytes,
-      fileSystemType: fileSystemType,
-      usagePercentage: usagePercentage, category: category, isProtected: isProtected,
-      snapshots: snapshots,
-      storageError: storageError)
-  }
-
-  private func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {
-    guard let name = snapshotData["SnapshotName"] as? String,
-      let uuid = snapshotData["SnapshotUUID"] as? String
-    else { return nil }
-    return APFSSnapshot(id: uuid, name: name)
-  }
-
-  private func getConnectionInfo(from infoPlist: [String: Any]?, isInternal: Bool) -> (
-    type: String, diskType: PhysicalDiskType
-  ) {
-    let defaultType = NSLocalizedString("Unknown", comment: "Unknown connection type")
-    guard let info = infoPlist else {
-      return (defaultType, isInternal ? .internalDisk : .physical)
-    }
-
-    let isRAIDMaster = DiskTopology.isRAIDMaster(info)
-    let isVirtual = info["VirtualOrPhysical"] as? String == "Virtual"
-
-    let diskType: PhysicalDiskType
-    if isInternal {
-      diskType = .internalDisk
-    } else if isVirtual && !isRAIDMaster {
-      diskType = .diskImage
-    } else {
-      diskType = .physical
-    }
-
-    let connectionType: String
-    if isRAIDMaster {
-      connectionType = NSLocalizedString("Apple RAID", comment: "Apple RAID")
-    } else if diskType == .diskImage {
-      connectionType = NSLocalizedString("Disk Image", comment: "Disk Image")
-    } else {
-      connectionType = info["BusProtocol"] as? String ?? defaultType
-    }
-
-    return (connectionType, diskType)
   }
 
   // MARK: - Error Handling

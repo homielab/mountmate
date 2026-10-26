@@ -1,0 +1,257 @@
+import XCTest
+
+@testable import MountMate
+
+/// Runs `DiskListParser` against a recorded `diskutil list -plist` of a Mac
+/// with an internal APFS disk (disk0, containers disk1–disk3) and two
+/// external NTFS disks: disk6 "Samsung_T5" (mounted) and disk7 "One Touch"
+/// (not mounted).
+final class DiskListParserTests: XCTestCase {
+  private static let samsungTotal: Int64 = 1_000_202_273_280
+  private static let samsungFree: Int64 = 400_000_000_000
+
+  private var allDisks: [[String: Any]] = []
+
+  override func setUpWithError() throws {
+    let url = try XCTUnwrap(
+      Bundle(for: Self.self).url(forResource: "testDisks", withExtension: "plist"),
+      "testDisks.plist fixture missing from the test bundle")
+    let data = try Data(contentsOf: url)
+    let plist = try XCTUnwrap(
+      try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+        as? [String: Any])
+    allDisks = try XCTUnwrap(DiskListParser.allDisksAndPartitions(in: plist))
+  }
+
+  private let rootInfo: [String: [String: Any]] = [
+    "disk0": ["Internal": true, "BusProtocol": "Apple Fabric", "MediaName": "APPLE SSD"],
+    "disk6": [
+      "Internal": false, "BusProtocol": "USB", "IORegistryEntryName": "Samsung PSSD T5 Media",
+      "DiskUUID": "6A1B0C2D-0000-4000-8000-000000000006",
+    ],
+  ]
+
+  private func parser(
+    showInternalDisks: Bool = false, filters: DiskListParser.Filters = .init(),
+    usage: DriveManager.FileSystemUsageResult? = nil,
+    fallback: [String: DiskListParser.FallbackDiskKind] = ["disk7": .external]
+  ) -> DiskListParser {
+    let usage = usage ?? .usage(total: Self.samsungTotal, free: Self.samsungFree)
+    return DiskListParser(
+      filters: filters, showInternalDisks: showInternalDisks,
+      fileSystemUsage: { _ in usage },
+      classifyDisksWithoutInfo: { ids in fallback.filter { ids.contains($0.key) } })
+  }
+
+  private func parse(_ parser: DiskListParser, unclassified: Set<String> = ["disk7"])
+    -> DiskListParser.Result
+  {
+    parser.parse(
+      allDisksAndPartitions: allDisks, rootInfo: rootInfo, unclassifiedDiskIDs: unclassified)
+  }
+
+  func testFixtureHasSixEntriesAndThreeWholeDisks() {
+    XCTAssertEqual(allDisks.count, 6)
+    let roots = DiskListParser.rootDisks(in: allDisks).compactMap {
+      $0["DeviceIdentifier"] as? String
+    }
+    // disk1–disk3 are synthesized APFS containers, not physical disks.
+    XCTAssertEqual(roots, ["disk0", "disk6", "disk7"])
+  }
+
+  func testMissingDiskListIsNil() {
+    XCTAssertNil(DiskListParser.allDisksAndPartitions(in: ["WholeDisks": ["disk0"]]))
+  }
+
+  func testInternalDiskIsHiddenByDefault() {
+    let result = parse(parser())
+
+    XCTAssertEqual(result.disks.map(\.id), ["disk7", "disk6"])  // sorted by name
+    XCTAssertEqual(result.disks.map(\.name), ["One Touch", "Samsung PSSD T5 Media"])
+    XCTAssertTrue(result.disks.allSatisfy { $0.containers.isEmpty && $0.partitions.count == 1 })
+    XCTAssertTrue(result.unverifiedDiskIDs.isEmpty)
+    XCTAssertFalse(result.usageTimedOut)
+  }
+
+  func testInternalDiskIsListedFirstWhenShown() throws {
+    let result = parse(parser(showInternalDisks: true))
+
+    XCTAssertEqual(result.disks.map(\.id), ["disk0", "disk7", "disk6"])
+    let internalDisk = result.disks[0]
+    XCTAssertEqual(internalDisk.type, .internalDisk)
+    XCTAssertEqual(internalDisk.name, "APPLE SSD")
+    XCTAssertEqual(internalDisk.connectionType, "Apple Fabric")
+    // disk0s2 is the store of container disk3; disk0s1 / disk0s3 are listed
+    // as plain partitions.
+    XCTAssertEqual(internalDisk.containers.map(\.id), ["disk3"])
+    XCTAssertEqual(internalDisk.partitions.map(\.deviceIdentifier), ["disk0s1", "disk0s3"])
+  }
+
+  func testAPFSContainerSkipsSealedSnapshotAndKeepsSnapshots() throws {
+    let internalDisk = try XCTUnwrap(parse(parser(showInternalDisks: true)).disks.first)
+    let container = try XCTUnwrap(internalDisk.containers.first)
+
+    XCTAssertEqual(
+      container.volumes.map(\.name),
+      ["Macintosh HD", "Preboot", "Recovery", "Update", "Data", "VM"])
+    XCTAssertFalse(container.volumes.contains { $0.deviceIdentifier == "disk3s1s1" })
+    let system = container.volumes[0]
+    XCTAssertEqual(system.snapshots.count, 1)
+    XCTAssertFalse(system.isMounted)
+    XCTAssertEqual(container.volumes[4].mountPoint, "/System/Volumes/Data")
+    XCTAssertEqual(container.volumes[4].usedBytes, 413_704_962_048)
+  }
+
+  func testMountedNTFSVolumeUsesFileSystemUsage() throws {
+    let samsung = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk6" })
+    let volume = try XCTUnwrap(samsung.partitions.first)
+
+    XCTAssertEqual(volume.name, "Samsung_T5")
+    XCTAssertEqual(volume.mountPoint, "/Volumes/Samsung_T5")
+    XCTAssertEqual(volume.fileSystemType, "Windows_NTFS")
+    XCTAssertEqual(volume.category, .user)
+    XCTAssertEqual(volume.usedBytes, Self.samsungTotal - Self.samsungFree)
+    XCTAssertEqual(
+      try XCTUnwrap(volume.usagePercentage),
+      Double(Self.samsungTotal - Self.samsungFree) / Double(Self.samsungTotal), accuracy: 1e-9)
+    XCTAssertNotNil(volume.freeSpace)
+    XCTAssertNil(volume.storageError)
+  }
+
+  func testParentDiskStatsComeFromItsVolumes() throws {
+    let samsung = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk6" })
+
+    XCTAssertEqual(samsung.connectionType, "USB")
+    XCTAssertEqual(samsung.type, .physical)
+    XCTAssertTrue(samsung.isRemovable)
+    XCTAssertEqual(samsung.diskUUID, "6A1B0C2D-0000-4000-8000-000000000006")
+    XCTAssertEqual(
+      try XCTUnwrap(samsung.usagePercentage),
+      Double(Self.samsungTotal - Self.samsungFree) / 1_000_204_886_016, accuracy: 1e-9)
+    XCTAssertNotNil(samsung.totalSize)
+    XCTAssertNil(samsung.storageError)
+  }
+
+  func testUsageTimeoutIsReportedAsStorageError() throws {
+    let result = parse(parser(usage: .timedOut))
+    let samsung = try XCTUnwrap(result.disks.first { $0.id == "disk6" })
+
+    XCTAssertTrue(result.usageTimedOut)
+    XCTAssertNotNil(samsung.partitions.first?.storageError)
+    XCTAssertEqual(samsung.storageError, samsung.partitions.first?.storageError)
+    XCTAssertNil(samsung.usagePercentage)
+  }
+
+  func testUnmountedVolumeHasNoUsage() throws {
+    let oneTouch = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk7" })
+    let volume = try XCTUnwrap(oneTouch.partitions.first)
+
+    XCTAssertFalse(volume.isMounted)
+    XCTAssertNil(volume.usedBytes)
+    XCTAssertNotNil(volume.totalSize)
+    XCTAssertEqual(oneTouch.usagePercentage, 0)
+  }
+
+  func testDiskWithoutInfoUsesFallbackClassification() throws {
+    let external = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk7" })
+    XCTAssertEqual(external.type, .physical)
+    XCTAssertEqual(
+      external.connectionType, NSLocalizedString("Unknown", comment: "Unknown connection type"))
+
+    let image = try XCTUnwrap(
+      parse(parser(fallback: ["disk7": .diskImage])).disks.first { $0.id == "disk7" })
+    XCTAssertEqual(image.type, .diskImage)
+  }
+
+  func testUnclassifiedDiskIsListedAsUnverifiedAndNotRemovable() throws {
+    let result = parse(parser(fallback: [:]))
+    let unknown = try XCTUnwrap(result.disks.first { $0.id == "disk7" })
+
+    XCTAssertEqual(result.unverifiedDiskIDs, ["disk7"])
+    XCTAssertEqual(unknown.type, .internalDisk)
+    XCTAssertFalse(unknown.isRemovable)
+  }
+
+  func testDiskKnownInternalWithoutInfoIsHidden() {
+    let result = parse(parser(fallback: ["disk7": .internalDisk]))
+    XCTAssertEqual(result.disks.map(\.id), ["disk6"])
+    XCTAssertTrue(result.unverifiedDiskIDs.isEmpty)
+  }
+
+  func testIgnoredVolumeIsDroppedAndProtectedVolumeIsMarked() {
+    let samsungID = "NONE-F6664668-1958-3938-9449-2C1A72F37580"
+    let oneTouchID = "NONE-EC5A6C68-26FA-39D5-BCF9-55C4A68DC4F9"
+    let result = parse(
+      parser(filters: .init(ignoredIDs: [samsungID], protectedIDs: [oneTouchID])))
+
+    // A disk left without volumes is not listed.
+    XCTAssertEqual(result.disks.map(\.id), ["disk7"])
+    XCTAssertEqual(result.disks.first?.partitions.first?.isProtected, true)
+  }
+
+  // MARK: - Helpers
+
+  func testFindAPFSContainerMatchesPhysicalStore() {
+    XCTAssertEqual(
+      DiskListParser.findAPFSContainer(forStore: "disk0s2", in: allDisks)?["DeviceIdentifier"]
+        as? String, "disk3")
+    XCTAssertNil(DiskListParser.findAPFSContainer(forStore: "disk6s1", in: allDisks))
+  }
+
+  func testParentDiskStatsSumsUsedBytesAndCapsAtFull() {
+    let stats = DiskListParser.parentDiskStats(
+      totalBytes: 1_000, volumes: [volume(usedBytes: 300), volume(usedBytes: 200)])
+    XCTAssertEqual(stats.percentage, 0.5)
+    XCTAssertNil(stats.error)
+    XCTAssertNotNil(stats.total)
+
+    let overfull = DiskListParser.parentDiskStats(
+      totalBytes: 1_000, volumes: [volume(usedBytes: 900), volume(usedBytes: 400)])
+    XCTAssertEqual(overfull.percentage, 1.0)
+  }
+
+  func testParentDiskStatsWithoutSizeOrWithErrors() {
+    let noSize = DiskListParser.parentDiskStats(totalBytes: 0, volumes: [volume(usedBytes: 1)])
+    XCTAssertNil(noSize.total)
+    XCTAssertNil(noSize.percentage)
+
+    let failed = DiskListParser.parentDiskStats(
+      totalBytes: 1_000, volumes: [volume(usedBytes: 1), volume(storageError: "boom")])
+    XCTAssertEqual(failed.error, "boom")
+    XCTAssertNil(failed.total)
+    XCTAssertNil(failed.percentage)
+  }
+
+  func testConnectionInfoForImagesRAIDAndInternalDisks() {
+    let image = DiskListParser.connectionInfo(
+      from: ["VirtualOrPhysical": "Virtual", "BusProtocol": "Disk Image"], isInternal: false)
+    XCTAssertEqual(image.diskType, .diskImage)
+    XCTAssertEqual(image.type, NSLocalizedString("Disk Image", comment: "Disk Image"))
+
+    let raid = DiskListParser.connectionInfo(
+      from: ["RAIDMaster": true, "VirtualOrPhysical": "Virtual"], isInternal: false)
+    XCTAssertEqual(raid.diskType, .physical)
+    XCTAssertEqual(raid.type, NSLocalizedString("Apple RAID", comment: "Apple RAID"))
+
+    let internalDisk = DiskListParser.connectionInfo(
+      from: ["BusProtocol": "PCI-Express"], isInternal: true)
+    XCTAssertEqual(internalDisk.diskType, .internalDisk)
+    XCTAssertEqual(internalDisk.type, "PCI-Express")
+  }
+
+  func testFallbackConnectionInfoNeverMakesUnknownDisksRemovable() {
+    XCTAssertEqual(DiskListParser.fallbackConnectionInfo(for: .external).diskType, .physical)
+    XCTAssertEqual(DiskListParser.fallbackConnectionInfo(for: .diskImage).diskType, .diskImage)
+    XCTAssertEqual(
+      DiskListParser.fallbackConnectionInfo(for: .internalDisk).diskType, .internalDisk)
+    XCTAssertEqual(DiskListParser.fallbackConnectionInfo(for: .unknown).diskType, .internalDisk)
+  }
+
+  private func volume(usedBytes: Int64? = nil, storageError: String? = nil) -> Volume {
+    Volume(
+      id: UUID().uuidString, deviceIdentifier: "disk9s1", diskUUID: nil, name: "Test",
+      isMounted: true, mountPoint: "/Volumes/Test", freeSpace: nil, totalSize: nil,
+      usedSpace: nil, usedBytes: usedBytes, fileSystemType: "apfs", usagePercentage: nil,
+      category: .user, isProtected: false, snapshots: [], storageError: storageError)
+  }
+}
