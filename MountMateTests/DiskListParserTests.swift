@@ -59,6 +59,30 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(roots, ["disk0", "disk6", "disk7"])
   }
 
+  func testSMARTStatusIsReadFromTheDiskInfo() throws {
+    func status(_ value: Any?) -> SMARTStatus? {
+      var info = rootInfo["disk6"] ?? [:]
+      info["SMARTStatus"] = value
+      var infos = rootInfo
+      infos["disk6"] = info
+      let result = parser().parse(
+        allDisksAndPartitions: allDisks, rootInfo: infos, unclassifiedDiskIDs: ["disk7"])
+      return result.disks.first { $0.id == "disk6" }?.smartStatus
+    }
+    XCTAssertEqual(status("Verified"), .verified)
+    XCTAssertEqual(status("Failing"), .failing)
+    XCTAssertEqual(status("Not Supported"), .notSupported)
+    XCTAssertEqual(status(nil), .unknown)
+    XCTAssertEqual(status("Something New"), .unknown)
+
+    let url = try XCTUnwrap(
+      Bundle(for: Self.self).url(forResource: "diskutilInfoSMARTFailing", withExtension: "plist"))
+    let fixture = try XCTUnwrap(
+      try PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil)
+        as? [String: Any])
+    XCTAssertEqual(status(fixture["SMARTStatus"]), .failing)
+  }
+
   func testMissingDiskListIsNil() {
     XCTAssertNil(DiskListParser.allDisksAndPartitions(in: ["WholeDisks": ["disk0"]]))
   }

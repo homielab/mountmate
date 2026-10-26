@@ -58,6 +58,41 @@ final class NotificationManagerTests: XCTestCase {
     wait(for: [done], timeout: 2)
   }
 
+  private func disk(_ id: String, smart: SMARTStatus) -> PhysicalDisk {
+    PhysicalDisk(
+      id: id, diskUUID: nil, connectionType: "USB", name: "Disk \(id)", totalSize: nil,
+      freeSpace: nil, usedSpace: nil, usagePercentage: nil, type: .physical, isRAIDSet: false,
+      partitions: [], containers: [], storageError: nil, smartStatus: smart)
+  }
+
+  func testFailingDiskIsAnnouncedOnceAcrossRefreshes() {
+    let manager = makeManager()
+    manager.isEnabled = true
+    drainMainQueue()
+    let disks = [disk("disk6", smart: .failing), disk("disk7", smart: .verified)]
+    manager.disksRefreshed(disks)
+    manager.disksRefreshed(disks)
+    XCTAssertEqual(center.added.map(\.identifier), ["smart.disk6"])
+    manager.disksRefreshed(disks + [disk("disk8", smart: .failing)])
+    XCTAssertEqual(center.added.map(\.identifier), ["smart.disk6", "smart.disk8"])
+  }
+
+  func testNothingIsAnnouncedWhenNotificationsAreOffOrStatusIsNotFailing() {
+    let manager = makeManager()
+    manager.disksRefreshed([disk("disk6", smart: .failing)])
+    XCTAssertTrue(center.added.isEmpty)
+    manager.isEnabled = true
+    drainMainQueue()
+    manager.disksRefreshed([
+      disk("disk6", smart: .verified), disk("disk7", smart: .notSupported),
+      disk("disk8", smart: .unknown),
+    ])
+    XCTAssertTrue(center.added.isEmpty)
+    // Turned on later: a disk that is still failing is announced then.
+    manager.disksRefreshed([disk("disk6", smart: .failing)])
+    XCTAssertEqual(center.added.count, 1)
+  }
+
   func testIsOffByDefaultAndReadsTheSavedSetting() {
     XCTAssertFalse(makeManager().isEnabled)
     defaults.set(true, forKey: NotificationManager.enabledKey)

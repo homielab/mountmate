@@ -44,9 +44,20 @@ struct DiskHeaderRow: View {
         .frame(width: 40, height: 40)
 
         VStack(alignment: .leading, spacing: 2) {
-          Text(disk.name ?? disk.connectionType)
-            .font(.headline)
-            .bold()
+          HStack(spacing: 4) {
+            Text(disk.name ?? disk.connectionType)
+              .font(.headline)
+              .bold()
+            if disk.smartStatus == .failing {
+              let warning = NSLocalizedString(
+                "SMART status: failing — back up this disk",
+                comment: "Warning badge on a disk whose SMART status is failing")
+              Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.red)
+                .help(warning)
+                .accessibilityLabel(Text(warning))
+            }
+          }
 
           if let error = disk.storageError {
             Text(error)

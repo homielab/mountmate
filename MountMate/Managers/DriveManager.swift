@@ -220,6 +220,7 @@ class DriveManager: ObservableObject {
         self.unverifiedDiskIDs = unverifiedDiskIDs
       }
       self.recordFirstSeen(of: disks)
+      NotificationManager.shared.disksRefreshed(disks)
       self.isFetchInProgress = false
       self.isRefreshing = false
       self.refreshError = nil

@@ -57,6 +57,19 @@ struct BackgroundEventThrottle: Sendable {
   }
 }
 
+/// Remembers which disks already got a "SMART failing" notice, so a disk
+/// that stays failing is announced once per run, not on every refresh.
+/// Not thread-safe: main queue only.
+struct SMARTAlertTracker: Sendable {
+  private var announced: Set<String> = []
+
+  /// The disks of `disks` that report `.failing` and were not announced
+  /// yet; they count as announced afterwards.
+  mutating func newlyFailing(in disks: [PhysicalDisk]) -> [PhysicalDisk] {
+    disks.filter { $0.smartStatus == .failing && announced.insert($0.id).inserted }
+  }
+}
+
 /// What a click on a MountMate notification (or one of its buttons) does.
 enum NotificationAction: Equatable {
   case reconnectNow
@@ -158,6 +171,7 @@ final class NotificationManager: NSObject, ObservableObject {
 
   private var isAuthorized = false
   private var keepAliveThrottle = BackgroundEventThrottle()
+  private var smartTracker = SMARTAlertTracker()
   private var cancellables = Set<AnyCancellable>()
 
   private let center: NotificationCentering
@@ -289,6 +303,23 @@ final class NotificationManager: NSObject, ObservableObject {
       title: NSLocalizedString("Unmount When Idle", comment: "Notification title"),
       body: message)
     return true
+  }
+
+  /// A refresh finished. Announces each disk that reports a failing SMART
+  /// status, once. With notifications off nothing is remembered, so turning
+  /// them on announces a disk that is still failing.
+  func disksRefreshed(_ disks: [PhysicalDisk]) {
+    guard isEnabled else { return }
+    for disk in smartTracker.newlyFailing(in: disks) {
+      post(
+        id: "smart.\(disk.id)",
+        title: NSLocalizedString("Disk Is Failing", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%@” reports a failing SMART status. Back up its data now.",
+            comment: "Notification: a disk's SMART status is failing"),
+          disk.name ?? disk.connectionType))
+    }
   }
 
   // MARK: - Delivery

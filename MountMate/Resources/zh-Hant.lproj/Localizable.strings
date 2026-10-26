@@ -486,3 +486,6 @@
 "No volume named “%@”." = "沒有名為「%@」的磁碟卷。";
 "More than one volume is named “%@”." = "有多個磁碟卷名為「%@」。";
 "“%@” is protected and cannot be unmounted." = "「%@」受保護，無法卸載。";
+"Disk Is Failing" = "磁碟即將故障";
+"“%@” reports a failing SMART status. Back up its data now." = "「%@」的 SMART 狀態為故障。請立即備份其中的資料。";
+"SMART status: failing — back up this disk" = "SMART 狀態：故障 — 請備份此磁碟";

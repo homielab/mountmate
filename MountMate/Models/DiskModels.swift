@@ -152,6 +152,22 @@ struct APFSContainer: Identifiable, Hashable, Sendable {
   var volumes: [Volume]
 }
 
+/// The drive's own health verdict, from `diskutil info`'s `SMARTStatus`.
+enum SMARTStatus: String, Codable, Equatable, Sendable {
+  case verified, failing, notSupported, unknown
+
+  /// Maps diskutil's text ("Verified", "Failing", "Not Supported"); a missing
+  /// or unrecognized value is `.unknown`.
+  init(diskutilValue: String?) {
+    switch diskutilValue?.trimmingCharacters(in: .whitespaces).lowercased() {
+    case "verified": self = .verified
+    case "failing": self = .failing
+    case "not supported": self = .notSupported
+    default: self = .unknown
+    }
+  }
+}
+
 struct PhysicalDisk: Identifiable, Equatable, Sendable {
   let id: String  // deviceIdentifier
   let diskUUID: String?
@@ -168,6 +184,7 @@ struct PhysicalDisk: Identifiable, Equatable, Sendable {
   var containers: [APFSContainer]
 
   var storageError: String?
+  var smartStatus: SMARTStatus = .unknown
 
   var hasVisibleContent: Bool {
     !partitions.isEmpty || containers.contains { !$0.volumes.isEmpty }

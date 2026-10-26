@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BusProtocol</key>
+	<string>USB</string>
+	<key>DeviceIdentifier</key>
+	<string>disk6</string>
+	<key>DiskUUID</key>
+	<string>6A1B0C2D-0000-4000-8000-000000000006</string>
+	<key>Internal</key>
+	<false/>
+	<key>IORegistryEntryName</key>
+	<string>Samsung PSSD T5 Media</string>
+	<key>SMARTStatus</key>
+	<string>Failing</string>
+	<key>WholeDisk</key>
+	<true/>
+</dict>
+</plist>

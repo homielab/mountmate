@@ -48,8 +48,9 @@ struct LogsSettingsSection: View {
 
   private func copyDiagnostics() {
     diagnosticsState = .collecting
+    let failing = (DriveManager.shared.physicalDisks ?? []).filter { $0.smartStatus == .failing }
     Task {
-      let copied = await DiagnosticsReport.copyToPasteboard()
+      let copied = await DiagnosticsReport.copyToPasteboard(failingDiskCount: failing.count)
       diagnosticsState = copied ? .copied : .failed
     }
   }

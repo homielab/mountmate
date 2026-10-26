@@ -486,3 +486,6 @@
 "No volume named “%@”." = "No volume named “%@”.";
 "More than one volume is named “%@”." = "More than one volume is named “%@”.";
 "“%@” is protected and cannot be unmounted." = "“%@” is protected and cannot be unmounted.";
+"Disk Is Failing" = "Disk Is Failing";
+"“%@” reports a failing SMART status. Back up its data now." = "“%@” reports a failing SMART status. Back up its data now.";
+"SMART status: failing — back up this disk" = "SMART status: failing — back up this disk";

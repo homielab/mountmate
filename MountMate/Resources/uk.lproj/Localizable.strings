@@ -486,3 +486,6 @@
 "No volume named “%@”." = "Немає тому з назвою «%@».";
 "More than one volume is named “%@”." = "Кілька томів мають назву «%@».";
 "“%@” is protected and cannot be unmounted." = "«%@» захищений і не може бути відключений.";
+"Disk Is Failing" = "Диск виходить з ладу";
+"“%@” reports a failing SMART status. Back up its data now." = "«%@» повідомляє про збій SMART. Зробіть резервну копію даних зараз.";
+"SMART status: failing — back up this disk" = "Стан SMART: збій — зробіть резервну копію цього диска";

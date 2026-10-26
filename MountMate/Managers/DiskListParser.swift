@@ -174,7 +174,8 @@ struct DiskListParser {
           totalSize: stats.total, freeSpace: stats.free, usedSpace: stats.used,
           usagePercentage: stats.percentage, type: connectionInfo.diskType,
           isRAIDSet: DiskTopology.isRAIDMaster(infoPlist),
-          partitions: partitions, containers: containers, storageError: stats.error)
+          partitions: partitions, containers: containers, storageError: stats.error,
+          smartStatus: SMARTStatus(diskutilValue: infoPlist?["SMARTStatus"] as? String))
         newDisks.append(physicalDisk)
         if infoPlist == nil, fallbackKind == nil || fallbackKind == .unknown {
           unverifiedDiskIDs.insert(physicalIdentifier)
