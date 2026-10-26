@@ -22,8 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Lint (swift-format)
-        # Not strict yet: the code base still has style findings (see README).
-        run: swift format lint -r MountMate MountMateTests
+        run: swift format lint --strict -r MountMate MountMateTests
 
       - name: Unit tests
         run: >
