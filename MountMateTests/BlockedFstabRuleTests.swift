@@ -6,7 +6,7 @@ final class BlockedFstabRuleTests: XCTestCase {
   // MARK: - blockedFstabEntry
 
   func testBlockedFstabEntryWritesNoautoRuleForVolumeUUID() {
-    let entry = PersistenceManager.blockedFstabEntry(
+    let entry = FstabRules.blockedFstabEntry(
       volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "hfs",
       identifier: "DISKUUID-F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6")
     XCTAssertEqual(
@@ -16,7 +16,7 @@ final class BlockedFstabRuleTests: XCTestCase {
   }
 
   func testBlockedFstabEntryAllowsPrintableUnicodeIdentifier() {
-    let entry = PersistenceManager.blockedFstabEntry(
+    let entry = FstabRules.blockedFstabEntry(
       volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "apfs",
       identifier: "DISKUUID-Bản sao #1")
     XCTAssertNotNil(entry)
@@ -25,7 +25,7 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testBlockedFstabEntryRejectsNewlineInIdentifier() {
     XCTAssertNil(
-      PersistenceManager.blockedFstabEntry(
+      FstabRules.blockedFstabEntry(
         volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: "apfs",
         identifier: "DISKUUID\nUUID=11111111-2222-4333-8444-555555555555 none apfs rw"))
   }
@@ -36,7 +36,7 @@ final class BlockedFstabRuleTests: XCTestCase {
       "F81D4FAE7DEC11D0A76500A0C91E6BF6", "F81D4FAE-7DEC-11D0-A765", "NONE", "",
     ] {
       XCTAssertNil(
-        PersistenceManager.blockedFstabEntry(
+        FstabRules.blockedFstabEntry(
           volumeUUID: uuid, fileSystemType: "apfs", identifier: "DISKUUID-VOLUUID"),
         uuid)
     }
@@ -45,7 +45,7 @@ final class BlockedFstabRuleTests: XCTestCase {
   func testBlockedFstabEntryRejectsUnsafeFileSystemType() {
     for type in ["APFS", "ap fs", "apfs\nrw", "apfs#", ""] {
       XCTAssertNil(
-        PersistenceManager.blockedFstabEntry(
+        FstabRules.blockedFstabEntry(
           volumeUUID: "F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6", fileSystemType: type,
           identifier: "DISKUUID-VOLUUID"),
         type)
@@ -56,35 +56,35 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testContainsUnsafeFstabCharacterRejectsControlCharacters() {
     for value in ["a\nb", "\n", "\r", "a\u{2028}b", "a\u{0}b"] {
-      XCTAssertTrue(PersistenceManager.containsUnsafeFstabCharacter(value), value.debugDescription)
+      XCTAssertTrue(FstabRules.containsUnsafeFstabCharacter(value), value.debugDescription)
     }
   }
 
   func testContainsUnsafeFstabCharacterAllowsPrintableFields() {
     for value in [" ", "\t", "a#b", "/Volumes/Bản sao", "disk4s1", "🎉", ""] {
-      XCTAssertFalse(PersistenceManager.containsUnsafeFstabCharacter(value), value.debugDescription)
+      XCTAssertFalse(FstabRules.containsUnsafeFstabCharacter(value), value.debugDescription)
     }
   }
 
   func testIsStrictFstabUUIDAcceptsOnlyHyphenatedHexForms() {
-    XCTAssertTrue(PersistenceManager.isStrictFstabUUID("F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
-    XCTAssertTrue(PersistenceManager.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
-    XCTAssertFalse(PersistenceManager.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf"))
+    XCTAssertTrue(FstabRules.isStrictFstabUUID("F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
+    XCTAssertTrue(FstabRules.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
+    XCTAssertFalse(FstabRules.isStrictFstabUUID("f81d4fae-7dec-11d0-a765-00a0c91e6bf"))
     XCTAssertFalse(
-      PersistenceManager.isStrictFstabUUID("{F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6}"))
+      FstabRules.isStrictFstabUUID("{F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6}"))
     XCTAssertFalse(
-      PersistenceManager.isStrictFstabUUID("urn:uuid:F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
-    XCTAssertFalse(PersistenceManager.isStrictFstabUUID("1234-ABCD"))
-    XCTAssertFalse(PersistenceManager.isStrictFstabUUID(""))
+      FstabRules.isStrictFstabUUID("urn:uuid:F81D4FAE-7DEC-11D0-A765-00A0C91E6BF6"))
+    XCTAssertFalse(FstabRules.isStrictFstabUUID("1234-ABCD"))
+    XCTAssertFalse(FstabRules.isStrictFstabUUID(""))
   }
 
   func testIsPlainFstabFileSystemType() {
-    XCTAssertTrue(PersistenceManager.isPlainFstabFileSystemType("apfs"))
-    XCTAssertTrue(PersistenceManager.isPlainFstabFileSystemType("msdos"))
-    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("APFS"))
-    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("ap fs"))
-    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType("apfs\n"))
-    XCTAssertFalse(PersistenceManager.isPlainFstabFileSystemType(""))
+    XCTAssertTrue(FstabRules.isPlainFstabFileSystemType("apfs"))
+    XCTAssertTrue(FstabRules.isPlainFstabFileSystemType("msdos"))
+    XCTAssertFalse(FstabRules.isPlainFstabFileSystemType("APFS"))
+    XCTAssertFalse(FstabRules.isPlainFstabFileSystemType("ap fs"))
+    XCTAssertFalse(FstabRules.isPlainFstabFileSystemType("apfs\n"))
+    XCTAssertFalse(FstabRules.isPlainFstabFileSystemType(""))
   }
 
   // MARK: - Staged file integrity
@@ -111,7 +111,7 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testSha256HexMatchesKnownVector() {
     XCTAssertEqual(
-      PersistenceManager.sha256Hex(Data("abc".utf8)),
+      FstabWriter.sha256Hex(Data("abc".utf8)),
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   }
 
@@ -135,7 +135,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let result = runShell(
-      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: bytes))
+      FstabWriter.stagedContentsLoadCommand(path: url.path, bytes: bytes))
     XCTAssertEqual(result.exitCode, 0)
   }
 
@@ -146,18 +146,18 @@ final class BlockedFstabRuleTests: XCTestCase {
     try? Data("rm -rf /".utf8).write(to: url, options: .atomic)
 
     let result = runShell(
-      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: bytes))
+      FstabWriter.stagedContentsLoadCommand(path: url.path, bytes: bytes))
     XCTAssertNotEqual(result.exitCode, 0)
-    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+    XCTAssertTrue(result.stderr.contains(FstabWriter.stagedFstabChangedMarker))
   }
 
   func testStagedContentsLoadCommandAbortsForMissingFile() {
     let url = temporaryPath("missing")
 
     let result = runShell(
-      PersistenceManager.stagedContentsLoadCommand(path: url.path, bytes: Data("x".utf8)))
+      FstabWriter.stagedContentsLoadCommand(path: url.path, bytes: Data("x".utf8)))
     XCTAssertNotEqual(result.exitCode, 0)
-    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+    XCTAssertTrue(result.stderr.contains(FstabWriter.stagedFstabChangedMarker))
   }
 
   func testStagedContentsLoadCommandRejectsDroppedTrailingNewline() {
@@ -167,15 +167,15 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let result = runShell(
-      PersistenceManager.stagedContentsLoadCommand(
+      FstabWriter.stagedContentsLoadCommand(
         path: url.path, bytes: Data("UUID=A none apfs rw\n".utf8)))
     XCTAssertNotEqual(result.exitCode, 0)
-    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+    XCTAssertTrue(result.stderr.contains(FstabWriter.stagedFstabChangedMarker))
   }
 
   func testSystemFstabWriteCommandReadsStagedFileOnce() {
     let stagedPath = "/tmp/mountmate-fstab-it's $x"
-    let command = PersistenceManager.systemFstabWriteCommand(
+    let command = FstabWriter.systemFstabWriteCommand(
       stagedPath: stagedPath, stagedData: hostileContents, expectedCurrent: Data())
 
     let quotedPath = stagedPath.shellQuoted
@@ -184,17 +184,17 @@ final class BlockedFstabRuleTests: XCTestCase {
     XCTAssertFalse(command.contains("cmp"))
     // The contents themselves never appear in the command, only their digest.
     XCTAssertFalse(command.contains("rm -rf"))
-    XCTAssertTrue(command.contains(PersistenceManager.sha256Hex(hostileContents)))
+    XCTAssertTrue(command.contains(FstabWriter.sha256Hex(hostileContents)))
 
     // Load, then the /etc/fstab guard, then the write from the variable.
     let load = command.range(of: "/bin/cat")!.lowerBound
-    let guardCheck = command.range(of: PersistenceManager.sha256Hex(Data()))!.lowerBound
+    let guardCheck = command.range(of: FstabWriter.sha256Hex(Data()))!.lowerBound
     let write = command.range(of: "> '/etc/fstab'")!.lowerBound
     XCTAssertLessThan(load, guardCheck)
     XCTAssertLessThan(guardCheck, write)
     XCTAssertTrue(
       command.contains(
-        "printf '%s' \"$\(PersistenceManager.stagedContentsVariable)\" > '/etc/fstab'"))
+        "printf '%s' \"$\(FstabWriter.stagedContentsVariable)\" > '/etc/fstab'"))
   }
 
   func testSystemFstabWriteCommandWritesStagedBytesExactly() throws {
@@ -209,7 +209,7 @@ final class BlockedFstabRuleTests: XCTestCase {
 
     // chown root:wheel fails without root; everything before it must work.
     let result = runShell(
-      PersistenceManager.systemFstabWriteCommand(
+      FstabWriter.systemFstabWriteCommand(
         stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: current,
         fstabPath: target.path))
     XCTAssertFalse(result.stderr.contains("MOUNTMATE_"), result.stderr)
@@ -227,11 +227,11 @@ final class BlockedFstabRuleTests: XCTestCase {
     }
 
     let result = runShell(
-      PersistenceManager.systemFstabWriteCommand(
+      FstabWriter.systemFstabWriteCommand(
         stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: current,
         fstabPath: target.path))
     XCTAssertNotEqual(result.exitCode, 0)
-    XCTAssertTrue(result.stderr.contains(PersistenceManager.stagedFstabChangedMarker))
+    XCTAssertTrue(result.stderr.contains(FstabWriter.stagedFstabChangedMarker))
     XCTAssertEqual(try Data(contentsOf: target), current)
   }
 
@@ -245,7 +245,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     }
 
     let result = runShell(
-      PersistenceManager.systemFstabWriteCommand(
+      FstabWriter.systemFstabWriteCommand(
         stagedPath: staged.path, stagedData: hostileContents,
         expectedCurrent: Data("# old\n".utf8), fstabPath: target.path))
     XCTAssertNotEqual(result.exitCode, 0)
@@ -262,14 +262,14 @@ final class BlockedFstabRuleTests: XCTestCase {
     }
 
     let refused = runShell(
-      PersistenceManager.systemFstabWriteCommand(
+      FstabWriter.systemFstabWriteCommand(
         stagedPath: staged.path, stagedData: hostileContents,
         expectedCurrent: Data("# old\n".utf8), fstabPath: target.path))
     XCTAssertTrue(refused.stderr.contains("MOUNTMATE_FSTAB_CHANGED"))
     XCTAssertFalse(FileManager.default.fileExists(atPath: target.path))
 
     _ = runShell(
-      PersistenceManager.systemFstabWriteCommand(
+      FstabWriter.systemFstabWriteCommand(
         stagedPath: staged.path, stagedData: hostileContents, expectedCurrent: Data(),
         fstabPath: target.path))
     XCTAssertEqual(try? Data(contentsOf: target), hostileContents)
@@ -281,7 +281,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     try current.write(to: target)
     defer { try? FileManager.default.removeItem(at: target) }
 
-    let command = PersistenceManager.systemFstabWriteCommand(
+    let command = FstabWriter.systemFstabWriteCommand(
       stagedPath: nil, stagedData: Data(), expectedCurrent: current, fstabPath: target.path)
     XCTAssertFalse(command.contains("/bin/cat"))
     let result = runShell(command)
@@ -314,8 +314,8 @@ final class BlockedFstabRuleTests: XCTestCase {
       UUID=CCCC-3333 none exfat rw,noauto
       """
     XCTAssertEqual(
-      PersistenceManager.managedFstabVolumeUUIDs(
-        kinds: [PersistenceManager.mountMateBlockPrefix], in: contents),
+      FstabRules.managedFstabVolumeUUIDs(
+        kinds: [FstabRules.mountMateBlockPrefix], in: contents),
       ["CCCC-3333"])
   }
 
@@ -329,8 +329,8 @@ final class BlockedFstabRuleTests: XCTestCase {
       UUID=AAAA-1111 none hfs rw,noauto
       other line
       """
-    let removed = PersistenceManager.removingManagedFstabEntries(
-      volumeUUID: "aaaa-1111", kinds: [PersistenceManager.mountMateBlockPrefix], from: contents)
+    let removed = FstabRules.removingManagedFstabEntries(
+      volumeUUID: "aaaa-1111", kinds: [FstabRules.mountMateBlockPrefix], from: contents)
     XCTAssertEqual(
       removed,
       "# MountMate custom mount: DISK1-VOL1\nUUID=AAAA-1111 /Volumes/Backup hfs rw\nother line\n")
@@ -343,9 +343,9 @@ final class BlockedFstabRuleTests: XCTestCase {
       # MountMate block: DISK1-VOL1
       UUID=AAAA-1111 none hfs rw,noauto
       """
-    let removed = PersistenceManager.removingManagedFstabEntries(
+    let removed = FstabRules.removingManagedFstabEntries(
       volumeUUID: "AAAA-1111",
-      kinds: [PersistenceManager.mountMateFstabPrefix, PersistenceManager.mountMateBlockPrefix],
+      kinds: [FstabRules.mountMateFstabPrefix, FstabRules.mountMateBlockPrefix],
       from: contents)
     XCTAssertEqual(removed, "")
   }
@@ -356,8 +356,8 @@ final class BlockedFstabRuleTests: XCTestCase {
       # MountMate block: DISK1-VOL1
       UUID=AAAA-1111 none hfs rw,noauto
       """
-    let removed = PersistenceManager.removingManagedFstabEntries(
-      volumeUUID: "AAAA-1111", kinds: [PersistenceManager.mountMateBlockPrefix], from: contents)
+    let removed = FstabRules.removingManagedFstabEntries(
+      volumeUUID: "AAAA-1111", kinds: [FstabRules.mountMateBlockPrefix], from: contents)
     XCTAssertEqual(removed, "UUID=AAAA-1111 none hfs rw,noauto\n")
   }
 
@@ -368,8 +368,8 @@ final class BlockedFstabRuleTests: XCTestCase {
       # MountMate block: DISK2-VOL2
       UUID=BBBB-2222 none exfat rw,noauto
       """
-    let removed = PersistenceManager.removingManagedFstabEntries(
-      volumeUUID: "AAAA-1111", kinds: [PersistenceManager.mountMateBlockPrefix], from: contents)
+    let removed = FstabRules.removingManagedFstabEntries(
+      volumeUUID: "AAAA-1111", kinds: [FstabRules.mountMateBlockPrefix], from: contents)
     XCTAssertEqual(
       removed,
       "# MountMate block: DISK2-VOL2\nUUID=BBBB-2222 none exfat rw,noauto\n")
@@ -382,7 +382,7 @@ final class BlockedFstabRuleTests: XCTestCase {
       # MountMate block: DISK1-VOL1
       UUID=AAAA-1111 none hfs rw,noauto
       """
-    XCTAssertFalse(PersistenceManager.hasOtherFstabEntry(volumeUUID: "AAAA-1111", in: contents))
+    XCTAssertFalse(FstabRules.hasOtherFstabEntry(volumeUUID: "AAAA-1111", in: contents))
   }
 
   func testHasOtherFstabEntryDetectsCustomMountAndUserLines() {
@@ -391,23 +391,23 @@ final class BlockedFstabRuleTests: XCTestCase {
       UUID=AAAA-1111 /Volumes/Backup hfs rw
       """
     XCTAssertTrue(
-      PersistenceManager.hasOtherFstabEntry(volumeUUID: "aaaa-1111", in: customMount))
+      FstabRules.hasOtherFstabEntry(volumeUUID: "aaaa-1111", in: customMount))
 
     let userLine = "UUID=BBBB-2222 none apfs rw,noauto\n"
-    XCTAssertTrue(PersistenceManager.hasOtherFstabEntry(volumeUUID: "BBBB-2222", in: userLine))
-    XCTAssertFalse(PersistenceManager.hasOtherFstabEntry(volumeUUID: "CCCC-3333", in: userLine))
+    XCTAssertTrue(FstabRules.hasOtherFstabEntry(volumeUUID: "BBBB-2222", in: userLine))
+    XCTAssertFalse(FstabRules.hasOtherFstabEntry(volumeUUID: "CCCC-3333", in: userLine))
   }
 
   func testHasOtherFstabEntryIgnoresCommentedLines() {
     let contents = "# UUID=AAAA-1111 none hfs rw,noauto\n"
-    XCTAssertFalse(PersistenceManager.hasOtherFstabEntry(volumeUUID: "AAAA-1111", in: contents))
+    XCTAssertFalse(FstabRules.hasOtherFstabEntry(volumeUUID: "AAAA-1111", in: contents))
   }
 
   // MARK: - fstabFileSystemType
 
   func testFstabFileSystemTypePrefersPlistFilesystemType() {
     XCTAssertEqual(
-      PersistenceManager.fstabFileSystemType(
+      FstabRules.fstabFileSystemType(
         plist: ["FilesystemName": "Mac OS Extended (Journaled)", "FilesystemType": "hfs"],
         fallback: nil),
       "hfs")
@@ -415,19 +415,19 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testFstabFileSystemTypeFallsBackToRawValue() {
     XCTAssertEqual(
-      PersistenceManager.fstabFileSystemType(plist: nil, fallback: "ExFAT"), "exfat")
+      FstabRules.fstabFileSystemType(plist: nil, fallback: "ExFAT"), "exfat")
   }
 
   func testFstabFileSystemTypeIsNilWithoutAnyCandidate() {
-    XCTAssertNil(PersistenceManager.fstabFileSystemType(plist: nil, fallback: nil))
+    XCTAssertNil(FstabRules.fstabFileSystemType(plist: nil, fallback: nil))
   }
 
   // MARK: - startupBlockEligibility
 
   private func eligibility(
     _ plist: [String: Any], boot: String? = "disk3", roles: [String]? = []
-  ) -> PersistenceManager.StartupBlockEligibility {
-    PersistenceManager.startupBlockEligibility(
+  ) -> FstabRules.StartupBlockEligibility {
+    FstabRules.startupBlockEligibility(
       plist: plist, bootAPFSContainer: boot, apfsRoles: roles)
   }
 
@@ -506,12 +506,12 @@ final class BlockedFstabRuleTests: XCTestCase {
   // MARK: - Orphaned / hand-edited comments
 
   func testIsBlockRuleLine() {
-    XCTAssertTrue(PersistenceManager.isBlockRuleLine("UUID=AAAA-1111 none hfs rw,noauto"))
-    XCTAssertTrue(PersistenceManager.isBlockRuleLine("  UUID=AAAA-1111\tnone apfs noauto,rw"))
-    XCTAssertFalse(PersistenceManager.isBlockRuleLine("UUID=AAAA-1111 /Volumes/X hfs rw"))
-    XCTAssertFalse(PersistenceManager.isBlockRuleLine("UUID=AAAA-1111 none hfs rw"))
-    XCTAssertFalse(PersistenceManager.isBlockRuleLine("# MountMate block: X"))
-    XCTAssertFalse(PersistenceManager.isBlockRuleLine(""))
+    XCTAssertTrue(FstabRules.isBlockRuleLine("UUID=AAAA-1111 none hfs rw,noauto"))
+    XCTAssertTrue(FstabRules.isBlockRuleLine("  UUID=AAAA-1111\tnone apfs noauto,rw"))
+    XCTAssertFalse(FstabRules.isBlockRuleLine("UUID=AAAA-1111 /Volumes/X hfs rw"))
+    XCTAssertFalse(FstabRules.isBlockRuleLine("UUID=AAAA-1111 none hfs rw"))
+    XCTAssertFalse(FstabRules.isBlockRuleLine("# MountMate block: X"))
+    XCTAssertFalse(FstabRules.isBlockRuleLine(""))
   }
 
   func testOrphanedBlockCommentDoesNotClaimTheUsersNextLine() {
@@ -522,23 +522,23 @@ final class BlockedFstabRuleTests: XCTestCase {
       UUID=BBBB-2222 /Volumes/Work apfs rw
       """
     XCTAssertEqual(
-      PersistenceManager.managedFstabVolumeUUIDs(
-        kinds: [PersistenceManager.mountMateBlockPrefix], in: contents),
+      FstabRules.managedFstabVolumeUUIDs(
+        kinds: [FstabRules.mountMateBlockPrefix], in: contents),
       [])
     XCTAssertEqual(
-      PersistenceManager.removingManagedFstabEntries(
-        volumeUUID: "BBBB-2222", kinds: [PersistenceManager.mountMateBlockPrefix],
+      FstabRules.removingManagedFstabEntries(
+        volumeUUID: "BBBB-2222", kinds: [FstabRules.mountMateBlockPrefix],
         from: contents),
       contents + "\n")
-    XCTAssertTrue(PersistenceManager.hasOtherFstabEntry(volumeUUID: "BBBB-2222", in: contents))
+    XCTAssertTrue(FstabRules.hasOtherFstabEntry(volumeUUID: "BBBB-2222", in: contents))
   }
 
   // MARK: - feedbackMessage
 
-  private typealias Change = PersistenceManager.StartupRuleChange
+  private typealias Change = FstabRules.StartupRuleChange
 
   func testFeedbackNamesTheSingleDiskThatWasBlocked() {
-    let message = PersistenceManager.feedbackMessage(
+    let message = FstabRules.feedbackMessage(
       for: Change(addedNames: ["Backup"], removedCount: 0, ruleCount: 1),
       enabled: true, fromToggle: false)
     XCTAssertNotNil(message)
@@ -547,20 +547,20 @@ final class BlockedFstabRuleTests: XCTestCase {
 
   func testFeedbackForTurningOffMentionsRemoval() {
     XCTAssertNotNil(
-      PersistenceManager.feedbackMessage(
+      FstabRules.feedbackMessage(
         for: Change(addedNames: [], removedCount: 2, ruleCount: 0),
         enabled: false, fromToggle: true))
   }
 
   func testToggleOnWithNothingToWriteStillConfirms() {
     XCTAssertNotNil(
-      PersistenceManager.feedbackMessage(
+      FstabRules.feedbackMessage(
         for: Change(ruleCount: 0), enabled: true, fromToggle: true))
   }
 
   func testNoFeedbackWhenNothingChangedOutsideTheToggle() {
     XCTAssertNil(
-      PersistenceManager.feedbackMessage(
+      FstabRules.feedbackMessage(
         for: Change(ruleCount: 1), enabled: true, fromToggle: false))
   }
 }

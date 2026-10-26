@@ -1,7 +1,6 @@
 //  Created by homielab.com
 
 import Combine
-import CryptoKit
 import Foundation
 
 class PersistenceManager: ObservableObject {
@@ -55,9 +54,6 @@ class PersistenceManager: ObservableObject {
     pinnedVolumeIDs.removeAll { $0 == id }
   }
 
-  static let mountMateFstabPrefix = "# MountMate custom mount:"
-  static let mountMateBlockPrefix = "# MountMate block:"
-
   /// When on, every blocked volume also gets a `noauto` rule in /etc/fstab,
   /// so macOS itself skips mounting it at startup — before MountMate (or any
   /// login item) is running. Off by default because each change to
@@ -79,6 +75,8 @@ class PersistenceManager: ObservableObject {
   /// Serializes every startup-block read-modify-write cycle of /etc/fstab so
   /// concurrent block, unblock and reconcile actions cannot interleave.
   private let fstabQueue = DispatchQueue(label: "com.homielab.mountmate.fstab")
+  /// diskutil lookups for new rules. Only used on `fstabQueue`.
+  private let volumeLookup = FstabVolumeLookup()
   private var isFstabReconcilePending = false
   /// Set when a background startup-block update fails (e.g. its admin prompt
   /// is cancelled). Background updates then stay quiet — also across
@@ -90,18 +88,22 @@ class PersistenceManager: ObservableObject {
   }
 
   private init() {
-    self.protectedVolumes = Self.droppingNonUUIDEntries(Self.load(from: protectedVolumesKey))
-    self.ignoredVolumes = Self.migratedIgnoredEntries(Self.load(from: ignoredVolumesKey))
-    self.blockedVolumes = Self.droppingNonUUIDEntries(Self.load(from: blockedVolumesKey))
-    self.keepAliveVolumes = Self.droppingNonUUIDEntries(Self.load(from: keepAliveVolumesKey))
-    self.networkShares = Self.load(from: networkSharesKey)
-    self.customMountPoints = Self.load(from: customMountPointsKey)
-    self.idleUnmountVolumes = Self.load(from: idleUnmountVolumesKey).filter {
+    self.protectedVolumes = Self.droppingNonUUIDEntries(
+      CodableDefaultsStore.load(from: protectedVolumesKey))
+    self.ignoredVolumes = Self.migratedIgnoredEntries(
+      CodableDefaultsStore.load(from: ignoredVolumesKey))
+    self.blockedVolumes = Self.droppingNonUUIDEntries(
+      CodableDefaultsStore.load(from: blockedVolumesKey))
+    self.keepAliveVolumes = Self.droppingNonUUIDEntries(
+      CodableDefaultsStore.load(from: keepAliveVolumesKey))
+    self.networkShares = CodableDefaultsStore.load(from: networkSharesKey)
+    self.customMountPoints = CodableDefaultsStore.load(from: customMountPointsKey)
+    self.idleUnmountVolumes = CodableDefaultsStore.load(from: idleUnmountVolumesKey).filter {
       (entry: IdleUnmountVolume) in
       entry.minutes > 0 && Self.normalizedSystemVolumeUUID(entry.volumeUUID) != nil
     }
-    self.fstabBlockedVolumeUUIDs = Self.managedFstabVolumeUUIDs(
-      kinds: [Self.mountMateBlockPrefix], in: Self.readSystemFstabContents())
+    self.fstabBlockedVolumeUUIDs = FstabRules.managedFstabVolumeUUIDs(
+      kinds: [FstabRules.mountMateBlockPrefix], in: FstabWriter.readSystemFstabContents())
     // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
     // do not run in init, so this only takes effect with the next pin change.
     self.pinnedVolumeIDs = pinnedVolumeIDs.filter {
@@ -383,7 +385,7 @@ class PersistenceManager: ObservableObject {
     }
 
     fstabQueue.async {
-      guard let fileSystemType = self.resolvedFstabFileSystemType(for: volume) else {
+      guard let fileSystemType = self.volumeLookup.fstabFileSystemType(for: volume) else {
         DispatchQueue.main.async {
           completion(
             .failure(
@@ -395,12 +397,12 @@ class PersistenceManager: ObservableObject {
       }
 
       do {
-        let snapshot = try self.loadSystemFstabSnapshot()
+        let snapshot = try FstabWriter.loadSnapshot()
         let currentContents = snapshot.contents
-        let updatedContents = try self.updatedFstabContents(
+        let updatedContents = try FstabRules.updatedFstabContents(
           from: currentContents,
-          for: volume,
           volumeUUID: volumeUUID,
+          identifier: self.stableIdentifier(for: volume),
           mountPoint: mountPoint,
           fileSystemType: fileSystemType
         )
@@ -421,7 +423,7 @@ class PersistenceManager: ObservableObject {
         }
 
         if updatedContents != currentContents {
-          try self.installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
+          try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
         }
 
         DispatchQueue.main.async {
@@ -471,13 +473,13 @@ class PersistenceManager: ObservableObject {
     fstabQueue.async {
       do {
         if let volumeUUID {
-          let snapshot = try self.loadSystemFstabSnapshot()
+          let snapshot = try FstabWriter.loadSnapshot()
           let currentContents = snapshot.contents
-          let updatedContents = Self.removingManagedFstabEntries(
-            volumeUUID: volumeUUID, kinds: [Self.mountMateFstabPrefix], from: currentContents)
+          let updatedContents = FstabRules.removingCustomMountEntry(
+            volumeUUID: volumeUUID, from: currentContents)
 
           if updatedContents != currentContents {
-            try self.installSystemFstabContents(updatedContents, expectedCurrent: snapshot.raw)
+            try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
           }
         }
 
@@ -496,7 +498,7 @@ class PersistenceManager: ObservableObject {
   private static func customMountPointUpdateResult(for error: Error)
     -> CustomMountPointUpdateResult
   {
-    if isAdminPromptCancellation(error) { return .cancelled }
+    if FstabWriter.isAdminPromptCancellation(error) { return .cancelled }
     return .failure(
       String(
         format: NSLocalizedString(
@@ -633,7 +635,7 @@ class PersistenceManager: ObservableObject {
         let change = try self.applyStartupBlockRules(
           enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: 2)
         if userInitiated,
-          let message = Self.feedbackMessage(
+          let message = FstabRules.feedbackMessage(
             for: change, enabled: enabled, fromToggle: fromToggle)
         {
           FeedbackHUD.show(message)
@@ -641,7 +643,7 @@ class PersistenceManager: ObservableObject {
         DispatchQueue.main.async { completion?(true) }
       } catch {
         if userInitiated {
-          if !(silentOnCancel && Self.isAdminPromptCancellation(error)) {
+          if !(silentOnCancel && FstabWriter.isAdminPromptCancellation(error)) {
             self.handleStartupBlockError(error)
           }
         } else {
@@ -659,77 +661,26 @@ class PersistenceManager: ObservableObject {
   /// One read-compute-write cycle of `reconcileStartupBlockRules`. Runs on
   /// `fstabQueue`. Retries when /etc/fstab changed between the read and the
   /// privileged write (e.g. a custom mount point was saved meanwhile).
-  /// What one startup-rule update changed in /etc/fstab.
-  struct StartupRuleChange {
-    var addedNames: [String] = []
-    var removedCount = 0
-    /// Rules present after the update.
-    var ruleCount = 0
-    var wroteFile: Bool { !addedNames.isEmpty || removedCount > 0 }
-  }
-
-  /// The confirmation shown after a user-initiated update, or nil when there
-  /// is nothing worth saying.
-  static func feedbackMessage(
-    for change: StartupRuleChange, enabled: Bool, fromToggle: Bool
-  ) -> String? {
-    if change.wroteFile {
-      if change.removedCount == 0, change.addedNames.count == 1 {
-        return String(
-          format: NSLocalizedString(
-            "“%@” is now blocked at startup.", comment: "Startup rule added for one disk"),
-          change.addedNames[0])
-      }
-      if change.removedCount == 0 {
-        return PluralizedString.format("startup.blocked.added", change.addedNames.count)
-      }
-      if change.addedNames.isEmpty {
-        return enabled
-          ? NSLocalizedString("Startup block removed.", comment: "Startup rule removed")
-          : NSLocalizedString(
-            "Block at Startup is off. All startup rules were removed.",
-            comment: "Startup blocking turned off")
-      }
-      return NSLocalizedString("Startup blocking updated.", comment: "Startup rules changed")
-    }
-    // Turned on, but no blocked disk is connected to read its format from.
-    if fromToggle, enabled, change.ruleCount == 0 {
-      return NSLocalizedString(
-        "Block at Startup is on. Blocked disks get their startup rule the next time they're connected.",
-        comment: "Startup blocking on, nothing to write yet")
-    }
-    return nil
-  }
-
   @discardableResult
   private func applyStartupBlockRules(
     enabled: Bool, blockedInfos: [ManagedVolumeInfo], attemptsLeft: Int
-  ) throws -> StartupRuleChange {
+  ) throws -> FstabRules.StartupRuleChange {
     do {
-      let snapshot = try self.loadSystemFstabSnapshot()
+      let snapshot = try FstabWriter.loadSnapshot()
       let contents = snapshot.contents
-      let present = Self.managedFstabVolumeUUIDs(
-        kinds: [Self.mountMateBlockPrefix], in: contents)
-      let desired: [String: ManagedVolumeInfo] =
-        enabled
-        ? Dictionary(
-          blockedInfos.compactMap { info in
-            Self.normalizedSystemVolumeUUID(info.volumeUUID).map { ($0, info) }
-          }, uniquingKeysWith: { first, _ in first })
-        : [:]
+      let diff = FstabRules.startupBlockDiff(
+        enabled: enabled, blockedInfos: blockedInfos, contents: contents)
 
-      let stale = present.subtracting(desired.keys)
-      var additions: [(uuid: String, fileSystemType: String, info: ManagedVolumeInfo)] = []
-      for (uuid, info) in desired where !present.contains(uuid) {
-        if Self.hasOtherFstabEntry(volumeUUID: uuid, in: contents) {
-          Log.persistence.info(
-            "“\(info.name, privacy: .private)” already has an /etc/fstab entry; not adding a startup block rule."
-          )
-          continue
-        }
-        switch self.startupBlockEligibility(forVolumeUUID: uuid) {
+      for info in diff.alreadyHasEntry {
+        Log.persistence.info(
+          "“\(info.name, privacy: .private)” already has an /etc/fstab entry; not adding a startup block rule."
+        )
+      }
+      var additions: [FstabRules.StartupBlockAddition] = []
+      for (uuid, info) in diff.missing {
+        switch self.volumeLookup.startupBlockEligibility(forVolumeUUID: uuid) {
         case .eligible(let fileSystemType):
-          additions.append((uuid, fileSystemType, info))
+          additions.append(.init(uuid: uuid, fileSystemType: fileSystemType, info: info))
         case .notConnected:
           Log.persistence.info(
             "“\(info.name, privacy: .private)” is not connected; its startup block rule will be added when it next appears."
@@ -741,41 +692,30 @@ class PersistenceManager: ObservableObject {
         }
       }
 
+      let stale = diff.stale
       guard !stale.isEmpty || !additions.isEmpty else {
         self.refreshFstabBlockedUUIDs(from: contents)
-        return StartupRuleChange(ruleCount: present.count)
+        return FstabRules.StartupRuleChange(ruleCount: diff.present.count)
       }
 
-      var updated = contents
-      for uuid in stale {
-        updated = Self.removingManagedFstabEntries(
-          volumeUUID: uuid, kinds: [Self.mountMateBlockPrefix], from: updated)
-      }
-      updated = Self.trimmedFstabContents(updated)
-      for addition in additions.sorted(by: { $0.uuid < $1.uuid }) {
-        guard
-          let entry = Self.blockedFstabEntry(
-            volumeUUID: addition.uuid, fileSystemType: addition.fileSystemType,
-            identifier: addition.info.id)
-        else {
-          Log.persistence.error(
-            "Skipped a startup block rule with unsafe fields (“\(addition.info.name, privacy: .private)”)."
-          )
-          continue
-        }
-        updated += entry
+      let (updated, skipped) = FstabRules.applyingStartupBlockChanges(
+        to: contents, removing: stale, adding: additions)
+      for addition in skipped {
+        Log.persistence.error(
+          "Skipped a startup block rule with unsafe fields (“\(addition.info.name, privacy: .private)”)."
+        )
       }
 
-      try self.installSystemFstabContents(updated, expectedCurrent: snapshot.raw)
+      try FstabWriter.install(updated, expectedCurrent: snapshot.raw)
       self.refreshFstabBlockedUUIDs(from: updated)
       Log.persistence.notice(
         "Startup block rules updated (\(additions.count, privacy: .public) added, \(stale.count, privacy: .public) removed)."
       )
-      return StartupRuleChange(
+      return FstabRules.StartupRuleChange(
         addedNames: additions.map(\.info.name), removedCount: stale.count,
-        ruleCount: present.count - stale.count + additions.count)
+        ruleCount: diff.present.count - stale.count + additions.count)
     } catch let error as NSError
-      where error.domain == "MountMate" && error.code == Self.fstabChangedErrorCode
+      where error.domain == "MountMate" && error.code == FstabWriter.fstabChangedErrorCode
       && attemptsLeft > 1
     {
       Log.persistence.notice(
@@ -785,123 +725,9 @@ class PersistenceManager: ObservableObject {
     }
   }
 
-  enum StartupBlockEligibility: Equatable {
-    case eligible(fileSystemType: String)
-    case notConnected
-    case ineligible(String)
-  }
-
-  /// Filesystem types that may get a `rw,noauto` rule: built-in macOS drivers
-  /// that mount read-write anyway. Not NTFS: `rw` in /etc/fstab turns on
-  /// Apple's experimental NTFS write support, which can corrupt the disk when
-  /// it is later mounted by hand. Not third-party drivers (Paragon, Tuxera,
-  /// macFUSE…), so a rule can never change which driver mounts a disk. Those
-  /// disks keep the runtime block only.
-  static let startupBlockFileSystemTypes: Set<String> = ["apfs", "hfs", "exfat", "msdos"]
-
-  /// APFS roles that may get a startup rule. Any other role (System, Data,
-  /// Preboot, Recovery, VM, Update, xART, Hardware…) is part of macOS, and a
-  /// `noauto` rule for it could stop the Mac from starting up.
-  static let startupBlockAllowedAPFSRoles: Set<String> = ["Backup"]
-
-  /// Boot volume's APFS container (e.g. "disk3"), resolved once per launch.
-  /// A failed lookup is not cached. Only touched on `fstabQueue`.
-  private var cachedBootAPFSContainer: String?
-
-  private func startupBlockEligibility(forVolumeUUID uuid: String) -> StartupBlockEligibility {
-    guard let plist = diskInfo(for: uuid) else { return .notConnected }
-
-    if cachedBootAPFSContainer == nil {
-      cachedBootAPFSContainer = diskInfo(for: "/")?["APFSContainerReference"] as? String
-    }
-
-    var roles: [String]?
-    if let container = plist["APFSContainerReference"] as? String {
-      roles = apfsRoles(forVolumeUUID: uuid, container: container)
-    }
-
-    return Self.startupBlockEligibility(
-      plist: plist, bootAPFSContainer: cachedBootAPFSContainer, apfsRoles: roles)
-  }
-
-  /// Decides whether a connected volume may get a startup rule, from its
-  /// `diskutil info -plist` output. Errs on the side of no rule: a skipped
-  /// volume is still blocked at runtime, while a wrong rule affects boot.
-  static func startupBlockEligibility(
-    plist: [String: Any], bootAPFSContainer: String?, apfsRoles: [String]?
-  ) -> StartupBlockEligibility {
-    let mountPoint = (plist["MountPoint"] as? String ?? "")
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    if mountPoint == "/" || mountPoint.hasPrefix("/System/Volumes/") {
-      return .ineligible("it is a macOS system volume")
-    }
-
-    let container = plist["APFSContainerReference"] as? String
-    if let container {
-      // Fail closed: without knowing the startup disk's container, no APFS
-      // volume can be shown to be outside it.
-      guard let bootAPFSContainer else {
-        return .ineligible("the startup disk's APFS container could not be determined")
-      }
-      if container == bootAPFSContainer {
-        return .ineligible("it is in the startup disk's APFS container")
-      }
-    }
-
-    guard let rawType = (plist["FilesystemType"] as? String)?.lowercased(),
-      startupBlockFileSystemTypes.contains(rawType)
-    else {
-      return .ineligible("its file system is not handled by a built-in macOS driver")
-    }
-
-    if rawType == "apfs" || container != nil {
-      // Unknown roles are treated as system roles.
-      guard let apfsRoles, Set(apfsRoles).isSubset(of: startupBlockAllowedAPFSRoles) else {
-        return .ineligible("it has a macOS system role")
-      }
-    }
-
-    return .eligible(fileSystemType: rawType)
-  }
-
-  /// APFS roles of a volume, or nil when they cannot be determined.
-  private func apfsRoles(forVolumeUUID uuid: String, container: String) -> [String]? {
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist", container])
-    guard result.succeeded, let data = result.stdout.data(using: .utf8),
-      let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-        as? [String: Any],
-      let containers = plist["Containers"] as? [[String: Any]]
-    else { return nil }
-
-    for containerInfo in containers {
-      for volume in containerInfo["Volumes"] as? [[String: Any]] ?? [] {
-        if let volumeUUID = volume["APFSVolumeUUID"] as? String,
-          volumeUUID.caseInsensitiveCompare(uuid) == .orderedSame
-        {
-          return volume["Roles"] as? [String] ?? []
-        }
-      }
-    }
-    return nil
-  }
-
-  /// The /etc/fstab comment+rule pair for a blocked volume. `none` as the
-  /// mount point plus `noauto` makes macOS skip the automatic mount while
-  /// leaving manual mounts possible. Returns nil when a field could not be
-  /// written safely (see `validateFstabField`); callers skip the volume.
-  static func blockedFstabEntry(
-    volumeUUID: String, fileSystemType: String, identifier: String
-  ) -> String? {
-    guard isStrictFstabUUID(volumeUUID), isPlainFstabFileSystemType(fileSystemType),
-      !containsUnsafeFstabCharacter(identifier)
-    else { return nil }
-    return
-      "\(mountMateBlockPrefix) \(identifier)\nUUID=\(volumeUUID) none \(fileSystemType) rw,noauto\n"
-  }
-
   private func refreshFstabBlockedUUIDs(from contents: String) {
-    let uuids = Self.managedFstabVolumeUUIDs(kinds: [Self.mountMateBlockPrefix], in: contents)
+    let uuids = FstabRules.managedFstabVolumeUUIDs(
+      kinds: [FstabRules.mountMateBlockPrefix], in: contents)
     DispatchQueue.main.async { [weak self] in
       self?.fstabBlockedVolumeUUIDs = uuids
       if self?.startupRuleCount != uuids.count { self?.startupRuleCount = uuids.count }
@@ -914,7 +740,7 @@ class PersistenceManager: ObservableObject {
     )
     // A cancelled password prompt is not an error; say plainly what it means.
     let message =
-      Self.isAdminPromptCancellation(error)
+      FstabWriter.isAdminPromptCancellation(error)
       ? NSLocalizedString(
         "System Mount Rule Update Cancelled",
         comment: "Alert message when the admin prompt for a startup block rule was cancelled")
@@ -959,566 +785,8 @@ class PersistenceManager: ObservableObject {
     volume.stableVolumeUUID
   }
 
-  private func resolvedFstabFileSystemType(for volume: Volume) -> String? {
-    let plist = diskInfo(for: volume.deviceIdentifier)
-    return Self.fstabFileSystemType(plist: plist, fallback: volume.fileSystemType)
-  }
-
-  private func diskInfo(for deviceIdentifier: String) -> [String: Any]? {
-    guard !deviceIdentifier.isEmpty else { return nil }
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil",
-      arguments: ["info", "-plist", deviceIdentifier])
-    guard result.succeeded, let data = result.stdout.data(using: .utf8) else { return nil }
-    return try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-      as? [String: Any]
-  }
-
-  /// Maps a diskutil plist (plus a fallback raw value) to the filesystem type
-  /// string used in /etc/fstab entries.
-  static func fstabFileSystemType(plist: [String: Any]?, fallback: String?) -> String? {
-    let candidates = [
-      plist?["FilesystemType"] as? String,
-      plist?["FilesystemName"] as? String,
-      plist?["Content"] as? String,
-      fallback,
-    ].compactMap { $0 }
-
-    for candidate in candidates {
-      if let mapped = mapFstabFileSystemType(candidate) {
-        return mapped
-      }
-    }
-
-    return nil
-  }
-
-  static func mapFstabFileSystemType(_ rawValue: String) -> String? {
-    let value = rawValue.lowercased()
-    if value.contains("apfs") { return "apfs" }
-    if value.contains("hfs") { return "hfs" }
-    if value.contains("exfat") { return "exfat" }
-    if value.contains("msdos") || value.contains("dos_fat") || value.contains("fat32")
-      || value.contains("fat")
-    {
-      return "msdos"
-    }
-    if value.contains("ntfs") { return "ntfs" }
-
-    let normalized = value.filter { $0.isLetter || $0.isNumber }
-    return normalized.isEmpty ? nil : normalized
-  }
-
-  private static func readSystemFstabContents() -> String {
-    guard let data = FileManager.default.contents(atPath: "/etc/fstab"),
-      let contents = String(data: data, encoding: .utf8)
-    else { return "" }
-    return contents
-  }
-
-  /// /etc/fstab as text, plus the exact bytes it was decoded from. The
-  /// privileged write compares against the bytes, so a re-encoding
-  /// difference (e.g. a byte-order mark) can never make it fail forever.
-  private struct FstabSnapshot {
-    let contents: String
-    let raw: Data
-  }
-
-  private func loadSystemFstabSnapshot() throws -> FstabSnapshot {
-    let path = "/etc/fstab"
-    guard FileManager.default.fileExists(atPath: path) else {
-      return FstabSnapshot(contents: "", raw: Data())
-    }
-    let raw = try Data(contentsOf: URL(fileURLWithPath: path))
-    guard let contents = String(data: raw, encoding: .utf8) else {
-      throw CocoaError(.fileReadInapplicableStringEncoding)
-    }
-    return FstabSnapshot(contents: contents, raw: raw)
-  }
-
-  private func updatedFstabContents(
-    from contents: String,
-    for volume: Volume,
-    volumeUUID: String,
-    mountPoint: String,
-    fileSystemType: String
-  ) throws -> String {
-    // Everything below lands in a root-written /etc/fstab line, so every field
-    // is validated here — not just where the UI validates it — before any of
-    // it is staged for the privileged write.
-    try Self.validateFstabField(mountPoint)
-    try Self.validateFstabField(stableIdentifier(for: volume))
-    guard Self.isStrictFstabUUID(volumeUUID), Self.isPlainFstabFileSystemType(fileSystemType)
-    else {
-      throw NSError(
-        domain: "MountMate", code: Self.fstabInvalidFieldErrorCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "Custom Mount Point System Error",
-            comment: "Fallback custom mount point system configuration error")
-        ])
-    }
-
-    let withoutManagedEntry = removingManagedFstabEntry(from: contents, for: volume)
-    let activeLines = withoutManagedEntry.components(separatedBy: .newlines)
-
-    if activeLines.contains(where: { isConflictingFstabEntry($0, volumeUUID: volumeUUID) }) {
-      throw NSError(
-        domain: "MountMate",
-        code: 1,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "Custom Mount Point System Conflict",
-            comment: "Custom mount point system configuration error")
-        ])
-    }
-
-    var normalized = Self.trimmedFstabContents(withoutManagedEntry)
-    if !normalized.isEmpty {
-      normalized += "\n"
-    }
-
-    let entryLine =
-      "UUID=\(volumeUUID) \(fstabEscapedField(mountPoint)) \(fileSystemType) rw"
-    normalized += "\(managedFstabComment(for: volume))\n\(entryLine)\n"
-    return normalized
-  }
-
-  private func removingManagedFstabEntry(from contents: String, for volume: Volume) -> String {
-    guard let volumeUUID = volumeUUIDForSystemMount(for: volume) else { return contents }
-    return Self.removingManagedFstabEntries(
-      volumeUUID: volumeUUID, kinds: [Self.mountMateFstabPrefix], from: contents)
-  }
-
-  /// Removes MountMate-managed comment+entry pairs of the given `kinds`
-  /// (comment prefixes) that address `volumeUUID`. Matching by UUID keeps
-  /// removal working even when the volume's last-known identifiers have
-  /// changed.
-  static func removingManagedFstabEntries(
-    volumeUUID: String, kinds: Set<String>, from contents: String
-  ) -> String {
-    let lines = contents.components(separatedBy: .newlines)
-    var filtered: [String] = []
-    var index = 0
-
-    while index < lines.count {
-      if let kind = managedPairKind(at: index, in: lines), kinds.contains(kind),
-        entryAddressesUUID(lines[index + 1], volumeUUID)
-      {
-        index += 2
-        continue
-      }
-      filtered.append(lines[index])
-      index += 1
-    }
-
-    return trimmedFstabContents(filtered.joined(separator: "\n"))
-  }
-
-  private static func managedFstabKind(of line: String) -> String? {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
-    if trimmed.hasPrefix(mountMateFstabPrefix) { return mountMateFstabPrefix }
-    if trimmed.hasPrefix(mountMateBlockPrefix) { return mountMateBlockPrefix }
-    return nil
-  }
-
-  /// The managed kind of the comment+entry pair starting at `index`, or nil.
-  /// A startup-block comment only counts when the next line really is a
-  /// MountMate block rule, so a comment left behind by a hand edit can never
-  /// make the user's own following line look like MountMate's.
-  private static func managedPairKind(at index: Int, in lines: [String]) -> String? {
-    guard let kind = managedFstabKind(of: lines[index]), index + 1 < lines.count else {
-      return nil
-    }
-    if kind == mountMateBlockPrefix && !isBlockRuleLine(lines[index + 1]) { return nil }
-    return kind
-  }
-
-  /// `UUID=<uuid> none <fs> <options containing noauto>`
-  static func isBlockRuleLine(_ line: String) -> Bool {
-    let fields = line.split(whereSeparator: { $0 == " " || $0 == "\t" })
-    guard fields.count >= 4, fields[0].hasPrefix("UUID="), fields[0].count > 5,
-      fields[1] == "none"
-    else { return false }
-    return fields[3].split(separator: ",").contains("noauto")
-  }
-
-  /// Volume UUIDs (uppercased) addressed by the managed entries of `kinds`.
-  static func managedFstabVolumeUUIDs(kinds: Set<String>, in contents: String) -> Set<String> {
-    let lines = contents.components(separatedBy: .newlines)
-    var uuids: Set<String> = []
-    var index = 0
-
-    while index < lines.count {
-      if let kind = managedPairKind(at: index, in: lines), kinds.contains(kind) {
-        let entry = lines[index + 1].trimmingCharacters(in: .whitespaces)
-        if entry.hasPrefix("UUID=") {
-          let uuid = entry.dropFirst("UUID=".count).prefix { !$0.isWhitespace }
-          if !uuid.isEmpty {
-            uuids.insert(String(uuid).uppercased())
-          }
-        }
-        index += 2
-        continue
-      }
-      index += 1
-    }
-
-    return uuids
-  }
-
-  /// True when an fstab line other than a MountMate startup-block rule
-  /// addresses `volumeUUID` (a custom mount point, or a rule the user wrote
-  /// by hand). A second line for the same volume would conflict, so no
-  /// startup-block rule is added in that case.
-  static func hasOtherFstabEntry(volumeUUID: String, in contents: String) -> Bool {
-    let lines = contents.components(separatedBy: .newlines)
-    var index = 0
-
-    while index < lines.count {
-      if managedPairKind(at: index, in: lines) == mountMateBlockPrefix {
-        index += 2
-        continue
-      }
-      let trimmed = lines[index].trimmingCharacters(in: .whitespaces)
-      if !trimmed.hasPrefix("#"), entryAddressesUUID(trimmed, volumeUUID) {
-        return true
-      }
-      index += 1
-    }
-    return false
-  }
-
-  private static func entryAddressesUUID(_ line: String, _ volumeUUID: String) -> Bool {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
-    guard trimmed.hasPrefix("UUID=") else { return false }
-    let uuid = trimmed.dropFirst("UUID=".count).prefix { !$0.isWhitespace }
-    return uuid.lowercased() == volumeUUID.lowercased()
-  }
-
-  private static let fstabChangedErrorCode = 3
-  /// The user dismissed the administrator password prompt.
-  private static let adminPromptCancelledErrorCode = 4
-  /// A rule field could not be written safely (control characters, malformed
-  /// UUID or file-system type). Never worth a password prompt.
-  static let fstabInvalidFieldErrorCode = 5
-  /// The staged copy changed on disk before the privileged shell used it.
-  private static let stagedFstabChangedErrorCode = 6
-  private static let fstabChangedMarker = "MOUNTMATE_FSTAB_CHANGED"
-  static let stagedFstabChangedMarker = "MOUNTMATE_STAGED_FSTAB_CHANGED"
-
-  /// Writes /etc/fstab with administrator privileges.
-  ///
-  /// `expectedCurrent` is the exact bytes the caller based `contents` on. The
-  /// privileged shell checks /etc/fstab still matches it before writing, so
-  /// two writers (custom mount points on the main thread, startup-block
-  /// rules on `fstabQueue`) can never silently overwrite each other's change
-  /// while one of them waits at the password prompt.
-  private func installSystemFstabContents(_ contents: String, expectedCurrent: Data) throws {
-    let normalizedContents = Self.trimmedFstabContents(contents)
-    // The bytes are hashed and written as one unit, so the identity the
-    // privileged shell checks is exactly what was staged.
-    let stagedData = normalizedContents.data(using: .utf8) ?? Data()
-    let fileManager = FileManager.default
-    let temporaryURL = fileManager.temporaryDirectory
-      .appendingPathComponent("mountmate-fstab-\(UUID().uuidString)")
-
-    if !stagedData.isEmpty {
-      try stagedData.write(to: temporaryURL, options: .atomic)
-    }
-    defer { try? fileManager.removeItem(at: temporaryURL) }
-
-    let command = Self.systemFstabWriteCommand(
-      stagedPath: stagedData.isEmpty ? nil : temporaryURL.path,
-      stagedData: stagedData,
-      expectedCurrent: expectedCurrent)
-
-    let prompt = NSLocalizedString(
-      "System Mount Rule Admin Prompt", comment: "Administrator password prompt for /etc/fstab")
-    let result = PrivilegedShell.run(command, prompt: prompt)
-    if !result.succeeded && result.stderr.contains(Self.fstabChangedMarker) {
-      throw NSError(
-        domain: "MountMate",
-        code: Self.fstabChangedErrorCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "System Mount Rule Changed During Update",
-            comment: "Error when /etc/fstab changed while MountMate was updating it")
-        ])
-    }
-    if !result.succeeded && result.stderr.contains(Self.stagedFstabChangedMarker) {
-      throw NSError(
-        domain: "MountMate",
-        code: Self.stagedFstabChangedErrorCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "Staged Fstab File Changed",
-            comment: "Error when a staged copy changed before the privileged write used it")
-        ])
-    }
-    // osascript reports a dismissed password prompt as
-    // "execution error: User canceled. (-128)". Never show that raw text.
-    if !result.succeeded && result.stderr.contains("(-128)") {
-      throw NSError(
-        domain: "MountMate",
-        code: Self.adminPromptCancelledErrorCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "Administrator Prompt Cancelled",
-            comment: "Error when the administrator password prompt was cancelled")
-        ])
-    }
-    // Still refused by macOS even through sudo: say so plainly and point to
-    // the manual way instead of showing the raw shell error.
-    if !result.succeeded && result.stderr.contains("Operation not permitted") {
-      throw NSError(
-        domain: "MountMate",
-        code: 2,
-        userInfo: [
-          NSLocalizedDescriptionKey: NSLocalizedString(
-            "System Mount Rule Blocked By macOS",
-            comment: "Error when macOS refuses to let MountMate change /etc/fstab")
-        ])
-    }
-    if !result.succeeded {
-      let error =
-        result.stderr.isEmpty
-        ? NSLocalizedString(
-          "Custom Mount Point System Error",
-          comment: "Fallback custom mount point system configuration error")
-        : result.stderr
-      throw NSError(
-        domain: "MountMate",
-        code: 2,
-        userInfo: [NSLocalizedDescriptionKey: error])
-    }
-  }
-
-  /// True when `error` means the user dismissed the administrator prompt.
-  static func isAdminPromptCancellation(_ error: Error) -> Bool {
-    let nsError = error as NSError
-    return nsError.domain == "MountMate" && nsError.code == adminPromptCancelledErrorCode
-  }
-
-  private func managedFstabComment(for volume: Volume) -> String {
-    "\(Self.mountMateFstabPrefix) \(stableIdentifier(for: volume))"
-  }
-
-  private func isConflictingFstabEntry(_ line: String, volumeUUID: String) -> Bool {
-    let trimmed = line.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return false }
-    let uuidPrefix = "UUID=\(volumeUUID)"
-    guard trimmed.hasPrefix(uuidPrefix), trimmed.count > uuidPrefix.count else { return false }
-    let separatorIndex = trimmed.index(trimmed.startIndex, offsetBy: uuidPrefix.count)
-    return trimmed[separatorIndex].isWhitespace
-  }
-
-  private func fstabEscapedField(_ value: String) -> String {
-    value
-      .replacingOccurrences(of: "\\", with: "\\\\")
-      .replacingOccurrences(of: " ", with: "\\040")
-      .replacingOccurrences(of: "\t", with: "\\011")
-  }
-
-  // MARK: - Fstab Rule Validation
-
-  /// True when `value` has a character that must never be written into an
-  /// /etc/fstab rule: control characters and line or paragraph separators. A
-  /// newline would end the field and start a line of the attacker's choosing,
-  /// and the escaper below only encodes spaces, tabs and backslashes. Spaces
-  /// and tabs themselves stay allowed (they are escaped), as does any
-  /// printable Unicode character.
-  static func containsUnsafeFstabCharacter(_ value: String) -> Bool {
-    value.contains { character in
-      guard character != "\t" else { return false }
-      return character.isNewline
-        || character.unicodeScalars.contains {
-          CharacterSet.controlCharacters.contains($0)
-            || CharacterSet.illegalCharacters.contains($0)
-        }
-    }
-  }
-
-  /// Strict UUID shape (8-4-4-4-12 hexadecimal) for values interpolated into
-  /// /etc/fstab rules. `UUID(uuidString:)` also accepts brace and urn forms,
-  /// which this rejects.
-  static func isStrictFstabUUID(_ value: String) -> Bool {
-    let lengths = [8, 4, 4, 4, 12]
-    let parts = value.split(separator: "-", omittingEmptySubsequences: false)
-    guard parts.count == lengths.count, zip(parts, lengths).allSatisfy({ $0.0.count == $0.1 })
-    else { return false }
-    return parts.allSatisfy { $0.allSatisfy(\.isHexDigit) }
-  }
-
-  /// Only lowercase letters and digits — what `mapFstabFileSystemType`
-  /// produces and what is safe as the file-system-type field of a rule.
-  static func isPlainFstabFileSystemType(_ value: String) -> Bool {
-    !value.isEmpty && value == value.lowercased()
-      && value.allSatisfy { $0.isLetter || $0.isNumber }
-  }
-
-  /// Throws when `value` cannot be written into an /etc/fstab field. The
-  /// message names the mount point, the only rule field a user can type.
-  static func validateFstabField(_ value: String) throws {
-    guard containsUnsafeFstabCharacter(value) else { return }
-    throw NSError(
-      domain: "MountMate", code: fstabInvalidFieldErrorCode,
-      userInfo: [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "Custom Mount Point Control Characters",
-          comment: "Custom mount point validation")
-      ])
-  }
-
-  /// Lowercase SHA-256 hex digest of `data`: the identity a staged file must
-  /// keep until the privileged shell uses it.
-  static func sha256Hex(_ data: Data) -> String {
-    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-  }
-
-  /// Shell variable that holds the staged contents inside the privileged
-  /// shell.
-  static let stagedContentsVariable = "mountmate_staged"
-
-  /// The privileged command that replaces `fstabPath` (normally /etc/fstab)
-  /// with `stagedData`, or removes it when `stagedPath` is nil.
-  ///
-  /// - The current file must still hash to `expectedCurrent` (a missing file
-  ///   matches empty bytes), else it fails with `fstabChangedMarker`, so two
-  ///   writers never silently overwrite each other's change while one waits
-  ///   at the password prompt.
-  /// - The staged copy lives in the user's temporary directory, where another
-  ///   process could swap it. It is read exactly once into a shell variable;
-  ///   the variable is hashed and the same variable is written, so nothing
-  ///   reopens the file between the check and the write.
-  static func systemFstabWriteCommand(
-    stagedPath: String?, stagedData: Data, expectedCurrent: Data,
-    fstabPath: String = "/etc/fstab"
-  ) -> String {
-    let target = fstabPath.shellQuoted
-    let guardCommand =
-      "if [ -e \(target) ]; then "
-      + "[ \"$(/usr/bin/shasum -a 256 < \(target) | /usr/bin/awk '{print $1}')\" = "
-      + "\"\(sha256Hex(expectedCurrent))\" ]; "
-      + "else \(expectedCurrent.isEmpty ? "true" : "false"); fi "
-      + "|| { echo \(fstabChangedMarker) >&2; exit 1; }"
-
-    guard let stagedPath else {
-      return "\(guardCommand); /bin/rm -f \(target)"
-    }
-    // Do not use `install` here. On recent macOS versions it stages the
-    // destination in /etc and atomically replaces /etc/fstab with rename(2),
-    // which can be rejected even after administrator authentication. Writing
-    // the existing file in place avoids that protected-directory rename.
-    let variable = stagedContentsVariable
-    return
-      "\(stagedContentsLoadCommand(path: stagedPath, bytes: stagedData)); \(guardCommand); "
-      + "printf '%s' \"$\(variable)\" > \(target) && /bin/chmod 644 \(target) "
-      + "&& /usr/sbin/chown root:wheel \(target)"
-  }
-
-  /// A shell snippet that reads the staged file at `path` once into
-  /// `stagedContentsVariable` and fails with `stagedFstabChangedMarker`
-  /// unless those bytes hash to `bytes`. A trailing sentinel keeps the
-  /// final newlines command substitution would strip; a NUL byte (which the
-  /// shell drops) or any swap makes the digest differ and aborts.
-  static func stagedContentsLoadCommand(path: String, bytes: Data) -> String {
-    let variable = stagedContentsVariable
-    let fail = "{ echo \(stagedFstabChangedMarker) >&2; exit 1; }"
-    return
-      "\(variable)=\"$(/bin/cat \(path.shellQuoted) && printf .)\" || \(fail); "
-      + "\(variable)=\"${\(variable)%.}\"; "
-      + "[ \"$(printf '%s' \"$\(variable)\" | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}')\" = "
-      + "\"\(sha256Hex(bytes))\" ] || \(fail)"
-  }
-
-  static func trimmedFstabContents(_ contents: String) -> String {
-    let lines = contents.components(separatedBy: .newlines)
-    var end = lines.count
-    while end > 0 && lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty {
-      end -= 1
-    }
-
-    guard end > 0 else { return "" }
-    return lines[..<end].joined(separator: "\n") + "\n"
-  }
-
-  // MARK: - Private Save/Load Helpers
-
   private func save<T: Codable>(_ items: [T], to key: String) {
-    if let data = try? JSONEncoder().encode(items) {
-      UserDefaults.standard.set(data, forKey: key)
-    }
-  }
-
-  /// Loads a saved list. Elements are decoded one by one, so a single entry
-  /// that cannot be read (e.g. written by a newer version) does not empty the
-  /// whole list. When anything is skipped, the raw data is backed up first,
-  /// because the next save overwrites it with the readable entries only.
-  static func load<T: Codable>(from key: String, defaults: UserDefaults = .standard) -> [T] {
-    guard let data = defaults.data(forKey: key) else { return [] }
-    let result = decodeLossyArray(T.self, from: data)
-    if result.hadFailures {
-      Log.persistence.error(
-        "Some saved entries for \(key, privacy: .public) could not be read and were skipped (\(result.elements.count, privacy: .public) kept)."
-      )
-      backUpUndecodableData(data, forKey: key, defaults: defaults)
-    }
-    return result.elements
-  }
-
-  struct LossyDecodeResult<Element> {
-    var elements: [Element]
-    /// True when at least one element, or the whole payload, could not be
-    /// decoded.
-    var hadFailures: Bool
-  }
-
-  /// Decodes each element on its own; a nil `value` marks an element that
-  /// failed. (Its decoder still consumes the element, so decoding continues
-  /// with the next one.)
-  private struct LossyElement<Element: Decodable>: Decodable {
-    let value: Element?
-
-    init(from decoder: Decoder) throws {
-      value = try? Element(from: decoder)
-    }
-  }
-
-  /// Decodes a JSON array, skipping elements that fail to decode. A payload
-  /// that is not a JSON array at all yields no elements and `hadFailures`.
-  static func decodeLossyArray<Element: Decodable>(
-    _ type: Element.Type, from data: Data
-  ) -> LossyDecodeResult<Element> {
-    guard let wrapped = try? JSONDecoder().decode([LossyElement<Element>].self, from: data) else {
-      return LossyDecodeResult(elements: [], hadFailures: true)
-    }
-    let elements = wrapped.compactMap(\.value)
-    return LossyDecodeResult(elements: elements, hadFailures: elements.count != wrapped.count)
-  }
-
-  /// Stores `data` under "<key>_backup_<unix timestamp>". At most one backup
-  /// per key per app version, so a list that keeps failing to decode on
-  /// every launch does not pile up copies.
-  static func backUpUndecodableData(
-    _ data: Data, forKey key: String, defaults: UserDefaults = .standard,
-    appVersion: String = PersistenceManager.currentAppVersion, now: Date = Date()
-  ) {
-    let markerKey = "\(key)_backupVersion"
-    guard defaults.string(forKey: markerKey) != appVersion else { return }
-    let backupKey = "\(key)_backup_\(Int(now.timeIntervalSince1970))"
-    defaults.set(data, forKey: backupKey)
-    defaults.set(appVersion, forKey: markerKey)
-    Log.persistence.notice(
-      "Backed up the unreadable data of \(key, privacy: .public) to \(backupKey, privacy: .public)."
-    )
-  }
-
-  static var currentAppVersion: String {
-    let info = Bundle.main.infoDictionary
-    let version = info?["CFBundleShortVersionString"] as? String ?? "?"
-    let build = info?["CFBundleVersion"] as? String ?? "?"
-    return "\(version) (\(build))"
+    CodableDefaultsStore.save(items, to: key)
   }
 
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }
@@ -1528,5 +796,4 @@ class PersistenceManager: ObservableObject {
   private func saveNetworkShares() { save(networkShares, to: networkSharesKey) }
   private func saveCustomMountPoints() { save(customMountPoints, to: customMountPointsKey) }
   private func saveIdleUnmountVolumes() { save(idleUnmountVolumes, to: idleUnmountVolumesKey) }
-
 }

@@ -137,6 +137,8 @@ Mỗi lần làm mới chỉ chạy `diskutil list` một lần và `diskutil in
 
 Danh sách ổ được dựng bởi `DiskListParser` (`MountMate/Managers/DiskListParser.swift`), vốn không tự chạy tiến trình nào: statfs và phương án dự phòng Disk Arbitration được truyền vào. `DiskListParserTests` chạy nó trên một bản `diskutil list -plist` ghi sẵn trong `MountMateTests/Fixtures/`; cần kiểm một bố cục ổ mới thì thêm fixture vào đó.
 
+Mã cho `/etc/fstab` chia làm ba: `FstabRules` (`MountMate/Managers/FstabRules.swift`) dựng, tìm, xoá các dòng của MountMate và kiểm từng trường, toàn hàm thuần không đụng file; `FstabVolumeLookup` hỏi `diskutil` định dạng của volume và volume có được chặn lúc khởi động không; `FstabWriter` đọc `/etc/fstab` và ghi nó qua hộp thoại mật khẩu quản trị. Kiểm thay đổi quy tắc trong `FstabRulesTests` và `BlockedFstabRuleTests`; lệnh đặc quyền được kiểm trên một file tạm, không bao giờ trên `/etc/fstab` thật.
+
 CI chạy cả hai trên mỗi pull request và mỗi push vào `main`. Kiểm tra style chỉ báo cáo, chưa làm hỏng build cho tới khi dọn xong các lỗi cũ.
 
 ## 📫 Đóng góp & phản hồi

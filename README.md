@@ -144,6 +144,8 @@ A refresh runs `diskutil list` once and `diskutil info` only for whole disks tha
 
 The disk list is built by `DiskListParser` (`MountMate/Managers/DiskListParser.swift`), which runs no process itself: statfs and the Disk Arbitration fallback are passed in. `DiskListParserTests` run it against a recorded `diskutil list -plist` in `MountMateTests/Fixtures/`; add a fixture there when a new disk layout needs covering.
 
+`/etc/fstab` code is split in three: `FstabRules` (`MountMate/Managers/FstabRules.swift`) builds, finds and removes MountMate's lines and validates every field, as pure functions without file access; `FstabVolumeLookup` asks `diskutil` for the file system and startup-block eligibility of a volume; `FstabWriter` reads `/etc/fstab` and writes it through the administrator prompt. Test rule changes in `FstabRulesTests` and `BlockedFstabRuleTests`; the privileged command is tested against a temporary file, never the real `/etc/fstab`.
+
 CI runs both on every pull request and push to `main`. The style check reports findings without failing the build until the existing ones are cleaned up.
 
 ## 🔐 Network Share Errors
