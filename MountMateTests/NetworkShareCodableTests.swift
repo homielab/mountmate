@@ -58,7 +58,7 @@ final class NetworkShareCodableTests: XCTestCase {
       name: "Exports", server: "192.168.1.10", sharePath: "exports/public",
       username: "", mountAtLogin: false, shareProtocol: .nfs)
 
-    let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share))
+    let url = try XCTUnwrap(NetworkShareMounter.connectionURL(for: share))
     XCTAssertEqual(url.absoluteString, "nfs://192.168.1.10/exports/public")
   }
 
@@ -70,7 +70,7 @@ final class NetworkShareCodableTests: XCTestCase {
         name: "Time Capsule", server: "tc.local", sharePath: "Data", username: "admin",
         mountAtLogin: false, shareProtocol: shareProtocol)
 
-      let url = try XCTUnwrap(NetworkMountManager.shared.connectionURL(for: share))
+      let url = try XCTUnwrap(NetworkShareMounter.connectionURL(for: share))
       XCTAssertEqual(url.absoluteString, "\(shareProtocol.urlScheme)://tc.local/Data")
       XCTAssertNil(url.user)
       XCTAssertNil(url.password)
@@ -81,7 +81,7 @@ final class NetworkShareCodableTests: XCTestCase {
     let share = NetworkShare(
       name: "Projects", server: "fs.corp.example", sharePath: "projects", username: "")
     let url = try XCTUnwrap(
-      NetworkMountManager.shared.connectionURL(for: share, user: "CORP;alice"))
+      NetworkShareMounter.connectionURL(for: share, user: "CORP;alice"))
     XCTAssertEqual(url.user, "CORP;alice")
     XCTAssertNil(url.password)
     XCTAssertEqual(url.host, "fs.corp.example")

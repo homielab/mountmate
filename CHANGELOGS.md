@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Internal: mounting a network share moved out of `NetworkMountManager` into `NetworkShareMounter`, with unit tests for the stalled-mount rule, the connection URL and how a mount result becomes a message. No change in behavior.
 - **Keep Alive** now waits for a volume's remount to really finish instead of checking after 3 seconds, so a slow USB drive that needs up to 30 seconds to spin up is no longer counted as a failed reconnect (no backoff, no false "could not reconnect" notification).
 - **Accessibility**: with "Reduce motion" on, the usage rings and the disk expand arrow no longer animate. Volume and share rows can be focused with Tab (Up/Down move between rows; Return or Space mounts or unmounts on macOS 14+), and VoiceOver offers Mount/Unmount, Open in Finder, Copy Path and Open in Terminal as actions on each row.
 - **Full Disk Access** now shows in Settings → General → Permissions as "Granted" or "Not Granted", with an "Open System Settings" button when it is missing. It updates when you come back from System Settings, so declining the one-time prompt no longer hides the problem.
