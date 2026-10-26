@@ -415,3 +415,8 @@
 /* Network share connected outside MountMate whose server or share name is unknown */
 "Unknown Server" = "Невідомий сервер";
 "Shared Folder" = "Спільна папка";
+
+/* Update reminder */
+"MountMate %@ is available" = "Доступна версія MountMate %@";
+"View…" = "Відкрити…";
+"Accessibility Update Available" = "Доступне оновлення";

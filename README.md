@@ -77,7 +77,7 @@ So I built **MountMate**.
 - **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
 - **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**
-- Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates, where you can switch automatic checks off; the popover header has a Check for Updates button)
+- Fully native – no Electron; the only dependency is [Sparkle](https://sparkle-project.org), used for automatic updates (Settings → About & Updates, where you can switch automatic checks off; the popover header has a Check for Updates button). An update found by an automatic check never opens a window over your work: the menu bar icon gets a dot and the popover shows "MountMate X.Y is available — View…"; click View… to open the update window
 
 ## ✨ Why Use MountMate?
 

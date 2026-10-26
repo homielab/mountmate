@@ -415,3 +415,8 @@
 /* Network share connected outside MountMate whose server or share name is unknown */
 "Unknown Server" = "Máy chủ không rõ";
 "Shared Folder" = "Thư mục chia sẻ";
+
+/* Update reminder */
+"MountMate %@ is available" = "Đã có MountMate %@";
+"View…" = "Xem…";
+"Accessibility Update Available" = "Có bản cập nhật";

@@ -415,3 +415,8 @@
 /* Network share connected outside MountMate whose server or share name is unknown */
 "Unknown Server" = "未知服务器";
 "Shared Folder" = "共享文件夹";
+
+/* Update reminder */
+"MountMate %@ is available" = "MountMate %@ 现已可用";
+"View…" = "查看…";
+"Accessibility Update Available" = "有可用更新";

@@ -46,7 +46,7 @@ Vì vậy, tôi đã tạo **MountMate**.
 - **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
 - Chạy gọn nhẹ trên **thanh menu**
-- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates, nơi tắt được kiểm tra tự động; header popover có nút Check for Updates)
+- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates, nơi tắt được kiểm tra tự động; header popover có nút Check for Updates). Bản cập nhật tìm thấy khi kiểm tra tự động không bật cửa sổ đè lên việc đang làm: icon menu bar có chấm nhỏ và popover hiện dòng "MountMate X.Y is available — View…"; bấm View… mới mở cửa sổ cập nhật
 
 ## ✨ MountMate dành cho ai?
 

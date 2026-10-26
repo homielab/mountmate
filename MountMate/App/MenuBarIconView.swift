@@ -7,6 +7,7 @@ import SwiftUI
 struct MenuBarIconView: View {
   @ObservedObject var driveManager: DriveManager
   @ObservedObject var networkManager = NetworkMountManager.shared
+  @ObservedObject var updater: UpdaterController
   @AppStorage("showCountInMenuBar") private var showCountInMenuBar = false
 
   /// Determines the appropriate icon based on current state
@@ -46,6 +47,10 @@ struct MenuBarIconView: View {
     } else if currentIcon == "externaldrive.fill.badge.timemachine" {
       parts.append(NSLocalizedString("Accessibility Busy", comment: "Accessibility value"))
     }
+    if updater.reminder.hasPendingUpdate {
+      parts.append(
+        NSLocalizedString("Accessibility Update Available", comment: "Accessibility value"))
+    }
     return parts.joined(separator: ", ")
   }
 
@@ -58,14 +63,22 @@ struct MenuBarIconView: View {
 
   @ViewBuilder
   private var iconContent: some View {
-    let icon = currentIcon
     if showCountInMenuBar {
       HStack(spacing: 4) {
-        Image(systemName: icon)
+        iconImage
         Text("\(mountedCount)").font(.system(size: 13, weight: .medium, design: .rounded))
       }
     } else {
-      Image(systemName: icon)
+      iconImage
     }
+  }
+
+  /// The state symbol, with a dot while an update is waiting for the user.
+  private var iconImage: Image {
+    let icon = currentIcon
+    if updater.reminder.hasPendingUpdate, let badged = BadgedMenuBarIcon.image(symbolName: icon) {
+      return Image(nsImage: badged)
+    }
+    return Image(systemName: icon)
   }
 }

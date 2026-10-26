@@ -415,3 +415,8 @@
 /* Network share connected outside MountMate whose server or share name is unknown */
 "Unknown Server" = "Serveur inconnu";
 "Shared Folder" = "Dossier partagé";
+
+/* Update reminder */
+"MountMate %@ is available" = "MountMate %@ est disponible";
+"View…" = "Afficher…";
+"Accessibility Update Available" = "Mise à jour disponible";

@@ -5,6 +5,7 @@ import SwiftUI
 
 struct MainView: View {
   @EnvironmentObject var driveManager: DriveManager
+  @EnvironmentObject var updater: UpdaterController
   @ObservedObject var persistence = PersistenceManager.shared
   @ObservedObject var networkManager = NetworkMountManager.shared
   // Not observed: the list mirrors the editor state it needs, so typing in
@@ -37,6 +38,10 @@ struct MainView: View {
   var body: some View {
     VStack(spacing: 0) {
       HeaderActionsView()
+
+      if let version = updater.reminder.pendingVersion {
+        UpdateAvailableBanner(version: version) { updater.checkForUpdates() }
+      }
 
       if let error = driveManager.refreshError {
         ErrorBannerView(message: error)

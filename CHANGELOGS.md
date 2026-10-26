@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
 
 - **Copy Path and Open in Terminal**: The right-click menu of a mounted volume or network share now has "Copy Path" (puts the mount path on the clipboard) and "Open in Terminal" (opens a Terminal window in that folder). They are not shown for volumes that are not mounted.
+- **Quiet update reminders**: An update found by an automatic check no longer opens a window on top of other apps. The menu bar icon gets a small dot (VoiceOver says "Update available") and the popover shows "MountMate X.Y is available" with a "View…" button that opens the update window. "Check for Updates..." still shows the window right away.
 - **Updates**: Settings → About & Updates has an "Automatically check for updates" switch, automatic checks are on from the first launch (no more question at the second launch), and the popover header has a "Check for Updates..." button.
 
 ### Changed

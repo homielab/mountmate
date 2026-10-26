@@ -23,7 +23,7 @@ struct MountMateApp: App {
       .environmentObject(driveManager)
       .environmentObject(updaterViewModel)
     } label: {
-      MenuBarIconView(driveManager: driveManager)
+      MenuBarIconView(driveManager: driveManager, updater: updaterViewModel)
     }
     .menuBarExtraStyle(.window)
 
