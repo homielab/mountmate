@@ -34,4 +34,28 @@ final class ShellRedactionTests: XCTestCase {
     let arguments = ["apfs", "unlockVolume", "disk5s1", "-stdinpassphrase"]
     XCTAssertEqual(redactedArguments(arguments), arguments)
   }
+
+  func testErrorTextRedactsBothURLForms() {
+    XCTAssertEqual(
+      redactingURLPasswords(
+        "mount_smbfs: smb://alice:s3cr%40t@nas.local/share: Authentication error"),
+      "mount_smbfs: smb://alice:***@nas.local/share: Authentication error")
+    XCTAssertEqual(
+      redactingURLPasswords("server connection failed: //bob:hunter2@server/share"),
+      "server connection failed: //bob:***@server/share")
+    XCTAssertEqual(
+      redactingURLPasswords("nfs://u:a@b@host/x and //v:c:d@host2/y"),
+      "nfs://u:***@host/x and //v:***@host2/y")
+  }
+
+  func testErrorTextWithoutPasswordIsUnchanged() {
+    for text in [
+      "mount_smbfs: server connection failed: No route to host",
+      "smb://alice@nas.local/share is busy",
+      "smb://nas.local:445/share failed, contact admin@example.com",
+      "//server/share on /Volumes/share (smbfs, nodev, nosuid, mounted by bob)",
+    ] {
+      XCTAssertEqual(redactingURLPasswords(text), text)
+    }
+  }
 }

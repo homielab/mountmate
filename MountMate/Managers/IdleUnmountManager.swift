@@ -169,8 +169,11 @@ final class IdleUnmountManager {
   private func check() {
     let drives = DriveManager.shared
     let persistence = PersistenceManager.shared
+    // After a failed refresh the list may show disks that are gone or
+    // changed: wait for fresh data instead of acting on it.
+    let disks = drives.isShowingStaleDisks ? [] : drives.physicalDisks ?? []
     let candidates = Self.candidates(
-      disks: drives.physicalDisks ?? [], unverifiedDiskIDs: drives.unverifiedDiskIDs,
+      disks: disks, unverifiedDiskIDs: drives.unverifiedDiskIDs,
       settings: persistence.idleUnmountVolumes,
       keepAliveIDs: Set(persistence.keepAliveVolumes.map(\.id)),
       busyVolumeIDs: drives.busyVolumeIDs)

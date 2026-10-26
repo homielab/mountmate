@@ -403,3 +403,10 @@
 "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate не вдалося відмонтувати заблокований том «%@», імовірно, він використовується.";
 "Unmount Before Sleep Unfinished" = "Відмонтування перед сном не завершено";
 "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Деякі диски ще відмонтовувалися, коли Mac перейшов у режим сну. Переконайтеся, що їх відмонтовано, перш ніж від'єднувати.";
+
+/* Network share errors and bulk eject */
+"Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location." = "Не вдалося створити точку монтування «%1$@».\n\nДля цього розташування потрібні права адміністратора. Вкажіть шлях у своїй домашній папці (наприклад, ~/mountmate/%2$@) або залиште поле «Власна точка підключення» порожнім, щоб використати розташування за замовчуванням.";
+"Failed to create mount point at “%1$@”: %2$@" = "Не вдалося створити точку монтування «%1$@»: %2$@";
+"Invalid share configuration" = "Неправильне налаштування спільного ресурсу";
+"Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Не вдалося підключити «%1$@» у «%2$@».\n\nДля цього місця монтування потрібні права адміністратора. Вкажіть шлях у своїй домашній папці (наприклад, ~/mountmate/%1$@) або залиште поле «Власна точка підключення» порожнім, щоб використати розташування за замовчуванням.";
+"Could not eject: %@" = "Не вдалося вийняти: %@";

@@ -214,6 +214,11 @@ class NetworkMountManager: ObservableObject {
 
   private var workspaceObservers: [NSObjectProtocol] = []
   private var mountEventDebounce: DispatchWorkItem?
+  /// `refreshMountStatus` runs overlap (keep-alive, mount events, Eject
+  /// All); these keep a slow older run from overwriting a newer result.
+  /// Main thread only.
+  private var mountStatusGate = LatestResultGate()
+  private var shareUsageGate = LatestResultGate()
 
   private init() {
     // Initial check
@@ -246,14 +251,19 @@ class NetworkMountManager: ObservableObject {
         return
       }
       let savedShares = PersistenceManager.shared.networkShares
+      let ticket = self.mountStatusGate.begin()
       DispatchQueue.global(qos: .userInitiated).async {
-        self.refreshMountStatus(savedShares: savedShares, completion: completion)
+        self.refreshMountStatus(savedShares: savedShares, ticket: ticket, completion: completion)
       }
     }
   }
 
-  /// Background part of `refreshMountStatus(completion:)`.
-  private func refreshMountStatus(savedShares: [NetworkShare], completion: (() -> Void)?) {
+  /// Background part of `refreshMountStatus(completion:)`. `ticket` comes
+  /// from `mountStatusGate`: a result older than the one already shown is
+  /// dropped (its completion still runs; the newer state is in place).
+  private func refreshMountStatus(
+    savedShares: [NetworkShare], ticket: Int, completion: (() -> Void)?
+  ) {
     let result = runProcess(executable: "/sbin/mount", arguments: [])
     guard result.succeeded, !result.stdout.isEmpty else {
       DispatchQueue.main.async { completion?() }
@@ -264,6 +274,10 @@ class NetworkMountManager: ObservableObject {
     let parsedData = self.parseMountedShares(from: output, savedShares: savedShares)
 
     DispatchQueue.main.async {
+      guard self.mountStatusGate.shouldApply(ticket) else {
+        completion?()
+        return
+      }
       // Assigning an @Published property re-renders every observing view
       // even when the value is identical, and this runs on every
       // keep-alive tick: only publish actual changes.
@@ -289,6 +303,7 @@ class NetworkMountManager: ObservableObject {
     }
 
     DispatchQueue.main.async {
+      guard self.shareUsageGate.shouldApply(ticket) else { return }
       var usage = [UUID: ShareUsage]()
       for (index, mount) in mounts.enumerated() {
         switch results[index] {
@@ -542,7 +557,7 @@ class NetworkMountManager: ObservableObject {
           format: NSLocalizedString(
             "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there.",
             comment: "Network share mount error: mount point used by another share"),
-          share.name, mountPoint, sanitizeError(occupant.source)))
+          share.name, mountPoint, redactingURLPasswords(occupant.source)))
       return
     }
 
@@ -561,11 +576,19 @@ class NetworkMountManager: ObservableObject {
       {
         finish(
           false,
-          "Cannot create mount point at \"\(mountPoint)\".\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
-        )
+          String(
+            format: NSLocalizedString(
+              "Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location.",
+              comment: "Network share mount error: 1 = mount point path, 2 = share name"),
+            mountPoint, share.name))
       } else {
         finish(
-          false, "Failed to create mount point at \"\(mountPoint)\": \(error.localizedDescription)")
+          false,
+          String(
+            format: NSLocalizedString(
+              "Failed to create mount point at “%1$@”: %2$@",
+              comment: "Network share mount error: 1 = mount point path, 2 = system error"),
+            mountPoint, error.localizedDescription))
       }
       return
     }
@@ -669,7 +692,7 @@ class NetworkMountManager: ObservableObject {
       result.stderr.isEmpty
       ? "\(executable) exited with code \(result.exitCode ?? -1)."
       : result.stderr
-    let sanitized = sanitizeError(rawError)
+    let sanitized = redactingURLPasswords(rawError)
     // Detect permission-related mount failures
     let lower = sanitized.lowercased()
     if lower.contains("permission denied") || lower.contains("operation not permitted")
@@ -691,7 +714,8 @@ class NetworkMountManager: ObservableObject {
     let username = share.shareProtocol.supportsUserCredentials ? share.username : ""
     let (urlUser, argumentUser) = Self.netFSUserPlacement(for: share)
     guard let url = connectionURL(for: share, user: urlUser) else {
-      return .failed("Invalid share configuration")
+      return .failed(
+        NSLocalizedString("Invalid share configuration", comment: "Network share mount error"))
     }
 
     // No username: pass no credentials at all, so NetFS uses the Mac's
@@ -1039,7 +1063,8 @@ class NetworkMountManager: ObservableObject {
       return message(text("Another volume is already mounted at “%@”.", mountPoint))
     case EPERM, EACCES:
       if !mountPoint.hasPrefix(homeDirectory + "/") {
-        return message(mountLocationPermissionMessage(share: share, mountPoint: mountPoint))
+        return message(
+          mountLocationPermissionMessage(share: share, mountPoint: mountPoint, localize: localize))
       }
       return message(
         text("Access to the share “%@” was denied by the server.", share.name),
@@ -1058,8 +1083,15 @@ class NetworkMountManager: ObservableObject {
     }
   }
 
-  static func mountLocationPermissionMessage(share: NetworkShare, mountPoint: String) -> String {
-    "Could not mount \"\(share.name)\" at \"\(mountPoint)\".\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/\(share.name)) or leave the Custom Mount Point empty to use the default location."
+  static func mountLocationPermissionMessage(
+    share: NetworkShare, mountPoint: String,
+    localize: (String) -> String = { NSLocalizedString($0, comment: "Network share mount error") }
+  ) -> String {
+    String(
+      format: localize(
+        "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location."
+      ),
+      share.name, mountPoint)
   }
 
   private func timeoutMessage(for share: NetworkShare) -> String {
@@ -1402,20 +1434,5 @@ class NetworkMountManager: ObservableObject {
 
     // If device IDs differ, it's a mount point
     return fileStat.st_dev != parentStat.st_dev
-  }
-
-  /// Strips credentials from network URLs in error strings to prevent password
-  /// leaks. e.g. "smb://user:p%40ss@host/share" → "smb://user:***@host/share"
-  private func sanitizeError(_ error: String) -> String {
-    // Match protocol://user:password@host patterns (password may be URL-encoded)
-    let pattern = "((?:smb|afp|nfs)://[^:/@]+:)([^@]+)(@)"
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
-      return error
-    }
-    return regex.stringByReplacingMatches(
-      in: error,
-      range: NSRange(error.startIndex..., in: error),
-      withTemplate: "$1***$3"
-    )
   }
 }

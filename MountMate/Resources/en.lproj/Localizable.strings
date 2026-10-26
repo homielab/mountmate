@@ -403,3 +403,10 @@
 "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use.";
 "Unmount Before Sleep Unfinished" = "Unmount Before Sleep Unfinished";
 "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them.";
+
+/* Network share errors and bulk eject */
+"Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location." = "Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location.";
+"Failed to create mount point at “%1$@”: %2$@" = "Failed to create mount point at “%1$@”: %2$@";
+"Invalid share configuration" = "Invalid share configuration";
+"Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location.";
+"Could not eject: %@" = "Could not eject: %@";

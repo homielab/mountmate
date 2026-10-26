@@ -403,3 +403,10 @@
 "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate 无法推出被阻止的卷“%@”，可能是因为它正在使用中。";
 "Unmount Before Sleep Unfinished" = "睡眠前推出未完成";
 "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Mac 进入睡眠时部分磁盘仍在推出中。断开连接前请确认它们已推出。";
+
+/* Network share errors and bulk eject */
+"Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location." = "无法在“%1$@”创建挂载点。\n\n此位置需要管理员权限。请使用个人文件夹中的路径（例如 ~/mountmate/%2$@），或将自定义挂载点留空以使用默认位置。";
+"Failed to create mount point at “%1$@”: %2$@" = "无法在“%1$@”创建挂载点：%2$@";
+"Invalid share configuration" = "共享配置无效";
+"Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "无法将“%1$@”挂载到“%2$@”。\n\n此挂载位置需要管理员权限。请使用个人文件夹中的路径（例如 ~/mountmate/%1$@），或将自定义挂载点留空以使用默认位置。";
+"Could not eject: %@" = "无法推出：%@";

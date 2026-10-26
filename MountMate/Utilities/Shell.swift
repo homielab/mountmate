@@ -174,9 +174,20 @@ private let secretArgumentFlags: Set<String> = [
 
 /// Matches the password in URL user info: `scheme://user:password@host` and
 /// the scheme-less `//user:password@host` form used by mount_smbfs.
-/// Group 1 keeps everything up to and including the colon.
+/// Group 1 keeps everything up to and including the colon. The password runs
+/// to the last `@` before the host, so an unencoded `@` in it is covered too.
+/// Compiled once (global constants are initialized lazily and thread-safely).
 private let urlPasswordRegex = try! NSRegularExpression(
-  pattern: "((?:[A-Za-z][A-Za-z0-9+.\\-]*:)?//[^/@:\\s]*:)[^/@\\s]*@")
+  pattern: "((?:[A-Za-z][A-Za-z0-9+.\\-]*:)?//[^/@:\\s]*:)[^/\\s]*@")
+
+/// `text` with every URL password replaced by `***`, e.g.
+/// `smb://user:p%40ss@host/share` → `smb://user:***@host/share` and
+/// `//user:pass@host/share` → `//user:***@host/share`. Used for command lines
+/// in logs and for error text shown to the user.
+func redactingURLPasswords(_ text: String) -> String {
+  urlPasswordRegex.stringByReplacingMatches(
+    in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "$1***@")
+}
 
 /// `arguments` with secrets replaced by `***`, for logging. Command lines can
 /// carry network share passwords (`smb://user:pass@server/share`) or
@@ -192,10 +203,7 @@ func redactedArguments(_ arguments: [String]) -> [String] {
       continue
     }
     previousWasSecretFlag = secretArgumentFlags.contains(argument.lowercased())
-    let range = NSRange(argument.startIndex..., in: argument)
-    redacted.append(
-      urlPasswordRegex.stringByReplacingMatches(
-        in: argument, range: range, withTemplate: "$1***@"))
+    redacted.append(redactingURLPasswords(argument))
   }
   return redacted
 }

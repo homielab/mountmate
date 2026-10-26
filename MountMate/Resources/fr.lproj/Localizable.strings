@@ -403,3 +403,10 @@
 "MountMate couldn't unmount the blocked volume “%@”, probably because it is in use." = "MountMate n’a pas pu démonter le volume bloqué « %@ », probablement parce qu’il est utilisé.";
 "Unmount Before Sleep Unfinished" = "Démontage avant la veille inachevé";
 "Some disks were still unmounting when the Mac went to sleep. Check that they are unmounted before disconnecting them." = "Certains disques étaient encore en cours de démontage lorsque le Mac s’est mis en veille. Vérifiez qu’ils sont démontés avant de les déconnecter.";
+
+/* Network share errors and bulk eject */
+"Cannot create mount point at “%1$@”.\n\nThis location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%2$@) or leave the Custom Mount Point empty to use the default location." = "Impossible de créer le point de montage « %1$@ ».\n\nCet emplacement nécessite des privilèges d’administrateur. Utilisez un chemin dans votre dossier personnel (par exemple ~/mountmate/%2$@) ou laissez le point de montage personnalisé vide pour utiliser l’emplacement par défaut.";
+"Failed to create mount point at “%1$@”: %2$@" = "Échec de la création du point de montage « %1$@ » : %2$@";
+"Invalid share configuration" = "Configuration du partage non valide";
+"Could not mount “%1$@” at “%2$@”.\n\nThe mount location requires administrator privileges. Please use a path within your home folder (e.g., ~/mountmate/%1$@) or leave the Custom Mount Point empty to use the default location." = "Impossible de monter « %1$@ » sur « %2$@ ».\n\nL’emplacement de montage nécessite des privilèges d’administrateur. Utilisez un chemin dans votre dossier personnel (par exemple ~/mountmate/%1$@) ou laissez le point de montage personnalisé vide pour utiliser l’emplacement par défaut.";
+"Could not eject: %@" = "Impossible d’éjecter : %@";

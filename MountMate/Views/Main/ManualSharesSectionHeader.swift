@@ -30,7 +30,10 @@ struct ManualSharesSectionHeader: View {
       guard !failures.isEmpty else { return }
       DriveManager.shared.userActionError = AppAlert(
         title: NSLocalizedString("Eject Failed", comment: "Alert title"),
-        message: "Could not eject: \(failures.joined(separator: ", "))",
+        message: String(
+          format: NSLocalizedString(
+            "Could not eject: %@", comment: "Bulk eject failure; list of share names"),
+          ListFormatter.localizedString(byJoining: failures)),
         kind: .basic)
     }
   }

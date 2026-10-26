@@ -12,6 +12,10 @@ class DriveManager: ObservableObject {
   @Published var isRefreshing = false
   @Published var userActionError: AppAlert? = nil
   @Published var refreshError: String? = nil
+  /// True while `physicalDisks` is the last successful result kept after a
+  /// refresh failed (shown with `refreshError`); cleared by the next
+  /// successful refresh.
+  @Published private(set) var isShowingStaleDisks = false
   /// Volumes (by `Volume.id`) with a mount, unmount or unlock in flight. Each
   /// operation inserts its own ID and removes it in its own completion, so
   /// concurrent operations and unrelated refreshes never clear each other.
@@ -209,6 +213,7 @@ class DriveManager: ObservableObject {
       self.isFetchInProgress = false
       self.isRefreshing = false
       self.refreshError = nil
+      self.isShowingStaleDisks = false
 
       // A disk spinning up can make statfs time out ("Could not read storage
       // details."); look again shortly, once.
@@ -276,8 +281,14 @@ class DriveManager: ObservableObject {
         // Start over: a later one-off failure gets its retry again instead of
         // wiping the list immediately.
         self.refreshRetryCount = 0
-        self.physicalDisks = []
-        self.unverifiedDiskIDs = []
+        // Keep the last known list: one slow `diskutil list` must not make
+        // every disk disappear. Only the first refresh, with nothing to
+        // keep, ends the loading state with an empty list.
+        if self.physicalDisks == nil {
+          self.physicalDisks = []
+        } else {
+          self.isShowingStaleDisks = true
+        }
 
         let message = NSLocalizedString(
           "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect.",
@@ -384,8 +395,9 @@ class DriveManager: ObservableObject {
     let volumesToMount = bulkActionDisks
       .flatMap(\.allVolumes)
       .filter {
-        // EFI partitions cannot be mounted by diskutil (see .mountEFIVolume).
-        !$0.isMounted && $0.category == .user && $0.name.uppercased() != "EFI"
+        // `.user` leaves out EFI partitions (category `.system`), which
+        // diskutil cannot mount (see .mountEFIVolume).
+        !$0.isMounted && $0.category == .user
           && !PersistenceManager.shared.isVolumeBlocked($0)
       }
 
