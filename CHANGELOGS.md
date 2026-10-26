@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **More Shortcuts actions**: Unmount Network Share, Mount Volume and Unmount Volume join the Shortcuts app, so a shortcut can act on one saved share or one volume (pick it or type its name, case ignored) instead of all of them. A name that matches no volume is reported as the shortcut's error, a protected volume is not unmounted, and nothing is forced or ejected.
 - **Eject All External Disks**: a button in the popover header (next to Unmount All), an optional keyboard shortcut (Settings → General → Keyboard Shortcuts, none by default) and a Shortcuts action unmount and eject every external disk at once so you can unplug them. Internal disks, disk images and disks with a protected volume are left alone, nothing is forced, and one alert names any disk that could not be ejected.
 - **Notification actions**: the "Cannot Reconnect" notification now has a "Reconnect Now" button that retries right away, and clicking any MountMate notification opens the MountMate popover.
 - **Reconnect Now**: a share or volume that Keep Alive is waiting to reconnect now shows "Retrying in N seconds" under "Reconnecting…", with a "Reconnect Now" button (also in the right-click menu) that retries right away instead of waiting out the backoff. The countdown only updates while the popover is open.

@@ -607,7 +607,17 @@ class DriveManager: ObservableObject {
     }
   }
 
-  func unmount(volume: Volume) {
+  /// Unmounts a volume, never forced.
+  ///
+  /// - Parameter allowsErrorAlerts: Pass `false` when the caller reports the
+  ///   failure itself (Shortcuts).
+  /// - Parameter completion: Called on the main thread once the unmount has
+  ///   finished and the disk list is refreshed, with the failure message of
+  ///   `diskutil` when it did not succeed.
+  func unmount(
+    volume: Volume, allowsErrorAlerts: Bool = true,
+    completion: ((Result<Void, Error>) -> Void)? = nil
+  ) {
     KeepAliveManager.shared.suppress(volume: volume)
     WakeRemountManager.shared.forget([volume])
     setBusy(volume.id, true)
@@ -618,18 +628,27 @@ class DriveManager: ObservableObject {
       DispatchQueue.main.async {
         if !result.succeeded {
           self.setBusy(volume.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
-            for: volume.name, volume: volume, operation: .unmount)
-          self.refreshDrives(qos: .userInitiated)
+          let message = DiskUtilErrorClassifier.failureMessage(
+            for: result, timeout: Self.mountUnmountTimeout)
+          if allowsErrorAlerts {
+            self.handleDiskUtilError(
+              message, for: volume.name, volume: volume, operation: .unmount)
+          }
+          self.refreshDrives(qos: .userInitiated) {
+            completion?(.failure(MountFailure(message: message)))
+          }
         } else if let image = self.diskImageToDetach(afterUnmounting: volume) {
           // Match Finder: once the last volume of a disk image is unmounted,
           // detach the image so it no longer lingers in the list (#72). The
           // disk's eject spinner takes over from the volume's.
           self.setBusy(volume.id, false)
           self.eject(disk: image)
+          completion?(.success(()))
         } else {
-          self.refreshDrives(qos: .userInitiated) { self.setBusy(volume.id, false) }
+          self.refreshDrives(qos: .userInitiated) {
+            self.setBusy(volume.id, false)
+            completion?(.success(()))
+          }
         }
       }
     }

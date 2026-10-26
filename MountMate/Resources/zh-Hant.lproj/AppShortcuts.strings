@@ -5,3 +5,6 @@
 "Mount a network share with ${applicationName}" = "用 ${applicationName} 掛載網路共享";
 "Eject all external disks with ${applicationName}" = "用${applicationName}推出所有外接磁碟";
 "Eject all drives with ${applicationName}" = "用${applicationName}推出所有磁碟機";
+"Unmount a network share with ${applicationName}" = "用 ${applicationName} 卸載網路共享";
+"Mount a volume with ${applicationName}" = "用 ${applicationName} 掛載磁碟卷";
+"Unmount a volume with ${applicationName}" = "用 ${applicationName} 卸載磁碟卷";

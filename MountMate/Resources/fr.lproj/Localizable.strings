@@ -471,3 +471,18 @@
 "Clear Shortcut" = "Effacer le raccourci";
 "Not Set" = "Non défini";
 "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Démonte et éjecte chaque disque externe pour pouvoir le débrancher. Les disques ayant un volume protégé restent.";
+
+// MARK: - Shortcuts: unmount share, mount/unmount volume
+"Unmounts a network share saved in MountMate." = "Démonte un partage réseau enregistré dans MountMate.";
+"Mounts one external volume by its name." = "Monte un volume externe d’après son nom.";
+"Unmounts one external volume by its name. A protected volume is refused." = "Démonte un volume externe d’après son nom. Un volume protégé est refusé.";
+"Unmount Network Share" = "Démonter un partage réseau";
+"Mount Volume" = "Monter un volume";
+"Unmount Volume" = "Démonter un volume";
+"Volume" = "Volume";
+"“%@” unmounted." = "« %@ » démonté.";
+"Could not unmount “%@”: %@" = "Impossible de démonter « %@ » : %@";
+"Could not unmount “%@”." = "Impossible de démonter « %@ ».";
+"No volume named “%@”." = "Aucun volume nommé « %@ ».";
+"More than one volume is named “%@”." = "Plusieurs volumes portent le nom « %@ ».";
+"“%@” is protected and cannot be unmounted." = "« %@ » est protégé et ne peut pas être démonté.";

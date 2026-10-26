@@ -9,7 +9,7 @@ import Foundation
 enum IntentActions {
   /// Refreshes the drive list first: right after Shortcuts launches the app
   /// nothing has been read yet.
-  private static func refreshedDriveManager() async -> DriveManager {
+  static func refreshedDriveManager() async -> DriveManager {
     let manager = DriveManager.shared
     await withCheckedContinuation { continuation in
       manager.refreshDrives(qos: .userInitiated) { continuation.resume() }
@@ -49,6 +49,46 @@ enum IntentActions {
         continuation.resume(returning: success ? nil : (error ?? ""))
       }
     }
+  }
+
+  /// `nil` when the share is unmounted, else the error (possibly empty).
+  static func unmount(share: NetworkShare) async -> String? {
+    await withCheckedContinuation { continuation in
+      NetworkMountManager.shared.unmount(share: share) { success, error in
+        continuation.resume(returning: success ? nil : (error ?? ""))
+      }
+    }
+  }
+
+  /// Decides what to do for a volume name after refreshing the drive list.
+  static func volumePlan(name: String, mount: Bool) async -> VolumeIntentPlanner.Plan {
+    let manager = await refreshedDriveManager()
+    let volumes = VolumeIntentPlanner.candidates(
+      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+    return VolumeIntentPlanner.plan(name: name, in: volumes, mount: mount)
+  }
+
+  /// `nil` when the volume is mounted, else the error (possibly empty).
+  static func mount(volume: Volume) async -> String? {
+    await withCheckedContinuation { continuation in
+      DriveManager.shared.mount(volume: volume, allowsErrorAlerts: false) { result in
+        continuation.resume(returning: Self.failureMessage(result))
+      }
+    }
+  }
+
+  /// `nil` when the volume is unmounted, else the error (possibly empty).
+  static func unmount(volume: Volume) async -> String? {
+    await withCheckedContinuation { continuation in
+      DriveManager.shared.unmount(volume: volume, allowsErrorAlerts: false) { result in
+        continuation.resume(returning: Self.failureMessage(result))
+      }
+    }
+  }
+
+  private static func failureMessage(_ result: Result<Void, Error>) -> String? {
+    if case .failure(let error) = result { return error.localizedDescription }
+    return nil
   }
 }
 
@@ -118,6 +158,80 @@ struct MountShareIntent: AppIntent {
   }
 }
 
+struct UnmountShareIntent: AppIntent {
+  static var title: LocalizedStringResource = "Unmount Network Share"
+  static var description = IntentDescription("Unmounts a network share saved in MountMate.")
+
+  @Parameter(title: "Network Share")
+  var share: NetworkShareEntity
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    guard let saved = NetworkShareQuery.savedShares().first(where: { $0.id == share.id }) else {
+      throw IntentFailure(message: IntentMessages.shareNotFound())
+    }
+    if let error = await IntentActions.unmount(share: saved) {
+      throw IntentFailure(
+        message: IntentMessages.shareUnmountFailure(name: saved.name, reason: error))
+    }
+    return .result(
+      dialog: IntentDialog(stringLiteral: IntentMessages.shareUnmounted(name: saved.name)))
+  }
+}
+
+struct MountVolumeIntent: AppIntent {
+  static var title: LocalizedStringResource = "Mount Volume"
+  static var description = IntentDescription("Mounts one external volume by its name.")
+
+  @Parameter(title: "Volume")
+  var volume: VolumeEntity
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    switch await IntentActions.volumePlan(name: volume.id, mount: true) {
+    case .failure(let message):
+      throw IntentFailure(message: message)
+    case .alreadyDone(let found):
+      return .result(
+        dialog: IntentDialog(stringLiteral: IntentMessages.shareMounted(name: found.name)))
+    case .run(let found):
+      if let error = await IntentActions.mount(volume: found) {
+        throw IntentFailure(
+          message: IntentMessages.shareFailure(name: found.name, reason: error))
+      }
+      return .result(
+        dialog: IntentDialog(stringLiteral: IntentMessages.shareMounted(name: found.name)))
+    }
+  }
+}
+
+struct UnmountVolumeIntent: AppIntent {
+  static var title: LocalizedStringResource = "Unmount Volume"
+  static var description = IntentDescription(
+    "Unmounts one external volume by its name. A protected volume is refused.")
+
+  @Parameter(title: "Volume")
+  var volume: VolumeEntity
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    switch await IntentActions.volumePlan(name: volume.id, mount: false) {
+    case .failure(let message):
+      throw IntentFailure(message: message)
+    case .alreadyDone(let found):
+      return .result(
+        dialog: IntentDialog(stringLiteral: IntentMessages.shareUnmounted(name: found.name)))
+    case .run(let found):
+      if let error = await IntentActions.unmount(volume: found) {
+        throw IntentFailure(
+          message: IntentMessages.shareUnmountFailure(name: found.name, reason: error))
+      }
+      return .result(
+        dialog: IntentDialog(stringLiteral: IntentMessages.shareUnmounted(name: found.name)))
+    }
+  }
+}
+
 struct MountMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
@@ -145,5 +259,17 @@ struct MountMateShortcuts: AppShortcutsProvider {
       intent: MountShareIntent(),
       phrases: ["Mount a network share with \(.applicationName)"],
       shortTitle: "Mount Network Share", systemImageName: "network")
+    AppShortcut(
+      intent: UnmountShareIntent(),
+      phrases: ["Unmount a network share with \(.applicationName)"],
+      shortTitle: "Unmount Network Share", systemImageName: "network.slash")
+    AppShortcut(
+      intent: MountVolumeIntent(),
+      phrases: ["Mount a volume with \(.applicationName)"],
+      shortTitle: "Mount Volume", systemImageName: "externaldrive.badge.plus")
+    AppShortcut(
+      intent: UnmountVolumeIntent(),
+      phrases: ["Unmount a volume with \(.applicationName)"],
+      shortTitle: "Unmount Volume", systemImageName: "eject")
   }
 }

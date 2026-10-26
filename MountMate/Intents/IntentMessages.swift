@@ -47,6 +47,32 @@ enum IntentMessages {
     return String(format: localize("Could not mount “%@”: %@"), name, reason)
   }
 
+  static func shareUnmounted(name: String, localize: Localize = defaultLocalize) -> String {
+    String(format: localize("“%@” unmounted."), name)
+  }
+
+  /// `reason` is the already sanitized error of the unmount, when there is one.
+  static func shareUnmountFailure(
+    name: String, reason: String?, localize: Localize = defaultLocalize
+  ) -> String {
+    guard let reason, !reason.isEmpty else {
+      return String(format: localize("Could not unmount “%@”."), name)
+    }
+    return String(format: localize("Could not unmount “%@”: %@"), name, reason)
+  }
+
+  static func volumeNotFound(name: String, localize: Localize = defaultLocalize) -> String {
+    String(format: localize("No volume named “%@”."), name)
+  }
+
+  static func volumeNameAmbiguous(name: String, localize: Localize = defaultLocalize) -> String {
+    String(format: localize("More than one volume is named “%@”."), name)
+  }
+
+  static func volumeProtected(name: String, localize: Localize = defaultLocalize) -> String {
+    String(format: localize("“%@” is protected and cannot be unmounted."), name)
+  }
+
   static func shareNotFound(localize: Localize = defaultLocalize) -> String {
     localize("That network share is no longer saved in MountMate.")
   }

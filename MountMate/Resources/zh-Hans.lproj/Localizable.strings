@@ -471,3 +471,18 @@
 "Clear Shortcut" = "清除快捷键";
 "Not Set" = "未设置";
 "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "卸载并推出所有外置磁盘，以便安全拔出。含受保护宗卷的磁盘会保留。";
+
+// MARK: - Shortcuts: unmount share, mount/unmount volume
+"Unmounts a network share saved in MountMate." = "卸载 MountMate 中保存的网络共享。";
+"Mounts one external volume by its name." = "按名称挂载一个外置卷宗。";
+"Unmounts one external volume by its name. A protected volume is refused." = "按名称卸载一个外置卷宗。受保护的卷宗会被拒绝。";
+"Unmount Network Share" = "卸载网络共享";
+"Mount Volume" = "挂载卷宗";
+"Unmount Volume" = "卸载卷宗";
+"Volume" = "卷宗";
+"“%@” unmounted." = "已卸载“%@”。";
+"Could not unmount “%@”: %@" = "无法卸载“%@”：%@";
+"Could not unmount “%@”." = "无法卸载“%@”。";
+"No volume named “%@”." = "没有名为“%@”的卷宗。";
+"More than one volume is named “%@”." = "有多个卷宗名为“%@”。";
+"“%@” is protected and cannot be unmounted." = "“%@”受保护，无法卸载。";

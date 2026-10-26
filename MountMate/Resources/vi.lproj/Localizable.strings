@@ -471,3 +471,18 @@
 "Clear Shortcut" = "Xoá phím tắt";
 "Not Set" = "Chưa đặt";
 "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Unmount và đẩy ra mọi ổ đĩa ngoài để có thể rút an toàn. Ổ có phân vùng được bảo vệ sẽ được giữ lại.";
+
+// MARK: - Shortcuts: unmount share, mount/unmount volume
+"Unmounts a network share saved in MountMate." = "Unmount một chia sẻ mạng đã lưu trong MountMate.";
+"Mounts one external volume by its name." = "Mount một phân vùng ngoài theo tên.";
+"Unmounts one external volume by its name. A protected volume is refused." = "Unmount một phân vùng ngoài theo tên. Phân vùng được bảo vệ sẽ bị từ chối.";
+"Unmount Network Share" = "Unmount chia sẻ mạng";
+"Mount Volume" = "Mount phân vùng";
+"Unmount Volume" = "Unmount phân vùng";
+"Volume" = "Phân vùng";
+"“%@” unmounted." = "Đã unmount “%@”.";
+"Could not unmount “%@”: %@" = "Không unmount được “%@”: %@";
+"Could not unmount “%@”." = "Không unmount được “%@”.";
+"No volume named “%@”." = "Không có phân vùng nào tên “%@”.";
+"More than one volume is named “%@”." = "Có nhiều hơn một phân vùng tên “%@”.";
+"“%@” is protected and cannot be unmounted." = "“%@” được bảo vệ nên không thể unmount.";

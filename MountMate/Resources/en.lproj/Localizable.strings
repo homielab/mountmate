@@ -471,3 +471,18 @@
 "Clear Shortcut" = "Clear Shortcut";
 "Not Set" = "Not Set";
 "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay.";
+
+// MARK: - Shortcuts: unmount share, mount/unmount volume
+"Unmounts a network share saved in MountMate." = "Unmounts a network share saved in MountMate.";
+"Mounts one external volume by its name." = "Mounts one external volume by its name.";
+"Unmounts one external volume by its name. A protected volume is refused." = "Unmounts one external volume by its name. A protected volume is refused.";
+"Unmount Network Share" = "Unmount Network Share";
+"Mount Volume" = "Mount Volume";
+"Unmount Volume" = "Unmount Volume";
+"Volume" = "Volume";
+"“%@” unmounted." = "“%@” unmounted.";
+"Could not unmount “%@”: %@" = "Could not unmount “%@”: %@";
+"Could not unmount “%@”." = "Could not unmount “%@”.";
+"No volume named “%@”." = "No volume named “%@”.";
+"More than one volume is named “%@”." = "More than one volume is named “%@”.";
+"“%@” is protected and cannot be unmounted." = "“%@” is protected and cannot be unmounted.";

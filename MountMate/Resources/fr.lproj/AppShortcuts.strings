@@ -5,3 +5,6 @@
 "Mount a network share with ${applicationName}" = "Monter un partage réseau avec ${applicationName}";
 "Eject all external disks with ${applicationName}" = "Éjecter tous les disques externes avec ${applicationName}";
 "Eject all drives with ${applicationName}" = "Éjecter tous les lecteurs avec ${applicationName}";
+"Unmount a network share with ${applicationName}" = "Démonter un partage réseau avec ${applicationName}";
+"Mount a volume with ${applicationName}" = "Monter un volume avec ${applicationName}";
+"Unmount a volume with ${applicationName}" = "Démonter un volume avec ${applicationName}";

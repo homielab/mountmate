@@ -471,3 +471,18 @@
 "Clear Shortcut" = "Удалить сочетание клавиш";
 "Not Set" = "Не задано";
 "Unmounts and ejects every external disk so it can be unplugged. Disks with a protected volume stay." = "Отмонтирует и извлекает каждый внешний диск, чтобы его можно было отключить. Диски с защищённым томом остаются.";
+
+// MARK: - Shortcuts: unmount share, mount/unmount volume
+"Unmounts a network share saved in MountMate." = "Размонтирует сетевую папку, сохранённую в MountMate.";
+"Mounts one external volume by its name." = "Монтирует внешний том по имени.";
+"Unmounts one external volume by its name. A protected volume is refused." = "Размонтирует внешний том по имени. Защищённый том не размонтируется.";
+"Unmount Network Share" = "Размонтировать сетевую папку";
+"Mount Volume" = "Смонтировать том";
+"Unmount Volume" = "Размонтировать том";
+"Volume" = "Том";
+"“%@” unmounted." = "«%@» размонтирован.";
+"Could not unmount “%@”: %@" = "Не удалось размонтировать «%@»: %@";
+"Could not unmount “%@”." = "Не удалось размонтировать «%@».";
+"No volume named “%@”." = "Нет тома с именем «%@».";
+"More than one volume is named “%@”." = "Несколько томов называются «%@».";
+"“%@” is protected and cannot be unmounted." = "«%@» защищён и не может быть размонтирован.";
