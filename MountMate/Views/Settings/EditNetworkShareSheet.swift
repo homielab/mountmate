@@ -1,6 +1,5 @@
 //  Created by homielab.com
 
-import Security
 import SwiftUI
 
 struct EditNetworkShareSheet: View {
@@ -46,48 +45,16 @@ struct EditNetworkShareSheet: View {
   /// Why the share cannot be saved as entered, or nil.
   private var validationError: String? {
     guard !cleanedServer.isEmpty, !cleanedSharePath.isEmpty else { return nil }
-
-    // Existing names stay valid when editing other fields.
-    if finalName != shareToEdit?.name,
-      let nameError = NetworkShare.displayNameValidationError(finalName)
-    {
-      return nameError
-    }
-
     let candidate = makeShare()
-    let otherShares = PersistenceManager.shared.networkShares.filter { $0.id != candidate.id }
-
-    if shareToEdit == nil,
-      let duplicate = otherShares.first(where: { $0.hasSameEndpoint(as: candidate) })
-    {
-      return String(
-        format: NSLocalizedString(
-          "This share is already saved as “%@”.", comment: "Network share validation error"),
-        duplicate.name)
-    }
-
-    // Two shares must never use the same mount folder: mounting one would
-    // look like the other is mounted, and unmounting one would unmount both.
-    let manager = NetworkMountManager.shared
-    let mountPoint = manager.configuredMountPoint(for: candidate)
-    if let clash = otherShares.first(where: {
-      NetworkMountTable.samePath(manager.configuredMountPoint(for: $0), mountPoint)
-    }) {
-      return String(
-        format: NSLocalizedString(
-          "The mount point “%@” is already used by the share “%@”. Choose a different display name or custom mount point.",
-          comment: "Network share validation error"),
-        mountPoint, clash.name)
-    }
-    return nil
+    return NetworkShareValidation.error(
+      candidate: candidate, original: shareToEdit,
+      otherShares: PersistenceManager.shared.networkShares.filter { $0.id != candidate.id },
+      mountPoint: NetworkMountManager.shared.configuredMountPoint(for:))
   }
 
   private var connectionStringPreview: String {
     let srv = cleanedServer.isEmpty ? "server" : cleanedServer
     let path = cleanedSharePath.isEmpty ? "share" : cleanedSharePath
-    if shareProtocol == .nfs {
-      return "nfs://\(srv)/\(path)"
-    }
     return "\(shareProtocol.urlScheme)://\(srv)/\(path)"
   }
 
@@ -302,58 +269,14 @@ struct EditNetworkShareSheet: View {
     )
   }
 
-  /// Saves or removes the share's Keychain password. Returns a user-facing
-  /// error message, or nil on success.
-  private func updateKeychain(for share: NetworkShare) -> String? {
-    let account = share.id.uuidString
-    guard share.shareProtocol.supportsUserCredentials else {
-      // Switched to NFS, which uses no password: don't keep an orphaned one.
-      guard let original = shareToEdit, original.shareProtocol.supportsUserCredentials
-      else { return nil }
-      return deletePassword(account: account)
-    }
-
-    if !password.isEmpty {
-      // Unchanged: skip the write (and any Keychain prompt it could cause).
-      guard password != loadedPassword else { return nil }
-      let status = KeychainManager.shared.save(
-        password: password, for: account, name: share.name, kind: .networkShare)
-      guard status == errSecSuccess else {
-        return String(
-          format: NSLocalizedString(
-            "MountMate could not save the password to the Keychain (error %d).",
-            comment: "Network share save error"),
-          status)
-      }
-      return nil
-    }
-
-    // The field was emptied on edit: forget the saved password. Only when
-    // one was actually loaded; if reading it failed, the empty field does
-    // not mean the user cleared it.
-    guard loadedPassword != nil else { return nil }
-    return deletePassword(account: account)
-  }
-
-  /// Deletes the saved password. Returns a user-facing error, or nil.
-  private func deletePassword(account: String) -> String? {
-    let status = KeychainManager.shared.delete(account: account)
-    guard status == errSecSuccess || status == errSecItemNotFound else {
-      return String(
-        format: NSLocalizedString(
-          "MountMate could not remove the saved password from the Keychain (error %d).",
-          comment: "Network share save error"),
-        status)
-    }
-    return nil
-  }
-
   private func saveShare() {
     guard isValid else { return }
     let share = makeShare()
 
     // Keep the sheet open on a Keychain failure so nothing is lost silently.
-    if let keychainError = updateKeychain(for: share) {
+    if let keychainError = NetworkSharePasswordSync(store: KeychainManager.shared).sync(
+      share: share, original: shareToEdit, password: password, loadedPassword: loadedPassword)
+    {
       saveError = keychainError
       return
     }
