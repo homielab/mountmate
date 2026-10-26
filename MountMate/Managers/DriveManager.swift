@@ -397,7 +397,7 @@ class DriveManager: ObservableObject {
           timeout: Self.mountUnmountTimeout)
         // Locked (encrypted) volumes are expected to stay unmounted here;
         // they are skipped rather than reported as failures.
-        return result.succeeded || Self.isLockedVolumeFailure(result)
+        return result.succeeded || DiskUtilErrorClassifier.isLockedVolumeFailure(result)
       }
       DispatchQueue.main.async {
         guard let self else { return }
@@ -409,12 +409,6 @@ class DriveManager: ObservableObject {
         self.refreshDrives(qos: .userInitiated)
       }
     }
-  }
-
-  private static func isLockedVolumeFailure(_ result: ProcessResult) -> Bool {
-    guard !result.timedOut else { return false }
-    let output = "\(result.stdout)\n\(result.stderr)".lowercased()
-    return output.contains("encrypted and locked") || output.contains("unlockvolume")
   }
 
   /// Runs `operation` for every volume in parallel (at most one per CPU core)
@@ -472,7 +466,9 @@ class DriveManager: ObservableObject {
       let ejectTimeout: TimeInterval = 60
       var result = runProcess(
         executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-      if !result.succeeded && !result.timedOut && !Self.isBusyError(result.stderr) {
+      if !result.succeeded && !result.timedOut
+        && !DiskUtilErrorClassifier.isBusyFailure(stderr: result.stderr)
+      {
         Thread.sleep(forTimeInterval: 2)
         result = runProcess(
           executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
@@ -516,15 +512,6 @@ class DriveManager: ObservableObject {
         }
       }
     }
-  }
-
-  /// True when diskutil refused because something is using the disk; retrying
-  /// will not help and the user should get the Force Eject prompt right away.
-  private static func isBusyError(_ stderr: String) -> Bool {
-    let lower = stderr.lowercased()
-    return lower.contains("busy") || lower.contains("in use")
-      || lower.contains("dissented by pid")
-      || lower.contains("at least one volume could not be unmounted")
   }
 
   func forceUnmount(volume: Volume) {
@@ -606,22 +593,10 @@ class DriveManager: ObservableObject {
     }
   }
 
-  /// A generic "failed to mount" is retried once only when it is plausibly
-  /// transient: the volume appeared moments ago and diskutil did not say the
-  /// file system is unsupported. Real failures surface without the delay.
   private func shouldRetryMount(after result: ProcessResult, volume: Volume) -> Bool {
-    guard !result.succeeded, !result.timedOut else { return false }
-    let error = result.stderr.lowercased()
-    guard error.contains("failed to mount") else { return false }
-    // Note: diskutil's generic hint ("If the volume is damaged, try the
-    // readOnly option") is printed for every failure, so "damaged" is not
-    // a usable marker here.
-    let permanentMarkers = ["unrecognized", "not supported", "unsupported", "corrupt"]
-    if permanentMarkers.contains(where: { error.contains($0) }) { return false }
     let firstSeen = volumeFirstSeenLock.withLock { volumeFirstSeen[volume.id] }
-    // Not listed yet: the disk has only just appeared.
-    guard let firstSeen else { return true }
-    return Date().timeIntervalSince(firstSeen) < Self.recentAppearanceWindow
+    return DiskUtilErrorClassifier.shouldRetryMount(
+      after: result, firstSeen: firstSeen, now: Date(), window: Self.recentAppearanceWindow)
   }
 
   private static func postDidFinishManualMount(_ volume: Volume) {

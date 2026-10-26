@@ -143,4 +143,106 @@ final class DiskUtilErrorClassifierTests: XCTestCase {
     XCTAssertEqual(titles.count, 3)
     XCTAssertEqual(messages.count, 3)
   }
+
+  // MARK: locked volume matcher (one source for Mount All and the alert path)
+
+  func testLockedMatcherAndClassifyAgree() {
+    let samples = [
+      "This is an encrypted and locked APFS Volume; use \"diskutil apfs unlockVolume\"",
+      "Volume is encrypted and locked, run diskutil apfs unlockVolume first",
+      "use diskutil apfs unlockVolume disk5s1",
+    ]
+    for sample in samples {
+      XCTAssertTrue(
+        DiskUtilErrorClassifier.isLockedVolumeFailure(result(stderr: sample)), sample)
+      XCTAssertEqual(
+        DiskUtilErrorClassifier.classify(sample, for: "Vault", operation: .mount),
+        .mountLockedVolume, sample)
+    }
+  }
+
+  func testLockedMatcherReadsStdoutAndIgnoresTimeouts() {
+    XCTAssertTrue(
+      DiskUtilErrorClassifier.isLockedVolumeFailure(
+        result(stdout: "encrypted and locked", stderr: "")))
+    XCTAssertFalse(
+      DiskUtilErrorClassifier.isLockedVolumeFailure(
+        result(stderr: "encrypted and locked", exitCode: nil, timedOut: true)))
+    XCTAssertFalse(
+      DiskUtilErrorClassifier.isLockedVolumeFailure(result(stderr: "resource busy")))
+  }
+
+  // MARK: busy matcher
+
+  func testBusyMatcherAgreesWithClassify() {
+    let samples = [
+      "Volume Backup on disk4s2 failed to unmount: resource busy",
+      "dissented by PID 12 (/usr/bin/foo)",
+      "Resource in use",
+      "at least one volume could not be unmounted",
+      "Volume failed to mount: unsupported",
+      "",
+    ]
+    for sample in samples {
+      let kind = DiskUtilErrorClassifier.classify(sample, for: "X", operation: .eject)
+      let isBusyKind: Bool
+      switch kind {
+      case .inUse, .unmountBusyVolume: isBusyKind = true
+      default: isBusyKind = false
+      }
+      XCTAssertEqual(DiskUtilErrorClassifier.isBusyFailure(stderr: sample), isBusyKind, sample)
+    }
+  }
+
+  // MARK: shouldRetryMount
+
+  private let now = Date(timeIntervalSince1970: 1_000_000)
+  private let failedMount = "Volume Data on disk4s1 failed to mount; Error: -69842"
+
+  private func retry(_ result: ProcessResult, firstSeenAgo: TimeInterval?) -> Bool {
+    DiskUtilErrorClassifier.shouldRetryMount(
+      after: result, firstSeen: firstSeenAgo.map { now.addingTimeInterval(-$0) }, now: now,
+      window: 20)
+  }
+
+  func testRetriesRecentGenericMountFailure() {
+    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: 3))
+  }
+
+  func testRetriesWhenVolumeNotListedYet() {
+    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: nil))
+  }
+
+  func testDoesNotRetryOldVolumeOrBoundary() {
+    XCTAssertFalse(retry(result(stderr: failedMount), firstSeenAgo: 60))
+    XCTAssertFalse(retry(result(stderr: failedMount), firstSeenAgo: 20))
+    XCTAssertTrue(retry(result(stderr: failedMount), firstSeenAgo: 19.9))
+  }
+
+  func testDoesNotRetrySuccessTimeoutOrOtherErrors() {
+    XCTAssertFalse(retry(result(exitCode: 0), firstSeenAgo: 1))
+    XCTAssertFalse(
+      retry(result(stderr: failedMount, exitCode: nil, timedOut: true), firstSeenAgo: 1))
+    XCTAssertFalse(retry(result(stderr: "resource busy"), firstSeenAgo: 1))
+  }
+
+  func testDoesNotRetryPermanentMarkers() {
+    for marker in ["unrecognized", "not supported", "unsupported", "corrupt"] {
+      XCTAssertFalse(
+        retry(result(stderr: "\(failedMount) (\(marker) file system)"), firstSeenAgo: 1), marker)
+    }
+  }
+
+  // MARK: remount after a failed unmount
+
+  func testShouldRemountDecision() {
+    XCTAssertTrue(
+      NetworkMountManager.shouldRemount(afterUnmountSucceeded: true, stillMounted: false))
+    XCTAssertTrue(
+      NetworkMountManager.shouldRemount(afterUnmountSucceeded: true, stillMounted: true))
+    XCTAssertTrue(
+      NetworkMountManager.shouldRemount(afterUnmountSucceeded: false, stillMounted: false))
+    XCTAssertFalse(
+      NetworkMountManager.shouldRemount(afterUnmountSucceeded: false, stillMounted: true))
+  }
 }

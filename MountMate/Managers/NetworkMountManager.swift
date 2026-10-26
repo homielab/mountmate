@@ -634,7 +634,7 @@ class NetworkMountManager: ObservableObject {
         Log.network.notice(
           "Unmounting \(share.name, privacy: .private) again: it was ejected during an automatic mount."
         )
-        _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+        logUndoUnmount(of: share, at: mountPoint)
         cleanUpMountPoint(mountPoint, ifCreated: createdMountPoint)
         refreshMountStatus { finish(false, nil) }
       } else {
@@ -900,7 +900,7 @@ class NetworkMountManager: ObservableObject {
           Log.network.notice(
             "Unmounting \(share.name, privacy: .private) again: it was ejected while the mount was pending."
           )
-          _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+          self.logUndoUnmount(of: share, at: mountPoint)
         }
         self.refreshMountStatus()
       } else {
@@ -1155,7 +1155,20 @@ class NetworkMountManager: ObservableObject {
           DispatchQueue.main.async { completion?(true) }
           return
         }
-        _ = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+        let umountResult = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+        if !umountResult.succeeded {
+          Log.network.notice(
+            "Unmount before remounting \(share.name, privacy: .private) failed (\(umountResult.timedOut ? "timed out" : "exit \(umountResult.exitCode ?? -1)", privacy: .public)): \(umountResult.stderr, privacy: .private)"
+          )
+          let stillMounted =
+            self.currentMountTable().map { !self.mounts(of: share, in: $0).isEmpty } ?? true
+          if !Self.shouldRemount(afterUnmountSucceeded: false, stillMounted: stillMounted) {
+            // Busy share: it is still mounted, so there is nothing to
+            // reconnect and a second mount would only fail.
+            DispatchQueue.main.async { completion?(true) }
+            return
+          }
+        }
       }
       DispatchQueue.main.async {
         // Automatic: must not clear keep-alive suppression or backoff state.
@@ -1164,6 +1177,22 @@ class NetworkMountManager: ObservableObject {
         }
       }
     }
+  }
+
+  /// Whether `forceRemount` should mount again: always after a successful
+  /// unmount, and after a failed one only when the share is gone anyway.
+  static func shouldRemount(afterUnmountSucceeded: Bool, stillMounted: Bool) -> Bool {
+    afterUnmountSucceeded || !stillMounted
+  }
+
+  /// Unmounts a share an automatic mount left behind after the user ejected it
+  /// meanwhile; a failure (busy share) is logged instead of ignored.
+  private func logUndoUnmount(of share: NetworkShare, at mountPoint: String) {
+    let result = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+    guard !result.succeeded else { return }
+    Log.network.notice(
+      "Could not unmount \(share.name, privacy: .private) again (\(result.timedOut ? "timed out" : "exit \(result.exitCode ?? -1)", privacy: .public)): \(result.stderr, privacy: .private)"
+    )
   }
 
   /// Marks a share as intentionally unmounted by the user so the keep-alive

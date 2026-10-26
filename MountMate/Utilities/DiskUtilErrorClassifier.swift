@@ -54,23 +54,66 @@ enum DiskUtilErrorClassifier {
       return .mountEFIVolume
     }
 
-    if lowerCaseError.contains("at least one volume could not be unmounted") {
+    if lowerCaseError.contains(unmountBusyMarker) {
       return .unmountBusyVolume
     }
 
-    if lowerCaseError.contains("busy") || lowerCaseError.contains("in use")
-      || lowerCaseError.contains("dissented by pid")
-    {
+    if mentionsBusy(lowerCaseError) {
       return .inUse(process: blockingProcessName(in: rawError))
     }
 
-    if rawError.contains(
-      "This is an encrypted and locked APFS Volume; use \"diskutil apfs unlockVolume\"")
-    {
+    if mentionsLockedVolume(lowerCaseError) {
       return .mountLockedVolume
     }
 
     return .other
+  }
+
+  private static let unmountBusyMarker = "at least one volume could not be unmounted"
+
+  private static func mentionsBusy(_ lowerCaseError: String) -> Bool {
+    lowerCaseError.contains("busy") || lowerCaseError.contains("in use")
+      || lowerCaseError.contains("dissented by pid")
+  }
+
+  /// Matches diskutil's "encrypted and locked ... use unlockVolume" sentence
+  /// loosely, so a changed wording or quoting still counts as locked.
+  private static func mentionsLockedVolume(_ lowerCaseError: String) -> Bool {
+    lowerCaseError.contains("encrypted and locked") || lowerCaseError.contains("unlockvolume")
+  }
+
+  /// True when a mount failed only because the volume is encrypted and still
+  /// locked (stdout and stderr both checked). Same matcher as `classify`.
+  static func isLockedVolumeFailure(_ result: ProcessResult) -> Bool {
+    guard !result.timedOut else { return false }
+    return mentionsLockedVolume("\(result.stdout)\n\(result.stderr)".lowercased())
+  }
+
+  /// True when diskutil refused because something is using the disk (a busy
+  /// volume, a blocking process, or an unmount that left a volume mounted);
+  /// retrying will not help. Agrees with `classify` returning `.inUse` or
+  /// `.unmountBusyVolume`.
+  static func isBusyFailure(stderr: String) -> Bool {
+    let lower = stderr.lowercased()
+    return lower.contains(unmountBusyMarker) || mentionsBusy(lower)
+  }
+
+  /// A generic "failed to mount" is retried once only when it is plausibly
+  /// transient: the volume appeared moments ago (`firstSeen` within `window`
+  /// of `now`, or not listed yet) and diskutil did not say the file system is
+  /// unsupported.
+  static func shouldRetryMount(
+    after result: ProcessResult, firstSeen: Date?, now: Date, window: TimeInterval
+  ) -> Bool {
+    guard !result.succeeded, !result.timedOut else { return false }
+    let error = result.stderr.lowercased()
+    guard error.contains("failed to mount") else { return false }
+    // diskutil's generic hint ("If the volume is damaged, try the readOnly
+    // option") is printed for every failure, so "damaged" is no usable marker.
+    let permanentMarkers = ["unrecognized", "not supported", "unsupported", "corrupt"]
+    if permanentMarkers.contains(where: { error.contains($0) }) { return false }
+    guard let firstSeen else { return true }
+    return now.timeIntervalSince(firstSeen) < window
   }
 
   /// Last path component of the executable diskutil names as the blocker,
