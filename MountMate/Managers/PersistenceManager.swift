@@ -6,6 +6,12 @@ import Foundation
 class PersistenceManager: ObservableObject {
   static let shared = PersistenceManager()
 
+  private static let pinnedVolumeIDsKey = "pinnedVolumeIDs"
+  private static let blockAtStartupKey = "blockAtStartup"
+
+  /// Where every list and setting is stored. Tests pass a temporary suite.
+  private let defaults: UserDefaults
+
   private let protectedVolumesKey = "mountmate_protectedVolumes_v4"
   private let ignoredVolumesKey = "mountmate_ignoredVolumes_v4"
   private let blockedVolumesKey = "mountmate_blockedVolumes_v1"
@@ -25,10 +31,8 @@ class PersistenceManager: ObservableObject {
   @Published var idleUnmountVolumes: [IdleUnmountVolume]
   /// Volumes pinned to the top of the menu bar list, in the order they were
   /// pinned. Stored by composite ID so pins survive reconnecting the drive.
-  @Published var pinnedVolumeIDs: [String] =
-    UserDefaults.standard.stringArray(forKey: "pinnedVolumeIDs") ?? []
-  {
-    didSet { UserDefaults.standard.set(pinnedVolumeIDs, forKey: "pinnedVolumeIDs") }
+  @Published var pinnedVolumeIDs: [String] {
+    didSet { defaults.set(pinnedVolumeIDs, forKey: Self.pinnedVolumeIDsKey) }
   }
 
   func isPinned(_ volume: Volume) -> Bool {
@@ -58,8 +62,7 @@ class PersistenceManager: ObservableObject {
   /// so macOS itself skips mounting it at startup — before MountMate (or any
   /// login item) is running. Off by default because each change to
   /// /etc/fstab needs the administrator password.
-  @Published private(set) var blockAtStartup: Bool = UserDefaults.standard.bool(
-    forKey: "blockAtStartup")
+  @Published private(set) var blockAtStartup: Bool
 
   /// True while a user-initiated startup-rule update is running (including
   /// while the password prompt is up). Shown as a spinner in Settings.
@@ -72,41 +75,47 @@ class PersistenceManager: ObservableObject {
   /// and publishing would redraw every observer of this manager.
   private(set) var fstabBlockedVolumeUUIDs: Set<String> = []
 
-  /// Serializes every startup-block read-modify-write cycle of /etc/fstab so
-  /// concurrent block, unblock and reconcile actions cannot interleave.
-  private let fstabQueue = DispatchQueue(label: "com.homielab.mountmate.fstab")
-  /// diskutil lookups for new rules. Only used on `fstabQueue`.
-  private let volumeLookup = FstabVolumeLookup()
-  private var isFstabReconcilePending = false
-  /// Set when a background startup-block update fails (e.g. its admin prompt
-  /// is cancelled). Background updates then stay quiet — also across
-  /// launches — until the user blocks, unblocks or toggles the setting.
-  /// Only touched on `fstabQueue`.
-  private var backgroundFstabUpdateDeclined: Bool {
-    get { UserDefaults.standard.bool(forKey: "startupBlockBackgroundDeclined") }
-    set { UserDefaults.standard.set(newValue, forKey: "startupBlockBackgroundDeclined") }
-  }
+  /// diskutil lookups for new rules. Only used on `startupBlock.queue`.
+  let volumeLookup: FstabVolumeLookup
+  /// Keeps /etc/fstab in step with `blockedVolumes` (see the type's notes).
+  /// Its queue also serializes custom mount point updates.
+  lazy var startupBlock = StartupBlockCoordinator(
+    defaults: defaults, access: fstabAccess, host: self)
+  private let fstabAccess: StartupBlockFstabAccess
 
-  private init() {
+  /// - Parameters:
+  ///   - defaults: Where lists and settings are stored.
+  ///   - fstabAccess: /etc/fstab and `diskutil` access for the startup-block
+  ///     rules; defaults to the real system.
+  init(defaults: UserDefaults = .standard, fstabAccess: StartupBlockFstabAccess? = nil) {
+    let volumeLookup = FstabVolumeLookup()
+    let fstabAccess = fstabAccess ?? SystemFstabAccess(lookup: volumeLookup)
+    self.defaults = defaults
+    self.volumeLookup = volumeLookup
+    self.fstabAccess = fstabAccess
+    self.blockAtStartup = defaults.bool(forKey: Self.blockAtStartupKey)
     self.protectedVolumes = Self.droppingNonUUIDEntries(
-      CodableDefaultsStore.load(from: protectedVolumesKey))
+      CodableDefaultsStore.load(from: protectedVolumesKey, defaults: defaults))
     self.ignoredVolumes = Self.migratedIgnoredEntries(
-      CodableDefaultsStore.load(from: ignoredVolumesKey))
+      CodableDefaultsStore.load(from: ignoredVolumesKey, defaults: defaults))
     self.blockedVolumes = Self.droppingNonUUIDEntries(
-      CodableDefaultsStore.load(from: blockedVolumesKey))
+      CodableDefaultsStore.load(from: blockedVolumesKey, defaults: defaults))
     self.keepAliveVolumes = Self.droppingNonUUIDEntries(
-      CodableDefaultsStore.load(from: keepAliveVolumesKey))
-    self.networkShares = CodableDefaultsStore.load(from: networkSharesKey)
-    self.customMountPoints = CodableDefaultsStore.load(from: customMountPointsKey)
-    self.idleUnmountVolumes = CodableDefaultsStore.load(from: idleUnmountVolumesKey).filter {
+      CodableDefaultsStore.load(from: keepAliveVolumesKey, defaults: defaults))
+    self.networkShares = CodableDefaultsStore.load(from: networkSharesKey, defaults: defaults)
+    self.customMountPoints = CodableDefaultsStore.load(
+      from: customMountPointsKey, defaults: defaults)
+    self.idleUnmountVolumes = CodableDefaultsStore.load(
+      from: idleUnmountVolumesKey, defaults: defaults
+    ).filter {
       (entry: IdleUnmountVolume) in
       entry.minutes > 0 && Self.normalizedSystemVolumeUUID(entry.volumeUUID) != nil
     }
     self.fstabBlockedVolumeUUIDs = FstabRules.managedFstabVolumeUUIDs(
-      kinds: [FstabRules.mountMateBlockPrefix], in: FstabWriter.readSystemFstabContents())
+      kinds: [FstabRules.mountMateBlockPrefix], in: fstabAccess.readContents())
     // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
     // do not run in init, so this only takes effect with the next pin change.
-    self.pinnedVolumeIDs = pinnedVolumeIDs.filter {
+    self.pinnedVolumeIDs = (defaults.stringArray(forKey: Self.pinnedVolumeIDsKey) ?? []).filter {
       Self.normalizedSystemVolumeUUID(String($0.suffix(36))) != nil
     }
   }
@@ -195,7 +204,7 @@ class PersistenceManager: ObservableObject {
     }
 
     if blockAtStartup {
-      reconcileStartupBlockRules(userInitiated: true)
+      startupBlock.reconcile(userInitiated: true)
     }
     return true
   }
@@ -207,14 +216,14 @@ class PersistenceManager: ObservableObject {
     // Remove the volume's startup rule even when the setting is off, so an
     // unblocked volume never stays blocked at boot. While the setting is on,
     // always reconcile: a rule for this volume may still be in flight on
-    // fstabQueue (block then unblock during the password prompt) and not yet
+    // the fstab queue (block then unblock during the password prompt) and not yet
     // reflected in fstabBlockedVolumeUUIDs. The queued reconcile runs after
     // it and removes the rule; when nothing changes it does not prompt.
     let hasKnownRule =
       Self.normalizedSystemVolumeUUID(info.volumeUUID)
       .map { fstabBlockedVolumeUUIDs.contains($0) } ?? false
     if blockAtStartup || hasKnownRule {
-      reconcileStartupBlockRules(userInitiated: true)
+      startupBlock.reconcile(userInitiated: true)
     }
   }
 
@@ -338,193 +347,6 @@ class PersistenceManager: ObservableObject {
     saveNetworkShares()
   }
 
-  func customMountPoint(for volume: Volume) -> VolumeCustomMountPoint? {
-    // Custom mount points are /etc/fstab rules addressed by volume UUID, so
-    // only volumes with a real UUID can have one.
-    guard volume.stableVolumeUUID != nil else { return nil }
-    let identifier = stableIdentifier(for: volume)
-    return customMountPoints.first { $0.id == identifier }
-  }
-
-  /// Outcome of an asynchronous custom mount point update.
-  enum CustomMountPointUpdateResult: Equatable {
-    case success
-    /// The user dismissed the administrator password prompt; nothing changed.
-    case cancelled
-    /// A localized message to show to the user.
-    case failure(String)
-  }
-
-  /// Adds or replaces the volume's custom mount point: writes its /etc/fstab
-  /// rule (which may show the administrator password prompt), then saves it
-  /// in MountMate's list.
-  ///
-  /// The `diskutil` lookup and the privileged write run on `fstabQueue`, so
-  /// the UI never waits for the password prompt, and the update is
-  /// serialized with startup-block reconciles. Call on the main thread;
-  /// `completion` is called on the main thread.
-  func applyCustomMountPoint(
-    _ mountPoint: String, for volume: Volume,
-    completion: @escaping (CustomMountPointUpdateResult) -> Void
-  ) {
-    guard !isVolumeBlocked(volume) else {
-      completion(
-        .failure(
-          NSLocalizedString(
-            "Custom Mount Point Volume Blocked",
-            comment: "Custom mount point blocked-volume error")))
-      return
-    }
-    guard let volumeUUID = volumeUUIDForSystemMount(for: volume) else {
-      completion(
-        .failure(
-          NSLocalizedString(
-            "Custom Mount Point Requires UUID",
-            comment: "Custom mount point system configuration error")))
-      return
-    }
-
-    fstabQueue.async {
-      guard let fileSystemType = self.volumeLookup.fstabFileSystemType(for: volume) else {
-        DispatchQueue.main.async {
-          completion(
-            .failure(
-              NSLocalizedString(
-                "Custom Mount Point Unsupported File System",
-                comment: "Custom mount point system configuration error")))
-        }
-        return
-      }
-
-      do {
-        let snapshot = try FstabWriter.loadSnapshot()
-        let currentContents = snapshot.contents
-        let updatedContents = try FstabRules.updatedFstabContents(
-          from: currentContents,
-          volumeUUID: volumeUUID,
-          identifier: self.stableIdentifier(for: volume),
-          mountPoint: mountPoint,
-          fileSystemType: fileSystemType
-        )
-
-        // The volume may have been blocked while this job waited in the
-        // queue (e.g. behind another password prompt). Read the current
-        // state, as reconcile does. (Safe: main never waits on fstabQueue.)
-        let isBlockedNow = DispatchQueue.main.sync { self.isVolumeBlocked(volume) }
-        guard !isBlockedNow else {
-          DispatchQueue.main.async {
-            completion(
-              .failure(
-                NSLocalizedString(
-                  "Custom Mount Point Volume Blocked",
-                  comment: "Custom mount point blocked-volume error")))
-          }
-          return
-        }
-
-        if updatedContents != currentContents {
-          try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
-        }
-
-        DispatchQueue.main.async {
-          self.saveCustomMountPoint(mountPoint, for: volume)
-          completion(.success)
-        }
-      } catch {
-        let result = Self.customMountPointUpdateResult(for: error)
-        DispatchQueue.main.async { completion(result) }
-      }
-    }
-  }
-
-  /// Removes the volume's custom mount point: its /etc/fstab rule (which
-  /// may show the administrator password prompt) and its saved entry. Runs
-  /// like `applyCustomMountPoint`. Call on the main thread; `completion` is
-  /// called on the main thread.
-  func removeCustomMountPoint(
-    for volume: Volume, completion: @escaping (CustomMountPointUpdateResult) -> Void
-  ) {
-    removeCustomMountPoint(
-      volumeUUID: volumeUUIDForSystemMount(for: volume),
-      entryID: stableIdentifier(for: volume),
-      completion: completion)
-  }
-
-  /// Same as `removeCustomMountPoint(for:completion:)`, from the saved entry
-  /// alone, so entries of volumes that are not connected can be removed too.
-  func removeCustomMountPoint(
-    info: VolumeCustomMountPoint, completion: @escaping (CustomMountPointUpdateResult) -> Void
-  ) {
-    removeCustomMountPoint(
-      volumeUUID: Self.normalizedSystemVolumeUUID(info.volumeUUID) != nil ? info.volumeUUID : nil,
-      entryID: info.id,
-      completion: completion)
-  }
-
-  /// - Parameters:
-  ///   - volumeUUID: The UUID the /etc/fstab rule addresses, or nil when the
-  ///     volume has none (then it cannot have a rule, and only the saved
-  ///     entry is removed).
-  ///   - entryID: The `VolumeCustomMountPoint.id` of the saved entry.
-  private func removeCustomMountPoint(
-    volumeUUID: String?, entryID: String,
-    completion: @escaping (CustomMountPointUpdateResult) -> Void
-  ) {
-    fstabQueue.async {
-      do {
-        if let volumeUUID {
-          let snapshot = try FstabWriter.loadSnapshot()
-          let currentContents = snapshot.contents
-          let updatedContents = FstabRules.removingCustomMountEntry(
-            volumeUUID: volumeUUID, from: currentContents)
-
-          if updatedContents != currentContents {
-            try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
-          }
-        }
-
-        DispatchQueue.main.async {
-          self.customMountPoints.removeAll { $0.id == entryID }
-          self.saveCustomMountPoints()
-          completion(.success)
-        }
-      } catch {
-        let result = Self.customMountPointUpdateResult(for: error)
-        DispatchQueue.main.async { completion(result) }
-      }
-    }
-  }
-
-  private static func customMountPointUpdateResult(for error: Error)
-    -> CustomMountPointUpdateResult
-  {
-    if FstabWriter.isAdminPromptCancellation(error) { return .cancelled }
-    return .failure(
-      String(
-        format: NSLocalizedString(
-          "Custom Mount Point System Save Error",
-          comment: "Custom mount point system configuration error"),
-        error.localizedDescription))
-  }
-
-  /// Main thread only.
-  private func saveCustomMountPoint(_ mountPoint: String, for volume: Volume) {
-    let identifier = stableIdentifier(for: volume)
-    let info = VolumeCustomMountPoint(
-      volumeUUID: volume.id,
-      backingDiskIdentifier: backingDiskIdentifier(for: volume),
-      name: volume.name,
-      mountPoint: mountPoint
-    )
-
-    if let index = customMountPoints.firstIndex(where: { $0.id == identifier }) {
-      customMountPoints[index] = info
-    } else {
-      customMountPoints.append(info)
-    }
-    saveCustomMountPoints()
-  }
-
   // MARK: - Volume Helpers
 
   /// Normalizes a volume identifier into an uppercased UUID string, or nil
@@ -537,17 +359,6 @@ class PersistenceManager: ObservableObject {
 
   // MARK: - Startup Blocking (/etc/fstab)
 
-  /// The Disk Arbitration approval callback only exists while MountMate is
-  /// running, but macOS mounts connected volumes during startup, before login
-  /// items launch. With "Block at Startup" on, each blocked volume is also
-  /// written to /etc/fstab as `UUID=… none <fs> rw,noauto`, which makes macOS
-  /// itself skip the automatic mount. Manual mounts (MountMate, Disk Utility,
-  /// `diskutil mount`) still work.
-  ///
-  /// Rules can only be added while the volume is connected, because the
-  /// filesystem type is read from it. A blocked volume that is not connected
-  /// gets its rule the next time it appears and MountMate dissents its mount.
-
   /// Turns startup blocking on or off and syncs /etc/fstab right away (one
   /// administrator prompt, or none when there is nothing to change). If the
   /// update fails, the setting goes back to its previous value.
@@ -555,206 +366,25 @@ class PersistenceManager: ObservableObject {
     guard enabled != blockAtStartup else { return }
     let previous = blockAtStartup
     blockAtStartup = enabled
-    UserDefaults.standard.set(enabled, forKey: "blockAtStartup")
+    defaults.set(enabled, forKey: Self.blockAtStartupKey)
 
     // Cancelling the password prompt here just turns the toggle back, with
     // no alert: the user saw the toggle and chose not to continue.
-    reconcileStartupBlockRules(userInitiated: true, silentOnCancel: true, fromToggle: true) {
+    startupBlock.reconcile(userInitiated: true, silentOnCancel: true, fromToggle: true) {
       [weak self] succeeded in
       // Only roll back if the user has not changed the setting again since.
       guard let self, !succeeded, self.blockAtStartup == enabled else { return }
       self.blockAtStartup = previous
-      UserDefaults.standard.set(previous, forKey: "blockAtStartup")
+      self.defaults.set(previous, forKey: Self.blockAtStartupKey)
     }
   }
 
-  /// Called once shortly after launch. Adds rules for blocked volumes that
-  /// were connected at boot without one, and removes leftover rules whose
-  /// removal was cancelled earlier (e.g. after unblocking the last blocked
-  /// volume, when the Disk Arbitration session is no longer running).
-  /// Prompts only when /etc/fstab actually needs to change.
   func reconcileStartupBlockRulesAtLaunch() {
-    guard blockAtStartup || !fstabBlockedVolumeUUIDs.isEmpty else { return }
-    reconcileStartupBlockRules(userInitiated: false)
+    startupBlock.reconcileAtLaunch(
+      enabled: blockAtStartup, knownRuleUUIDs: fstabBlockedVolumeUUIDs)
   }
 
-  /// Schedules a coalesced background reconcile a few seconds out. Called
-  /// when a blocked volume's auto-mount was just dissented: the volume is
-  /// connected at that moment, so its missing rule can be added.
-  func scheduleStartupBlockReconcile() {
-    DispatchQueue.main.async { [weak self] in
-      guard let self, self.blockAtStartup, !self.isFstabReconcilePending else { return }
-      self.isFstabReconcilePending = true
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-        guard let self else { return }
-        self.isFstabReconcilePending = false
-        self.reconcileStartupBlockRules(userInitiated: false)
-      }
-    }
-  }
-
-  /// Syncs MountMate's startup-block rules in /etc/fstab with the blocked
-  /// list: adds rules for connected blocked volumes that lack one (only when
-  /// the setting is on) and removes rules that are no longer wanted. Writes
-  /// /etc/fstab at most once. Must be called on the main thread.
-  ///
-  /// - Parameters:
-  ///   - userInitiated: Explicit user actions always try, even after an
-  ///     earlier admin prompt was cancelled; background reconciles do not.
-  ///   - silentOnCancel: Show no alert when the user cancels the
-  ///     administrator prompt (the caller reports the failure itself).
-  ///   - completion: Called on the main thread with false if the update failed.
-  func reconcileStartupBlockRules(
-    userInitiated: Bool, silentOnCancel: Bool = false, fromToggle: Bool = false,
-    completion: ((Bool) -> Void)? = nil
-  ) {
-    if userInitiated { isUpdatingStartupRules = true }
-    fstabQueue.async { [weak self] in
-      guard let self else { return }
-      defer {
-        if userInitiated {
-          DispatchQueue.main.async { self.isUpdatingStartupRules = false }
-        }
-      }
-      if userInitiated {
-        self.backgroundFstabUpdateDeclined = false
-      } else if self.backgroundFstabUpdateDeclined {
-        return
-      }
-
-      // Read the wanted state when the job runs, not when it was queued, so
-      // jobs queued behind a password prompt act on the latest settings.
-      // Several queued jobs collapse naturally: once one has applied the
-      // current state, the rest find nothing to change and do not prompt.
-      // (Safe: the main thread never waits on fstabQueue.)
-      let (enabled, blockedInfos) = DispatchQueue.main.sync {
-        (self.blockAtStartup, self.blockedVolumes)
-      }
-
-      do {
-        let change = try self.applyStartupBlockRules(
-          enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: 2)
-        if userInitiated,
-          let message = FstabRules.feedbackMessage(
-            for: change, enabled: enabled, fromToggle: fromToggle)
-        {
-          FeedbackHUD.show(message)
-        }
-        DispatchQueue.main.async { completion?(true) }
-      } catch {
-        if userInitiated {
-          if !(silentOnCancel && FstabWriter.isAdminPromptCancellation(error)) {
-            self.handleStartupBlockError(error)
-          }
-        } else {
-          // No alert for updates the user did not just ask for.
-          self.backgroundFstabUpdateDeclined = true
-          Log.persistence.error(
-            "Background startup block update failed; not retrying until the next user action: \(error.localizedDescription, privacy: .public)"
-          )
-        }
-        DispatchQueue.main.async { completion?(false) }
-      }
-    }
-  }
-
-  /// One read-compute-write cycle of `reconcileStartupBlockRules`. Runs on
-  /// `fstabQueue`. Retries when /etc/fstab changed between the read and the
-  /// privileged write (e.g. a custom mount point was saved meanwhile).
-  @discardableResult
-  private func applyStartupBlockRules(
-    enabled: Bool, blockedInfos: [ManagedVolumeInfo], attemptsLeft: Int
-  ) throws -> FstabRules.StartupRuleChange {
-    do {
-      let snapshot = try FstabWriter.loadSnapshot()
-      let contents = snapshot.contents
-      let diff = FstabRules.startupBlockDiff(
-        enabled: enabled, blockedInfos: blockedInfos, contents: contents)
-
-      for info in diff.alreadyHasEntry {
-        Log.persistence.info(
-          "“\(info.name, privacy: .private)” already has an /etc/fstab entry; not adding a startup block rule."
-        )
-      }
-      var additions: [FstabRules.StartupBlockAddition] = []
-      for (uuid, info) in diff.missing {
-        switch self.volumeLookup.startupBlockEligibility(forVolumeUUID: uuid) {
-        case .eligible(let fileSystemType):
-          additions.append(.init(uuid: uuid, fileSystemType: fileSystemType, info: info))
-        case .notConnected:
-          Log.persistence.info(
-            "“\(info.name, privacy: .private)” is not connected; its startup block rule will be added when it next appears."
-          )
-        case .ineligible(let reason):
-          Log.persistence.info(
-            "No startup block rule for “\(info.name, privacy: .private)”: \(reason, privacy: .public)."
-          )
-        }
-      }
-
-      let stale = diff.stale
-      guard !stale.isEmpty || !additions.isEmpty else {
-        self.refreshFstabBlockedUUIDs(from: contents)
-        return FstabRules.StartupRuleChange(ruleCount: diff.present.count)
-      }
-
-      let (updated, skipped) = FstabRules.applyingStartupBlockChanges(
-        to: contents, removing: stale, adding: additions)
-      for addition in skipped {
-        Log.persistence.error(
-          "Skipped a startup block rule with unsafe fields (“\(addition.info.name, privacy: .private)”)."
-        )
-      }
-
-      try FstabWriter.install(updated, expectedCurrent: snapshot.raw)
-      self.refreshFstabBlockedUUIDs(from: updated)
-      Log.persistence.notice(
-        "Startup block rules updated (\(additions.count, privacy: .public) added, \(stale.count, privacy: .public) removed)."
-      )
-      return FstabRules.StartupRuleChange(
-        addedNames: additions.map(\.info.name), removedCount: stale.count,
-        ruleCount: diff.present.count - stale.count + additions.count)
-    } catch let error as NSError
-      where error.domain == "MountMate" && error.code == FstabWriter.fstabChangedErrorCode
-      && attemptsLeft > 1
-    {
-      Log.persistence.notice(
-        "/etc/fstab changed during the update; retrying with the new contents.")
-      return try applyStartupBlockRules(
-        enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: attemptsLeft - 1)
-    }
-  }
-
-  private func refreshFstabBlockedUUIDs(from contents: String) {
-    let uuids = FstabRules.managedFstabVolumeUUIDs(
-      kinds: [FstabRules.mountMateBlockPrefix], in: contents)
-    DispatchQueue.main.async { [weak self] in
-      self?.fstabBlockedVolumeUUIDs = uuids
-      if self?.startupRuleCount != uuids.count { self?.startupRuleCount = uuids.count }
-    }
-  }
-
-  private func handleStartupBlockError(_ error: Error) {
-    Log.persistence.error(
-      "Failed to update startup block rules in /etc/fstab: \(error.localizedDescription, privacy: .public)"
-    )
-    // A cancelled password prompt is not an error; say plainly what it means.
-    let message =
-      FstabWriter.isAdminPromptCancellation(error)
-      ? NSLocalizedString(
-        "System Mount Rule Update Cancelled",
-        comment: "Alert message when the admin prompt for a startup block rule was cancelled")
-      : String(
-        format: NSLocalizedString(
-          "System Mount Rule Update Failed", comment: "Alert message"),
-        error.localizedDescription)
-    DispatchQueue.main.async {
-      DriveManager.shared.userActionError = AppAlert(
-        title: NSLocalizedString("System Mount Rule Not Updated", comment: "Alert title"),
-        message: message,
-        kind: .basic)
-    }
-  }
+  func scheduleStartupBlockReconcile() { startupBlock.scheduleReconcile() }
 
   // MARK: - Helper Checkers
 
@@ -773,20 +403,20 @@ class PersistenceManager: ObservableObject {
     return blockedVolumes.contains { $0.id == compositeId }
   }
 
-  private func stableIdentifier(for volume: Volume) -> String {
+  func stableIdentifier(for volume: Volume) -> String {
     "\(backingDiskIdentifier(for: volume))-\(volume.id)"
   }
 
-  private func backingDiskIdentifier(for volume: Volume) -> String {
+  func backingDiskIdentifier(for volume: Volume) -> String {
     volume.diskUUID ?? volume.deviceIdentifier
   }
 
-  private func volumeUUIDForSystemMount(for volume: Volume) -> String? {
+  func volumeUUIDForSystemMount(for volume: Volume) -> String? {
     volume.stableVolumeUUID
   }
 
   private func save<T: Codable>(_ items: [T], to key: String) {
-    CodableDefaultsStore.save(items, to: key)
+    CodableDefaultsStore.save(items, to: key, defaults: defaults)
   }
 
   private func saveProtectedVolumes() { save(protectedVolumes, to: protectedVolumesKey) }
@@ -794,6 +424,29 @@ class PersistenceManager: ObservableObject {
   private func saveBlockedVolumes() { save(blockedVolumes, to: blockedVolumesKey) }
   private func saveKeepAliveVolumes() { save(keepAliveVolumes, to: keepAliveVolumesKey) }
   private func saveNetworkShares() { save(networkShares, to: networkSharesKey) }
-  private func saveCustomMountPoints() { save(customMountPoints, to: customMountPointsKey) }
+  func saveCustomMountPoints() { save(customMountPoints, to: customMountPointsKey) }
   private func saveIdleUnmountVolumes() { save(idleUnmountVolumes, to: idleUnmountVolumesKey) }
+}
+
+extension PersistenceManager: StartupBlockHost {
+  func startupBlockState() -> (enabled: Bool, blockedInfos: [ManagedVolumeInfo]) {
+    (blockAtStartup, blockedVolumes)
+  }
+
+  func startupBlockUpdateInProgress(_ inProgress: Bool) {
+    isUpdatingStartupRules = inProgress
+  }
+
+  func startupBlockRulesDidChange(volumeUUIDs: Set<String>) {
+    fstabBlockedVolumeUUIDs = volumeUUIDs
+    if startupRuleCount != volumeUUIDs.count { startupRuleCount = volumeUUIDs.count }
+  }
+
+  func startupBlockShowFeedback(_ message: String) {
+    FeedbackHUD.show(message)
+  }
+
+  func startupBlockDidFail(title: String, message: String) {
+    DriveManager.shared.userActionError = AppAlert(title: title, message: message, kind: .basic)
+  }
 }

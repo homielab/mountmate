@@ -5,7 +5,7 @@ import Foundation
 /// The `diskutil` lookups a new /etc/fstab rule needs: the file-system type
 /// of a volume and whether it may get a startup-block rule. The decisions
 /// themselves are in `FstabRules`. Not thread-safe: `PersistenceManager`
-/// only uses it on its fstab queue.
+/// only uses it on the startup-block queue.
 final class FstabVolumeLookup {
   /// Boot volume's APFS container (e.g. "disk3"), resolved once per launch.
   /// A failed lookup is not cached.
