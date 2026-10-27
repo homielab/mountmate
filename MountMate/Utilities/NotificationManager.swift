@@ -64,9 +64,12 @@ struct SMARTAlertTracker: Sendable {
   private var announced: Set<String> = []
 
   /// The disks of `disks` that report `.failing` and were not announced
-  /// yet; they count as announced afterwards.
+  /// yet; they count as announced afterwards. A disk that is gone or no
+  /// longer failing is forgotten, so macOS reusing its identifier for the
+  /// next drive (or the same drive failing again) is announced again.
   mutating func newlyFailing(in disks: [PhysicalDisk]) -> [PhysicalDisk] {
-    disks.filter { $0.smartStatus == .failing && announced.insert($0.id).inserted }
+    announced.formIntersection(disks.filter { $0.smartStatus == .failing }.map(\.id))
+    return disks.filter { $0.smartStatus == .failing && announced.insert($0.id).inserted }
   }
 }
 
