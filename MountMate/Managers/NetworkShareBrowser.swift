@@ -16,75 +16,107 @@ final class NetworkShareBrowser: ObservableObject {
   @Published private(set) var failed = false
 
   private var browsers: [NWBrowser] = []
+  /// The latest full result set of each browser, keyed by Bonjour type. Each
+  /// NWBrowser reports its complete current list, so a server that leaves
+  /// Bonjour drops out of its entry and therefore out of `services`.
+  private var resultsByType: [String: [DiscoveredShareService]] = [:]
+  /// Bumped by every start and stop; callbacks queued for an older session
+  /// are ignored so a closed picker never refills its list.
+  private var session = 0
+  private var isActive = false
+  private var graceWork: DispatchWorkItem?
   private let queue = DispatchQueue(label: "com.homielab.mountmate.browse")
   private let foundGracePeriod: TimeInterval
+  private let browsesNetwork: Bool
 
-  init(foundGracePeriod: TimeInterval = 6) {
+  /// `browsesNetwork: false` starts a session without NWBrowsers, so tests
+  /// can feed results through `handle(results:type:)`.
+  init(foundGracePeriod: TimeInterval = 6, browsesNetwork: Bool = true) {
     self.foundGracePeriod = foundGracePeriod
+    self.browsesNetwork = browsesNetwork
   }
 
   /// Starts browsing (once). Call on the main thread; updates publish on main.
   func start() {
-    guard browsers.isEmpty else { return }
+    guard !isActive else { return }
+    isActive = true
+    session += 1
+    let current = session
+    resultsByType.removeAll()
+    services.removeAll()
     failed = false
     isBrowsing = true
-    for type in NetworkServiceResolver.browsedTypes {
-      let browser = NWBrowser(for: .bonjour(type: type, domain: nil), using: .tcp)
-      browser.browseResultsChangedHandler = { [weak self] results, _ in
-        let discovered = results.compactMap { result -> DiscoveredShareService? in
-          // A Bonjour result's endpoint is the .service case with the name
-          // and type the resolver needs.
-          if case .service(let name, let serviceType, _, _) = result.endpoint {
-            return DiscoveredShareService(name: name, type: serviceType)
-          }
-          return nil
-        }
-        let resolved = NetworkServiceResolver.resolve(discovered)
-        DispatchQueue.main.async {
-          guard let self else { return }
-          // Both browsers report into one list; the resolver dedupes.
-          self.merge(resolved)
-        }
+    if browsesNetwork {
+      for type in NetworkServiceResolver.browsedTypes {
+        browsers.append(makeBrowser(type: type, session: current))
       }
-      browser.stateUpdateHandler = { [weak self] state in
-        if case .failed = state {
-          DispatchQueue.main.async {
-            guard let self, !self.browsers.isEmpty else { return }
-            self.failed = true
-            self.isBrowsing = false
-          }
-        }
-      }
-      browser.start(queue: queue)
-      browsers.append(browser)
     }
     // The "none found" state: no service within the grace period ends the
     // spinner (browsing keeps running, so late servers still appear).
-    DispatchQueue.main.asyncAfter(deadline: .now() + foundGracePeriod) { [weak self] in
-      guard let self, self.services.isEmpty else { return }
+    let work = DispatchWorkItem { [weak self] in
+      guard let self, self.isActive, self.session == current, self.services.isEmpty else {
+        return
+      }
       self.isBrowsing = false
     }
+    graceWork = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + foundGracePeriod, execute: work)
   }
 
   /// Stops browsing and forgets the results (the picker closed).
   func stop() {
+    isActive = false
+    session += 1
+    graceWork?.cancel()
+    graceWork = nil
     for browser in browsers {
       browser.cancel()
     }
     browsers.removeAll()
+    resultsByType.removeAll()
     services.removeAll()
     isBrowsing = false
     failed = false
   }
 
-  /// Merges one browser's batch into the published list (deduplicated by the
-  /// resolver, order kept stable).
-  private func merge(_ batch: [BrowsedShareService]) {
+  /// Replaces one browser's results with its latest full list and rebuilds
+  /// the published services from every browser's results (deduplicated and
+  /// sorted by the resolver). Ignored when not browsing. Call on main.
+  func handle(results: [DiscoveredShareService], type: String) {
+    guard isActive else { return }
+    resultsByType[type] = results
     let merged = NetworkServiceResolver.resolve(
-      (services + batch).map {
-        DiscoveredShareService(name: $0.displayName, type: "_\($0.shareProtocol.rawValue)._tcp")
-      })
+      resultsByType.sorted { $0.key < $1.key }.flatMap(\.value))
     services = merged
     if !merged.isEmpty { isBrowsing = false }
+  }
+
+  private func makeBrowser(type: String, session current: Int) -> NWBrowser {
+    let browser = NWBrowser(for: .bonjour(type: type, domain: nil), using: .tcp)
+    browser.browseResultsChangedHandler = { [weak self] results, _ in
+      let discovered = results.compactMap { result -> DiscoveredShareService? in
+        // A Bonjour result's endpoint is the .service case with the name
+        // and type the resolver needs.
+        if case .service(let name, let serviceType, _, _) = result.endpoint {
+          return DiscoveredShareService(name: name, type: serviceType)
+        }
+        return nil
+      }
+      DispatchQueue.main.async {
+        guard let self, self.session == current else { return }
+        self.handle(results: discovered, type: type)
+      }
+    }
+    browser.stateUpdateHandler = { [weak self] state in
+      if case .failed = state {
+        DispatchQueue.main.async {
+          guard let self, self.isActive, self.session == current else { return }
+          self.failed = true
+          self.isBrowsing = false
+        }
+      }
+    }
+    browser.start(queue: queue)
+    return browser
   }
 }
