@@ -538,3 +538,6 @@
 "Rename Failed" = "重新命名失敗";
 "Failed to rename “%@” because it is currently in use by another application." = "無法重新命名「%@」，因為它正被其他應用程式使用。";
 "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "無法重新命名「%@」。其檔案系統可能不支援在 macOS 中重新命名（例如 NTFS），或磁碟可能是唯讀的。";
+"“%@” is busy: a file on it is still in use." = "「%@」正忙：其中的檔案仍在使用。";
+"“%@” is no longer mounted." = "「%@」已不再掛載。";
+"Could not unmount “%@” (code %d)." = "無法卸載「%@」（代碼 %d）。";

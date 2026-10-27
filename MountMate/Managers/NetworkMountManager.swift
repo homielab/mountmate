@@ -259,6 +259,24 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   }
 
   func unmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
+    attemptUnmount(share: share, force: false) { failure in
+      completion(failure == nil, failure?.message)
+    }
+  }
+
+  /// `umount -f`: only after the user confirmed it (busy share, dead server).
+  func forceUnmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
+    attemptUnmount(share: share, force: true) { failure in
+      completion(failure == nil, failure?.message)
+    }
+  }
+
+  /// Unmounts a share; `completion(nil)` on success, else the translated
+  /// failure (with `canForce`) so the caller can offer a Force Unmount.
+  func attemptUnmount(
+    share: NetworkShare, force: Bool,
+    completion: @escaping (NetworkMountPlan.UnmountFailure?) -> Void
+  ) {
     let lastKnownMountPoint = mountPointsByShareID[share.id]
 
     // Suppress keep-alive BEFORE unmounting: otherwise a sweep running in the
@@ -274,35 +292,26 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       else {
         // Not mounted any more (e.g. ejected in Finder): nothing to do.
         DispatchQueue.main.async {
-          self.refreshMountStatus { completion(true, nil) }
+          self.refreshMountStatus { completion(nil) }
         }
         return
       }
 
-      let result = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+      let result = runProcess(
+        executable: "/sbin/umount", arguments: (force ? ["-f"] : []) + [mountPoint])
 
       DispatchQueue.main.async {
         if !result.succeeded {
           if !wasSuppressed {
             KeepAliveManager.shared.unsuppress(shareID: share.id)
           }
-          let errMsg: String
-          if result.timedOut {
-            errMsg = String(
-              format: NSLocalizedString(
-                "Unmounting “%@” timed out.", comment: "Network share unmount error"),
-              share.name)
-          } else if result.stderr.isEmpty {
-            errMsg = "umount exited with code \(result.exitCode ?? -1)."
-          } else {
-            errMsg = result.stderr
-          }
+          let failure = NetworkMountPlan.unmountFailure(for: result, shareName: share.name)
           self.refreshMountStatus {
-            completion(false, errMsg)
+            completion(failure)
           }
         } else {
           self.refreshMountStatus {
-            completion(true, nil)
+            completion(nil)
           }
         }
       }

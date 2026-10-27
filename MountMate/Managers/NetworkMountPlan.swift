@@ -46,6 +46,53 @@ enum NetworkMountPlan {
     !(userInitiated && stallAge >= stalledMountRetryAge)
   }
 
+  /// How a failed `umount` is reported and whether `umount -f` is worth
+  /// offering (the user still has to confirm it).
+  struct UnmountFailure: Equatable {
+    let message: String
+    let canForce: Bool
+  }
+
+  /// Turns a failed `umount` into a translated message. Busy shares, timeouts
+  /// and unknown errors can be forced; a share that is not mounted any more
+  /// cannot. `localize` is injectable so tests do not depend on the system
+  /// language.
+  static func unmountFailure(
+    for result: ProcessResult,
+    shareName: String,
+    localize: (String) -> String = { NSLocalizedString($0, comment: "Network share unmount error") }
+  ) -> UnmountFailure {
+    if result.timedOut {
+      return UnmountFailure(
+        message: String(format: localize("Unmounting “%@” timed out."), shareName), canForce: true)
+    }
+    let stderr = result.stderr.lowercased()
+    if stderr.contains("not currently mounted") || stderr.contains("not a mount point")
+      || stderr.contains("not mounted")
+    {
+      return UnmountFailure(
+        message: String(format: localize("“%@” is no longer mounted."), shareName),
+        canForce: false)
+    }
+    if stderr.contains("busy") {
+      return UnmountFailure(
+        message: String(
+          format: localize("“%@” is busy: a file on it is still in use."), shareName),
+        canForce: true)
+    }
+    if result.stderr.isEmpty {
+      return UnmountFailure(
+        message: String(
+          format: localize("Could not unmount “%@” (code %d)."), shareName,
+          Int(result.exitCode ?? -1)),
+        canForce: true)
+    }
+    return UnmountFailure(
+      message: String(
+        format: localize("Could not unmount “%@”: %@"), shareName, result.stderr),
+      canForce: true)
+  }
+
   /// NetFS has no timeout of its own and can block for a long time on an
   /// unreachable server. The mount is abandoned (reported as timed out)
   /// after this long so the UI and keep-alive sweeps never get stuck.

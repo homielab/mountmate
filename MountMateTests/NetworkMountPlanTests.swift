@@ -287,4 +287,44 @@ final class NetworkMountPlanTests: XCTestCase {
       NetworkMountPlan.mountOfSameShare(
         share, ownMountPoint: "/Users/me/mountmate/photos", mountTable: nil))
   }
+
+  // MARK: unmount failures
+
+  private func failure(stderr: String, code: Int32? = 1, timedOut: Bool = false)
+    -> NetworkMountPlan.UnmountFailure
+  {
+    NetworkMountPlan.unmountFailure(
+      for: ProcessResult(stdout: "", stderr: stderr, exitCode: code, timedOut: timedOut),
+      shareName: "Photos", localize: { $0 })
+  }
+
+  func testBusyShareCanBeForced() {
+    let result = failure(stderr: "umount: /Volumes/Photos: Resource busy")
+    XCTAssertTrue(result.canForce)
+    XCTAssertEqual(result.message, "“Photos” is busy: a file on it is still in use.")
+  }
+
+  func testTimedOutUnmountCanBeForced() {
+    let result = failure(stderr: "", code: nil, timedOut: true)
+    XCTAssertTrue(result.canForce)
+    XCTAssertEqual(result.message, "Unmounting “Photos” timed out.")
+  }
+
+  func testEmptyStderrMessageHasExitCode() {
+    let result = failure(stderr: "", code: 64)
+    XCTAssertTrue(result.canForce)
+    XCTAssertEqual(result.message, "Could not unmount “Photos” (code 64).")
+  }
+
+  func testNotMountedCannotBeForced() {
+    let result = failure(stderr: "umount: /Volumes/Photos: not currently mounted")
+    XCTAssertFalse(result.canForce)
+    XCTAssertEqual(result.message, "“Photos” is no longer mounted.")
+  }
+
+  func testOtherErrorKeepsDetailAndCanBeForced() {
+    let result = failure(stderr: "umount: Input/output error")
+    XCTAssertTrue(result.canForce)
+    XCTAssertEqual(result.message, "Could not unmount “Photos”: umount: Input/output error")
+  }
 }

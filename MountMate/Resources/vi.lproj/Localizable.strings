@@ -538,3 +538,6 @@
 "Rename Failed" = "Đổi tên thất bại";
 "Failed to rename “%@” because it is currently in use by another application." = "Không thể đổi tên “%@” vì phân vùng đang được một ứng dụng khác sử dụng.";
 "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "Không thể đổi tên “%@”. Hệ thống tập tin của phân vùng có thể không hỗ trợ đổi tên trên macOS (ví dụ NTFS), hoặc ổ đĩa đang ở chế độ chỉ đọc.";
+"“%@” is busy: a file on it is still in use." = "“%@” đang bận: vẫn còn tệp trên đó đang được sử dụng.";
+"“%@” is no longer mounted." = "“%@” không còn được gắn nữa.";
+"Could not unmount “%@” (code %d)." = "Không thể tháo “%@” (mã %d).";

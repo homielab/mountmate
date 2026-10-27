@@ -538,3 +538,6 @@
 "Rename Failed" = "Rename Failed";
 "Failed to rename “%@” because it is currently in use by another application." = "Failed to rename “%@” because it is currently in use by another application.";
 "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only.";
+"“%@” is busy: a file on it is still in use." = "“%@” is busy: a file on it is still in use.";
+"“%@” is no longer mounted." = "“%@” is no longer mounted.";
+"Could not unmount “%@” (code %d)." = "Could not unmount “%@” (code %d).";

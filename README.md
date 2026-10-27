@@ -131,6 +131,7 @@ Everything in the list above, in full:
 - **Notifications** (optional, off by default; Settings → General → Behavior): get told when Keep Alive cannot reconnect a mount and when it is back (once per outage, not on every retry), when a blocked disk could not be unmounted, when unmounting before sleep ran out of time, and when a volume was unmounted because it was idle. Clicking a notification opens MountMate, and the "Cannot Reconnect" one has a "Reconnect Now" button.
 - **Shortcuts**: the Shortcuts app (and Spotlight, Siri, Automator via "Run Shortcut") gets seven actions: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount Network Share and Unmount Network Share (pick any saved share), and Mount Volume and Unmount Volume (pick a volume or type its name; case is ignored, an unknown name is an error, a protected volume is not unmounted). Build "arrive home → mount the NAS" or "before bed → unmount all" automations; a failure is shown as the shortcut's error. Needs MountMate to be installed; it starts in the background when a shortcut runs
 - **Force Eject**: Safely force eject drives that are in use
+- **Force Unmount for network shares**: if ejecting a share fails because it is busy or its server is gone, MountMate explains why (translated) and offers a confirmed Force Unmount
 - **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
 - **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**

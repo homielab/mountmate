@@ -70,6 +70,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Network shares: Force Unmount**: ejecting a share from the popover that is busy, whose server went away or whose unmount timed out now offers a confirmed "Force Unmount" (`umount -f`) instead of a raw `umount` message, and unmount errors are translated in all seven languages.
 - **Read-only after changing the mount point**: a volume mounted read-only (for example a backup or a damaged disk) stays read-only when you set, change or remove its custom mount point. It used to be mounted again with write access.
 - **Language change**: choosing another language in Settings → General now asks again to restart MountMate (Restart Now / Later), and says so if it cannot restart itself. The prompt had stopped appearing, so nothing seemed to happen after picking a language.
 - **SMART warning notification**: with Notifications on, a failing drive plugged in after another failing drive was unplugged (macOS reuses names like disk4) is now announced too, and a drive that recovers and fails again is announced again.

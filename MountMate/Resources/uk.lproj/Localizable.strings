@@ -538,3 +538,6 @@
 "Rename Failed" = "Не вдалося перейменувати";
 "Failed to rename “%@” because it is currently in use by another application." = "Не вдалося перейменувати «%@», бо його використовує інша програма.";
 "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "Не вдалося перейменувати «%@». Можливо, його файлова система не підтримує перейменування в macOS (наприклад, NTFS) або диск доступний лише для читання.";
+"“%@” is busy: a file on it is still in use." = "«%@» зайнятий: файл на ньому досі використовується.";
+"“%@” is no longer mounted." = "«%@» більше не підключений.";
+"Could not unmount “%@” (code %d)." = "Не вдалося відмонтувати «%@» (код %d).";

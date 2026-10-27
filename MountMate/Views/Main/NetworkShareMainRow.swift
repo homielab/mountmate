@@ -46,13 +46,15 @@ struct NetworkShareMainRow: View {
     guard !isWorking else { return }
     isWorking = true
     if isMounted {
-      NetworkMountManager.shared.unmount(share: share) { success, error in
+      NetworkMountManager.shared.attemptUnmount(share: share, force: false) { failure in
         isWorking = false
-        if !success, let error = error {
-          DriveManager.shared.userActionError = AppAlert(
-            title: NSLocalizedString("Unmount Failed", comment: "Alert title"),
-            message: error, kind: .basic)
-        }
+        guard let failure else { return }
+        let title = NSLocalizedString("Unmount Failed", comment: "Alert title")
+        let share = share
+        DriveManager.shared.userActionError = AppAlert(
+          title: title, message: failure.message,
+          kind: failure.canForce
+            ? .forceUnmount { forceUnmount(share, title: title) } : .basic)
       }
     } else {
       NetworkMountManager.shared.mount(share: share) { success, error in
@@ -65,6 +67,18 @@ struct NetworkShareMainRow: View {
             title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,
             kind: .basic)
         }
+      }
+    }
+  }
+
+  /// Runs after the user confirmed Force Unmount in the alert.
+  private func forceUnmount(_ share: NetworkShare, title: String) {
+    isWorking = true
+    NetworkMountManager.shared.forceUnmount(share: share) { success, error in
+      isWorking = false
+      if !success, let error {
+        DriveManager.shared.userActionError = AppAlert(
+          title: title, message: error, kind: .basic)
       }
     }
   }
