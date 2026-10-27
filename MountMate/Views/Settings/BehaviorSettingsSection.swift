@@ -11,6 +11,7 @@ struct BehaviorSettingsSection: View {
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
   @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
+  @AppStorage(OpenAfterMountRules.enabledKey) private var openFinderAfterMount = false
   @AppStorage(LowSpaceRules.thresholdKey) private var lowSpacePercent = LowSpaceRules.defaultPercent
 
   /// One line under "Also Block at Startup" saying what is in effect, so the
@@ -95,6 +96,12 @@ struct BehaviorSettingsSection: View {
         "Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected."
       )
       startupBlockStatus
+      Toggle(isOn: $openFinderAfterMount) {
+        Label("Open in Finder after mounting", systemImage: "macwindow")
+      }
+      .help(
+        "Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window."
+      )
       Toggle(isOn: $ejectOnSleepEnabled) {
         Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
       }

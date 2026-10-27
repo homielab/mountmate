@@ -454,6 +454,8 @@
 "Login Item Error" = "无法更改登录时启动：%@";
 "Mount Again on Wake" = "唤醒时重新挂载";
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 唤醒时，重新挂载睡眠前已推出的磁盘。您手动推出的磁盘、未连接的磁盘和已阻止的磁盘保持推出状态。";
+"Open in Finder after mounting" = "挂载后在访达中打开";
+"Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "当您从菜单、通过“全部挂载”或快捷指令操作挂载的宗卷或共享就绪时，打开一个访达窗口。自动挂载、由 Keep Alive 或唤醒后挂载的磁盘不会打开窗口。";
 "Disks Were Not Unmounted Before Sleep" = "睡眠前未能推出的磁盘";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "Mac 进入睡眠前，MountMate 无法推出这些磁盘：%@。";
 "Collecting…" = "正在收集…";

@@ -174,6 +174,19 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     mounter.mount(share: share, userInitiated: userInitiated, completion: completion)
   }
 
+  /// Opens a Finder window at the share's mount point after a successful
+  /// mount, when "Open in Finder after mounting" is on and `trigger` is a
+  /// user request. Call on the main thread.
+  func openInFinderAfterMounting(_ share: NetworkShare, trigger: MountTrigger) {
+    let mountPoint = getMountPoint(for: share)
+    guard
+      OpenAfterMountRules.shouldOpen(
+        trigger: trigger, isEnabled: OpenAfterMountRules.isEnabled(), succeeded: true,
+        isBlocked: false, mountPoint: mountPoint)
+    else { return }
+    OpenAfterMountRules.open([mountPoint])
+  }
+
   func mountAllAutoShares() {
     let shares = PersistenceManager.shared.networkShares.filter { $0.mountAtLogin }
     for share in shares {

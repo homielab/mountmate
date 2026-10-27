@@ -454,6 +454,8 @@
 "Login Item Error" = "Không thể thay đổi Khởi động cùng máy: %@";
 "Mount Again on Wake" = "Mount lại khi thức dậy";
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mount lại các ổ đã được tháo trước khi ngủ khi máy Mac thức dậy. Ổ bạn tự tháo, ổ chưa cắm và ổ bị chặn vẫn không được mount.";
+"Open in Finder after mounting" = "Mở trong Finder sau khi mount";
+"Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "Mở một cửa sổ Finder khi volume hoặc share bạn mount từ menu, bằng Mount All hoặc bằng một tác vụ Phím tắt đã sẵn sàng. Ổ được mount tự động, bởi Keep Alive hoặc sau khi thức dậy không mở cửa sổ.";
 "Disks Were Not Unmounted Before Sleep" = "Một số ổ chưa được tháo trước khi ngủ";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate không thể tháo các ổ này trước khi máy Mac chuyển sang chế độ ngủ: %@.";
 "Collecting…" = "Đang thu thập…";

@@ -454,6 +454,8 @@
 "Login Item Error" = "Не вдалося змінити запуск під час входу: %@";
 "Mount Again on Wake" = "Монтувати знову після пробудження";
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Знову монтує диски, відмонтовані перед сном, коли Mac прокидається. Диски, які ви відмонтували самі, непідключені та заблоковані диски залишаються відмонтованими.";
+"Open in Finder after mounting" = "Відкривати у Finder після монтування";
+"Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "Відкриває вікно Finder, коли том або спільний ресурс, змонтований вами з меню, командою «Змонтувати все» або дією Швидких команд, готовий. Диски, змонтовані автоматично, через Keep Alive або після пробудження, вікно не відкривають.";
 "Disks Were Not Unmounted Before Sleep" = "Диски не було відмонтовано перед сном";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate не зміг відмонтувати ці диски до переходу Mac у режим сну: %@.";
 "Collecting…" = "Збирання даних…";

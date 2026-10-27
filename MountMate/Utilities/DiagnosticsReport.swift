@@ -33,6 +33,7 @@ enum DiagnosticsReport {
     ("Allow other apps to mount blocked disks", "allowRequestedMounts", false),
     ("Block at startup", "blockAtStartup", false),
     ("Notifications", "notificationsEnabled", false),
+    ("Open in Finder after mounting", "openFinderAfterMount", false),
     ("Show internal disks", "showInternalDisks", false),
     ("Show only volumes", "showOnlyVolumes", false),
     ("Hide EFI partitions", "hideEFIPartitions", false),

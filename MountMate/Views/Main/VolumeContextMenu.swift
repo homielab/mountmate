@@ -79,12 +79,12 @@ struct VolumeContextMenu: View {
     }
     if rules.showsMountActions {
       Button {
-        manager.mount(volume: volume)
+        manager.mount(volume: volume, trigger: .popover)
       } label: {
         Label("Mount", systemImage: "plus.circle")
       }
       Button {
-        manager.mount(volume: volume, readOnly: true)
+        manager.mount(volume: volume, readOnly: true, trigger: .popover)
       } label: {
         Label("Mount Read-Only", systemImage: "lock.circle")
       }

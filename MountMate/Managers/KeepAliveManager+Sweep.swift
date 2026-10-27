@@ -121,7 +121,7 @@ extension KeepAliveManager {
         mounter: { volume, completion in
           DriveManager.shared.mount(
             volume: volume, allowsErrorAlerts: false, isUserInitiated: false,
-            completion: completion)
+            trigger: .keepAlive, completion: completion)
         },
         completion: { [weak self] result in
           var succeeded = false

@@ -321,7 +321,7 @@ struct VolumeRowView: View {
     if currentVolume.isMounted {
       manager.unmount(volume: currentVolume)
     } else {
-      manager.mount(volume: currentVolume)
+      manager.mount(volume: currentVolume, trigger: .popover)
     }
   }
 

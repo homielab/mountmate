@@ -466,10 +466,13 @@ class DriveManager: ObservableObject {
 
   /// - Parameter reportFailures: show an alert naming volumes that could not
   ///   be mounted. Off when the caller reports the result itself.
+  /// - Parameter trigger: `.shortcuts` from the Shortcuts action; decides
+  ///   whether "Open in Finder after mounting" applies.
   /// - Parameter completion: Called on the main thread with the names of the
   ///   volumes that could not be mounted, after the drive list refreshed.
   func mountAllVolumes(
-    reportFailures: Bool = true, completion: (([String]) -> Void)? = nil
+    reportFailures: Bool = true, trigger: MountTrigger = .mountAll,
+    completion: (([String]) -> Void)? = nil
   ) {
     let volumesToMount = BulkVolumeActions.mountCandidates(in: bulkActionDisks) {
       PersistenceManager.shared.isVolumeBlocked($0)
@@ -500,6 +503,7 @@ class DriveManager: ObservableObject {
               "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
         }
         self.refreshDrives(qos: .userInitiated) {
+          self.openInFinderAfterMounting(volumesToMount.map(\.id), trigger: trigger)
           completion?(failures.map(\.name))
         }
       }

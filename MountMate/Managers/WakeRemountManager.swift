@@ -143,7 +143,7 @@ final class WakeRemountManager {
       // Not a user action: a blocked volume stays blocked, and no alert
       // appears for a disk nobody is looking at.
       DriveManager.shared.mount(
-        volume: volume, allowsErrorAlerts: false, isUserInitiated: false)
+        volume: volume, allowsErrorAlerts: false, isUserInitiated: false, trigger: .wake)
     }
 
     // Keep the entries that are not connected yet for the next attempt.

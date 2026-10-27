@@ -21,7 +21,9 @@ enum IntentActions {
   static func mountAll() async -> [String] {
     let manager = await refreshedDriveManager()
     return await withCheckedContinuation { continuation in
-      manager.mountAllVolumes(reportFailures: false) { continuation.resume(returning: $0) }
+      manager.mountAllVolumes(reportFailures: false, trigger: .shortcuts) {
+        continuation.resume(returning: $0)
+      }
     }
   }
 
@@ -46,6 +48,9 @@ enum IntentActions {
   static func mount(share: NetworkShare) async -> String? {
     await withCheckedContinuation { continuation in
       NetworkMountManager.shared.mount(share: share) { success, error in
+        if success {
+          NetworkMountManager.shared.openInFinderAfterMounting(share, trigger: .shortcuts)
+        }
         continuation.resume(returning: success ? nil : (error ?? ""))
       }
     }
@@ -71,7 +76,8 @@ enum IntentActions {
   /// `nil` when the volume is mounted, else the error (possibly empty).
   static func mount(volume: Volume) async -> String? {
     await withCheckedContinuation { continuation in
-      DriveManager.shared.mount(volume: volume, allowsErrorAlerts: false) { result in
+      DriveManager.shared.mount(volume: volume, allowsErrorAlerts: false, trigger: .shortcuts) {
+        result in
         continuation.resume(returning: Self.failureMessage(result))
       }
     }

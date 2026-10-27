@@ -57,6 +57,9 @@ struct NetworkShareMainRow: View {
     } else {
       NetworkMountManager.shared.mount(share: share) { success, error in
         isWorking = false
+        if success {
+          NetworkMountManager.shared.openInFinderAfterMounting(share, trigger: .popover)
+        }
         if !success, let error = error {
           DriveManager.shared.userActionError = AppAlert(
             title: NSLocalizedString("Mount Failed", comment: "Alert title"), message: error,

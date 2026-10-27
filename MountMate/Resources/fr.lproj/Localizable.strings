@@ -454,6 +454,8 @@
 "Login Item Error" = "Impossible de modifier le lancement à l’ouverture de session : %@";
 "Mount Again on Wake" = "Remonter au réveil";
 "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Remonte au réveil du Mac les disques démontés avant la veille. Les disques que vous avez démontés vous-même, les disques non connectés et les disques bloqués restent démontés.";
+"Open in Finder after mounting" = "Ouvrir dans le Finder après le montage";
+"Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "Ouvre une fenêtre du Finder quand un volume ou un partage que vous montez depuis le menu, avec Tout monter ou avec une action Raccourcis est prêt. Les disques montés automatiquement, par Keep Alive ou au réveil n’ouvrent pas de fenêtre.";
 "Disks Were Not Unmounted Before Sleep" = "Disques non démontés avant la veille";
 "MountMate could not unmount these disks before the Mac went to sleep: %@." = "MountMate n’a pas pu démonter ces disques avant la mise en veille du Mac : %@.";
 "Collecting…" = "Collecte en cours…";

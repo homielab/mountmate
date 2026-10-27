@@ -13,12 +13,14 @@ extension DriveManager {
   ///   dialogs.
   /// - Parameter isUserInitiated: Set to `false` for automatic reconnects so
   ///   blocked-volume mount approval cannot be bypassed.
+  /// - Parameter trigger: What asked for the mount; decides whether
+  ///   "Open in Finder after mounting" applies (see `OpenAfterMountRules`).
   /// - Parameter completion: Called on the main thread once the mount has
   ///   finished (including the retry and the disk list refresh), with the
   ///   failure message of `diskutil` when it did not succeed.
   func mount(
     volume: Volume, readOnly: Bool = false, allowsErrorAlerts: Bool = true,
-    isUserInitiated: Bool = true,
+    isUserInitiated: Bool = true, trigger: MountTrigger = .automatic,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     if isUserInitiated {
@@ -58,13 +60,26 @@ extension DriveManager {
             Self.postDidFinishManualMount(volume)
           }
           self.handleMountResult(
-            retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
+            retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts, trigger: trigger,
+            completion: completion)
         }
       } else {
         self.handleMountResult(
-          result, for: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
+          result, for: volume, allowsErrorAlerts: allowsErrorAlerts, trigger: trigger,
+          completion: completion)
       }
     }
+  }
+
+  /// Opens a Finder window for each of `volumeIDs` that is now mounted, when
+  /// "Open in Finder after mounting" is on and `trigger` is a user request.
+  /// Call on the main thread after the drive list refreshed.
+  func openInFinderAfterMounting(_ volumeIDs: [String], trigger: MountTrigger) {
+    let mountPoints = OpenAfterMountRules.mountPoints(
+      afterMounting: volumeIDs, in: (physicalDisks ?? []).flatMap(\.allVolumes),
+      trigger: trigger, isEnabled: OpenAfterMountRules.isEnabled(),
+      isBlocked: { PersistenceManager.shared.isVolumeBlocked($0) })
+    OpenAfterMountRules.open(mountPoints)
   }
 
   /// The `diskutil` arguments that mount `volume`.
@@ -85,13 +100,14 @@ extension DriveManager {
 
   private func handleMountResult(
     _ result: ProcessResult, for volume: Volume, allowsErrorAlerts: Bool = true,
-    completion: ((Result<Void, Error>) -> Void)? = nil
+    trigger: MountTrigger, completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     DispatchQueue.main.async {
       guard !result.succeeded else {
         // Keep the spinner until the list shows the volume as mounted.
         self.refreshDrives(qos: .userInitiated) {
           self.setBusy(volume.id, false)
+          self.openInFinderAfterMounting([volume.id], trigger: trigger)
           completion?(.success(()))
         }
         return
