@@ -136,6 +136,51 @@ final class LocalizationKeyParityTests: XCTestCase {
     }
   }
 
+  /// A key as it is written in a Swift string literal.
+  static func escapedForSwiftLiteral(_ key: String) -> String {
+    key.replacingOccurrences(of: "\\", with: "\\\\")
+      .replacingOccurrences(of: "\"", with: "\\\"")
+      .replacingOccurrences(of: "\n", with: "\\n")
+  }
+
+  func testEscapedKeyMatchesSwiftLiteralForm() {
+    XCTAssertEqual(Self.escapedForSwiftLiteral("Say \"hi\"\n"), "Say \\\"hi\\\"\\n")
+  }
+
+  /// A key no Swift file mentions is dead text: the screen that used it
+  /// lost its call site (for example an alert that was not carried over
+  /// when a view was split), so translators keep translating it for nothing.
+  func testEveryEnglishKeyIsUsedInSource() throws {
+    let root = URL(fileURLWithPath: #filePath)
+      .deletingLastPathComponent().deletingLastPathComponent()
+    let sourceRoot = root.appendingPathComponent("MountMate")
+    let enumerator = try XCTUnwrap(
+      FileManager.default.enumerator(at: sourceRoot, includingPropertiesForKeys: nil))
+    var source = ""
+    for case let url as URL in enumerator where url.pathExtension == "swift" {
+      source += try String(contentsOf: url, encoding: .utf8)
+    }
+    XCTAssertFalse(source.isEmpty)
+
+    let english = try XCTUnwrap(
+      NSDictionary(
+        contentsOf: root.appendingPathComponent("MountMate/Resources/en.lproj/Localizable.strings"))
+        as? [String: Any])
+    // System keys are read by macOS, not by our code. The two others were
+    // already unused when this test was added; delete them (in every
+    // language) rather than adding to this list.
+    let knownUnused: Set<String> = [
+      "Preview: %@",
+      "Could not read storage details. Please grant MountMate 'Full Disk Access' or"
+        + " 'Files and Folders' permissions in System Settings > Privacy & Security.",
+    ]
+    let unused = english.keys.sorted().filter { key in
+      !key.hasPrefix("CFBundle") && !knownUnused.contains(key)
+        && !source.contains(Self.escapedForSwiftLiteral(key))
+    }
+    XCTAssertEqual(unused, [], "English keys that no Swift file uses")
+  }
+
   func testNewErrorStringsKeepTheirArguments() throws {
     for language in languages {
       let lproj = try XCTUnwrap(

@@ -102,6 +102,17 @@ struct ShortcutsLanguageSettingsSection: View {
     } header: {
       Label("Shortcuts & Language", systemImage: "slider.horizontal.below.rectangle")
     }
+    .alert("Restart Required", isPresented: $showRestartAlert) {
+      Button("Restart Now", role: .destructive) { relaunchApp() }
+      Button("Later", role: .cancel) {}
+    } message: {
+      Text("Please restart MountMate for the language change to take effect.")
+    }
+    .alert("Could Not Restart", isPresented: $showRelaunchFailedAlert) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("MountMate could not restart itself. Open it again from Applications.")
+    }
   }
 
   /// The language is already saved (see the picker's onChange).
