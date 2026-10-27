@@ -466,7 +466,6 @@
 
 // MARK: - Eject All External Disks
 "Eject All External Disks" = "推出所有外置磁盘";
-"Could not eject: %@" = "无法推出：%@";
 "Disks ejected." = "磁盘已推出。";
 "Clear Shortcut" = "清除快捷键";
 "Not Set" = "未设置";

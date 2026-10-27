@@ -96,6 +96,46 @@ final class LocalizationKeyParityTests: XCTestCase {
       Self.placeholders(in: "%1$@ and %2$@"), Self.placeholders(in: "%1$@"))
   }
 
+  /// Keys declared more than once in the raw text of a `.strings` file,
+  /// sorted. A later duplicate silently wins when the file is loaded, so a
+  /// translation edited at one place can be overridden at the other.
+  static func duplicateKeys(inStringsText text: String) -> [String] {
+    let pattern = "^\\s*\"((?:[^\"\\\\]|\\\\.)*)\"\\s*="
+    guard
+      let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines])
+    else { return [] }
+    let nsText = text as NSString
+    var counts: [String: Int] = [:]
+    for match in regex.matches(in: text, range: NSRange(location: 0, length: nsText.length)) {
+      counts[nsText.substring(with: match.range(at: 1)), default: 0] += 1
+    }
+    return counts.filter { $0.value > 1 }.keys.sorted()
+  }
+
+  func testDuplicateKeyDetectionSeesRepeatedKeys() {
+    let sample = """
+      /* comment */
+      "A" = "one";
+      "B %@" = "two";
+      "A" = "three";
+      "Say \\"hi\\"" = "x";
+      "Say \\"hi\\"" = "y";
+      """
+    XCTAssertEqual(Self.duplicateKeys(inStringsText: sample), ["A", "Say \\\"hi\\\""])
+    XCTAssertEqual(Self.duplicateKeys(inStringsText: "\"A\" = \"1\";\n\"B\" = \"2\";"), [])
+  }
+
+  func testNoLanguageDeclaresADuplicateKey() throws {
+    for language in languages {
+      // The bundled copy is compiled to a binary plist, so read the source file.
+      let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("MountMate/Resources/\(language).lproj/Localizable.strings")
+      let text = try String(contentsOf: url, encoding: .utf8)
+      XCTAssertEqual(Self.duplicateKeys(inStringsText: text), [], "\(language): duplicate keys")
+    }
+  }
+
   func testNewErrorStringsKeepTheirArguments() throws {
     for language in languages {
       let lproj = try XCTUnwrap(

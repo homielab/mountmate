@@ -466,7 +466,6 @@
 
 // MARK: - Eject All External Disks
 "Eject All External Disks" = "Đẩy ra tất cả ổ đĩa ngoài";
-"Could not eject: %@" = "Không thể đẩy ra: %@";
 "Disks ejected." = "Đã đẩy ra các ổ đĩa.";
 "Clear Shortcut" = "Xoá phím tắt";
 "Not Set" = "Chưa đặt";

@@ -466,7 +466,6 @@
 
 // MARK: - Eject All External Disks
 "Eject All External Disks" = "Éjecter tous les disques externes";
-"Could not eject: %@" = "Impossible d’éjecter : %@";
 "Disks ejected." = "Disques éjectés.";
 "Clear Shortcut" = "Effacer le raccourci";
 "Not Set" = "Non défini";
