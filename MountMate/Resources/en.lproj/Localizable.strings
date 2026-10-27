@@ -523,3 +523,16 @@
 "Volume Verification Failed" = "Volume Verification Failed";
 "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume.";
 "Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility.";
+
+// MARK: - Rename Volume
+
+"Rename Volume…" = "Rename Volume…";
+"Rename Volume" = "Rename Volume";
+"Enter a new name for “%@”." = "Enter a new name for “%@”.";
+"Rename" = "Rename";
+"Enter a name." = "Enter a name.";
+"A volume name cannot contain “/” or “:”." = "A volume name cannot contain “/” or “:”.";
+"Use at most %d characters." = "Use at most %d characters.";
+"Rename Failed" = "Rename Failed";
+"Failed to rename “%@” because it is currently in use by another application." = "Failed to rename “%@” because it is currently in use by another application.";
+"“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only.";

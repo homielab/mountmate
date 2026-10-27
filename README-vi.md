@@ -86,6 +86,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **Mount/unmount** nhanh chóng chỉ với 1 cú click
 - **Mount chỉ đọc**: chuột phải một volume chưa mount để mount ở chế độ chỉ đọc (bảo vệ ổ backup, đọc ổ NTFS hoặc ổ hỏng); hàng volume hiện nhãn "Chỉ đọc"
 - **Kiểm tra phân vùng (Verify Volume)**: chuột phải một phân vùng ngoài đang mount để kiểm tra cấu trúc hệ thống tập tin bằng diskutil chạy nền (chỉ kiểm tra, không bao giờ tự sửa); hiện trạng thái "Đang kiểm tra…" và thông báo kết quả kèm gợi ý dùng First Aid trong Disk Utility nếu có sự cố
+- **Đổi tên phân vùng (Rename Volume…)**: chuột phải một phân vùng ngoài đang mount, ghi được để đặt tên mới (`diskutil rename`); tên được kiểm trước (không chứa `/` hoặc `:`, tối đa 11 ký tự với FAT/exFAT), hệ thống tập tin macOS không đổi tên được (như NTFS) sẽ báo lỗi rõ ràng
 - Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
 - **Eject All External Disks**: một nút (cạnh Unmount All), phím tắt tuỳ chọn (mặc định không gán) hoặc hành động Shortcuts để unmount và eject mọi ổ ngoài rồi rút ra; bỏ qua ổ trong, ổ ảnh đĩa và ổ có phân vùng được Protect, không ép buộc, lỗi được liệt kê trong một thông báo
 - **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M` (Eject All External Disks không có phím mặc định); đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại)

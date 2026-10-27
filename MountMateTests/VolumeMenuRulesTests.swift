@@ -7,15 +7,17 @@ import XCTest
 final class VolumeMenuRulesTests: XCTestCase {
   private func volume(
     mounted: Bool, mountPoint: String? = "/Volumes/Data", isProtected: Bool = false,
-    category: DriveCategory = .user
+    category: DriveCategory = .user, readOnly: Bool = false
   )
     -> Volume
   {
-    Volume(
+    var volume = Volume(
       id: "v1", deviceIdentifier: "disk2s1", diskUUID: nil, name: "Data",
       isMounted: mounted, mountPoint: mountPoint, freeSpace: nil, totalSize: nil, usedSpace: nil,
       usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: category,
       isProtected: isProtected, snapshots: [], storageError: nil)
+    volume.isReadOnly = readOnly
+    return volume
   }
 
   private func rules(
@@ -132,5 +134,17 @@ final class VolumeMenuRulesTests: XCTestCase {
     }
     XCTAssertTrue(notVerifying.showsVerifyVolume)
     XCTAssertFalse(notVerifying.isVerifying)
+  }
+
+  func testRenameShowsOnlyForWritableUnprotectedMountedExternalUserVolumes() {
+    XCTAssertTrue(rules(volume(mounted: true)) { $0.isExternalDisk = true }.showsRename)
+    XCTAssertFalse(rules(volume(mounted: false)) { $0.isExternalDisk = true }.showsRename)
+    XCTAssertFalse(rules(volume(mounted: true)).showsRename)
+    XCTAssertFalse(
+      rules(volume(mounted: true, readOnly: true)) { $0.isExternalDisk = true }.showsRename)
+    XCTAssertFalse(
+      rules(volume(mounted: true, isProtected: true)) { $0.isExternalDisk = true }.showsRename)
+    XCTAssertFalse(
+      rules(volume(mounted: true, category: .system)) { $0.isExternalDisk = true }.showsRename)
   }
 }

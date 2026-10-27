@@ -63,6 +63,17 @@ struct VolumeContextMenu: View {
         }
         .disabled(rules.isVerifying)
       }
+      if rules.showsRename {
+        Button {
+          manager.promptRenameVolume(volume)
+        } label: {
+          Label(
+            NSLocalizedString(
+              "Rename Volume…", comment: "Volume context menu: rename volume action"),
+            systemImage: "pencil")
+        }
+        .disabled(rules.isVerifying)
+      }
       Divider()
       protectItem(rules.protectAction)
     }

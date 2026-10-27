@@ -523,3 +523,16 @@
 "Volume Verification Failed" = "Збій перевірки тома";
 "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "На «%@» виявлено проблеми. Скористайтеся «Першою допомогою» в Дисковій утиліті, щоб відновити цей том.";
 "Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "Перевірка «%@» не завершилася вчасно. Перевірте том за допомогою «Першої допомоги» в Дисковій утиліті.";
+
+// MARK: - Rename Volume
+
+"Rename Volume…" = "Перейменувати том…";
+"Rename Volume" = "Перейменувати том";
+"Enter a new name for “%@”." = "Введіть нову назву для «%@».";
+"Rename" = "Перейменувати";
+"Enter a name." = "Введіть назву.";
+"A volume name cannot contain “/” or “:”." = "Назва тому не може містити «/» або «:».";
+"Use at most %d characters." = "Не більше %d символів.";
+"Rename Failed" = "Не вдалося перейменувати";
+"Failed to rename “%@” because it is currently in use by another application." = "Не вдалося перейменувати «%@», бо його використовує інша програма.";
+"“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "Не вдалося перейменувати «%@». Можливо, його файлова система не підтримує перейменування в macOS (наприклад, NTFS) або диск доступний лише для читання.";

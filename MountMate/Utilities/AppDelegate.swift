@@ -251,6 +251,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         unlockButton?.isEnabled = !(textField?.stringValue.isEmpty ?? true)
       }
 
+    case .renameVolume(let renameAlert):
+      let textField = NSTextField(string: renameAlert.currentName)
+      textField.frame = NSRect(x: 0, y: 0, width: 250, height: 24)
+      let problemLabel = NSTextField(labelWithString: "")
+      problemLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+      problemLabel.textColor = .systemRed
+      problemLabel.frame = NSRect(x: 0, y: 0, width: 250, height: 16)
+      let stackView = NSStackView(views: [textField, problemLabel])
+      stackView.orientation = .vertical
+      stackView.alignment = .leading
+      stackView.spacing = 4
+      stackView.frame = NSRect(x: 0, y: 0, width: 250, height: 44)
+      alert.accessoryView = stackView
+      let renameButton = alert.addButton(
+        withTitle: NSLocalizedString("Rename", comment: "Rename button"))
+      alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+      alert.window.initialFirstResponder = textField
+      // Rename stays off until the name is valid and different.
+      let update = { [weak renameButton, weak textField, weak problemLabel] in
+        let name = textField?.stringValue ?? ""
+        let problem = renameAlert.validate(name)
+        problemLabel?.stringValue = problem ?? ""
+        renameButton?.isEnabled =
+          problem == nil && VolumeRenameRules.isChange(name, from: renameAlert.currentName)
+      }
+      update()
+      emptyFieldObserver = NotificationCenter.default.addObserver(
+        forName: NSControl.textDidChangeNotification, object: textField, queue: .main
+      ) { _ in update() }
+
     case .forceEject:
       alert.addButton(withTitle: NSLocalizedString("Force Eject", comment: "Force Eject button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
@@ -278,6 +308,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let forget = stackView.views.first { $0.identifier == Self.forgetCheckboxID } as? NSButton
         lockedVolumeAlert.onConfirm(
           textField.stringValue, checkbox.state == .on, forget?.state == .on)
+      } else if case .renameVolume(let renameAlert) = appAlert.kind,
+        let stackView = alert.accessoryView as? NSStackView,
+        let textField = stackView.views.first as? NSTextField
+      {
+        renameAlert.onConfirm(textField.stringValue)
       } else if case .forceEject(let action) = appAlert.kind {
         action()
       } else if case .forceUnmount(let action) = appAlert.kind {

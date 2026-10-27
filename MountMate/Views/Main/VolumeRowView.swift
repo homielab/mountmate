@@ -223,6 +223,14 @@ struct VolumeRowView: View {
             }
             .disabled(rules.isVerifying)
           }
+          if rules.showsRename, !rules.isVerifying {
+            Button(
+              NSLocalizedString(
+                "Rename Volume…", comment: "Volume context menu: rename volume action")
+            ) {
+              manager.promptRenameVolume(volume)
+            }
+          }
         }
 
         Button(action: toggleMount) {

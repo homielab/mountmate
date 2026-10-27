@@ -523,3 +523,16 @@
 "Volume Verification Failed" = "宗卷检查失败";
 "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "在“%@”上发现问题。请在“磁盘工具”中使用“急救”修复此宗卷。";
 "Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "“%@”的检查未能及时完成。你可以在“磁盘工具”中使用“急救”进行检查。";
+
+// MARK: - Rename Volume
+
+"Rename Volume…" = "重命名宗卷…";
+"Rename Volume" = "重命名宗卷";
+"Enter a new name for “%@”." = "为“%@”输入新名称。";
+"Rename" = "重命名";
+"Enter a name." = "请输入名称。";
+"A volume name cannot contain “/” or “:”." = "宗卷名称不能包含“/”或“:”。";
+"Use at most %d characters." = "最多 %d 个字符。";
+"Rename Failed" = "重命名失败";
+"Failed to rename “%@” because it is currently in use by another application." = "无法重命名“%@”，因为它正被其他应用程序使用。";
+"“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "无法重命名“%@”。其文件系统可能不支持在 macOS 中重命名（例如 NTFS），或磁盘可能是只读的。";

@@ -523,3 +523,16 @@
 "Volume Verification Failed" = "Kiểm tra phân vùng thất bại";
 "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "Phát hiện sự cố trên “%@”. Hãy dùng First Aid trong Disk Utility để sửa phân vùng này.";
 "Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "Việc kiểm tra “%@” không xong kịp thời gian. Bạn có thể kiểm tra bằng First Aid trong Disk Utility.";
+
+// MARK: - Rename Volume
+
+"Rename Volume…" = "Đổi tên phân vùng…";
+"Rename Volume" = "Đổi tên phân vùng";
+"Enter a new name for “%@”." = "Nhập tên mới cho “%@”.";
+"Rename" = "Đổi tên";
+"Enter a name." = "Hãy nhập tên.";
+"A volume name cannot contain “/” or “:”." = "Tên phân vùng không được chứa “/” hoặc “:”.";
+"Use at most %d characters." = "Tối đa %d ký tự.";
+"Rename Failed" = "Đổi tên thất bại";
+"Failed to rename “%@” because it is currently in use by another application." = "Không thể đổi tên “%@” vì phân vùng đang được một ứng dụng khác sử dụng.";
+"“%@” could not be renamed. Its file system may not support renaming from macOS (for example NTFS), or the disk may be read-only." = "Không thể đổi tên “%@”. Hệ thống tập tin của phân vùng có thể không hỗ trợ đổi tên trên macOS (ví dụ NTFS), hoặc ổ đĩa đang ở chế độ chỉ đọc.";
