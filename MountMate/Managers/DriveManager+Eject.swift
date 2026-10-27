@@ -17,6 +17,7 @@ extension DriveManager {
         kind: .basic)
       return
     }
+    let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: disk.allVolumes)
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
     // A RAID master is a virtual logical disk. `eject` is only valid for a
@@ -35,6 +36,7 @@ extension DriveManager {
     let finish: (ProcessResult) -> Void = { result in
       DispatchQueue.main.async {
         if !result.succeeded {
+          KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
           self.setEjecting(disk.id, false)
           self.handleDiskUtilError(
             DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout),
@@ -58,6 +60,7 @@ extension DriveManager {
   }
 
   func forceEject(disk: PhysicalDisk) {
+    let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: disk.allVolumes)
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
@@ -82,6 +85,7 @@ extension DriveManager {
           case .ejectFailed(let result): (result, .eject)
           }
         if let failure {
+          KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
           self.setEjecting(disk.id, false)
           self.handleDiskUtilError(
             DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: timeout),
@@ -95,6 +99,7 @@ extension DriveManager {
   }
 
   func forceUnmount(volume: Volume) {
+    let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
@@ -103,6 +108,7 @@ extension DriveManager {
         timeout: Self.mountUnmountTimeout)
       DispatchQueue.main.async {
         if !result.succeeded {
+          KeepAliveManager.shared.unsuppress(volumes: [volume], keeping: wasSuppressed)
           self.setBusy(volume.id, false)
           self.handleDiskUtilError(
             DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),

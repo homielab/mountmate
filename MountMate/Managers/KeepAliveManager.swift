@@ -227,6 +227,23 @@ class KeepAliveManager: ObservableObject {
     suppressionLock.unlock()
   }
 
+  /// Volumes of `volumes` the user has already suppressed. Take this before
+  /// `suppress(...)` so a failed unmount only lifts what it added.
+  func suppressedVolumes(among volumes: [Volume]) -> [Volume] {
+    suppressionLock.withLock {
+      volumes.filter { $0.compositeId.map(suppressedVolumeIDs.contains) ?? false }
+    }
+  }
+
+  /// Lifts the suppression a failed unmount/eject added up front, so the
+  /// volumes (still mounted) stay protected by keep-alive. Volumes in
+  /// `keeping` were suppressed before the action and stay suppressed.
+  func unsuppress(volumes: [Volume], keeping: [Volume] = []) {
+    let kept = Set(keeping.compactMap(\.compositeId))
+    let ids = volumes.compactMap(\.compositeId).filter { !kept.contains($0) }
+    suppressionLock.withLock { suppressedVolumeIDs.subtract(ids) }
+  }
+
   /// Called when the user mounts a share again — clears any suppression and
   /// retry state so keep-alive tracking restarts cleanly. Automatic mounts
   /// must NOT call this, or the backoff never accumulates.

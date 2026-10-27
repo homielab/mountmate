@@ -70,6 +70,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Keep Alive after a failed unmount or eject**: when Unmount, Eject, Force Unmount/Eject, Unmount All or Eject All fails (for example "Resource busy"), the volume is no longer left excluded from Keep Alive, so it is remounted if the drive is disconnected later. Successful unmounts and a volume you had already unmounted before are unchanged.
 - **Translations**: "Could not eject: %@" was declared twice in every language file; the duplicate is gone and a new test fails when a language file declares a key twice.
 - **Unit tests**: `NotificationManagerTests` no longer fails at random in a full test run (the permission check that asks again takes two main-queue hops, the test waited for one); the manager now takes its main-thread scheduler and app-activation notification center as parameters.
 - VoiceOver no longer reads the decorative icons in snapshot and container rows.

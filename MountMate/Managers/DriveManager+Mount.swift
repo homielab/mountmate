@@ -141,6 +141,7 @@ extension DriveManager {
     volume: Volume, allowsErrorAlerts: Bool = true,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
     WakeRemountManager.shared.forget([volume])
     setBusy(volume.id, true)
@@ -150,6 +151,8 @@ extension DriveManager {
         arguments: ["unmount", volume.deviceIdentifier], timeout: Self.mountUnmountTimeout)
       DispatchQueue.main.async {
         if !result.succeeded {
+          // Still mounted: keep-alive must keep protecting it.
+          KeepAliveManager.shared.unsuppress(volumes: [volume], keeping: wasSuppressed)
           self.setBusy(volume.id, false)
           let message = DiskUtilErrorClassifier.failureMessage(
             for: result, timeout: Self.mountUnmountTimeout)
@@ -223,6 +226,7 @@ extension DriveManager {
   func remount(volume: Volume) {
     // Keep-alive must not reconnect the volume in the gap between the
     // unmount and the mount below; mount(volume:) resumes it.
+    let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
@@ -232,7 +236,7 @@ extension DriveManager {
       DispatchQueue.main.async {
         if !result.succeeded {
           // Still mounted: undo the suppression.
-          KeepAliveManager.shared.resume(volume: volume)
+          KeepAliveManager.shared.unsuppress(volumes: [volume], keeping: wasSuppressed)
           self.setBusy(volume.id, false)
           self.handleDiskUtilError(
             DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),

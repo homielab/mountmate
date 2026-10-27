@@ -325,4 +325,50 @@ final class KeepAliveManagerTests: XCTestCase {
     drainMain()
     XCTAssertFalse(manager.reconnectingVolumeIDs.contains(id))
   }
+
+  private func suppressionTestVolume() -> Volume {
+    Volume(
+      id: UUID().uuidString, deviceIdentifier: "disk9s1", diskUUID: nil, name: "Busy",
+      isMounted: true, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: "exfat", usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+  }
+
+  func testFailedUnmountLiftsTheSuppressionItAdded() {
+    let manager = KeepAliveManager.shared
+    let volume = suppressionTestVolume()
+    let id = volume.compositeId!
+    defer { manager.resume(volume: volume) }
+    let before = manager.suppressedVolumes(among: [volume])
+    manager.suppress(volumes: [volume])
+    XCTAssertTrue(manager.isSuppressed(volumeID: id))
+    manager.unsuppress(volumes: [volume], keeping: before)
+    XCTAssertFalse(manager.isSuppressed(volumeID: id))
+  }
+
+  func testSuccessfulUnmountKeepsTheSuppression() {
+    let manager = KeepAliveManager.shared
+    let volume = suppressionTestVolume()
+    defer { manager.resume(volume: volume) }
+    manager.suppress(volumes: [volume])
+    // No unsuppress on success.
+    XCTAssertTrue(manager.isSuppressed(volumeID: volume.compositeId!))
+  }
+
+  func testFailedUnmountKeepsASuppressionThatWasThereBefore() {
+    let manager = KeepAliveManager.shared
+    let volume = suppressionTestVolume()
+    let other = suppressionTestVolume()
+    defer {
+      manager.resume(volume: volume)
+      manager.resume(volume: other)
+    }
+    manager.suppress(volume: volume)
+    let before = manager.suppressedVolumes(among: [volume, other])
+    XCTAssertEqual(before.count, 1)
+    manager.suppress(volumes: [volume, other])
+    manager.unsuppress(volumes: [volume, other], keeping: before)
+    XCTAssertTrue(manager.isSuppressed(volumeID: volume.compositeId!))
+    XCTAssertFalse(manager.isSuppressed(volumeID: other.compositeId!))
+  }
 }
