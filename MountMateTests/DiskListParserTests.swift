@@ -170,6 +170,26 @@ final class DiskListParserTests: XCTestCase {
       ["mount", "readOnly", volume.deviceIdentifier])
   }
 
+  func testRemountKeepsReadOnlyMount() throws {
+    var readOnlyParser = parser()
+    readOnlyParser.readOnlyMountPoints = ["/Volumes/Samsung_T5"]
+    let readOnly = try XCTUnwrap(
+      parse(readOnlyParser).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertTrue(DriveManager.remountReadOnly(for: readOnly))
+    XCTAssertEqual(
+      DriveManager.mountArguments(
+        for: readOnly, readOnly: DriveManager.remountReadOnly(for: readOnly)),
+      ["mount", "readOnly", readOnly.deviceIdentifier])
+
+    let writable = try XCTUnwrap(
+      parse(parser()).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertFalse(DriveManager.remountReadOnly(for: writable))
+    XCTAssertEqual(
+      DriveManager.mountArguments(
+        for: writable, readOnly: DriveManager.remountReadOnly(for: writable)),
+      ["mount", writable.deviceIdentifier])
+  }
+
   func testParentDiskStatsComeFromItsVolumes() throws {
     let samsung = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk6" })
 

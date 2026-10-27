@@ -223,7 +223,16 @@ extension DriveManager {
     return othersMounted ? nil : disk
   }
 
+  /// Whether `remount(volume:)` mounts `volume` again read-only: a volume
+  /// that was mounted read-only (a backup or a damaged disk) stays read-only
+  /// after its mount point changes.
+  static func remountReadOnly(for volume: Volume) -> Bool {
+    volume.isReadOnly
+  }
+
   func remount(volume: Volume) {
+    // Captured before the unmount, which clears the mount state.
+    let readOnly = Self.remountReadOnly(for: volume)
     // Keep-alive must not reconnect the volume in the gap between the
     // unmount and the mount below; mount(volume:) resumes it.
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
@@ -247,7 +256,7 @@ extension DriveManager {
 
         // Stays busy: mount(volume:) clears it when it finishes.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          self.mount(volume: volume)
+          self.mount(volume: volume, readOnly: readOnly)
         }
       }
     }
