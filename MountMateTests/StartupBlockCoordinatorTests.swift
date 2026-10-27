@@ -22,8 +22,27 @@ final class StartupBlockCoordinatorTests: XCTestCase {
     super.tearDown()
   }
 
+  /// Holds `install` (like an open password prompt) until the test opens it.
+  private actor Gate {
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+      if isOpen { return }
+      await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func open() {
+      isOpen = true
+      for waiter in waiters { waiter.resume() }
+      waiters = []
+    }
+  }
+
   private final class FakeAccess: StartupBlockFstabAccess {
     var contents = ""
+    /// When set, every `install` waits for it after recording the call.
+    var installGate: Gate?
     var eligibility: FstabRules.StartupBlockEligibility = .eligible(fileSystemType: "apfs")
     /// Errors thrown by successive `install` calls; empty = succeed.
     var installErrors: [Error] = []
@@ -35,8 +54,9 @@ final class StartupBlockCoordinatorTests: XCTestCase {
       snapshotLoads += 1
       return FstabWriter.Snapshot(contents: contents, raw: Data(contents.utf8))
     }
-    func install(_ newContents: String, expectedCurrent: Data) throws {
+    func install(_ newContents: String, expectedCurrent: Data) async throws {
       installed.append(newContents)
+      await installGate?.wait()
       if !installErrors.isEmpty { throw installErrors.removeFirst() }
       contents = newContents
     }
@@ -79,11 +99,11 @@ final class StartupBlockCoordinatorTests: XCTestCase {
     NSError(domain: "MountMate", code: code)
   }
 
-  /// Waits until the coordinator's queue and the main-thread hops after it
-  /// have finished.
+  /// Waits until the coordinator's fstab jobs and the main-thread hops after
+  /// them have finished.
   private func drain(_ coordinator: StartupBlockCoordinator) {
-    let queueDone = expectation(description: "queue drained")
-    coordinator.queue.async { queueDone.fulfill() }
+    let queueDone = expectation(description: "jobs drained")
+    coordinator.enqueueFstabJob { queueDone.fulfill() }
     wait(for: [queueDone], timeout: 5)
     let mainDone = expectation(description: "main drained")
     DispatchQueue.main.async { mainDone.fulfill() }
@@ -280,6 +300,68 @@ final class StartupBlockCoordinatorTests: XCTestCase {
     coordinator.reconcileAtLaunch(enabled: false, knownRuleUUIDs: [uuid])
     drain(coordinator)
     XCTAssertEqual(access.snapshotLoads, 1)
+  }
+
+  func testQueuedJobWaitsForTheRunningOneAndReadsTheLatestState() {
+    let access = FakeAccess()
+    let gate = Gate()
+    access.installGate = gate
+    let host = FakeHost()
+    host.blocked = [blockedInfo]
+    let coordinator = makeCoordinator(access: access, host: host)
+    var order: [String] = []
+    let firstDone = expectation(description: "first job")
+    let secondDone = expectation(description: "second job")
+
+    coordinator.reconcile(userInitiated: true) { succeeded in
+      order.append("first \(succeeded)")
+      firstDone.fulfill()
+    }
+    // The first job is now at the (fake) password prompt.
+    let deadline = Date().addingTimeInterval(5)
+    while access.installed.isEmpty && Date() < deadline {
+      RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+    }
+    XCTAssertEqual(access.installed.count, 1)
+
+    // Queued while the prompt is open, then the volume is unblocked before
+    // the job gets its turn: it must act on that latest state.
+    coordinator.reconcile(userInitiated: true) { succeeded in
+      order.append("second \(succeeded)")
+      secondDone.fulfill()
+    }
+    host.blocked = []
+    RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+    XCTAssertEqual(access.snapshotLoads, 1, "the queued job waits for the running one")
+
+    Task { await gate.open() }
+    wait(for: [firstDone, secondDone], timeout: 5, enforceOrder: true)
+    drain(coordinator)
+
+    XCTAssertEqual(order, ["first true", "second true"])
+    XCTAssertEqual(access.installed.count, 2)
+    XCTAssertTrue(access.installed[0].contains("UUID=\(uuid) none apfs rw,noauto"))
+    XCTAssertFalse(access.contents.contains(uuid), "the second job removed the rule")
+    XCTAssertEqual(host.ruleUUIDs, [])
+    XCTAssertEqual(host.progress, [true, true, false, false])
+  }
+
+  func testQueuedJobsThatFindNothingToChangeDoNotWrite() {
+    let access = FakeAccess()
+    let gate = Gate()
+    access.installGate = gate
+    let host = FakeHost()
+    host.blocked = [blockedInfo]
+    let coordinator = makeCoordinator(access: access, host: host)
+
+    coordinator.reconcile(userInitiated: true)
+    coordinator.reconcile(userInitiated: true)
+    coordinator.reconcile(userInitiated: false)
+    Task { await gate.open() }
+    drain(coordinator)
+
+    XCTAssertEqual(access.installed.count, 1, "one write, so one password prompt")
+    XCTAssertEqual(host.ruleUUIDs, [uuid])
   }
 
   // MARK: - PersistenceManager(defaults:)

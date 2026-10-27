@@ -8,7 +8,7 @@ import Foundation
 protocol StartupBlockFstabAccess {
   func readContents() -> String
   func loadSnapshot() throws -> FstabWriter.Snapshot
-  func install(_ contents: String, expectedCurrent: Data) throws
+  func install(_ contents: String, expectedCurrent: Data) async throws
   func startupBlockEligibility(forVolumeUUID uuid: String) -> FstabRules.StartupBlockEligibility
 }
 
@@ -18,8 +18,8 @@ struct SystemFstabAccess: StartupBlockFstabAccess {
 
   func readContents() -> String { FstabWriter.readSystemFstabContents() }
   func loadSnapshot() throws -> FstabWriter.Snapshot { try FstabWriter.loadSnapshot() }
-  func install(_ contents: String, expectedCurrent: Data) throws {
-    try FstabWriter.install(contents, expectedCurrent: expectedCurrent)
+  func install(_ contents: String, expectedCurrent: Data) async throws {
+    try await FstabWriter.install(contents, expectedCurrent: expectedCurrent)
   }
   func startupBlockEligibility(forVolumeUUID uuid: String) -> FstabRules.StartupBlockEligibility {
     lookup.startupBlockEligibility(forVolumeUUID: uuid)
@@ -55,12 +55,14 @@ protocol StartupBlockHost: AnyObject {
 /// filesystem type is read from it. A blocked volume that is not connected
 /// gets its rule the next time it appears and MountMate dissents its mount.
 ///
-/// Every read-modify-write cycle runs on `queue`, so concurrent block,
-/// unblock and reconcile actions (and custom mount point updates, which share
-/// the queue) cannot interleave.
+/// Every read-modify-write cycle runs as a job of `enqueueFstabJob`, so
+/// concurrent block, unblock and reconcile actions (and custom mount point
+/// updates, which are jobs too) cannot interleave, and at most one
+/// administrator password prompt is shown at a time.
 final class StartupBlockCoordinator {
-  /// Serializes every /etc/fstab read-modify-write cycle.
-  let queue = DispatchQueue(label: "com.homielab.mountmate.fstab")
+  private let jobLock = NSLock()
+  /// The last job enqueued; the next one waits for it. Guarded by `jobLock`.
+  private var lastFstabJob: Task<Void, Never>?
 
   private static let declinedKey = "startupBlockBackgroundDeclined"
 
@@ -82,10 +84,26 @@ final class StartupBlockCoordinator {
 
   /// Set when a background update fails (e.g. its admin prompt is cancelled).
   /// Background updates then stay quiet — also across launches — until the
-  /// user blocks, unblocks or toggles the setting. Only touched on `queue`.
+  /// user blocks, unblocks or toggles the setting. Only touched in fstab jobs.
   private var backgroundUpdateDeclined: Bool {
     get { defaults.bool(forKey: Self.declinedKey) }
     set { defaults.set(newValue, forKey: Self.declinedKey) }
+  }
+
+  /// Runs `job` after every job enqueued before it has finished, so all
+  /// /etc/fstab read-modify-write cycles run one at a time, in the order they
+  /// were enqueued. A job that is waiting for the password prompt keeps the
+  /// next ones waiting, and nothing (the main thread included) blocks on it.
+  /// Jobs that need main-thread state read it with `MainQueue.value` when
+  /// they start, so jobs queued behind a prompt see the latest state.
+  func enqueueFstabJob(_ job: @escaping () async -> Void) {
+    jobLock.lock()
+    defer { jobLock.unlock() }
+    let previous = lastFstabJob
+    lastFstabJob = Task {
+      await previous?.value
+      await job()
+    }
   }
 
   /// Called once shortly after launch. Adds rules for blocked volumes that
@@ -131,11 +149,11 @@ final class StartupBlockCoordinator {
     completion: ((Bool) -> Void)? = nil
   ) {
     if userInitiated { host?.startupBlockUpdateInProgress(true) }
-    queue.async { [weak self] in
+    enqueueFstabJob { [weak self] in
       guard let self else { return }
       defer {
         if userInitiated {
-          DispatchQueue.main.async { self.host?.startupBlockUpdateInProgress(false) }
+          MainQueue.perform { self.host?.startupBlockUpdateInProgress(false) }
         }
       }
       if userInitiated {
@@ -148,21 +166,20 @@ final class StartupBlockCoordinator {
       // jobs queued behind a password prompt act on the latest settings.
       // Several queued jobs collapse naturally: once one has applied the
       // current state, the rest find nothing to change and do not prompt.
-      // (Safe: the main thread never waits on the queue.)
-      let (enabled, blockedInfos) = DispatchQueue.main.sync {
+      let (enabled, blockedInfos) = await MainQueue.value {
         self.host?.startupBlockState() ?? (false, [])
       }
 
       do {
-        let change = try self.applyRules(
+        let change = try await self.applyRules(
           enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: 2)
         if userInitiated,
           let message = FstabRules.feedbackMessage(
             for: change, enabled: enabled, fromToggle: fromToggle)
         {
-          DispatchQueue.main.async { self.host?.startupBlockShowFeedback(message) }
+          MainQueue.perform { self.host?.startupBlockShowFeedback(message) }
         }
-        DispatchQueue.main.async { completion?(true) }
+        MainQueue.perform { completion?(true) }
       } catch {
         if userInitiated {
           if !(silentOnCancel && FstabWriter.isAdminPromptCancellation(error)) {
@@ -175,18 +192,18 @@ final class StartupBlockCoordinator {
             "Background startup block update failed; not retrying until the next user action: \(error.localizedDescription, privacy: .public)"
           )
         }
-        DispatchQueue.main.async { completion?(false) }
+        MainQueue.perform { completion?(false) }
       }
     }
   }
 
-  /// One read-compute-write cycle of `reconcile`. Runs on `queue`. Retries
+  /// One read-compute-write cycle of `reconcile`. Runs in a fstab job. Retries
   /// when /etc/fstab changed between the read and the privileged write (e.g.
   /// a custom mount point was saved meanwhile).
   @discardableResult
   private func applyRules(
     enabled: Bool, blockedInfos: [ManagedVolumeInfo], attemptsLeft: Int
-  ) throws -> FstabRules.StartupRuleChange {
+  ) async throws -> FstabRules.StartupRuleChange {
     do {
       let snapshot = try access.loadSnapshot()
       let contents = snapshot.contents
@@ -228,7 +245,7 @@ final class StartupBlockCoordinator {
         )
       }
 
-      try access.install(updated, expectedCurrent: snapshot.raw)
+      try await access.install(updated, expectedCurrent: snapshot.raw)
       publishRules(from: updated)
       Log.persistence.notice(
         "Startup block rules updated (\(additions.count, privacy: .public) added, \(stale.count, privacy: .public) removed)."
@@ -242,7 +259,7 @@ final class StartupBlockCoordinator {
     {
       Log.persistence.notice(
         "/etc/fstab changed during the update; retrying with the new contents.")
-      return try applyRules(
+      return try await applyRules(
         enabled: enabled, blockedInfos: blockedInfos, attemptsLeft: attemptsLeft - 1)
     }
   }

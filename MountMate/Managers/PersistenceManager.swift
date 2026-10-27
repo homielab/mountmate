@@ -75,7 +75,7 @@ class PersistenceManager: ObservableObject {
   /// and publishing would redraw every observer of this manager.
   private(set) var fstabBlockedVolumeUUIDs: Set<String> = []
 
-  /// diskutil lookups for new rules. Only used on `startupBlock.queue`.
+  /// diskutil lookups for new rules. Only used in fstab jobs (`startupBlock.enqueueFstabJob`), one at a time.
   let volumeLookup: FstabVolumeLookup
   /// Keeps /etc/fstab in step with `blockedVolumes` (see the type's notes).
   /// Its queue also serializes custom mount point updates.
@@ -216,7 +216,7 @@ class PersistenceManager: ObservableObject {
     // Remove the volume's startup rule even when the setting is off, so an
     // unblocked volume never stays blocked at boot. While the setting is on,
     // always reconcile: a rule for this volume may still be in flight on
-    // the fstab queue (block then unblock during the password prompt) and not yet
+    // in a queued fstab job (block then unblock during the password prompt) and not yet
     // reflected in fstabBlockedVolumeUUIDs. The queued reconcile runs after
     // it and removes the rule; when nothing changes it does not prompt.
     let hasKnownRule =

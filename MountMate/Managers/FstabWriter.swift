@@ -52,10 +52,11 @@ enum FstabWriter {
   ///
   /// `expectedCurrent` is the exact bytes the caller based `contents` on. The
   /// privileged shell checks /etc/fstab still matches it before writing, so
-  /// two writers (custom mount points on the main thread, startup-block
-  /// rules on `fstabQueue`) can never silently overwrite each other's change
-  /// while one of them waits at the password prompt.
-  static func install(_ contents: String, expectedCurrent: Data) throws {
+  /// another writer (another app, or the user editing the file) can never be
+  /// silently overwritten while MountMate waits at the password prompt.
+  /// MountMate's own writers run one at a time as
+  /// `StartupBlockCoordinator.enqueueFstabJob` jobs.
+  static func install(_ contents: String, expectedCurrent: Data) async throws {
     let normalizedContents = FstabRules.trimmedFstabContents(contents)
     // The bytes are hashed and written as one unit, so the identity the
     // privileged shell checks is exactly what was staged.
@@ -76,7 +77,7 @@ enum FstabWriter {
 
     let prompt = NSLocalizedString(
       "System Mount Rule Admin Prompt", comment: "Administrator password prompt for /etc/fstab")
-    let result = PrivilegedShell.run(command, prompt: prompt)
+    let result = await PrivilegedShell.run(command, prompt: prompt)
     if !result.succeeded && result.stderr.contains(fstabChangedMarker) {
       throw NSError(
         domain: "MountMate",

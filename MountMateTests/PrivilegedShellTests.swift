@@ -26,9 +26,9 @@ final class PrivilegedShellTests: XCTestCase {
 
   // MARK: run
 
-  func testOsascriptPathWrapsCommandAndNeverAsksForPassword() {
+  func testOsascriptPathWrapsCommandAndNeverAsksForPassword() async {
     var calls: [(String, [String], Data?, TimeInterval)] = []
-    let outcome = PrivilegedShell.run(
+    let outcome = await PrivilegedShell.run(
       "echo hi", prompt: "Why", usesSudo: false,
       runner: {
         calls.append(($0, $1, $2, $3))
@@ -47,9 +47,9 @@ final class PrivilegedShellTests: XCTestCase {
     XCTAssertNil(calls[0].2)
   }
 
-  func testSudoPathPassesPasswordOnStdinOnly() {
+  func testSudoPathPassesPasswordOnStdinOnly() async {
     var calls: [(String, [String], Data?, TimeInterval)] = []
-    let outcome = PrivilegedShell.run(
+    let outcome = await PrivilegedShell.run(
       "touch /etc/fstab", prompt: "Why", usesSudo: true,
       runner: {
         calls.append(($0, $1, $2, $3))
@@ -65,8 +65,8 @@ final class PrivilegedShellTests: XCTestCase {
     XCTAssertFalse(calls[0].1.joined().contains("hunter2"))
   }
 
-  func testCancellingThePromptReturnsTheCancelMarkerWithoutRunning() {
-    let outcome = PrivilegedShell.run(
+  func testCancellingThePromptReturnsTheCancelMarkerWithoutRunning() async {
+    let outcome = await PrivilegedShell.run(
       "x", prompt: "Why", usesSudo: true,
       runner: { _, _, _, _ in
         XCTFail("nothing may run")
@@ -77,10 +77,10 @@ final class PrivilegedShellTests: XCTestCase {
     XCTAssertEqual(outcome.stderr, PrivilegedShell.cancelledMarker)
   }
 
-  func testWrongPasswordAsksAgainAndMarksTheRetry() {
+  func testWrongPasswordAsksAgainAndMarksTheRetry() async {
     var retries: [Bool] = []
     var runs = 0
-    let outcome = PrivilegedShell.run(
+    let outcome = await PrivilegedShell.run(
       "x", prompt: "Why", usesSudo: true,
       runner: { _, _, _, _ in
         runs += 1
@@ -94,9 +94,9 @@ final class PrivilegedShellTests: XCTestCase {
     XCTAssertEqual(retries, [false, true])
   }
 
-  func testThreeWrongPasswordsGiveUp() {
+  func testThreeWrongPasswordsGiveUp() async {
     var asked = 0
-    let outcome = PrivilegedShell.run(
+    let outcome = await PrivilegedShell.run(
       "x", prompt: "Why", usesSudo: true,
       runner: { _, _, _, _ in self.result(stderr: "Sorry, try again.", exit: 1) },
       askPassword: { _, _ in
@@ -108,10 +108,10 @@ final class PrivilegedShellTests: XCTestCase {
     XCTAssertFalse(outcome.stderr.isEmpty)
   }
 
-  func testOtherSudoFailureIsReturnedWithoutAskingAgain() {
+  func testOtherSudoFailureIsReturnedWithoutAskingAgain() async {
     var asked = 0
     let failure = result(stderr: "fstab: read-only", exit: 2)
-    let outcome = PrivilegedShell.run(
+    let outcome = await PrivilegedShell.run(
       "x", prompt: "Why", usesSudo: true,
       runner: { _, _, _, _ in failure },
       askPassword: { _, _ in

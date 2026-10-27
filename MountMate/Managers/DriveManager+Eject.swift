@@ -19,25 +19,20 @@ extension DriveManager {
     }
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
-    DispatchQueue.global(qos: .userInitiated).async {
-      // A RAID master is a virtual logical disk. `eject` is only valid for a
-      // physical device, while unmountDisk safely unmounts every volume in the
-      // set and produces the same Finder-visible result.
-      let ejectArgs = disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
-      // A sleeping (spun-down) disk has to wake before it can be ejected,
-      // which can take well over the default 15s. The first attempt often
-      // unmounts the volumes but fails the eject while the drive spins up,
-      // so allow more time and retry once before reporting an error (#70).
-      let ejectTimeout: TimeInterval = 60
-      var result = runProcess(
-        executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-      if !result.succeeded && !result.timedOut
-        && !DiskUtilErrorClassifier.isBusyFailure(stderr: result.stderr)
-      {
-        Thread.sleep(forTimeInterval: 2)
-        result = runProcess(
-          executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-      }
+    // A RAID master is a virtual logical disk. `eject` is only valid for a
+    // physical device, while unmountDisk safely unmounts every volume in the
+    // set and produces the same Finder-visible result.
+    let ejectArgs = disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
+    // A sleeping (spun-down) disk has to wake before it can be ejected,
+    // which can take well over the default 15s. The first attempt often
+    // unmounts the volumes but fails the eject while the drive spins up,
+    // so allow more time and retry once, 2 s later, before reporting an
+    // error (#70).
+    let ejectTimeout: TimeInterval = 60
+    let runEject = {
+      runProcess(executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
+    }
+    let finish: (ProcessResult) -> Void = { result in
       DispatchQueue.main.async {
         if !result.succeeded {
           self.setEjecting(disk.id, false)
@@ -48,6 +43,16 @@ extension DriveManager {
         } else {
           self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }
         }
+      }
+    }
+    DispatchQueue.global(qos: .userInitiated).async {
+      let result = runEject()
+      guard
+        !result.succeeded && !result.timedOut
+          && !DiskUtilErrorClassifier.isBusyFailure(stderr: result.stderr)
+      else { return finish(result) }
+      DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 2) {
+        finish(runEject())
       }
     }
   }

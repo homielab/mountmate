@@ -26,9 +26,10 @@ extension PersistenceManager {
   /// rule (which may show the administrator password prompt), then saves it
   /// in MountMate's list.
   ///
-  /// The `diskutil` lookup and the privileged write run on `the fstab queue`, so
-  /// the UI never waits for the password prompt, and the update is
-  /// serialized with startup-block reconciles. Call on the main thread;
+  /// The `diskutil` lookup and the privileged write run as a fstab job
+  /// (`StartupBlockCoordinator.enqueueFstabJob`), so the UI never waits for
+  /// the password prompt, and the update is serialized with startup-block
+  /// reconciles. Call on the main thread;
   /// `completion` is called on the main thread.
   func applyCustomMountPoint(
     _ mountPoint: String, for volume: Volume,
@@ -51,9 +52,9 @@ extension PersistenceManager {
       return
     }
 
-    startupBlock.queue.async {
+    startupBlock.enqueueFstabJob {
       guard let fileSystemType = self.volumeLookup.fstabFileSystemType(for: volume) else {
-        DispatchQueue.main.async {
+        MainQueue.perform {
           completion(
             .failure(
               NSLocalizedString(
@@ -76,10 +77,10 @@ extension PersistenceManager {
 
         // The volume may have been blocked while this job waited in the
         // queue (e.g. behind another password prompt). Read the current
-        // state, as reconcile does. (Safe: main never waits on the fstab queue.)
-        let isBlockedNow = DispatchQueue.main.sync { self.isVolumeBlocked(volume) }
+        // state, as reconcile does.
+        let isBlockedNow = await MainQueue.value { self.isVolumeBlocked(volume) }
         guard !isBlockedNow else {
-          DispatchQueue.main.async {
+          MainQueue.perform {
             completion(
               .failure(
                 NSLocalizedString(
@@ -90,16 +91,16 @@ extension PersistenceManager {
         }
 
         if updatedContents != currentContents {
-          try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
+          try await FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
         }
 
-        DispatchQueue.main.async {
+        MainQueue.perform {
           self.saveCustomMountPoint(mountPoint, for: volume)
           completion(.success)
         }
       } catch {
         let result = Self.customMountPointUpdateResult(for: error)
-        DispatchQueue.main.async { completion(result) }
+        MainQueue.perform { completion(result) }
       }
     }
   }
@@ -137,7 +138,7 @@ extension PersistenceManager {
     volumeUUID: String?, entryID: String,
     completion: @escaping (CustomMountPointUpdateResult) -> Void
   ) {
-    startupBlock.queue.async {
+    startupBlock.enqueueFstabJob {
       do {
         if let volumeUUID {
           let snapshot = try FstabWriter.loadSnapshot()
@@ -146,18 +147,18 @@ extension PersistenceManager {
             volumeUUID: volumeUUID, from: currentContents)
 
           if updatedContents != currentContents {
-            try FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
+            try await FstabWriter.install(updatedContents, expectedCurrent: snapshot.raw)
           }
         }
 
-        DispatchQueue.main.async {
+        MainQueue.perform {
           self.customMountPoints.removeAll { $0.id == entryID }
           self.saveCustomMountPoints()
           completion(.success)
         }
       } catch {
         let result = Self.customMountPointUpdateResult(for: error)
-        DispatchQueue.main.async { completion(result) }
+        MainQueue.perform { completion(result) }
       }
     }
   }
