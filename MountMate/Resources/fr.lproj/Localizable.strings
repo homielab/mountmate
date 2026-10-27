@@ -507,3 +507,10 @@
 "No shared servers found. Type the server address by hand." = "Aucun serveur partagé trouvé. Saisissez l'adresse du serveur à la main.";
 "Local network access was denied, so no servers can be listed. Type the server address by hand." = "L'accès au réseau local a été refusé : aucun serveur ne peut être listé. Saisissez l'adresse du serveur à la main.";
 "Only servers announcing SMB or NFS on this network are listed." = "Seuls les serveurs annonçant SMB ou NFS sur ce réseau sont listés.";
+
+// MARK: - AFP Deprecation
+
+"Deprecated" = "Obsolète";
+"Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple a supprimé la prise en charge d'AFP dans les versions récentes de macOS. Pensez à utiliser SMB ou NFS pour ce partage.";
+"The server “%@” supports no protocol version this Mac can use." = "Le serveur « %@ » ne prend en charge aucune version de protocole utilisable par ce Mac.";
+"The file-sharing protocol is not supported by this Mac." = "Le protocole de partage de fichiers n’est pas pris en charge par ce Mac.";

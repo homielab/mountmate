@@ -59,6 +59,28 @@ struct NetworkShareRow: View {
               .clipShape(.rect(cornerRadius: 4))
               .help("Reconnects automatically when the share drops")
           }
+
+          if share.shareProtocol.isDeprecated {
+            Label(
+              NSLocalizedString("Deprecated", comment: "Badge for deprecated share protocol"),
+              systemImage: "exclamationmark.triangle.fill"
+            )
+            .font(.caption2)
+            .bold()
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.secondary.opacity(0.12))
+            .clipShape(.rect(cornerRadius: 4))
+            .help(
+              NSLocalizedString(
+                "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS.",
+                comment: "Tooltip for deprecated share protocol")
+            )
+            .accessibilityLabel(
+              NSLocalizedString(
+                "Deprecated", comment: "Badge for deprecated share protocol"))
+          }
         }
 
         Text(

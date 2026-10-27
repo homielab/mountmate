@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **AFP deprecation**: new network shares now only offer SMB and NFS because Apple has removed AFP client support in modern macOS versions. Existing saved AFP shares continue to be editable, removable and mountable, show a "Deprecated" badge (announced by VoiceOver), and any mount failure explains that AFP is deprecated rather than suggesting SMB settings.
 - **README**: Quick Start and screenshots now come first, the feature list is 12 one-line items, and the full descriptions moved to a "Feature Details" section (README-vi.md follows).
 - Internal: saving or removing a network share's Keychain password moved out of `EditNetworkShareSheet` into `NetworkSharePasswordSync`, and the share validation into `NetworkShareValidation`, unit-tested with a fake password store (new share, unchanged, changed or cleared password, switching to NFS, Keychain errors); the sheet shrinks from 374 to under 300 lines. No change in behavior.
 - Internal: the pure decisions of a network-share mount moved out of `NetworkShareMounter` into `NetworkMountPlan` (may the attempt start, the preflight checks, how a result maps to the message and clean-up, the NetFS connection URL, user placement and options, the NFS arguments and failure classification, finding a share's own mount in the mount table), unit-tested for every branch; the file shrinks from 623 to under 400 lines. No change in behavior.

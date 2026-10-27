@@ -32,6 +32,13 @@ struct EditNetworkShareSheet: View {
     username.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
+  private var availableProtocols: [ShareProtocol] {
+    if shareToEdit?.shareProtocol == .afp || shareProtocol == .afp {
+      return ShareProtocol.allCases
+    }
+    return ShareProtocol.creationCases
+  }
+
   /// The display name, defaulting to the last component of the share path
   /// (it names the default mount folder, so it must be a single component).
   private var finalName: String {
@@ -82,13 +89,28 @@ struct EditNetworkShareSheet: View {
 
         Section {
           Picker(selection: $shareProtocol) {
-            ForEach(ShareProtocol.allCases) { item in
+            ForEach(availableProtocols) { item in
               Text(item.displayName).tag(item)
             }
           } label: {
             Label("Protocol", systemImage: "network.badge.shield.half.filled")
           }
           .pickerStyle(.segmented)
+
+          if shareProtocol.isDeprecated {
+            HStack(alignment: .top, spacing: 6) {
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+              Text(
+                NSLocalizedString(
+                  "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS.",
+                  comment: "Deprecated share protocol warning")
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+            }
+            .padding(.top, 2)
+          }
 
           HStack {
             Image(systemName: "server.rack").frame(width: 20)

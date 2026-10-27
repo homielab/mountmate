@@ -44,6 +44,18 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     }
   }
 
+  /// Protocols offered when creating a new share. AFP is omitted because Apple
+  /// has removed AFP client support in modern macOS versions.
+  static let creationCases: [ShareProtocol] = [.smb, .nfs]
+
+  /// Whether this protocol is deprecated on modern macOS versions.
+  var isDeprecated: Bool {
+    switch self {
+    case .afp: return true
+    case .smb, .nfs: return false
+    }
+  }
+
   static func from(mountFilesystemName: String) -> ShareProtocol? {
     switch mountFilesystemName.lowercased() {
     case "smbfs": return .smb

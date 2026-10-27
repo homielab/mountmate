@@ -130,11 +130,18 @@ enum NetworkMountPlan {
   }
 
   static func timeoutMessage(for share: NetworkShare) -> String {
-    String(
+    let base = String(
       format: NSLocalizedString(
         "Mounting “%@” timed out. Check that the server is reachable and try again.",
         comment: "Network share mount error"),
       share.name)
+    if share.shareProtocol.isDeprecated {
+      let hint = NSLocalizedString(
+        "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS.",
+        comment: "Deprecated share protocol hint")
+      return "\(base)\n\n\(hint)"
+    }
+    return base
   }
 
   /// Builds the protocol-specific connection URL for a share. A password is

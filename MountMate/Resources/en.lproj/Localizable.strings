@@ -507,3 +507,10 @@
 "No shared servers found. Type the server address by hand." = "No shared servers found. Type the server address by hand.";
 "Local network access was denied, so no servers can be listed. Type the server address by hand." = "Local network access was denied, so no servers can be listed. Type the server address by hand.";
 "Only servers announcing SMB or NFS on this network are listed." = "Only servers announcing SMB or NFS on this network are listed.";
+
+// MARK: - AFP Deprecation
+
+"Deprecated" = "Deprecated";
+"Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS.";
+"The server “%@” supports no protocol version this Mac can use." = "The server “%@” supports no protocol version this Mac can use.";
+"The file-sharing protocol is not supported by this Mac." = "The file-sharing protocol is not supported by this Mac.";

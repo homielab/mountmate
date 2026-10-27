@@ -28,6 +28,8 @@ extension NetworkMountManager {
     case -5998: return "ENETFSNOSHARESAVAIL"
     case -5997: return "ENETFSNOAUTHMECHSUPP"
     case -5996: return "ENETFSNOPROTOVERSSUPP"
+    case ENOTSUP: return "ENOTSUP"
+    case EPROTONOSUPPORT: return "EPROTONOSUPPORT"
     default: return nil
     }
   }
@@ -72,6 +74,13 @@ extension NetworkMountManager {
         "If the account belongs to a Windows domain, enter the username as DOMAIN\\user or user@domain."
       )
     }
+    // Why AFP may fail on modern macOS.
+    var afpHint: String? {
+      guard share.shareProtocol == .afp else { return nil }
+      return localize(
+        "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS."
+      )
+    }
     let details: String = {
       if let name = netFSStatusName(status) {
         return text("Error code: %d (%@)", status, name)
@@ -86,12 +95,14 @@ extension NetworkMountManager {
     case EAUTH:
       return message(
         text("Authentication failed for “%@”. Check the username and password.", share.name),
-        loginHint)
+        loginHint,
+        afpHint)
     case -128:  // userCanceledErr: NetFS wanted to ask for a login
       return message(
         text(
           "The server “%@” requires a username and password. Enter them in the share’s settings.",
-          share.server))
+          share.server),
+        afpHint)
     case -5045:  // ENETFSPWDNEEDSCHANGE
       return message(
         text(
@@ -111,36 +122,53 @@ extension NetworkMountManager {
       return message(
         text(
           "The server “%@” offers no sign-in method this Mac supports. Ask its administrator to allow NTLMv2 or Kerberos sign-in.",
-          share.server))
+          share.server),
+        afpHint)
     case -5996:  // ENETFSNOPROTOVERSSUPP
+      if share.shareProtocol == .afp {
+        return message(
+          text(
+            "The server “%@” supports no protocol version this Mac can use.",
+            share.server),
+          afpHint)
+      }
       return message(
         text(
           "The server “%@” supports no protocol version this Mac can use. For SMB, ask its administrator to enable SMB 2 or SMB 3.",
           share.server))
+    case ENOTSUP, EPROTONOSUPPORT:
+      return message(
+        text("The file-sharing protocol is not supported by this Mac."),
+        afpHint)
     case ECONNREFUSED:
       return message(
         text(
           "The server “%@” refused the connection. Check that file sharing (%@) is turned on on the server.",
-          share.server, share.shareProtocol.displayName))
+          share.server, share.shareProtocol.displayName),
+        afpHint)
     case EHOSTUNREACH, EHOSTDOWN, ENETUNREACH, ENETDOWN:
       return message(
         text(
           "Could not connect to the server “%@”. Check that it is turned on and reachable from this network.",
-          share.server))
+          share.server),
+        afpHint)
     case ETIMEDOUT:
       return message(
         text(
-          "Mounting “%@” timed out. Check that the server is reachable and try again.", share.name))
+          "Mounting “%@” timed out. Check that the server is reachable and try again.", share.name),
+        afpHint)
     case ENOENT:
       return message(
         text("The share “%@” was not found on the server “%@”.", share.sharePath, share.server),
         localize(
           "Check the spelling of the share name; it is the name the server shares, not a folder path on its disk."
-        ))
+        ),
+        afpHint)
     case -5998:  // ENETFSNOSHARESAVAIL
       return message(
         text("The server “%@” has no shares available to this account.", share.server),
-        loginHint)
+        loginHint,
+        afpHint)
     case EEXIST:
       return message(
         text(
@@ -151,7 +179,8 @@ extension NetworkMountManager {
     case EPERM, EACCES:
       if !mountPoint.hasPrefix(homeDirectory + "/") {
         return message(
-          mountLocationPermissionMessage(share: share, mountPoint: mountPoint, localize: localize))
+          mountLocationPermissionMessage(share: share, mountPoint: mountPoint, localize: localize),
+          afpHint)
       }
       return message(
         text("Access to the share “%@” was denied by the server.", share.name),
@@ -160,8 +189,19 @@ extension NetworkMountManager {
         share.shareProtocol == .smb
           ? localize(
             "If it stopped working after a server update, ask the administrator whether the server still accepts SMB 2 or SMB 3 with NTLMv2 sign-in."
-          ) : nil)
+          ) : nil,
+        afpHint)
     default:
+      if share.shareProtocol == .afp {
+        if status > 0, let description = strerror(status) {
+          return message(
+            text("Could not mount “%@”: %@", share.name, String(cString: description)),
+            afpHint)
+        }
+        return message(
+          text("Could not mount “%@”.", share.name),
+          afpHint)
+      }
       if status > 0, let description = strerror(status) {
         return text(
           "Could not mount “%@”: %@ (error %d).", share.name, String(cString: description), status)

@@ -103,10 +103,26 @@ struct NetworkShareMainRow: View {
           .padding(.trailing, 8)
 
           VStack(alignment: .leading, spacing: 2) {
-            Text(share.name)
-              .font(.body)
-              .bold()
-              .foregroundStyle(isMounted ? .primary : .secondary)
+            HStack(spacing: 6) {
+              Text(share.name)
+                .font(.body)
+                .bold()
+                .foregroundStyle(isMounted ? .primary : .secondary)
+
+              if share.shareProtocol.isDeprecated {
+                Text(
+                  NSLocalizedString(
+                    "Deprecated", comment: "Badge for deprecated share protocol")
+                )
+                .font(.caption2)
+                .bold()
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(Color.secondary.opacity(0.12))
+                .clipShape(.rect(cornerRadius: 3))
+              }
+            }
 
             Text(statusText)
               .font(.caption)

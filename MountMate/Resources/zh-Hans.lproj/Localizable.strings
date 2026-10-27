@@ -507,3 +507,10 @@
 "No shared servers found. Type the server address by hand." = "未找到共享服务器。请手动输入服务器地址。";
 "Local network access was denied, so no servers can be listed. Type the server address by hand." = "本地网络访问被拒绝，无法列出服务器。请手动输入服务器地址。";
 "Only servers announcing SMB or NFS on this network are listed." = "仅列出此网络中公告 SMB 或 NFS 的服务器。";
+
+// MARK: - AFP Deprecation
+
+"Deprecated" = "已弃用";
+"Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple 已在现代 macOS 版本中移除了对 AFP 的支持。建议将此共享切换为 SMB 或 NFS。";
+"The server “%@” supports no protocol version this Mac can use." = "服务器“%@”不支持此 Mac 可用的任何协议版本。";
+"The file-sharing protocol is not supported by this Mac." = "此 Mac 不支持该文件共享协议。";

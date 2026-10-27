@@ -31,7 +31,7 @@ Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/release
 - Chặn ổ USB tự mount khi cắm hoặc khi đăng nhập, tuỳ chọn chặn cả lúc khởi động (`/etc/fstab`).
 - Mount phân vùng hoặc network share tại điểm mount bạn chọn.
 - Mở khoá ổ APFS mã hoá, có thể lưu mật khẩu vào Keychain.
-- Tự mount SMB, NFS, AFP khi đăng nhập và để Keep Alive nối lại khi bị rớt.
+- Tự mount SMB và NFS khi đăng nhập (share AFP cũ giữ nguyên kèm nhãn không còn hỗ trợ) và để Keep Alive nối lại khi bị rớt.
 - Cảnh báo "Almost full" và SMART, cùng thông báo tuỳ chọn.
 - Ignore, Protect hoặc Pin phân vùng, hiện Apple RAID thành một ổ, tuỳ chỉnh danh sách trong popover.
 - Tự động hoá bằng 7 hành động Shortcuts (cả Spotlight, Siri, Automator).
@@ -95,7 +95,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
 - **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI
 - **Ignore, Protect, Pin**: chuột phải một phân vùng để **Ignore** (ẩn đi, ví dụ phân vùng hệ thống), **Protect** (không bị "Unmount All" và unmount khi ngủ) hoặc **Pin to Top** (xếp lên đầu); xem lại các danh sách trong Settings → Management
-- **Network Shares**: tự mount SMB, NFS và AFP khi đăng nhập; nút "Browse Network…" trong sheet share liệt kê server SMB và NFS trong mạng nội bộ và điền sẵn địa chỉ
+- **Network Shares**: tự mount SMB và NFS khi đăng nhập (share AFP cũ có nhãn không còn hỗ trợ); nút "Browse Network…" trong sheet share liệt kê server SMB và NFS trong mạng nội bộ và điền sẵn địa chỉ
 - **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập; share hoặc ổ đang chờ sẽ hiện lúc thử lại kế tiếp và nút "Reconnect Now" (kết nối lại ngay)
 - **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau

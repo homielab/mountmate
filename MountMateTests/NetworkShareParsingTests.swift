@@ -28,6 +28,10 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertFalse(ShareProtocol.nfs.supportsUserCredentials)
     XCTAssertTrue(ShareProtocol.smb.supportsUserCredentials)
     XCTAssertTrue(ShareProtocol.afp.supportsUserCredentials)
+    XCTAssertEqual(ShareProtocol.creationCases, [.smb, .nfs])
+    XCTAssertTrue(ShareProtocol.afp.isDeprecated)
+    XCTAssertFalse(ShareProtocol.smb.isDeprecated)
+    XCTAssertFalse(ShareProtocol.nfs.isDeprecated)
   }
 
   func testSMBMountEntryMatchesSavedShare() throws {
@@ -389,6 +393,26 @@ final class NetworkShareParsingTests: XCTestCase {
   func testUnknownNetFSStatusKeepsGenericMessage() {
     XCTAssertEqual(failureMessage(-36), "Could not mount “Data” (error -36).")
     XCTAssertNil(NetworkMountManager.netFSStatusName(-36))
+  }
+
+  func testAFPFailureMessageExplainsDeprecation() {
+    let protoMsg = failureMessage(-5996, shareProtocol: .afp)
+    XCTAssertTrue(protoMsg.contains("supports no protocol version"), protoMsg)
+    XCTAssertTrue(protoMsg.contains("Apple has removed support for AFP"), protoMsg)
+    XCTAssertFalse(protoMsg.contains("SMB 2 or SMB 3"), protoMsg)
+
+    let notSupMsg = failureMessage(ENOTSUP, shareProtocol: .afp)
+    XCTAssertTrue(
+      notSupMsg.contains("The file-sharing protocol is not supported by this Mac."), notSupMsg)
+    XCTAssertTrue(notSupMsg.contains("Apple has removed support for AFP"), notSupMsg)
+    XCTAssertEqual(NetworkMountManager.netFSStatusName(ENOTSUP), "ENOTSUP")
+    XCTAssertEqual(NetworkMountManager.netFSStatusName(EPROTONOSUPPORT), "EPROTONOSUPPORT")
+
+    let refused = failureMessage(ECONNREFUSED, shareProtocol: .afp)
+    XCTAssertTrue(refused.contains("Apple has removed support for AFP"), refused)
+
+    let generic = failureMessage(-36, shareProtocol: .afp)
+    XCTAssertTrue(generic.contains("Apple has removed support for AFP"), generic)
   }
 
   func testEntriesWithoutSourceOrMountPointAreIgnored() {

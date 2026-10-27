@@ -131,6 +131,15 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertTrue(resolve(.timedOut(mayStillComplete: false)).cleanUpMountPoint)
   }
 
+  func testAFPTimeoutMessageExplainsDeprecation() {
+    let afpShare = NetworkShare(
+      name: "TimeCapsule", server: "tc", sharePath: "backup", username: "user",
+      shareProtocol: .afp)
+    let msg = NetworkMountPlan.timeoutMessage(for: afpShare)
+    XCTAssertTrue(msg.contains("TimeCapsule"))
+    XCTAssertTrue(msg.contains("Apple has removed support for AFP"))
+  }
+
   func testFailureCarriesItsMessage() {
     XCTAssertEqual(
       resolve(.failed("nope")),
