@@ -25,6 +25,9 @@ class DriveManager: ObservableObject {
   /// operation inserts its own ID and removes it in its own completion, so
   /// concurrent operations and unrelated refreshes never clear each other.
   @Published private(set) var busyVolumeIDs: Set<String> = []
+  /// Volumes (by `Volume.id`) with a file system verification in flight.
+  @Published private(set) var verifyingVolumeIDs: Set<String> = []
+  let volumeVerifier = VolumeVerifier()
   /// Disks (by `PhysicalDisk.id`) with an eject in flight.
   @Published private(set) var busyEjectingDiskIDs: Set<String> = []
   @Published private(set) var isUnmountingAll = false
@@ -45,6 +48,7 @@ class DriveManager: ObservableObject {
   var busyEjectingIdentifier: String? { busyEjectingDiskIDs.first }
 
   func isBusy(_ volumeID: String) -> Bool { busyVolumeIDs.contains(volumeID) }
+  func isVerifying(_ volumeID: String) -> Bool { verifyingVolumeIDs.contains(volumeID) }
   func isEjecting(_ diskID: String) -> Bool { busyEjectingDiskIDs.contains(diskID) }
 
   let driveExpansionSubject = PassthroughSubject<Bool, Never>()
@@ -128,6 +132,18 @@ class DriveManager: ObservableObject {
       busyVolumeIDs.insert(volumeID)
     } else {
       busyVolumeIDs.remove(volumeID)
+    }
+  }
+
+  func setVerifying(_ volumeID: String, _ verifying: Bool) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { self.setVerifying(volumeID, verifying) }
+      return
+    }
+    if verifying {
+      verifyingVolumeIDs.insert(volumeID)
+    } else {
+      verifyingVolumeIDs.remove(volumeID)
     }
   }
 

@@ -204,7 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let alert = NSAlert()
     alert.messageText = appAlert.title
     alert.informativeText = appAlert.message
-    alert.alertStyle = .warning
+    alert.alertStyle = appAlert.style == .informational ? .informational : .warning
 
     switch appAlert.kind {
     case .basic:

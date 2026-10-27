@@ -514,3 +514,13 @@
 "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple a supprimé la prise en charge d'AFP dans les versions récentes de macOS. Pensez à utiliser SMB ou NFS pour ce partage.";
 "The server “%@” supports no protocol version this Mac can use." = "Le serveur « %@ » ne prend en charge aucune version de protocole utilisable par ce Mac.";
 "The file-sharing protocol is not supported by this Mac." = "Le protocole de partage de fichiers n’est pas pris en charge par ce Mac.";
+
+// MARK: - Verify Volume
+
+"Verify Volume" = "Vérifier le volume";
+"Verifying…" = "Vérification…";
+"Volume Verified" = "Volume vérifié";
+"No problems were found on “%@”." = "Aucun problème n’a été détecté sur « %@ ».";
+"Volume Verification Failed" = "Échec de la vérification du volume";
+"Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "Des problèmes ont été détectés sur « %@ ». Utilisez S.O.S. dans Utilitaire de disque pour réparer ce volume.";
+"Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "La vérification de « %@ » ne s’est pas terminée à temps. Vous pouvez la lancer avec S.O.S. dans Utilitaire de disque.";

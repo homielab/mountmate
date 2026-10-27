@@ -514,3 +514,13 @@
 "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple đã ngừng hỗ trợ giao thức AFP trên các phiên bản macOS mới. Hãy cân nhắc chuyển chia sẻ này sang SMB hoặc NFS.";
 "The server “%@” supports no protocol version this Mac can use." = "Máy chủ “%@” không hỗ trợ phiên bản giao thức nào mà máy Mac này dùng được.";
 "The file-sharing protocol is not supported by this Mac." = "Giao thức chia sẻ tệp không được hỗ trợ trên máy Mac này.";
+
+// MARK: - Verify Volume
+
+"Verify Volume" = "Kiểm tra phân vùng";
+"Verifying…" = "Đang kiểm tra…";
+"Volume Verified" = "Đã kiểm tra phân vùng";
+"No problems were found on “%@”." = "Không tìm thấy sự cố trên “%@”.";
+"Volume Verification Failed" = "Kiểm tra phân vùng thất bại";
+"Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "Phát hiện sự cố trên “%@”. Hãy dùng First Aid trong Disk Utility để sửa phân vùng này.";
+"Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "Việc kiểm tra “%@” không xong kịp thời gian. Bạn có thể kiểm tra bằng First Aid trong Disk Utility.";

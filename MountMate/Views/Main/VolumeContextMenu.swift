@@ -49,6 +49,20 @@ struct VolumeContextMenu: View {
           Label("Open in Terminal", systemImage: "terminal")
         }
       }
+      if rules.showsVerifyVolume {
+        Button {
+          manager.verifyVolume(volume)
+        } label: {
+          Label(
+            rules.isVerifying
+              ? NSLocalizedString(
+                "Verifying…", comment: "Volume context menu: verification in progress")
+              : NSLocalizedString(
+                "Verify Volume", comment: "Volume context menu: verify volume action"),
+            systemImage: "checkmark.shield")
+        }
+        .disabled(rules.isVerifying)
+      }
       Divider()
       protectItem(rules.protectAction)
     }

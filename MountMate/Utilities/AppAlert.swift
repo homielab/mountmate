@@ -17,8 +17,14 @@ enum AppAlertKind {
 }
 
 struct AppAlert: Identifiable {
+  enum Style: Sendable {
+    case warning
+    case informational
+  }
+
   let id = UUID()
   let title: String
   let message: String
   let kind: AppAlertKind
+  var style: Style = .warning
 }

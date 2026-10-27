@@ -108,6 +108,7 @@ Everything in the list above, in full:
 - See which ones are **mounted**
 - **Mount/unmount** any drive with a click
 - **Mount Read-Only**: right-click an unmounted volume to mount it read-only (protect a backup drive, inspect a damaged or NTFS drive); the row shows a "Read-only" badge
+- **Verify Volume**: right-click a mounted external volume to verify its file system data structures with diskutil in the background (never repairs); shows a "Verifying…" status and alert results with Disk Utility repair suggestions if issues are found
 - Check **free space** for drives and for mounted network shares (used / total)
 - **Eject All External Disks**: one button (next to Unmount All), an optional shortcut (none by default) or a Shortcuts action unmounts and ejects every external disk so you can unplug them; internal disks, disk images and disks with a protected volume are skipped, nothing is forced, and failures are listed in one alert
 - **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default (Eject All External Disks has none until you record one); change them in Settings (the key shown follows your keyboard layout)

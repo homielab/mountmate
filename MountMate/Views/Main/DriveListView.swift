@@ -47,6 +47,7 @@ struct DriveListView: View {
     let reconnecting = keepAliveManager.reconnectingVolumeIDs
     let savedPasswords = manager.volumeIDsWithSavedPassword
     let lowSpaceThreshold = LowSpaceRules.threshold()
+    let verifying = manager.verifyingVolumeIDs
     var rowStates: [String: VolumeRowState] = [:]
     // Pinned volumes come from these disks too.
     for disk in internalDisks + externalDisks + diskImages {
@@ -61,7 +62,9 @@ struct DriveListView: View {
             && volume.compositeId != nil,
           idleUnmountMinutes: persistence.idleUnmountMinutes(for: volume),
           lowSpace: LowSpaceRules.warning(
-            for: volume, on: disk.type, threshold: lowSpaceThreshold))
+            for: volume, on: disk.type, threshold: lowSpaceThreshold),
+          isExternalDisk: disk.type == .physical,
+          isVerifying: verifying.contains(volume.id))
       }
     }
     return VolumeListState(

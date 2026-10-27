@@ -23,6 +23,10 @@ struct VolumeRowState: Equatable {
   var idleUnmountMinutes = 0
   /// Set when the volume is almost full (see `LowSpaceRules`).
   var lowSpace: LowSpaceRules.Warning?
+  /// On an external physical disk (not internal, not a disk image).
+  var isExternalDisk = false
+  /// Currently being verified by `diskutil verifyVolume`.
+  var isVerifying = false
 }
 
 /// Row state for the whole list, computed once per list render by

@@ -19,6 +19,9 @@ struct VolumeMenuRules: Equatable {
   let canUnmountWhenIdle: Bool
   let hasSavedPassword: Bool
   let idleUnmountMinutes: Int
+  let isExternalDisk: Bool
+  let isVerifying: Bool
+  let category: DriveCategory
 
   init(volume: Volume, state: VolumeRowState) {
     isMounted = volume.isMounted
@@ -30,6 +33,9 @@ struct VolumeMenuRules: Equatable {
     canUnmountWhenIdle = state.canUnmountWhenIdle
     hasSavedPassword = state.hasSavedPassword
     idleUnmountMinutes = state.idleUnmountMinutes
+    isExternalDisk = state.isExternalDisk
+    isVerifying = state.isVerifying
+    category = volume.category
   }
 
   /// "Reconnect Now": Keep Alive is waiting to bring this volume back.
@@ -49,6 +55,9 @@ struct VolumeMenuRules: Equatable {
 
   /// "Mount" and "Mount Read-Only": only while unmounted.
   var showsMountActions: Bool { !isMounted }
+
+  /// "Verify Volume": only mounted external user volumes (no system, no disk images).
+  var showsVerifyVolume: Bool { isMounted && isExternalDisk && category == .user }
 
   /// "Unmount When Idle" submenu: external physical disks only.
   var showsIdleUnmount: Bool { canUnmountWhenIdle }

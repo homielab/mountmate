@@ -36,6 +36,7 @@ struct VolumeRowView: View {
   private var editorRowID: String { Self.editorRowID(for: volume, context: context) }
   private var currentVolume: Volume { volume }
   private var customMountPoint: String? { state.customMountPoint }
+  private var rules: VolumeMenuRules { VolumeMenuRules(volume: volume, state: state) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
@@ -48,7 +49,18 @@ struct VolumeRowView: View {
               .foregroundStyle(
                 currentVolume.isMounted ? Color.accentColor : Color.secondary.opacity(0.6))
 
-            if let error = currentVolume.storageError {
+            if state.isVerifying {
+              ProgressView()
+                .controlSize(.mini)
+                .help(
+                  NSLocalizedString(
+                    "Verifying…", comment: "Volume status: verification in progress")
+                )
+                .accessibilityLabel(
+                  Text(
+                    NSLocalizedString(
+                      "Verifying…", comment: "Volume status: verification in progress")))
+            } else if let error = currentVolume.storageError {
               Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption)
                 .foregroundStyle(.orange)
@@ -84,7 +96,14 @@ struct VolumeRowView: View {
               .foregroundStyle(currentVolume.isMounted ? .primary : .secondary)
 
             if currentVolume.isMounted {
-              if currentVolume.isReadOnly {
+              if state.isVerifying {
+                Text(
+                  NSLocalizedString(
+                    "Verifying…", comment: "Volume status: verification in progress")
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              } else if currentVolume.isReadOnly {
                 Text("Read-only")
                   .font(.caption2).fontWeight(.semibold)
                   .foregroundStyle(.orange)
@@ -192,6 +211,18 @@ struct VolumeRowView: View {
             Button("Copy Path") { MountPointActions.copyPath(path) }
             Button("Open in Terminal") { MountPointActions.openInTerminal(path) }
           }
+          if rules.showsVerifyVolume {
+            Button(
+              rules.isVerifying
+                ? NSLocalizedString(
+                  "Verifying…", comment: "Volume context menu: verification in progress")
+                : NSLocalizedString(
+                  "Verify Volume", comment: "Volume context menu: verify volume action")
+            ) {
+              manager.verifyVolume(volume)
+            }
+            .disabled(rules.isVerifying)
+          }
         }
 
         Button(action: toggleMount) {
@@ -278,7 +309,7 @@ struct VolumeRowView: View {
 
   /// Main action of the row: unmount a mounted volume, mount an unmounted one.
   private func toggleMount() {
-    guard !isLoading else { return }
+    guard !isLoading, !state.isVerifying else { return }
     if currentVolume.isMounted {
       manager.unmount(volume: currentVolume)
     } else {

@@ -514,3 +514,13 @@
 "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS." = "Apple 已在现代 macOS 版本中移除了对 AFP 的支持。建议将此共享切换为 SMB 或 NFS。";
 "The server “%@” supports no protocol version this Mac can use." = "服务器“%@”不支持此 Mac 可用的任何协议版本。";
 "The file-sharing protocol is not supported by this Mac." = "此 Mac 不支持该文件共享协议。";
+
+// MARK: - Verify Volume
+
+"Verify Volume" = "检查宗卷";
+"Verifying…" = "正在检查…";
+"Volume Verified" = "宗卷已检查";
+"No problems were found on “%@”." = "在“%@”上未发现任何问题。";
+"Volume Verification Failed" = "宗卷检查失败";
+"Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume." = "在“%@”上发现问题。请在“磁盘工具”中使用“急救”修复此宗卷。";
+"Verification of “%@” did not finish in time. You can check it with First Aid in Disk Utility." = "“%@”的检查未能及时完成。你可以在“磁盘工具”中使用“急救”进行检查。";

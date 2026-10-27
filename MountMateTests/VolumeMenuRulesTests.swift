@@ -6,14 +6,15 @@ import XCTest
 
 final class VolumeMenuRulesTests: XCTestCase {
   private func volume(
-    mounted: Bool, mountPoint: String? = "/Volumes/Data", isProtected: Bool = false
+    mounted: Bool, mountPoint: String? = "/Volumes/Data", isProtected: Bool = false,
+    category: DriveCategory = .user
   )
     -> Volume
   {
     Volume(
       id: "v1", deviceIdentifier: "disk2s1", diskUUID: nil, name: "Data",
       isMounted: mounted, mountPoint: mountPoint, freeSpace: nil, totalSize: nil, usedSpace: nil,
-      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: .user,
+      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: category,
       isProtected: isProtected, snapshots: [], storageError: nil)
   }
 
@@ -93,5 +94,43 @@ final class VolumeMenuRulesTests: XCTestCase {
       VolumeMenuRules.idleUnmountChoiceTitle(0),
       NSLocalizedString("Off", comment: "Unmount When Idle: disabled"))
     XCTAssertTrue(VolumeMenuRules.idleUnmountChoiceTitle(10).contains("10"))
+  }
+
+  func testVerifyVolumeShowsOnlyForMountedExternalUserVolumes() {
+    let externalMounted = rules(volume(mounted: true)) {
+      $0.isExternalDisk = true
+    }
+    XCTAssertTrue(externalMounted.showsVerifyVolume)
+
+    let externalUnmounted = rules(volume(mounted: false)) {
+      $0.isExternalDisk = true
+    }
+    XCTAssertFalse(externalUnmounted.showsVerifyVolume)
+
+    let internalMounted = rules(volume(mounted: true)) {
+      $0.isExternalDisk = false
+    }
+    XCTAssertFalse(internalMounted.showsVerifyVolume)
+
+    let externalSystemMounted = rules(volume(mounted: true, category: .system)) {
+      $0.isExternalDisk = true
+    }
+    XCTAssertFalse(externalSystemMounted.showsVerifyVolume)
+  }
+
+  func testVerifyVolumeReflectsVerifyingState() {
+    let verifying = rules(volume(mounted: true)) {
+      $0.isExternalDisk = true
+      $0.isVerifying = true
+    }
+    XCTAssertTrue(verifying.showsVerifyVolume)
+    XCTAssertTrue(verifying.isVerifying)
+
+    let notVerifying = rules(volume(mounted: true)) {
+      $0.isExternalDisk = true
+      $0.isVerifying = false
+    }
+    XCTAssertTrue(notVerifying.showsVerifyVolume)
+    XCTAssertFalse(notVerifying.isVerifying)
   }
 }
