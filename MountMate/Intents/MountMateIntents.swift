@@ -36,8 +36,8 @@ enum IntentActions {
     }
   }
 
-  /// Names of the disks that could not be ejected.
-  static func ejectAll() async -> [String] {
+  /// The disks that could not be ejected, with the reason.
+  static func ejectAll() async -> [BulkVolumeActions.DiskEjectFailure] {
     let manager = await refreshedDriveManager()
     return await withCheckedContinuation { continuation in
       manager.ejectAllDisks(reportFailures: false) { continuation.resume(returning: $0) }
@@ -164,7 +164,9 @@ struct EjectAllIntent: AppIntent {
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let failed = await IntentActions.ejectAll()
     guard failed.isEmpty else {
-      throw IntentFailure(message: IntentMessages.ejectFailure(names: failed))
+      throw IntentFailure(
+        message: IntentMessages.ejectFailure(
+          names: failed.map(\.name), reasons: failed.map(\.reason)))
     }
     return .result(dialog: IntentDialog(stringLiteral: IntentMessages.disksEjected()))
   }

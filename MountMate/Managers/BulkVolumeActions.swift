@@ -73,12 +73,96 @@ enum BulkVolumeActions {
   /// Used by the single-disk Eject and by "Eject All External Disks".
   static let ejectTimeout: TimeInterval = 60
 
+  /// Pause before the second eject attempt.
+  static let ejectRetryDelay: TimeInterval = 2
+
   /// `diskutil eject` for a disk, with the longer `ejectTimeout`.
-  static func diskutilEject(_ disk: PhysicalDisk) -> Bool {
+  static func diskutilEject(_ disk: PhysicalDisk) -> ProcessResult {
     runProcess(
       executable: "/usr/sbin/diskutil", arguments: ejectArguments(for: disk),
-      timeout: ejectTimeout
-    ).succeeded
+      timeout: ejectTimeout)
+  }
+
+  /// Ejects `disk` and returns the last attempt's result. A sleeping disk
+  /// often unmounts its volumes but fails the eject while it spins up, so a
+  /// failure is retried once after `ejectRetryDelay` (#70) - unless it timed
+  /// out or says something is using the disk: waiting does not help then.
+  /// Used by the single Eject and by "Eject All External Disks". `run` and
+  /// `wait` are injectable for tests.
+  static func ejectWithRetry(
+    _ disk: PhysicalDisk,
+    run: (PhysicalDisk) -> ProcessResult = diskutilEject,
+    wait: () -> Void = { Thread.sleep(forTimeInterval: ejectRetryDelay) }
+  ) -> ProcessResult {
+    let first = run(disk)
+    guard !first.succeeded, !first.timedOut,
+      !DiskUtilErrorClassifier.isBusyFailure(stderr: first.stderr)
+    else { return first }
+    wait()
+    return run(disk)
+  }
+
+  /// A disk "Eject All External Disks" could not eject: why (it names the
+  /// disk) and whether Force Eject may help.
+  struct DiskEjectFailure: Equatable {
+    let disk: PhysicalDisk
+    let reason: String
+    let canForce: Bool
+
+    var name: String { disk.name ?? disk.id }
+  }
+
+  /// The reason for a failed eject of a disk called `name`. Busy, in use and
+  /// timed-out ejects can be forced; other errors cannot.
+  static func ejectFailureReason(
+    for result: ProcessResult, name: String
+  ) -> (reason: String, canForce: Bool) {
+    if result.timedOut {
+      return (
+        "“\(name)”: "
+          + DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout), true
+      )
+    }
+    switch DiskUtilErrorClassifier.classify(result.stderr, for: name, operation: .eject) {
+    case .unmountBusyVolume:
+      return (
+        String(
+          format: NSLocalizedString(
+            "Failed to eject “%@” because one of its volumes is busy or in use.",
+            comment: "Error message"), name), true
+      )
+    case .inUse(let process):
+      let format =
+        process == nil
+        ? NSLocalizedString(
+          "Failed to eject “%@” because it is currently in use by another application.",
+          comment: "Error message")
+        : NSLocalizedString(
+          "Failed to eject “%@” because it is currently in use by “%@”.",
+          comment: "Error message")
+      return (
+        process.map { String(format: format, name, $0) } ?? String(format: format, name), true
+      )
+    default:
+      let detail = DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout)
+      return ("“\(name)”: " + detail, false)
+    }
+  }
+
+  /// Ejects every disk in parallel (each with `ejectWithRetry`) and returns
+  /// the ones that failed, in the original order, with their reasons. Blocks
+  /// until all are done; call off the main thread.
+  static func ejectDisks(
+    _ disks: [PhysicalDisk],
+    run: (PhysicalDisk) -> ProcessResult = diskutilEject,
+    wait: () -> Void = { Thread.sleep(forTimeInterval: ejectRetryDelay) }
+  ) -> [DiskEjectFailure] {
+    let results = mapConcurrently(disks) { ejectWithRetry($0, run: run, wait: wait) }
+    return zip(disks, results).compactMap { disk, result in
+      guard !result.succeeded else { return nil }
+      let why = ejectFailureReason(for: result, name: disk.name ?? disk.id)
+      return DiskEjectFailure(disk: disk, reason: why.reason, canForce: why.canForce)
+    }
   }
 
   /// `diskutil unmount` for a volume.

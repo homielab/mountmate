@@ -22,15 +22,8 @@ extension DriveManager {
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
     // A RAID master is a virtual logical disk: `ejectArguments` unmounts its
-    // volumes instead. A sleeping (spun-down) disk has to wake before it can
-    // be ejected: the first attempt often unmounts the volumes but fails the
-    // eject while the drive spins up, so allow `ejectTimeout` and retry once,
-    // 2 s later, before reporting an error (#70).
-    let ejectArgs = BulkVolumeActions.ejectArguments(for: disk)
+    // volumes instead. A sleeping disk gets one retry (`ejectWithRetry`, #70).
     let ejectTimeout = BulkVolumeActions.ejectTimeout
-    let runEject = {
-      runProcess(executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
-    }
     let finish: (ProcessResult) -> Void = { result in
       DispatchQueue.main.async {
         self.finishDiskOperation(
@@ -44,14 +37,7 @@ extension DriveManager {
       }
     }
     DispatchQueue.global(qos: .userInitiated).async {
-      let result = runEject()
-      guard
-        !result.succeeded && !result.timedOut
-          && !DiskUtilErrorClassifier.isBusyFailure(stderr: result.stderr)
-      else { return finish(result) }
-      DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 2) {
-        finish(runEject())
-      }
+      finish(BulkVolumeActions.ejectWithRetry(disk))
     }
   }
 

@@ -362,10 +362,12 @@ class DriveManager: ObservableObject {
   /// parallel, and reports the disks that could not be ejected in one alert.
   /// - Parameter reportFailures: show that alert. Off when the caller
   ///   reports the result itself (Shortcuts).
-  /// - Parameter completion: Called on the main thread with the names of the
-  ///   disks that could not be ejected, after the drive list refreshed
+  /// - Parameter completion: Called on the main thread with the disks that
+  ///   could not be ejected (and why), after the drive list refreshed
   ///   (immediately with `[]` when there is nothing to eject).
-  func ejectAllDisks(reportFailures: Bool = true, completion: (([String]) -> Void)? = nil) {
+  func ejectAllDisks(
+    reportFailures: Bool = true, completion: (([BulkVolumeActions.DiskEjectFailure]) -> Void)? = nil
+  ) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
         self.ejectAllDisks(reportFailures: reportFailures, completion: completion)
@@ -384,28 +386,38 @@ class DriveManager: ObservableObject {
     for disk in disks { setEjecting(disk.id, true) }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let failures = BulkVolumeActions.runConcurrently(
-        disks, runner: BulkVolumeActions.diskutilEject)
+      let failures = BulkVolumeActions.ejectDisks(disks)
       DispatchQueue.main.async {
         guard let self else { return }
-        let names = failures.map { $0.name ?? $0.id }
         KeepAliveManager.shared.unsuppress(
-          volumes: failures.flatMap(\.allVolumes), keeping: wasSuppressed)
-        if reportFailures,
-          let alert = BulkVolumeActions.failureAlert(
-            forNames: names,
-            title: NSLocalizedString("Eject Failed", comment: "Alert title"),
-            format: NSLocalizedString(
-              "Could not eject: %@", comment: "Bulk eject failure; list of disk names"))
-        {
+          volumes: failures.flatMap(\.disk.allVolumes), keeping: wasSuppressed)
+        if reportFailures, let alert = self.ejectFailureAlert(failures) {
           self.userActionError = alert
         }
         self.refreshDrives(qos: .userInitiated) {
           for disk in disks { self.setEjecting(disk.id, false) }
-          completion?(names)
+          completion?(failures)
         }
       }
     }
+  }
+
+  /// One alert for the disks that could not be ejected, each with its reason;
+  /// offers Force Eject for the ones where it may help.
+  private func ejectFailureAlert(
+    _ failures: [BulkVolumeActions.DiskEjectFailure]
+  ) -> AppAlert? {
+    let forceable = failures.filter(\.canForce).map(\.disk)
+    let kind: AppAlertKind =
+      forceable.isEmpty
+      ? .basic
+      : .forceEject { for disk in forceable { self.forceEject(disk: disk) } }
+    return BulkVolumeActions.failureAlert(
+      forNames: failures.map(\.name),
+      title: NSLocalizedString("Eject Failed", comment: "Alert title"),
+      format: NSLocalizedString(
+        "Could not eject: %@", comment: "Bulk eject failure; list of disk names"),
+      reasons: failures.map(\.reason), kind: kind)
   }
 
   /// - Parameter suppressReconnect: `false` when the unmount is not a user

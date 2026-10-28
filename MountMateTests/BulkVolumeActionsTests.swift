@@ -256,6 +256,87 @@ final class BulkVolumeActionsTests: XCTestCase {
       BulkVolumeActions.mapConcurrently(Array(0..<20)) { $0 * 2 }, (0..<20).map { $0 * 2 })
   }
 
+  // MARK: - Eject with retry
+
+  private func ejectResult(_ code: Int32?, stderr: String = "", timedOut: Bool = false)
+    -> ProcessResult
+  {
+    ProcessResult(stdout: "", stderr: stderr, exitCode: code, timedOut: timedOut)
+  }
+
+  private func runEject(_ results: [ProcessResult]) -> (
+    result: ProcessResult, runs: Int, waits: Int
+  ) {
+    var runs = 0
+    var waits = 0
+    let result = BulkVolumeActions.ejectWithRetry(
+      disk("disk2", volumes: []),
+      run: { _ in
+        defer { runs += 1 }
+        return results[min(runs, results.count - 1)]
+      }, wait: { waits += 1 })
+    return (result, runs, waits)
+  }
+
+  func testEjectWithRetryRunsOnceWhenItSucceeds() {
+    let run = runEject([ejectResult(0)])
+    XCTAssertTrue(run.result.succeeded)
+    XCTAssertEqual(run.runs, 1)
+    XCTAssertEqual(run.waits, 0)
+  }
+
+  func testEjectWithRetryRunsASecondTimeAfterAPlainFailure() {
+    let run = runEject([ejectResult(1, stderr: "Could not eject"), ejectResult(0)])
+    XCTAssertTrue(run.result.succeeded)
+    XCTAssertEqual(run.runs, 2)
+    XCTAssertEqual(run.waits, 1)
+  }
+
+  func testEjectWithRetryReturnsTheSecondFailure() {
+    let run = runEject([ejectResult(1, stderr: "first"), ejectResult(1, stderr: "second")])
+    XCTAssertEqual(run.result.stderr, "second")
+    XCTAssertEqual(run.runs, 2)
+  }
+
+  func testEjectWithRetryDoesNotRetryABusyDisk() {
+    let run = runEject([ejectResult(1, stderr: "Volume is busy (dissented by PID 12 (/bin/x))")])
+    XCTAssertFalse(run.result.succeeded)
+    XCTAssertEqual(run.runs, 1)
+    XCTAssertEqual(run.waits, 0)
+  }
+
+  func testEjectWithRetryDoesNotRetryATimeout() {
+    let run = runEject([ejectResult(nil, timedOut: true)])
+    XCTAssertEqual(run.runs, 1)
+    XCTAssertEqual(run.waits, 0)
+  }
+
+  func testEjectDisksReportsEachFailedDiskWithItsReason() {
+    let disks = [
+      disk("disk2", volumes: []), disk("disk3", volumes: []), disk("disk4", volumes: []),
+    ]
+    let failures = BulkVolumeActions.ejectDisks(
+      disks,
+      run: { disk in
+        switch disk.id {
+        case "disk2": return self.ejectResult(0)
+        case "disk3": return self.ejectResult(1, stderr: "Volume is busy")
+        default: return self.ejectResult(1, stderr: "Some error")
+        }
+      }, wait: {})
+    XCTAssertEqual(failures.map(\.name), ["disk3", "disk4"])
+    XCTAssertEqual(failures.map(\.canForce), [true, false])
+    XCTAssertTrue(failures[0].reason.contains("disk3"))
+    XCTAssertTrue(failures[1].reason.contains("Some error"))
+  }
+
+  func testEjectFailureReasonForATimeoutCanBeForced() {
+    let why = BulkVolumeActions.ejectFailureReason(
+      for: ejectResult(nil, timedOut: true), name: "HDD")
+    XCTAssertTrue(why.reason.contains("HDD"))
+    XCTAssertTrue(why.canForce)
+  }
+
   // MARK: - Mount with retry
 
   private func result(_ code: Int32?, stderr: String = "") -> ProcessResult {

@@ -26,6 +26,10 @@ final class IntentMessagesTests: XCTestCase {
   func testEjectFailureListsNamesAndIsTranslated() throws {
     XCTAssertEqual(
       IntentMessages.ejectFailure(names: ["A", "B"], localize: { $0 }), "Could not eject: A, B")
+    XCTAssertEqual(
+      IntentMessages.ejectFailure(
+        names: ["A", "B"], reasons: ["“A”: busy", "“B”: timed out"], localize: { $0 }),
+      "Could not eject: A, B\n“A”: busy\n“B”: timed out")
     let english = try localizer("en")
     for language in languages where language != "en" {
       let localize = try localizer(language)
