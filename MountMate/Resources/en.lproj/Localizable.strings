@@ -165,9 +165,9 @@
 "Add Network Share" = "Add Network Share";
 "Edit “%@”" = "Edit “%@”";
 "Edit Network Share" = "Edit Network Share";
-"MountMate can automatically mount these SMB shares at login." = "MountMate can automatically mount these SMB shares at login.";
+"MountMate can automatically mount these SMB, NFS or AFP shares at login." = "MountMate can automatically mount these SMB, NFS or AFP shares at login.";
 "No Network Shares Configured" = "No Network Shares Configured";
-"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Add your SMB or NAS network shares here to mount them automatically or on demand.";
+"Add your SMB, NFS or AFP network shares here to mount them automatically or on demand." = "Add your SMB, NFS or AFP network shares here to mount them automatically or on demand.";
 "Saved Network Shares" = "Saved Network Shares";
 "Manually Connected Shares" = "Manually Connected Shares";
 "Eject All Manually Connected Shares" = "Eject All Manually Connected Shares";
@@ -195,9 +195,9 @@
 "public" = "public";
 "Optional (Guest)" = "Optional (Guest)";
 "Import Mounted" = "Import Mounted";
-"Import SMB shares that are currently mounted in Finder" = "Import SMB shares that are currently mounted in Finder";
+"Import SMB, NFS or AFP shares that are currently mounted in Finder" = "Import SMB, NFS or AFP shares that are currently mounted in Finder";
 "Those mounted shares are already in MountMate." = "Those mounted shares are already in MountMate.";
-"No mounted SMB shares were found." = "No mounted SMB shares were found.";
+"No mounted SMB, NFS or AFP shares were found." = "No mounted SMB, NFS or AFP shares were found.";
 
 
 // MARK: - Custom Mount Point

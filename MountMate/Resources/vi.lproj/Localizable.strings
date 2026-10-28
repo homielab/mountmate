@@ -165,9 +165,9 @@
 "Add Network Share" = "Thêm Chia sẻ Mạng";
 "Edit “%@”" = "Sửa “%@”";
 "Edit Network Share" = "Sửa Chia sẻ Mạng";
-"MountMate can automatically mount these SMB shares at login." = "MountMate có thể tự động gắn các chia sẻ SMB này khi đăng nhập.";
+"MountMate can automatically mount these SMB, NFS or AFP shares at login." = "MountMate có thể tự động gắn các chia sẻ SMB, NFS hoặc AFP này khi đăng nhập.";
 "No Network Shares Configured" = "Chưa cấu hình Chia sẻ Mạng";
-"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Thêm chia sẻ mạng SMB hoặc NAS của bạn vào đây để gắn tự động hoặc theo yêu cầu.";
+"Add your SMB, NFS or AFP network shares here to mount them automatically or on demand." = "Thêm chia sẻ mạng SMB, NFS hoặc AFP của bạn vào đây để gắn tự động hoặc theo yêu cầu.";
 "Saved Network Shares" = "Chia sẻ mạng đã lưu";
 "Manually Connected Shares" = "Chia sẻ kết nối thủ công";
 "Eject All Manually Connected Shares" = "Đẩy ra tất cả chia sẻ kết nối thủ công";
@@ -313,8 +313,8 @@
 "Vol: %@" = "Phân vùng: %@";
 "Volume Not Connected" = "Phân vùng chưa kết nối";
 "Import Mounted" = "Nhập ổ đang gắn";
-"Import SMB shares that are currently mounted in Finder" = "Nhập các thư mục chia sẻ SMB đang được gắn trong Finder";
-"No mounted SMB shares were found." = "Không tìm thấy thư mục chia sẻ SMB nào đang được gắn.";
+"Import SMB, NFS or AFP shares that are currently mounted in Finder" = "Nhập các thư mục chia sẻ SMB, NFS hoặc AFP đang được gắn trong Finder";
+"No mounted SMB, NFS or AFP shares were found." = "Không tìm thấy thư mục chia sẻ SMB, NFS hoặc AFP nào đang được gắn.";
 "Those mounted shares are already in MountMate." = "Các thư mục chia sẻ đang gắn này đã có trong MountMate.";
 "Access to the share “%@” was denied by the server." = "Máy chủ đã từ chối truy cập vào thư mục chia sẻ “%@”.";
 "Another volume is already mounted at “%@”." = "Một phân vùng khác đã được gắn tại “%@”.";

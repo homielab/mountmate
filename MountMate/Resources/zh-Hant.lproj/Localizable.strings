@@ -165,9 +165,9 @@
 "Add Network Share" = "新增網路共享";
 "Edit “%@”" = "編輯「%@」";
 "Edit Network Share" = "編輯網路共享";
-"MountMate can automatically mount these SMB shares at login." = "MountMate 可以在登入時自動掛載這些 SMB 共享。";
+"MountMate can automatically mount these SMB, NFS or AFP shares at login." = "MountMate 可以在登入時自動掛載這些 SMB、NFS 或 AFP 共享。";
 "No Network Shares Configured" = "未設定網路共享";
-"Add your SMB or NAS network shares here to mount them automatically or on demand." = "在此新增您的 SMB 或 NAS 網路共享，以便自動或按需掛載。";
+"Add your SMB, NFS or AFP network shares here to mount them automatically or on demand." = "在此新增您的 SMB、NFS 或 AFP 網路共享，以便自動或按需掛載。";
 "Saved Network Shares" = "已儲存的網路共享";
 "Manually Connected Shares" = "手動連線的共享";
 "Eject All Manually Connected Shares" = "推出所有手動連線的共享";
@@ -313,8 +313,8 @@
 "Vol: %@" = "磁碟卷：%@";
 "Volume Not Connected" = "磁碟卷未連接";
 "Import Mounted" = "匯入已掛載項目";
-"Import SMB shares that are currently mounted in Finder" = "匯入目前在 Finder 中掛載的 SMB 共享";
-"No mounted SMB shares were found." = "找不到已掛載的 SMB 共享。";
+"Import SMB, NFS or AFP shares that are currently mounted in Finder" = "匯入目前在 Finder 中掛載的 SMB、NFS 或 AFP 共享";
+"No mounted SMB, NFS or AFP shares were found." = "找不到已掛載的 SMB、NFS 或 AFP 共享。";
 "Those mounted shares are already in MountMate." = "這些已掛載的共享已在 MountMate 中。";
 "Access to the share “%@” was denied by the server." = "伺服器拒絕存取共享「%@」。";
 "Another volume is already mounted at “%@”." = "另一個磁碟卷已掛載在「%@」。";

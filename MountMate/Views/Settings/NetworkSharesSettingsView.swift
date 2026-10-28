@@ -28,7 +28,7 @@ struct NetworkSharesSettingsView: View {
         .buttonStyle(.bordered)
         .controlSize(.small)
         .disabled(isImporting)
-        .help("Import SMB shares that are currently mounted in Finder")
+        .help("Import SMB, NFS or AFP shares that are currently mounted in Finder")
 
         Button(action: { showingAddSheet = true }) {
           Label("Add Share", systemImage: "plus")
@@ -65,7 +65,7 @@ struct NetworkSharesSettingsView: View {
         )
       }
 
-      Text("MountMate can automatically mount these SMB shares at login.")
+      Text("MountMate can automatically mount these SMB, NFS or AFP shares at login.")
         .font(.caption)
         .foregroundStyle(.secondary)
     }
@@ -131,7 +131,7 @@ struct NetworkSharesSettingsView: View {
         "Those mounted shares are already in MountMate.", comment: "Mounted share import result")
     }
     return NSLocalizedString(
-      "No mounted SMB shares were found.", comment: "Mounted share import result")
+      "No mounted SMB, NFS or AFP shares were found.", comment: "Mounted share import result")
   }
 
   private var emptyStateView: some View {
@@ -152,11 +152,13 @@ struct NetworkSharesSettingsView: View {
         Text("No Network Shares Configured")
           .font(.headline)
 
-        Text("Add your SMB or NAS network shares here to mount them automatically or on demand.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.center)
-          .frame(maxWidth: 320)
+        Text(
+          "Add your SMB, NFS or AFP network shares here to mount them automatically or on demand."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: 320)
       }
 
       Button(action: { showingAddSheet = true }) {

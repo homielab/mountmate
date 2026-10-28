@@ -165,9 +165,9 @@
 "Add Network Share" = "Ajouter un partage réseau";
 "Edit “%@”" = "Modifier « %@ »";
 "Edit Network Share" = "Modifier un partage réseau";
-"MountMate can automatically mount these SMB shares at login." = "MountMate peut monter automatiquement ces partages SMB à l'ouverture de session.";
+"MountMate can automatically mount these SMB, NFS or AFP shares at login." = "MountMate peut monter automatiquement ces partages SMB, NFS ou AFP à l'ouverture de session.";
 "No Network Shares Configured" = "Aucun partage réseau configuré";
-"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Ajoutez vos partages réseau SMB ou NAS ici pour les monter automatiquement ou à la demande.";
+"Add your SMB, NFS or AFP network shares here to mount them automatically or on demand." = "Ajoutez vos partages réseau SMB, NFS ou AFP ici pour les monter automatiquement ou à la demande.";
 "Saved Network Shares" = "Partages réseau enregistrés";
 "Manually Connected Shares" = "Partages connectés manuellement";
 "Eject All Manually Connected Shares" = "Éjecter tous les partages connectés manuellement";
@@ -313,8 +313,8 @@
 "Vol: %@" = "Vol : %@";
 "Volume Not Connected" = "Volume non connecté";
 "Import Mounted" = "Importer les montés";
-"Import SMB shares that are currently mounted in Finder" = "Importer les partages SMB actuellement montés dans le Finder";
-"No mounted SMB shares were found." = "Aucun partage SMB monté n’a été trouvé.";
+"Import SMB, NFS or AFP shares that are currently mounted in Finder" = "Importer les partages SMB, NFS ou AFP actuellement montés dans le Finder";
+"No mounted SMB, NFS or AFP shares were found." = "Aucun partage SMB, NFS ou AFP monté n’a été trouvé.";
 "Those mounted shares are already in MountMate." = "Ces partages montés sont déjà dans MountMate.";
 "Access to the share “%@” was denied by the server." = "Le serveur a refusé l’accès au partage « %@ ».";
 "Another volume is already mounted at “%@”." = "Un autre volume est déjà monté sur « %@ ».";

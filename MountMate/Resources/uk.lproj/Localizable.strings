@@ -165,9 +165,9 @@
 "Add Network Share" = "Додати мережевий ресурс";
 "Edit “%@”" = "Редагувати «%@»";
 "Edit Network Share" = "Редагувати мережевий ресурс";
-"MountMate can automatically mount these SMB shares at login." = "MountMate може автоматично монтувати ці SMB-ресурси під час входу.";
+"MountMate can automatically mount these SMB, NFS or AFP shares at login." = "MountMate може автоматично монтувати ці ресурси SMB, NFS або AFP під час входу.";
 "No Network Shares Configured" = "Мережеві ресурси не налаштовані";
-"Add your SMB or NAS network shares here to mount them automatically or on demand." = "Додавайте ваші SMB або NAS мережеві ресурси сюди для автоматичного або за запитом монтування.";
+"Add your SMB, NFS or AFP network shares here to mount them automatically or on demand." = "Додавайте ваші мережеві ресурси SMB, NFS або AFP сюди для автоматичного або за запитом монтування.";
 "Saved Network Shares" = "Збережені мережеві ресурси";
 "Manually Connected Shares" = "Ручні підключені ресурси";
 "Eject All Manually Connected Shares" = "Вийняти всі ручні підключені ресурси";
@@ -313,8 +313,8 @@
 "Vol: %@" = "Том: %@";
 "Volume Not Connected" = "Том не під’єднано";
 "Import Mounted" = "Імпортувати підключені";
-"Import SMB shares that are currently mounted in Finder" = "Імпортувати SMB-ресурси, підключені зараз у Finder";
-"No mounted SMB shares were found." = "Підключених SMB-ресурсів не знайдено.";
+"Import SMB, NFS or AFP shares that are currently mounted in Finder" = "Імпортувати ресурси SMB, NFS або AFP, підключені зараз у Finder";
+"No mounted SMB, NFS or AFP shares were found." = "Підключених ресурсів SMB, NFS або AFP не знайдено.";
 "Those mounted shares are already in MountMate." = "Ці підключені ресурси вже є в MountMate.";
 "Access to the share “%@” was denied by the server." = "Сервер відмовив у доступі до ресурсу «%@».";
 "Another volume is already mounted at “%@”." = "У «%@» вже підключено інший том.";
