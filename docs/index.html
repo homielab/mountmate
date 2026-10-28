@@ -967,8 +967,9 @@
           <div class="card">
             <h3>Network shares</h3>
             <p>
-              Mount SMB, NFS and AFP shares from the menu bar and auto-mount
-              them at login, or all at once with Mount All and Unmount All in
+              Mount SMB and NFS shares from the menu bar (existing AFP shares
+              keep working with a deprecation notice) and auto-mount them at
+              login, or all at once with Mount All and Unmount All in
               the Saved Network Shares header. Mounted shares show how much
               space is used and free.
             </p>
@@ -1046,6 +1047,47 @@
             <p>
               Right-click a mounted volume or network share to copy its mount
               path or open a Terminal window in that folder.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Rename Volume</h3>
+            <p>
+              Right-click a mounted, writable external volume and choose Rename
+              Volume… to give it a new name. The name is checked as you type, and
+              an alert explains it if macOS cannot rename the volume.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Verify Volume</h3>
+            <p>
+              Right-click a mounted external volume and choose Verify Volume to
+              check its file system in the background. It never repairs
+              anything; if problems are found, it points you to First Aid in
+              Disk Utility.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Browse Network</h3>
+            <p>
+              The network share sheet can list the SMB and NFS servers announcing
+              themselves on your local network. Pick one to fill in the address
+              and protocol, or type it by hand as before.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Open in Finder after mounting</h3>
+            <p>
+              Optional, off by default (Settings → General → Behavior). A volume
+              or share you mount yourself opens in a Finder window once it is
+              ready. Automatic mounts never open a window.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Force Unmount for shares</h3>
+            <p>
+              When a network share is busy, its server went away or the unmount
+              timed out, MountMate offers a confirmed Force Unmount instead of a
+              raw error message.
             </p>
           </div>
           <div class="card">
