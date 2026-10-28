@@ -148,7 +148,6 @@
 "Password" = "密碼";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "為確保 MountMate 能偵測所有磁碟類型並避免錯誤，請授予「完整磁碟存取權限」。\n\n點擊「開啟系統設定」以前往相關頁面。";
 "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate 無法取得磁碟資訊。系統可能忙碌、磁碟可能無回應，或權限可能不正確。";
-"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "無法讀取儲存空間詳情。請在「系統設定 > 隱私與安全性」中為 MountMate 授予「完整磁碟存取權限」或「檔案與資料夾」權限。";
 "Could not save settings for “%@” because it does not have a unique identifier (UUID)." = "無法儲存“%@”的設定，因為它沒有唯一識別碼 (UUID)。";
 
 // Disk usage format
@@ -236,8 +235,6 @@
 
 // MARK: - Connection String Preview
 //=============================================
-
-"Preview: %@" = "預覽: %@";
 
 // MARK: - Keep Alive (Auto-Reconnect)
 //=============================================

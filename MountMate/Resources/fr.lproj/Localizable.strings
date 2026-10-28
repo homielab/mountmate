@@ -148,7 +148,6 @@
 "Password" = "Mot de passe";
 "To ensure MountMate can see all disk types and prevent errors, please grant Full Disk Access.\n\nClick 'Open System Settings' to be taken to the correct panel." = "Pour permettre à MountMate de voir tous les types de disques et d'éviter les erreurs, veuillez accorder l'accès complet au disque.\n\nCliquez sur « Ouvrir les Réglages Système » pour accéder directement au bon panneau.";
 "MountMate could not get disk information. The system may be busy, a disk may be unresponsive, or permissions may be incorrect." = "MountMate n'a pas pu récupérer les informations sur les disques. Le système est peut-être occupé, un disque ne répond peut-être pas ou les autorisations sont incorrectes.";
-"Could not read storage details. Please grant MountMate 'Full Disk Access' or 'Files and Folders' permissions in System Settings > Privacy & Security." = "Impossible de lire les détails de stockage. Veuillez accorder à MountMate l'accès complet au disque ou les permissions « Fichiers et dossiers » dans Réglages Système > Confidentialité et sécurité.";
 "Could not save settings for “%@” because it does not have a unique identifier (UUID)." = "Impossible d'enregistrer les réglages pour « %@ » car il n'a pas d'identifiant unique (UUID).";
 
 // Disk usage format
@@ -236,8 +235,6 @@
 
 // MARK: - Connection String Preview
 //=============================================
-
-"Preview: %@" = "Aperçu : %@";
 
 // MARK: - Keep Alive (Auto-Reconnect)
 //=============================================

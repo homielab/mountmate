@@ -206,17 +206,9 @@ final class LocalizationKeyParityTests: XCTestCase {
       NSDictionary(
         contentsOf: root.appendingPathComponent("MountMate/Resources/en.lproj/Localizable.strings"))
         as? [String: Any])
-    // System keys are read by macOS, not by our code. The two others were
-    // already unused when this test was added; delete them (in every
-    // language) rather than adding to this list.
-    let knownUnused: Set<String> = [
-      "Preview: %@",
-      "Could not read storage details. Please grant MountMate 'Full Disk Access' or"
-        + " 'Files and Folders' permissions in System Settings > Privacy & Security.",
-    ]
+    // System keys are read by macOS, not by our code.
     let unused = english.keys.sorted().filter { key in
-      !key.hasPrefix("CFBundle") && !knownUnused.contains(key)
-        && !source.contains(Self.escapedForSwiftLiteral(key))
+      !key.hasPrefix("CFBundle") && !source.contains(Self.escapedForSwiftLiteral(key))
     }
     XCTAssertEqual(unused, [], "English keys that no Swift file uses")
   }
@@ -249,5 +241,102 @@ final class LocalizationKeyParityTests: XCTestCase {
         }
       }
     }
+  }
+
+  /// Every string literal matched by `pattern`, whose first capture group must
+  /// cover the inside of the quotes.
+  static func literals(matching pattern: String, in text: String) -> [String] {
+    guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+    let range = NSRange(text.startIndex..., in: text)
+    return regex.matches(in: text, range: range).compactMap { match in
+      Range(match.range(at: 1), in: text).map { String(text[$0]) }
+    }
+  }
+
+  private static let stringLiteral = #""((?:[^"\\]|\\.)*)""#
+
+  /// Siri phrases of an `AppShortcutsProvider`, written the way
+  /// AppShortcuts.strings keys them: `\(.applicationName)` → `${applicationName}`.
+  static func shortcutPhrases(inSwift text: String) -> [String] {
+    literals(matching: #"phrases:\s*\[([^\]]*)\]"#, in: text).flatMap { list in
+      literals(matching: stringLiteral, in: list).map { phrase in
+        phrase.replacingOccurrences(
+          of: #"\\\(\\?\.\$?(\w+)\)"#, with: "\\${$1}", options: .regularExpression)
+      }
+    }
+  }
+
+  /// Titles, short titles, descriptions and parameter titles of App Intents:
+  /// keys of Localizable.strings.
+  static func intentStrings(inSwift text: String) -> [String] {
+    [
+      #"title:\s*LocalizedStringResource\s*=\s*"#,
+      #"shortTitle:\s*"#,
+      #"IntentDescription\(\s*"#,
+      #"@Parameter\(title:\s*"#,
+    ].flatMap { literals(matching: $0 + stringLiteral, in: text) }
+  }
+
+  func testShortcutSourceParsingFindsPhrasesAndTitles() {
+    let sample = #"""
+      static var title: LocalizedStringResource = "Mount All"
+      static var description = IntentDescription(
+        "Mounts all.")
+      @Parameter(title: "Volume")
+      AppShortcut(
+        intent: MountAllIntent(),
+        phrases: [
+          "Mount all with \(.applicationName)",
+          "Mount \(\.$volume) with \(.applicationName)",
+        ],
+        shortTitle: "Mount All", systemImageName: "eject")
+      """#
+    XCTAssertEqual(
+      Self.shortcutPhrases(inSwift: sample),
+      ["Mount all with ${applicationName}", "Mount ${volume} with ${applicationName}"])
+    XCTAssertEqual(
+      Self.intentStrings(inSwift: sample).sorted(),
+      ["Mount All", "Mount All", "Mounts all.", "Volume"])
+  }
+
+  private func intentsSource() throws -> (root: URL, text: String) {
+    let root = URL(fileURLWithPath: #filePath)
+      .deletingLastPathComponent().deletingLastPathComponent()
+    let text = try String(
+      contentsOf: root.appendingPathComponent("MountMate/Intents/MountMateIntents.swift"),
+      encoding: .utf8)
+    return (root, text)
+  }
+
+  /// A phrase missing from AppShortcuts.strings still builds, but Siri and
+  /// Spotlight do not recognize it.
+  func testEveryShortcutPhraseIsInAppShortcutsStrings() throws {
+    let (root, source) = try intentsSource()
+    let phrases = Self.shortcutPhrases(inSwift: source)
+    XCTAssertFalse(phrases.isEmpty)
+    let english = try XCTUnwrap(
+      NSDictionary(
+        contentsOf: root.appendingPathComponent("MountMate/Resources/en.lproj/AppShortcuts.strings")
+      )
+        as? [String: Any])
+    XCTAssertEqual(
+      Set(phrases).subtracting(english.keys).sorted(), [],
+      "Shortcut phrases missing from en AppShortcuts.strings")
+    XCTAssertEqual(
+      Set(english.keys).subtracting(phrases).sorted(), [],
+      "AppShortcuts.strings keys no shortcut uses")
+  }
+
+  func testEveryIntentTitleIsLocalized() throws {
+    let (root, source) = try intentsSource()
+    let strings = Self.intentStrings(inSwift: source)
+    XCTAssertFalse(strings.isEmpty)
+    let english = try XCTUnwrap(
+      NSDictionary(
+        contentsOf: root.appendingPathComponent("MountMate/Resources/en.lproj/Localizable.strings"))
+        as? [String: Any])
+    XCTAssertEqual(
+      Set(strings).subtracting(english.keys).sorted(), [],
+      "App Intents strings missing from en Localizable.strings")
   }
 }

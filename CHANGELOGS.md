@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).
 - **Faster list after plugging in a disk**: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.
 - Internal: the step that lets the Mac sleep after Unmount All Disks on Sleep is now a separate, unit-tested `SleepAllowGate` (sleep is allowed exactly once, when the unmount finishes or after 20 seconds, whichever comes first). No change in behavior.
 - Internal: the rule that decides when the mount point folder of a failed network mount is removed is now a separate, unit-tested function (refactor, no behaviour change; the guard from #71 that keeps a live share's files safe is unchanged).

@@ -31,7 +31,7 @@ Add tests for new logic in `MountMateTests/`. Code that talks to `diskutil`, the
 
 ## Localization
 
-Every user-facing string exists in all 7 languages under `MountMate/Resources/<lang>.lproj/Localizable.strings` (en, fr, ru, uk, vi, zh-Hans, zh-Hant). Plural forms go in `Localizable.stringsdict` of each language. Permission prompts (the `NS…UsageDescription` keys of `MountMate/Info.plist`) are translated in `InfoPlist.strings` of each language; change the English text in both files. `LocalizationKeyParityTests` fails when a language is missing a key or a placeholder differs.
+Every user-facing string exists in all 7 languages under `MountMate/Resources/<lang>.lproj/Localizable.strings` (en, fr, ru, uk, vi, zh-Hans, zh-Hant). Plural forms go in `Localizable.stringsdict` of each language. Permission prompts (the `NS…UsageDescription` keys of `MountMate/Info.plist`) are translated in `InfoPlist.strings` of each language; change the English text in both files. Shortcuts phrases (`phrases:` in `MountMate/Intents/MountMateIntents.swift`) are keys of `AppShortcuts.strings`, with `\(.applicationName)` written as `${applicationName}`; intent titles, short titles, descriptions and parameter titles are keys of `Localizable.strings`. `LocalizationKeyParityTests` fails when a language is missing a key, a placeholder differs, an English key is used by no Swift file, or a Shortcuts phrase or intent string has no key.
 
 ## Commits and pull requests
 
