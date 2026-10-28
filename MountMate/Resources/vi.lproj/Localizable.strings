@@ -560,3 +560,9 @@
 "Another operation on this volume is running." = "Một thao tác khác đang chạy trên phân vùng này.";
 "Timed out waiting for the mount to finish." = "Đã hết thời gian chờ mount hoàn tất.";
 "This disk is already being ejected." = "Ổ đĩa này đang được đẩy ra.";
+
+/* Feedback after a global keyboard shortcut */
+"Nothing to unmount" = "Không có gì để tháo";
+"Nothing to mount" = "Không có gì để gắn";
+"Nothing to eject" = "Không có gì để đẩy ra";
+"hotkey.feedback.mixed" = "%1$@, %2$@";

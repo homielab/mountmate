@@ -365,6 +365,13 @@ class DriveManager: ObservableObject {
     BulkVolumeActions.unmountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs)
   }
 
+  /// The volumes "Mount All" would mount right now (blocked disks skipped).
+  var mountAllCandidates: [Volume] {
+    BulkVolumeActions.mountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs) {
+      PersistenceManager.shared.isVolumeBlocked($0)
+    }
+  }
+
   /// The disks "Eject All External Disks" would eject right now.
   var ejectAllCandidates: [PhysicalDisk] {
     BulkVolumeActions.ejectCandidates(
@@ -519,11 +526,7 @@ class DriveManager: ObservableObject {
       completion?([])
       return
     }
-    let volumesToMount = BulkVolumeActions.mountCandidates(
-      in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs
-    ) {
-      PersistenceManager.shared.isVolumeBlocked($0)
-    }
+    let volumesToMount = mountAllCandidates
 
     guard !volumesToMount.isEmpty else {
       completion?([])

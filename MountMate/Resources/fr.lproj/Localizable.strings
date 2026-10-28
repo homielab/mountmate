@@ -560,3 +560,9 @@
 "Another operation on this volume is running." = "Une autre opération est en cours sur ce volume.";
 "Timed out waiting for the mount to finish." = "Le montage n’a pas abouti dans le délai imparti.";
 "This disk is already being ejected." = "Ce disque est déjà en cours d’éjection.";
+
+/* Feedback after a global keyboard shortcut */
+"Nothing to unmount" = "Rien à démonter";
+"Nothing to mount" = "Rien à monter";
+"Nothing to eject" = "Rien à éjecter";
+"hotkey.feedback.mixed" = "%1$@, %2$@";

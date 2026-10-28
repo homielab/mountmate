@@ -182,5 +182,145 @@
 			<string>Подключено %d тома</string>
 		</dict>
 	</dict>
+	<key>hotkey.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Отмонтирован %d том</string>
+			<key>few</key>
+			<string>Отмонтировано %d тома</string>
+			<key>many</key>
+			<string>Отмонтировано %d томов</string>
+			<key>other</key>
+			<string>Отмонтировано %d тома</string>
+		</dict>
+	</dict>
+	<key>hotkey.mounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Смонтирован %d том</string>
+			<key>few</key>
+			<string>Смонтировано %d тома</string>
+			<key>many</key>
+			<string>Смонтировано %d томов</string>
+			<key>other</key>
+			<string>Смонтировано %d тома</string>
+		</dict>
+	</dict>
+	<key>hotkey.ejected</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Извлечён %d диск</string>
+			<key>few</key>
+			<string>Извлечено %d диска</string>
+			<key>many</key>
+			<string>Извлечено %d дисков</string>
+			<key>other</key>
+			<string>Извлечено %d диска</string>
+		</dict>
+	</dict>
+	<key>hotkey.unmount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не удалось отмонтировать %d том</string>
+			<key>few</key>
+			<string>Не удалось отмонтировать %d тома</string>
+			<key>many</key>
+			<string>Не удалось отмонтировать %d томов</string>
+			<key>other</key>
+			<string>Не удалось отмонтировать %d тома</string>
+		</dict>
+	</dict>
+	<key>hotkey.mount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не удалось смонтировать %d том</string>
+			<key>few</key>
+			<string>Не удалось смонтировать %d тома</string>
+			<key>many</key>
+			<string>Не удалось смонтировать %d томов</string>
+			<key>other</key>
+			<string>Не удалось смонтировать %d тома</string>
+		</dict>
+	</dict>
+	<key>hotkey.eject.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не удалось извлечь %d диск</string>
+			<key>few</key>
+			<string>Не удалось извлечь %d диска</string>
+			<key>many</key>
+			<string>Не удалось извлечь %d дисков</string>
+			<key>other</key>
+			<string>Не удалось извлечь %d диска</string>
+		</dict>
+	</dict>
+	<key>hotkey.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>ошибок: %d</string>
+			<key>few</key>
+			<string>ошибок: %d</string>
+			<key>many</key>
+			<string>ошибок: %d</string>
+			<key>other</key>
+			<string>ошибок: %d</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

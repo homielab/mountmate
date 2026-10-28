@@ -560,3 +560,9 @@
 "Another operation on this volume is running." = "此卷宗上的另一项操作正在进行。";
 "Timed out waiting for the mount to finish." = "等待挂载完成超时。";
 "This disk is already being ejected." = "此磁盘正在推出。";
+
+/* Feedback after a global keyboard shortcut */
+"Nothing to unmount" = "没有可卸载的卷";
+"Nothing to mount" = "没有可挂载的卷";
+"Nothing to eject" = "没有可推出的磁盘";
+"hotkey.feedback.mixed" = "%1$@，%2$@";

@@ -440,19 +440,42 @@ class HotkeyManager: ObservableObject {
         Log.hotkey.notice(
           "Triggered Unmount All (\(self.unmountShortcut.displayString, privacy: .public))")
       #endif
-      DriveManager.shared.unmountAllDrives()
+      let drives = DriveManager.shared
+      let attempted = drives.unmountAllCandidates.count
+      drives.unmountAllDrives(finished: { failed in
+        Self.showFeedback(for: action, attempted: attempted, failed: failed.count)
+      })
     case .mountAll:
       #if DEBUG
         Log.hotkey.notice(
           "Triggered Mount All (\(self.mountShortcut.displayString, privacy: .public))")
       #endif
-      DriveManager.shared.mountAllVolumes()
+      let drives = DriveManager.shared
+      // A Mount All already running reports nothing new: no HUD.
+      guard !drives.isMountingAll else { return }
+      let attempted = drives.mountAllCandidates.count
+      drives.mountAllVolumes { failed in
+        Self.showFeedback(for: action, attempted: attempted, failed: failed.count)
+      }
     case .ejectAll:
       #if DEBUG
         Log.hotkey.notice("Triggered Eject All External Disks")
       #endif
-      DriveManager.shared.ejectAllDisks()
+      let drives = DriveManager.shared
+      let attempted = drives.ejectAllCandidates.count
+      drives.ejectAllDisks { failures in
+        Self.showFeedback(for: action, attempted: attempted, failed: failures.count)
+      }
     }
+  }
+
+  /// The menu is usually closed when a shortcut runs, so say what happened.
+  /// Failures still get their alert from `DriveManager`.
+  private static func showFeedback(for action: HotkeyAction, attempted: Int, failed: Int) {
+    let succeeded = max(attempted - failed, 0)
+    FeedbackHUD.show(
+      HotkeyFeedback.message(action: action, succeeded: succeeded, failed: failed),
+      systemImage: HotkeyFeedback.systemImage(succeeded: succeeded, failed: failed))
   }
 }
 

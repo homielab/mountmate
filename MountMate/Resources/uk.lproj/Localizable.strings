@@ -560,3 +560,9 @@
 "Another operation on this volume is running." = "З цим томом уже виконується інша операція.";
 "Timed out waiting for the mount to finish." = "Час очікування завершення підключення вичерпано.";
 "This disk is already being ejected." = "Цей диск уже виймається.";
+
+/* Feedback after a global keyboard shortcut */
+"Nothing to unmount" = "Нічого відмонтовувати";
+"Nothing to mount" = "Нічого монтувати";
+"Nothing to eject" = "Нічого виймати";
+"hotkey.feedback.mixed" = "%1$@, %2$@";
