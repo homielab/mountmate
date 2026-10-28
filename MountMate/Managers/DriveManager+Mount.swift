@@ -20,18 +20,19 @@ extension DriveManager {
   ///   failure message of `diskutil` when it did not succeed.
   func mount(
     volume: Volume, readOnly: Bool = false, allowsErrorAlerts: Bool = true,
-    isUserInitiated: Bool = true, trigger: MountTrigger = .automatic,
+    isUserInitiated: Bool = true, trigger: MountTrigger = .automatic, ownsBusy: Bool = false,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
         self.mount(
           volume: volume, readOnly: readOnly, allowsErrorAlerts: allowsErrorAlerts,
-          isUserInitiated: isUserInitiated, trigger: trigger, completion: completion)
+          isUserInitiated: isUserInitiated, trigger: trigger, ownsBusy: ownsBusy,
+          completion: completion)
       }
       return
     }
-    guard !rejectsAsBusy(volume, completion: completion) else { return }
+    guard !rejectsAsBusy(volume, ownsBusy: ownsBusy, completion: completion) else { return }
     if isUserInitiated {
       let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
       NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
@@ -151,14 +152,23 @@ extension DriveManager {
   /// spinner early. Reports `.failure` to `completion` (main thread) and
   /// returns true when skipped. Call on the main thread.
   private func rejectsAsBusy(
-    _ volume: Volume, completion: ((Result<Void, Error>) -> Void)?
+    _ volume: Volume, ownsBusy: Bool = false, completion: ((Result<Void, Error>) -> Void)?
   ) -> Bool {
-    guard isBusy(volume.id) else { return false }
+    guard Self.shouldRejectAsBusy(volumeID: volume.id, busyIDs: busyVolumeIDs, ownsBusy: ownsBusy)
+    else { return false }
     Log.drive.info(
       "Skipped a mount or unmount of \(volume.deviceIdentifier, privacy: .public): another operation is running"
     )
     completion?(.failure(MountFailure(message: "Another operation on this volume is running")))
     return true
+  }
+
+  /// Whether a mount or unmount of `volumeID` is skipped because another
+  /// operation holds its busy flag. `ownsBusy` is true when the caller itself
+  /// set the flag (`remount(volume:)` between its unmount and its mount), so
+  /// its own flag does not count.
+  static func shouldRejectAsBusy(volumeID: String, busyIDs: Set<String>, ownsBusy: Bool) -> Bool {
+    busyIDs.contains(volumeID) && !ownsBusy
   }
 
   /// Unmounts a volume, never forced.
@@ -275,6 +285,7 @@ extension DriveManager {
     // unmount and the mount below; mount(volume:) resumes it.
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
+    WakeRemountManager.shared.forget([volume])
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {
       let result = runProcess(
@@ -292,9 +303,10 @@ extension DriveManager {
           return
         }
 
-        // Stays busy: mount(volume:) clears it when it finishes.
+        // Stays busy so nothing slips in during the gap; `ownsBusy` lets this
+        // mount past the busy guard, and it clears the flag when it finishes.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          self.mount(volume: volume, readOnly: readOnly)
+          self.mount(volume: volume, readOnly: readOnly, ownsBusy: true)
         }
       }
     }

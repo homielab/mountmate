@@ -73,6 +73,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Changing a custom mount point** no longer leaves the volume unmounted with a spinner that never stops: the volume is mounted again at the new location once the change is saved.
 - **Eject All External Disks**: a disk that fails to eject (for example a hard drive still spinning up) is now tried a second time after 2 seconds, like a single Eject, and the alert and the Shortcuts error say why for each disk (busy, in use by an app, timed out) instead of only listing names. When Force Eject may help, the alert offers it.
 - **Ejecting a disk twice**: choosing Eject again (from the right-click menu, which is now greyed out while the disk ejects) or running Eject All External Disks a second time no longer starts a second eject of the same disk. Before, if the eject then failed, Keep Alive could stay off for the still-mounted volumes and the spinner stopped too early. Eject All also skips a disk while one of its volumes is mounting or unmounting.
 - **Renamed volumes keep their new name everywhere**: after Rename Volume… or a rename in Finder, Settings → Management (Protected, Blocked, Keep Alive, Unmount When Idle, Ignored) and the "blocked disk still mounted" notification show the current name instead of the one the volume had when you saved the setting.
