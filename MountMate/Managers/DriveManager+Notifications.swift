@@ -86,6 +86,16 @@ extension DriveManager {
     return rank(of: pending) >= rank(of: next) ? pending : next
   }
 
+  /// QoS of the retry after a failed refresh: the failed refresh's own QoS,
+  /// so a plug-in or wake refresh is not retried as throttled `.utility`
+  /// work. A follow-up that was waiting runs at `.userInitiated`, and the
+  /// retry serves it, so it is raised to that.
+  static func retryRefreshQoS(
+    after failed: DispatchQoS.QoSClass, servingFollowup: Bool
+  ) -> DispatchQoS.QoSClass {
+    servingFollowup ? coalescedRefreshQoS(failed, .userInitiated) : failed
+  }
+
   private static func rank(of qos: DispatchQoS.QoSClass) -> Int {
     switch qos {
     case .userInteractive: return 5

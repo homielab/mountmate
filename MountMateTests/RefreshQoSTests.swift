@@ -41,4 +41,17 @@ final class RefreshQoSTests: XCTestCase {
     }
     XCTAssertEqual(qos, .userInitiated)
   }
+
+  func testRetryKeepsTheQoSOfTheFailedRefresh() {
+    XCTAssertEqual(
+      DriveManager.retryRefreshQoS(after: .userInitiated, servingFollowup: false), .userInitiated)
+    XCTAssertEqual(DriveManager.retryRefreshQoS(after: .utility, servingFollowup: false), .utility)
+  }
+
+  func testRetryServingAFollowupRunsAtLeastUserInitiated() {
+    XCTAssertEqual(
+      DriveManager.retryRefreshQoS(after: .utility, servingFollowup: true), .userInitiated)
+    XCTAssertEqual(
+      DriveManager.retryRefreshQoS(after: .userInitiated, servingFollowup: true), .userInitiated)
+  }
 }

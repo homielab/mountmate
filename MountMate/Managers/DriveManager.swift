@@ -217,7 +217,7 @@ class DriveManager: ObservableObject {
 
       guard listResult.succeeded else {
         let errMsg = listResult.timedOut ? "diskutil timed out." : listResult.stderr
-        self.handleRefreshFailure(error: errMsg)
+        self.handleRefreshFailure(error: errMsg, qos: qos)
         return
       }
 
@@ -237,10 +237,11 @@ class DriveManager: ObservableObject {
               usageTimedOut: parsed.usageTimedOut)
           }
         } else {
-          self.handleRefreshFailure(error: "diskutil returned an unexpected property list.")
+          self.handleRefreshFailure(
+            error: "diskutil returned an unexpected property list.", qos: qos)
         }
       } catch {
-        self.handleRefreshFailure(error: error.localizedDescription)
+        self.handleRefreshFailure(error: error.localizedDescription, qos: qos)
       }
     }
   }
@@ -301,7 +302,8 @@ class DriveManager: ObservableObject {
     }
   }
 
-  private func handleRefreshFailure(error: String) {
+  /// - Parameter qos: QoS of the failed refresh; the retry keeps it.
+  private func handleRefreshFailure(error: String, qos: DispatchQoS.QoSClass) {
     DispatchQueue.main.async {
       self.isFetchInProgress = false
       self.isRefreshing = false
@@ -323,8 +325,9 @@ class DriveManager: ObservableObject {
           "Refresh failed (\(String(describing: error), privacy: .private)), will retry in \(retryDelay, privacy: .public) seconds (attempt \(self.refreshRetryCount, privacy: .public))"
         )
 
+        let retryQoS = Self.retryRefreshQoS(after: qos, servingFollowup: hadPendingFollowup)
         DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) {
-          self.refreshDrives()
+          self.refreshDrives(qos: retryQoS)
         }
       } else {
         Log.drive.error(
