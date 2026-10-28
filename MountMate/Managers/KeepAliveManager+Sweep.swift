@@ -94,12 +94,12 @@ extension KeepAliveManager {
     let keepAliveVolumes = PersistenceManager.shared.keepAliveVolumes
     guard !keepAliveVolumes.isEmpty else { return }
 
-    let disks = DriveManager.shared.physicalDisks ?? []
-    let candidateVolumes = disks.flatMap(\.allVolumes).filter { volume in
-      guard let compositeId = volume.compositeId else { return false }
-      return keepAliveVolumes.contains { $0.id == compositeId }
-        && !PersistenceManager.shared.isVolumeBlocked(volume)
-    }
+    let drives = DriveManager.shared
+    let candidateVolumes = Self.volumeCandidates(
+      disks: drives.physicalDisks ?? [], isStale: drives.isShowingStaleDisks,
+      unverifiedDiskIDs: drives.unverifiedDiskIDs,
+      keepAliveIDs: Set(keepAliveVolumes.map(\.id)),
+      isBlocked: PersistenceManager.shared.isVolumeBlocked)
 
     for volume in candidateVolumes {
       guard let compositeId = volume.compositeId else { continue }
@@ -132,6 +132,25 @@ extension KeepAliveManager {
           group.leave()
         })
     }
+  }
+
+  /// Keep-alive volumes the sweep may check, in list order.
+  ///
+  /// After a failed refresh (`isStale`) the list may show disks that are gone
+  /// or changed, and an unverified disk's volumes may not be what they seem:
+  /// skip them until fresh data arrives instead of reporting "Cannot
+  /// Reconnect" for a drive that isn't there.
+  static func volumeCandidates(
+    disks: [PhysicalDisk], isStale: Bool, unverifiedDiskIDs: Set<String>,
+    keepAliveIDs: Set<String>, isBlocked: (Volume) -> Bool
+  ) -> [Volume] {
+    guard !isStale else { return [] }
+    return disks.filter { !unverifiedDiskIDs.contains($0.id) }
+      .flatMap(\.allVolumes)
+      .filter { volume in
+        guard let compositeId = volume.compositeId else { return false }
+        return keepAliveIDs.contains(compositeId) && !isBlocked(volume)
+      }
   }
 
   /// Runs `mounter` and reports its result once, on the main thread, when it
