@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Keep Alive lets a NAS sleep**: its periodic checks of network shares no longer ask each server for its capacity, so they no longer keep a NAS from spinning down. The capacity ring is read when you open the popover or Settings (at most once a minute) and when a share mounts.
 - **AFP deprecation**: new network shares now only offer SMB and NFS because Apple has removed AFP client support in modern macOS versions. Existing saved AFP shares continue to be editable, removable and mountable, show a "Deprecated" badge (announced by VoiceOver), and any mount failure explains that AFP is deprecated rather than suggesting SMB settings.
 - **README**: Quick Start and screenshots now come first, the feature list is 12 one-line items, and the full descriptions moved to a "Feature Details" section (README-vi.md follows).
 - Internal: saving or removing a network share's Keychain password moved out of `EditNetworkShareSheet` into `NetworkSharePasswordSync`, and the share validation into `NetworkShareValidation`, unit-tested with a fake password store (new share, unchanged, changed or cleared password, switching to NFS, Keychain errors); the sheet shrinks from 374 to under 300 lines. No change in behavior.

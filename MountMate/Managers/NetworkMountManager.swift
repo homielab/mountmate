@@ -35,6 +35,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// Main thread only.
   private var mountStatusGate = LatestResultGate()
   private var shareUsageGate = LatestResultGate()
+  /// When the last share capacity read started (`ShareUsageReadRules`).
+  /// Main thread only.
+  private var lastUsageReadAt: Date?
 
   private init() {
     // Initial check
@@ -61,7 +64,15 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
   }
 
+  /// Refreshes which shares are mounted and, when due, their capacity.
   func refreshMountStatus(completion: (() -> Void)? = nil) {
+    refreshMountStatus(readUsage: true, completion: completion)
+  }
+
+  /// `readUsage: false` only reads the local mount table and never contacts
+  /// a server: Keep Alive uses it so its periodic checks let a NAS sleep.
+  /// With `true`, capacity is read when `ShareUsageReadRules` says it is due.
+  func refreshMountStatus(readUsage: Bool, completion: (() -> Void)? = nil) {
     // Snapshot the saved shares on the main thread (PersistenceManager is
     // main-thread state); this may be called from any thread.
     DispatchQueue.main.async { [weak self] in
@@ -72,16 +83,18 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       let savedShares = PersistenceManager.shared.networkShares
       let ticket = self.mountStatusGate.begin()
       DispatchQueue.global(qos: .userInitiated).async {
-        self.refreshMountStatus(savedShares: savedShares, ticket: ticket, completion: completion)
+        self.refreshMountStatus(
+          savedShares: savedShares, ticket: ticket, readUsage: readUsage, completion: completion)
       }
     }
   }
 
-  /// Background part of `refreshMountStatus(completion:)`. `ticket` comes
-  /// from `mountStatusGate`: a result older than the one already shown is
-  /// dropped (its completion still runs; the newer state is in place).
+  /// Background part of `refreshMountStatus(readUsage:completion:)`.
+  /// `ticket` comes from `mountStatusGate`: a result older than the one
+  /// already shown is dropped (its completion still runs; the newer state is
+  /// in place).
   private func refreshMountStatus(
-    savedShares: [NetworkShare], ticket: Int, completion: (() -> Void)?
+    savedShares: [NetworkShare], ticket: Int, readUsage: Bool, completion: (() -> Void)?
   ) {
     guard let mountedShares = MountTable.networkShares() else {
       Log.network.error("Could not read the mount table (getfsstat failed).")
@@ -109,12 +122,29 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
         self.manuallyConnectedShares = parsedData.manualShares
       }
       completion?()
-    }
 
-    // Usage is read after completion so a slow server never delays mounts or
-    // keep-alive sweeps. statfs each share in parallel: an unreachable server
-    // costs one timeout, not one per share.
-    let mounts = Array(parsedData.mountPoints)
+      // Usage is read after completion so a slow server never delays
+      // mounts or keep-alive sweeps.
+      let now = Date()
+      guard
+        ShareUsageReadRules.shouldRead(
+          requested: readUsage, mountedShareIDs: Set(parsedData.mountPoints.keys),
+          knownUsageIDs: Set(self.usageByShareID.keys), lastReadAt: self.lastUsageReadAt,
+          now: now)
+      else { return }
+      self.lastUsageReadAt = now
+      let mounts = Array(parsedData.mountPoints)
+      DispatchQueue.global(qos: .userInitiated).async {
+        self.readShareUsage(of: mounts, ticket: ticket)
+      }
+    }
+  }
+
+  /// Reads the capacity of each mounted share (`statfs`) and publishes it.
+  /// Shares are read in parallel: an unreachable server costs one timeout,
+  /// not one per share. Background queue.
+  private func readShareUsage(of mounts: [(key: UUID, value: String)], ticket: Int) {
+    Log.network.debug("Reading capacity of \(mounts.count, privacy: .public) network share(s).")
     var results = [FileSystemUsage.Outcome?](repeating: nil, count: mounts.count)
     let lock = NSLock()
     DispatchQueue.concurrentPerform(iterations: mounts.count) { index in

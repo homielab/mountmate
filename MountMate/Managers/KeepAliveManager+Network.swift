@@ -39,7 +39,7 @@ extension KeepAliveManager {
     let shares = keepAliveShares
     guard !shares.isEmpty else { return }
     // One mount-table refresh for all shares (not one per share).
-    NetworkMountManager.shared.refreshMountStatus { [weak self] in
+    NetworkMountManager.shared.refreshMountStatus(readUsage: false) { [weak self] in
       guard let self else { return }
       var needsSweep = false
       for share in shares {

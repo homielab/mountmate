@@ -26,7 +26,7 @@ extension KeepAliveManager {
       // reconnect work has been queued, so `isSweeping` can't clear early
       // and let a second sweep overlap this one.
       group.enter()
-      NetworkMountManager.shared.refreshMountStatus { [weak self] in
+      NetworkMountManager.shared.refreshMountStatus(readUsage: false) { [weak self] in
         defer { group.leave() }
         guard let self else { return }
         self.reconnectShares(group: group)
