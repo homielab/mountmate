@@ -38,15 +38,27 @@ enum BulkVolumeActions {
   /// The disks "Eject All External Disks" ejects: physical external disks
   /// whose type was confirmed in the last refresh. Internal disks, disk
   /// images and disks with a protected volume stay (ejecting would unmount
-  /// the protected volume too). Network shares are not disks and never
-  /// appear here.
+  /// the protected volume too). Disks already being ejected and disks with
+  /// a volume busy (mount, unmount or unlock in flight) are skipped, so a
+  /// second run never overlaps the first. Network shares are not disks and
+  /// never appear here.
   static func ejectCandidates(
-    in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>
+    in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>,
+    ejectingDiskIDs: Set<String> = [], busyVolumeIDs: Set<String> = []
   ) -> [PhysicalDisk] {
-    disks.filter {
-      $0.type == .physical && !unverifiedDiskIDs.contains($0.id)
-        && !$0.allVolumes.contains(where: \.isProtected)
+    disks.filter { disk in
+      disk.type == .physical && !unverifiedDiskIDs.contains(disk.id)
+        && !ejectingDiskIDs.contains(disk.id)
+        && !disk.allVolumes.contains { $0.isProtected || busyVolumeIDs.contains($0.id) }
     }
+  }
+
+  /// Whether a single Eject or Force Eject of `disk` may start: not while
+  /// another eject of the same disk is still running. The second call would
+  /// read the first one's Keep Alive suppression as the user's own and keep
+  /// it after a failure, and end the first one's spinner early.
+  static func canStartEject(of disk: PhysicalDisk, ejectingDiskIDs: Set<String>) -> Bool {
+    !ejectingDiskIDs.contains(disk.id)
   }
 
   /// The `diskutil` arguments that eject a disk, never forced. A RAID

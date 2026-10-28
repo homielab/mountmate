@@ -72,6 +72,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Ejecting a disk twice**: choosing Eject again (from the right-click menu, which is now greyed out while the disk ejects) or running Eject All External Disks a second time no longer starts a second eject of the same disk. Before, if the eject then failed, Keep Alive could stay off for the still-mounted volumes and the spinner stopped too early. Eject All also skips a disk while one of its volumes is mounting or unmounting.
 - **Renamed volumes keep their new name everywhere**: after Rename Volume… or a rename in Finder, Settings → Management (Protected, Blocked, Keep Alive, Unmount When Idle, Ignored) and the "blocked disk still mounted" notification show the current name instead of the one the volume had when you saved the setting.
 - **Eject All Manually Connected Shares**: the shares are now ejected at the same time, so one share on a server that does not answer no longer keeps the others (and the spinner) waiting. The alert says why each share could not be ejected (busy, timed out, no longer mounted) and offers Force Unmount when that may help.
 - **Busy volumes**: while a volume is mounting, unmounting or being verified, its right-click menu no longer offers Mount, Mount Read-Only, Unmount, Verify or Rename, and a second mount or unmount started meanwhile (for example by Keep Alive or a shortcut) is skipped instead of running a second `diskutil` and clearing the spinner early.

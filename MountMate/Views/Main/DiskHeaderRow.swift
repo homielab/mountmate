@@ -96,6 +96,7 @@ struct DiskHeaderRow: View {
         }
         if canEject {
           Button("Eject") { manager.eject(disk: disk) }
+            .disabled(manager.isEjecting(disk.id))
         }
       }
 

@@ -80,6 +80,50 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertEqual(candidates.map(\.id), ["disk2", "disk6"])
   }
 
+  func testEjectCandidatesSkipDisksAlreadyEjectingOrWithABusyVolume() {
+    let disks = [
+      disk("disk2", volumes: [volume("a")]),
+      disk("disk3", volumes: [volume("b"), volume("c")]),
+      disk("disk4", volumes: [volume("d")]),
+    ]
+    let candidates = BulkVolumeActions.ejectCandidates(
+      in: disks, unverifiedDiskIDs: [], ejectingDiskIDs: ["disk2"], busyVolumeIDs: ["c"])
+    // A second Eject All while the first runs leaves disk2 to the first;
+    // disk3 waits until its volume's mount or unmount is done.
+    XCTAssertEqual(candidates.map(\.id), ["disk4"])
+  }
+
+  func testEjectStartsOnlyWhenTheSameDiskIsNotEjectingAlready() {
+    let target = disk("disk2", volumes: [volume("a")])
+    XCTAssertTrue(BulkVolumeActions.canStartEject(of: target, ejectingDiskIDs: []))
+    XCTAssertTrue(BulkVolumeActions.canStartEject(of: target, ejectingDiskIDs: ["disk3"]))
+    XCTAssertFalse(BulkVolumeActions.canStartEject(of: target, ejectingDiskIDs: ["disk2"]))
+  }
+
+  /// A second Eject of a disk that is still ejecting does nothing: the
+  /// first keeps its spinner and Keep Alive is not suppressed a second time
+  /// (whose failure would otherwise keep the suppression for good).
+  @MainActor
+  func testSecondEjectOfADiskStillEjectingIsIgnored() throws {
+    let manager = DriveManager.shared
+    let target = disk(
+      "disk-eject-twice-test",
+      volumes: [
+        // A UUID id, so the volume has a Keep Alive key (`compositeId`).
+        volume("7E57E1EC-7000-4000-8000-0000000E7EC7")
+      ])
+    let key = try XCTUnwrap(target.allVolumes.first?.compositeId)
+    manager.setEjecting(target.id, true)
+    defer { manager.setEjecting(target.id, false) }
+
+    XCTAssertFalse(manager.startEjectIfIdle(target))
+    manager.eject(disk: target)
+    manager.forceEject(disk: target)
+
+    XCTAssertTrue(manager.isEjecting(target.id))
+    XCTAssertFalse(KeepAliveManager.shared.isSuppressed(volumeID: key))
+  }
+
   func testEjectCandidatesAreEmptyWithoutDisks() {
     XCTAssertEqual(BulkVolumeActions.ejectCandidates(in: [], unverifiedDiskIDs: []), [])
   }

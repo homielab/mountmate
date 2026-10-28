@@ -354,7 +354,8 @@ class DriveManager: ObservableObject {
   /// The disks "Eject All External Disks" would eject right now.
   var ejectAllCandidates: [PhysicalDisk] {
     BulkVolumeActions.ejectCandidates(
-      in: physicalDisks ?? [], unverifiedDiskIDs: unverifiedDiskIDs)
+      in: physicalDisks ?? [], unverifiedDiskIDs: unverifiedDiskIDs,
+      ejectingDiskIDs: busyEjectingDiskIDs, busyVolumeIDs: busyVolumeIDs)
   }
 
   /// Ejects every external disk (`diskutil eject`, never forced), in

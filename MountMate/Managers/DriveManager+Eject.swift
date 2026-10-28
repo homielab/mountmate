@@ -4,6 +4,7 @@ import Foundation
 
 extension DriveManager {
   func eject(disk: PhysicalDisk) {
+    guard startEjectIfIdle(disk) else { return }
     // Nothing could confirm what this disk is (it may be the internal
     // disk). Never refuse silently. Disk images are never internal.
     guard disk.type == .diskImage || !unverifiedDiskIDs.contains(disk.id) else {
@@ -55,6 +56,7 @@ extension DriveManager {
   }
 
   func forceEject(disk: PhysicalDisk) {
+    guard startEjectIfIdle(disk) else { return }
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: disk.allVolumes)
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
@@ -108,6 +110,19 @@ extension DriveManager {
           endProgress: { self.setBusy(volume.id, false) })
       }
     }
+  }
+
+  /// False (and logged, no alert) when an eject of `disk` is already
+  /// running, e.g. Eject chosen twice from the right-click menu or during
+  /// "Eject All External Disks": that eject keeps its spinner and its Keep
+  /// Alive bookkeeping. Main thread only.
+  func startEjectIfIdle(_ disk: PhysicalDisk) -> Bool {
+    guard BulkVolumeActions.canStartEject(of: disk, ejectingDiskIDs: busyEjectingDiskIDs) else {
+      Log.drive.info(
+        "Eject of \(disk.name ?? disk.id, privacy: .private) ignored: already ejecting")
+      return false
+    }
+    return true
   }
 
   /// The diskutil call that failed, which operation it was and its timeout.
