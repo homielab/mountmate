@@ -30,6 +30,7 @@ struct VolumeContextMenu: View {
       } label: {
         Label("Unmount", systemImage: "minus.circle")
       }
+      .disabled(rules.disablesVolumeOperations)
       Button {
         if let path = volume.mountPoint {
           NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
@@ -61,7 +62,7 @@ struct VolumeContextMenu: View {
                 "Verify Volume", comment: "Volume context menu: verify volume action"),
             systemImage: "checkmark.shield")
         }
-        .disabled(rules.isVerifying)
+        .disabled(rules.isVerifying || rules.disablesVolumeOperations)
       }
       if rules.showsRename {
         Button {
@@ -72,7 +73,7 @@ struct VolumeContextMenu: View {
               "Rename Volume…", comment: "Volume context menu: rename volume action"),
             systemImage: "pencil")
         }
-        .disabled(rules.isVerifying)
+        .disabled(rules.isVerifying || rules.disablesVolumeOperations)
       }
       Divider()
       protectItem(rules.protectAction)
@@ -83,11 +84,13 @@ struct VolumeContextMenu: View {
       } label: {
         Label("Mount", systemImage: "plus.circle")
       }
+      .disabled(rules.disablesVolumeOperations)
       Button {
         manager.mount(volume: volume, readOnly: true, trigger: .popover)
       } label: {
         Label("Mount Read-Only", systemImage: "lock.circle")
       }
+      .disabled(rules.disablesVolumeOperations)
     }
 
     Divider()

@@ -23,6 +23,15 @@ extension DriveManager {
     isUserInitiated: Bool = true, trigger: MountTrigger = .automatic,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async {
+        self.mount(
+          volume: volume, readOnly: readOnly, allowsErrorAlerts: allowsErrorAlerts,
+          isUserInitiated: isUserInitiated, trigger: trigger, completion: completion)
+      }
+      return
+    }
+    guard !rejectsAsBusy(volume, completion: completion) else { return }
     if isUserInitiated {
       let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
       NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
@@ -137,6 +146,21 @@ extension DriveManager {
     }
   }
 
+  /// A mount or unmount that arrives while another operation runs on the same
+  /// volume is skipped: a second `diskutil` would race the first and clear its
+  /// spinner early. Reports `.failure` to `completion` (main thread) and
+  /// returns true when skipped. Call on the main thread.
+  private func rejectsAsBusy(
+    _ volume: Volume, completion: ((Result<Void, Error>) -> Void)?
+  ) -> Bool {
+    guard isBusy(volume.id) else { return false }
+    Log.drive.info(
+      "Skipped a mount or unmount of \(volume.deviceIdentifier, privacy: .public): another operation is running"
+    )
+    completion?(.failure(MountFailure(message: "Another operation on this volume is running")))
+    return true
+  }
+
   /// Unmounts a volume, never forced.
   ///
   /// - Parameter allowsErrorAlerts: Pass `false` when the caller reports the
@@ -148,6 +172,13 @@ extension DriveManager {
     volume: Volume, allowsErrorAlerts: Bool = true,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async {
+        self.unmount(volume: volume, allowsErrorAlerts: allowsErrorAlerts, completion: completion)
+      }
+      return
+    }
+    guard !rejectsAsBusy(volume, completion: completion) else { return }
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
     WakeRemountManager.shared.forget([volume])

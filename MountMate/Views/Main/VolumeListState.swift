@@ -27,6 +27,8 @@ struct VolumeRowState: Equatable {
   var isExternalDisk = false
   /// Currently being verified by `diskutil verifyVolume`.
   var isVerifying = false
+  /// A mount, unmount or verification of this volume is in flight.
+  var isBusy = false
 }
 
 /// Row state for the whole list, computed once per list render by

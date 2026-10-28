@@ -21,6 +21,7 @@ struct VolumeMenuRules: Equatable {
   let idleUnmountMinutes: Int
   let isExternalDisk: Bool
   let isVerifying: Bool
+  let isBusy: Bool
   let isReadOnly: Bool
   let category: DriveCategory
 
@@ -36,6 +37,7 @@ struct VolumeMenuRules: Equatable {
     idleUnmountMinutes = state.idleUnmountMinutes
     isExternalDisk = state.isExternalDisk
     isVerifying = state.isVerifying
+    isBusy = state.isBusy
     isReadOnly = volume.isReadOnly
     category = volume.category
   }
@@ -66,6 +68,10 @@ struct VolumeMenuRules: Equatable {
   var showsRename: Bool {
     isMounted && isExternalDisk && category == .user && !isReadOnly && !isProtected
   }
+
+  /// Mount, Mount Read-Only, Unmount, Verify and Rename are off while another
+  /// operation runs on the volume.
+  var disablesVolumeOperations: Bool { isBusy }
 
   /// "Unmount When Idle" submenu: external physical disks only.
   var showsIdleUnmount: Bool { canUnmountWhenIdle }

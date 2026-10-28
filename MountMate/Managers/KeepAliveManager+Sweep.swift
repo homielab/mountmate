@@ -109,6 +109,8 @@ extension KeepAliveManager {
       }
       guard !isSuppressed(volumeID: compositeId) else { continue }
       guard isDueForRetry(volumeID: compositeId) else { continue }
+      // Another mount or unmount is running: skip without counting an attempt.
+      guard !DriveManager.shared.isBusy(volume.id) else { continue }
 
       recordAttempt(volumeID: compositeId)
       group.enter()

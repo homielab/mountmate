@@ -9,6 +9,7 @@ extension DriveManager {
   /// repairs), marks it "Verifying…" meanwhile and shows the outcome in an
   /// alert. Call on the main thread.
   func verifyVolume(_ volume: Volume) {
+    guard !isBusy(volume.id) else { return }
     let volumeID = volume.id
     let name = volume.name
     let started = volumeVerifier.verify(

@@ -147,4 +147,15 @@ final class VolumeMenuRulesTests: XCTestCase {
     XCTAssertFalse(
       rules(volume(mounted: true, category: .system)) { $0.isExternalDisk = true }.showsRename)
   }
+
+  func testBusyVolumeDisablesMountUnmountVerifyAndRename() {
+    let idle = rules(volume(mounted: true))
+    XCTAssertFalse(idle.disablesVolumeOperations)
+    let busyMounted = rules(volume(mounted: true)) { $0.isBusy = true }
+    XCTAssertTrue(busyMounted.disablesVolumeOperations)
+    XCTAssertTrue(busyMounted.isBusy)
+    let busyUnmounted = rules(volume(mounted: false)) { $0.isBusy = true }
+    XCTAssertTrue(busyUnmounted.disablesVolumeOperations)
+    XCTAssertTrue(busyUnmounted.showsMountActions)
+  }
 }
