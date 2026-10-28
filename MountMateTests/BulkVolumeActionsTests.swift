@@ -193,4 +193,62 @@ final class BulkVolumeActionsTests: XCTestCase {
   func testFailureAlertIsNilWithoutFailures() {
     XCTAssertNil(BulkVolumeActions.failureAlert(for: [], title: "T", format: "%@"))
   }
+
+  // MARK: - Mount with retry
+
+  private func result(_ code: Int32?, stderr: String = "") -> ProcessResult {
+    ProcessResult(stdout: "", stderr: stderr, exitCode: code, timedOut: false)
+  }
+
+  private func runMount(
+    _ results: [ProcessResult], retry: Bool
+  ) -> (ok: Bool, attempts: Int, waits: Int, finished: Int) {
+    var attempts = 0
+    var waits = 0
+    var finished = 0
+    let ok = BulkVolumeActions.mountWithRetry(
+      volume("1", mounted: false),
+      attempt: { _ in
+        defer { attempts += 1 }
+        return results[min(attempts, results.count - 1)]
+      },
+      shouldRetry: { _, _ in retry }, wait: { waits += 1 }, didFinish: { _ in finished += 1 })
+    return (ok, attempts, waits, finished)
+  }
+
+  func testMountWithRetryPostsFinishOnceWhenTheMountSucceeds() {
+    let run = runMount([result(0)], retry: true)
+    XCTAssertTrue(run.ok)
+    XCTAssertEqual(run.attempts, 1)
+    XCTAssertEqual(run.finished, 1)
+  }
+
+  func testMountWithRetryPostsFinishOnceEvenWhenTheMountFails() {
+    let run = runMount([result(1)], retry: false)
+    XCTAssertFalse(run.ok)
+    XCTAssertEqual(run.attempts, 1)
+    XCTAssertEqual(run.finished, 1)
+  }
+
+  func testMountWithRetryRetriesExactlyOnceForAFreshlyAppearedVolume() {
+    let run = runMount([result(1), result(1), result(0)], retry: true)
+    XCTAssertFalse(run.ok)
+    XCTAssertEqual(run.attempts, 2)
+    XCTAssertEqual(run.waits, 1)
+    XCTAssertEqual(run.finished, 1)
+  }
+
+  func testMountWithRetrySucceedsWhenTheRetryWorks() {
+    let run = runMount([result(1), result(0)], retry: true)
+    XCTAssertTrue(run.ok)
+    XCTAssertEqual(run.attempts, 2)
+    XCTAssertEqual(run.finished, 1)
+  }
+
+  func testMountWithRetryDoesNotCountAnUnlockableVolumeAsAFailure() {
+    let locked = result(1, stderr: "Volume is encrypted and locked")
+    let run = runMount([locked], retry: false)
+    XCTAssertEqual(run.finished, 1)
+    XCTAssertEqual(run.ok, DiskUtilErrorClassifier.isLockedVolumeFailure(locked))
+  }
 }

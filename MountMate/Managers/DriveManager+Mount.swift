@@ -92,7 +92,14 @@ extension DriveManager {
     MountRetryRules.shouldRetry(after: result, firstSeen: firstSeen(of: volume), now: Date())
   }
 
-  private static func postDidFinishManualMount(_ volume: Volume) {
+  /// One plain `diskutil mount` of a volume (no read-only, no retry).
+  static func runMount(of volume: Volume) -> ProcessResult {
+    runProcess(
+      executable: "/usr/sbin/diskutil", arguments: mountArguments(for: volume, readOnly: false),
+      timeout: mountUnmountTimeout)
+  }
+
+  static func postDidFinishManualMount(_ volume: Volume) {
     NotificationCenter.default.post(
       name: .didFinishManualMount, object: nil,
       userInfo: ["deviceIdentifier": volume.deviceIdentifier])

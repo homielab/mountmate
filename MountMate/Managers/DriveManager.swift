@@ -31,6 +31,8 @@ class DriveManager: ObservableObject {
   /// Disks (by `PhysicalDisk.id`) with an eject in flight.
   @Published private(set) var busyEjectingDiskIDs: Set<String> = []
   @Published private(set) var isUnmountingAll = false
+  /// True while a Mount All runs; a second one is ignored until it is done.
+  @Published private(set) var isMountingAll = false
   /// Whole disks whose `diskutil info` failed during the last refresh and
   /// that have no earlier classification cached. They are listed but never
   /// treated as removable (no eject, Unmount All, Mount All or sleep unmount)
@@ -483,6 +485,10 @@ class DriveManager: ObservableObject {
     reportFailures: Bool = true, trigger: MountTrigger = .mountAll,
     completion: (([String]) -> Void)? = nil
   ) {
+    guard !isMountingAll else {
+      completion?([])
+      return
+    }
     let volumesToMount = BulkVolumeActions.mountCandidates(in: bulkActionDisks) {
       PersistenceManager.shared.isVolumeBlocked($0)
     }
@@ -491,17 +497,28 @@ class DriveManager: ObservableObject {
       completion?([])
       return
     }
+    isMountingAll = true
 
     for volume in volumesToMount {
       KeepAliveManager.shared.resume(volume: volume)
       // Lets the mount through MountMate's own auto-mount block.
       let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
       NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+      setBusy(volume.id, true)
     }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let failures = BulkVolumeActions.runConcurrently(
-        volumesToMount, runner: BulkVolumeActions.diskutilMount)
+      let failures = BulkVolumeActions.runConcurrently(volumesToMount) { volume in
+        BulkVolumeActions.mountWithRetry(
+          volume,
+          attempt: { Self.runMount(of: $0) },
+          shouldRetry: { result, volume in
+            MountRetryRules.shouldRetry(
+              after: result, firstSeen: self?.firstSeen(of: volume), now: Date())
+          },
+          wait: { Thread.sleep(forTimeInterval: MountRetryRules.retryDelay) },
+          didFinish: { Self.postDidFinishManualMount($0) })
+      }
       DispatchQueue.main.async {
         guard let self else { return }
         if reportFailures {
@@ -512,6 +529,8 @@ class DriveManager: ObservableObject {
               "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
         }
         self.refreshDrives(qos: .userInitiated) {
+          for volume in volumesToMount { self.setBusy(volume.id, false) }
+          self.isMountingAll = false
           self.openInFinderAfterMounting(volumesToMount.map(\.id), trigger: trigger)
           completion?(failures.map(\.name))
         }

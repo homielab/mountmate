@@ -72,13 +72,24 @@ enum BulkVolumeActions {
     ).succeeded
   }
 
-  /// `diskutil mount` for a volume. Locked (encrypted) volumes are expected
-  /// to stay unmounted here; they are skipped rather than reported as
-  /// failures.
-  static func diskutilMount(_ volume: Volume) -> Bool {
-    let result = runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ["mount", volume.deviceIdentifier],
-      timeout: DriveManager.mountUnmountTimeout)
+  /// Mounts `volume` for "Mount All": one attempt, and a second one after
+  /// `retryDelay` when `shouldRetry` says the failure looks like the race of a
+  /// freshly plugged-in volume. `didFinish` runs exactly once, after the last
+  /// attempt, whatever the outcome, so the mount approval is always withdrawn.
+  /// Locked (encrypted) volumes are expected to stay unmounted: not a failure.
+  static func mountWithRetry(
+    _ volume: Volume,
+    attempt: (Volume) -> ProcessResult,
+    shouldRetry: (ProcessResult, Volume) -> Bool,
+    wait: () -> Void,
+    didFinish: (Volume) -> Void
+  ) -> Bool {
+    defer { didFinish(volume) }
+    var result = attempt(volume)
+    if !result.succeeded, shouldRetry(result, volume) {
+      wait()
+      result = attempt(volume)
+    }
     return result.succeeded || DiskUtilErrorClassifier.isLockedVolumeFailure(result)
   }
 
