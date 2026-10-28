@@ -10,3 +10,4 @@
 "Unmount a volume with ${applicationName}" = "用 ${applicationName} 卸载卷宗";
 "Mount all network shares with ${applicationName}" = "用 ${applicationName} 挂载所有网络共享";
 "Unmount all network shares with ${applicationName}" = "用 ${applicationName} 卸载所有网络共享";
+"Eject a volume with ${applicationName}" = "用 ${applicationName} 推出卷宗";

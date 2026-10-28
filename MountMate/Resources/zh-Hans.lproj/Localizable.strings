@@ -566,3 +566,11 @@
 "Nothing to mount" = "没有可挂载的卷";
 "Nothing to eject" = "没有可推出的磁盘";
 "hotkey.feedback.mixed" = "%1$@，%2$@";
+
+// MARK: - Shortcuts: eject volume
+"Eject Volume" = "推出卷宗";
+"Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused." = "按名称选择一个卷宗，推出包含它的外置磁盘。含有受保护卷宗的磁盘会被拒绝。";
+"“%@” ejected." = "已推出“%@”。";
+"Could not eject “%@”." = "无法推出“%@”。";
+"Could not eject “%@”: %@" = "无法推出“%@”：%@";
+"The disk holding “%@” has a protected volume, so it was not ejected." = "包含“%@”的磁盘有受保护的卷宗，因此未推出。";

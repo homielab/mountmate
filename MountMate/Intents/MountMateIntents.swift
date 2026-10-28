@@ -118,6 +118,24 @@ enum IntentActions {
     }
   }
 
+  /// Decides which disk to eject for a volume name after refreshing the
+  /// drive list.
+  static func ejectPlan(name: String) async -> VolumeIntentPlanner.EjectPlan {
+    let manager = await refreshedDriveManager()
+    return VolumeIntentPlanner.ejectPlan(
+      name: name, in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+  }
+
+  /// `nil` when the disk is ejected, else the error (possibly empty). Never
+  /// forced.
+  static func eject(disk: PhysicalDisk) async -> String? {
+    await withCheckedContinuation { continuation in
+      DriveManager.shared.eject(disk: disk, allowsErrorAlerts: false) { result in
+        continuation.resume(returning: Self.failureMessage(result))
+      }
+    }
+  }
+
   private static func failureMessage(_ result: Result<Void, Error>) -> String? {
     if case .failure(let error) = result { return error.localizedDescription }
     return nil
@@ -302,6 +320,30 @@ struct UnmountVolumeIntent: AppIntent {
   }
 }
 
+struct EjectVolumeIntent: AppIntent {
+  static var title: LocalizedStringResource = "Eject Volume"
+  static var description = IntentDescription(
+    "Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused."
+  )
+
+  @Parameter(title: "Volume")
+  var volume: VolumeEntity
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    switch await IntentActions.ejectPlan(name: volume.id) {
+    case .failure(let message):
+      throw IntentFailure(message: message)
+    case .run(let disk):
+      let name = volume.id.trimmingCharacters(in: .whitespacesAndNewlines)
+      if let error = await IntentActions.eject(disk: disk) {
+        throw IntentFailure(message: IntentMessages.volumeEjectFailure(name: name, reason: error))
+      }
+      return .result(dialog: IntentDialog(stringLiteral: IntentMessages.volumeEjected(name: name)))
+    }
+  }
+}
+
 struct MountMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
@@ -349,5 +391,9 @@ struct MountMateShortcuts: AppShortcutsProvider {
       intent: UnmountVolumeIntent(),
       phrases: ["Unmount a volume with \(.applicationName)"],
       shortTitle: "Unmount Volume", systemImageName: "eject")
+    AppShortcut(
+      intent: EjectVolumeIntent(),
+      phrases: ["Eject a volume with \(.applicationName)"],
+      shortTitle: "Eject Volume", systemImageName: "eject.fill")
   }
 }

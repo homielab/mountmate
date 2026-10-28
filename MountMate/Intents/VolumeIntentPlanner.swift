@@ -73,8 +73,8 @@ enum VolumeIntentPlanner {
 
   /// What "Eject Volume" does for a volume name: the disk holding that volume
   /// is ejected. Only ordinary volumes of external disks match (internal disks
-  /// are never found); a protected volume or a disk nothing could verify is
-  /// refused.
+  /// are never found); a protected volume, a disk holding one, or a disk
+  /// nothing could verify is refused.
   static func ejectPlan(
     name: String, in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>,
     localize: IntentMessages.Localize = IntentMessages.defaultLocalize
@@ -93,6 +93,12 @@ enum VolumeIntentPlanner {
       guard let disk = external.first(where: { $0.allVolumes.contains { $0.id == volume.id } })
       else {
         return .failure(IntentMessages.volumeNotFound(name: name, localize: localize))
+      }
+      // Ejecting the disk unmounts all its volumes: another protected
+      // volume on it keeps the whole disk (as Eject All does).
+      if disk.allVolumes.contains(where: \.isProtected) {
+        return .failure(
+          IntentMessages.ejectDiskProtected(name: volume.name, localize: localize))
       }
       if disk.type != .diskImage && unverifiedDiskIDs.contains(disk.id) {
         return .failure(

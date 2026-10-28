@@ -566,3 +566,11 @@
 "Nothing to mount" = "Нечего монтировать";
 "Nothing to eject" = "Нечего извлекать";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
+
+// MARK: - Shortcuts: eject volume
+"Eject Volume" = "Извлечь том";
+"Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused." = "Извлекает внешний диск, на котором находится том, выбранный по имени. Диск с защищённым томом не извлекается.";
+"“%@” ejected." = "«%@» извлечён.";
+"Could not eject “%@”." = "Не удалось извлечь «%@».";
+"Could not eject “%@”: %@" = "Не удалось извлечь «%@»: %@";
+"The disk holding “%@” has a protected volume, so it was not ejected." = "На диске с «%@» есть защищённый том, поэтому он не извлечён.";

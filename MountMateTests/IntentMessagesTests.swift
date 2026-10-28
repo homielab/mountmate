@@ -41,6 +41,38 @@ final class IntentMessagesTests: XCTestCase {
     }
   }
 
+  func testVolumeEjectMessagesKeepTheNameAndAreTranslated() throws {
+    XCTAssertEqual(IntentMessages.volumeEjected(name: "USB", localize: { $0 }), "“USB” ejected.")
+    XCTAssertEqual(
+      IntentMessages.volumeEjectFailure(name: "USB", reason: "Busy", localize: { $0 }),
+      "Could not eject “USB”: Busy")
+    XCTAssertEqual(
+      IntentMessages.volumeEjectFailure(name: "USB", reason: "", localize: { $0 }),
+      "Could not eject “USB”.")
+    XCTAssertEqual(
+      IntentMessages.volumeEjectFailure(name: "USB", reason: nil, localize: { $0 }),
+      "Could not eject “USB”.")
+    let english = try localizer("en")
+    for language in languages {
+      let localize = try localizer(language)
+      let texts = [
+        IntentMessages.volumeEjected(name: "USB", localize: localize),
+        IntentMessages.volumeEjectFailure(name: "USB", reason: nil, localize: localize),
+        IntentMessages.ejectDiskProtected(name: "USB", localize: localize),
+      ]
+      for text in texts { XCTAssertTrue(text.contains("USB"), "\(language): \(text)") }
+      let failure = IntentMessages.volumeEjectFailure(
+        name: "USB", reason: "boom", localize: localize)
+      XCTAssertTrue(failure.contains("USB") && failure.contains("boom"), language)
+      if language != "en" {
+        XCTAssertNotEqual(
+          texts[0], IntentMessages.volumeEjected(name: "USB", localize: english), language)
+        XCTAssertNotEqual(
+          texts[2], IntentMessages.ejectDiskProtected(name: "USB", localize: english), language)
+      }
+    }
+  }
+
   func testShareFailureWithAndWithoutReason() {
     XCTAssertEqual(
       IntentMessages.shareFailure(name: "NAS", reason: "Host down", localize: { $0 }),

@@ -102,6 +102,26 @@ enum IntentMessages {
       ), name)
   }
 
+  static func volumeEjected(name: String, localize: Localize = defaultLocalize) -> String {
+    String(format: localize("“%@” ejected."), name)
+  }
+
+  /// `reason` is the already sanitized error of the eject, when there is one.
+  static func volumeEjectFailure(
+    name: String, reason: String?, localize: Localize = defaultLocalize
+  ) -> String {
+    guard let reason, !reason.isEmpty else {
+      return String(format: localize("Could not eject “%@”."), name)
+    }
+    return String(format: localize("Could not eject “%@”: %@"), name, reason)
+  }
+
+  static func ejectDiskProtected(name: String, localize: Localize = defaultLocalize) -> String {
+    String(
+      format: localize("The disk holding “%@” has a protected volume, so it was not ejected."),
+      name)
+  }
+
   static func shareNotFound(localize: Localize = defaultLocalize) -> String {
     localize("That network share is no longer saved in MountMate.")
   }

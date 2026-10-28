@@ -566,3 +566,11 @@
 "Nothing to mount" = "Không có gì để gắn";
 "Nothing to eject" = "Không có gì để đẩy ra";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
+
+// MARK: - Shortcuts: eject volume
+"Eject Volume" = "Đẩy ra phân vùng";
+"Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused." = "Đẩy ra ổ đĩa ngoài chứa một phân vùng, chọn theo tên. Ổ có phân vùng được bảo vệ sẽ bị từ chối.";
+"“%@” ejected." = "Đã đẩy ra “%@”.";
+"Could not eject “%@”." = "Không đẩy ra được “%@”.";
+"Could not eject “%@”: %@" = "Không đẩy ra được “%@”: %@";
+"The disk holding “%@” has a protected volume, so it was not ejected." = "Ổ chứa “%@” có phân vùng được bảo vệ nên không được đẩy ra.";

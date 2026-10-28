@@ -86,6 +86,15 @@ final class VolumeIntentPlannerTests: XCTestCase {
       plan("Nope"), .failure(IntentMessages.volumeNotFound(name: "Nope", localize: identity)))
   }
 
+  func testEjectPlanRefusesADiskWithAnotherProtectedVolume() {
+    let identity: IntentMessages.Localize = { $0 }
+    let disks = [disk("disk2", volumes: [volume("Photos"), volume("Backup", isProtected: true)])]
+    XCTAssertEqual(
+      VolumeIntentPlanner.ejectPlan(
+        name: "Photos", in: disks, unverifiedDiskIDs: [], localize: identity),
+      .failure(IntentMessages.ejectDiskProtected(name: "Photos", localize: identity)))
+  }
+
   func testEjectPlanOfADiskImageIgnoresUnverifiedState() {
     let image = disk("disk5", type: .diskImage, volumes: [volume("Image")])
     XCTAssertEqual(

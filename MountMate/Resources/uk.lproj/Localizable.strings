@@ -566,3 +566,11 @@
 "Nothing to mount" = "Нічого монтувати";
 "Nothing to eject" = "Нічого виймати";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
+
+// MARK: - Shortcuts: eject volume
+"Eject Volume" = "Вийняти том";
+"Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused." = "Виймає зовнішній диск, на якому є том, вибраний за назвою. Диск із захищеним томом не виймається.";
+"“%@” ejected." = "«%@» вийнято.";
+"Could not eject “%@”." = "Не вдалося вийняти «%@».";
+"Could not eject “%@”: %@" = "Не вдалося вийняти «%@»: %@";
+"The disk holding “%@” has a protected volume, so it was not ejected." = "На диску з «%@» є захищений том, тому його не вийнято.";

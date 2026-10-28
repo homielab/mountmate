@@ -10,3 +10,4 @@
 "Unmount a volume with ${applicationName}" = "Unmount phân vùng bằng ${applicationName}";
 "Mount all network shares with ${applicationName}" = "Mount tất cả chia sẻ mạng bằng ${applicationName}";
 "Unmount all network shares with ${applicationName}" = "Unmount tất cả chia sẻ mạng bằng ${applicationName}";
+"Eject a volume with ${applicationName}" = "Đẩy ra phân vùng bằng ${applicationName}";

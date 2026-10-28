@@ -566,3 +566,11 @@
 "Nothing to mount" = "Rien à monter";
 "Nothing to eject" = "Rien à éjecter";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
+
+// MARK: - Shortcuts: eject volume
+"Eject Volume" = "Éjecter un volume";
+"Ejects the external disk that holds one volume, chosen by its name. A disk with a protected volume is refused." = "Éjecte le disque externe qui contient un volume choisi d’après son nom. Un disque avec un volume protégé est refusé.";
+"“%@” ejected." = "« %@ » éjecté.";
+"Could not eject “%@”." = "Impossible d’éjecter « %@ ».";
+"Could not eject “%@”: %@" = "Impossible d’éjecter « %@ » : %@";
+"The disk holding “%@” has a protected volume, so it was not ejected." = "Le disque qui contient « %@ » a un volume protégé, il n’a donc pas été éjecté.";

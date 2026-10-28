@@ -10,3 +10,4 @@
 "Unmount a volume with ${applicationName}" = "Unmount a volume with ${applicationName}";
 "Mount all network shares with ${applicationName}" = "Mount all network shares with ${applicationName}";
 "Unmount all network shares with ${applicationName}" = "Unmount all network shares with ${applicationName}";
+"Eject a volume with ${applicationName}" = "Eject a volume with ${applicationName}";
