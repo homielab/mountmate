@@ -3,19 +3,28 @@
 import Foundation
 
 extension DriveManager {
-  func eject(disk: PhysicalDisk) {
-    guard startEjectIfIdle(disk) else { return }
+  /// Ejects `disk`. `allowsErrorAlerts: false` keeps failures out of the
+  /// popover (the caller reports them, e.g. a Shortcuts action). `completion`
+  /// runs once on the main thread: after the refreshed list is in on success,
+  /// or with the reason on a refusal or failure.
+  func eject(
+    disk: PhysicalDisk, allowsErrorAlerts: Bool = true,
+    completion: ((Result<Void, Error>) -> Void)? = nil
+  ) {
+    guard startEjectIfIdle(disk) else {
+      completion?(.failure(DiskOperationError(message: "Eject already in progress")))
+      return
+    }
     // Nothing could confirm what this disk is (it may be the internal
     // disk). Never refuse silently. Disk images are never internal.
     guard disk.type == .diskImage || !unverifiedDiskIDs.contains(disk.id) else {
-      userActionError = AppAlert(
-        title: NSLocalizedString("Eject Failed", comment: "Alert title"),
-        message: String(
-          format: NSLocalizedString(
-            "MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment.",
-            comment: "Eject refused because the disk type is unknown; disk name"),
-          disk.name ?? disk.id),
-        kind: .basic)
+      let message = IntentMessages.ejectUnverified(name: disk.name ?? disk.id)
+      if allowsErrorAlerts {
+        userActionError = AppAlert(
+          title: NSLocalizedString("Eject Failed", comment: "Alert title"),
+          message: message, kind: .basic)
+      }
+      completion?(.failure(DiskOperationError(message: message)))
       return
     }
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: disk.allVolumes)
@@ -30,6 +39,7 @@ extension DriveManager {
           failure: result.succeeded
             ? nil : (result: result, operation: .eject, timeout: ejectTimeout),
           name: disk.name ?? disk.id, disk: disk,
+          allowsErrorAlerts: allowsErrorAlerts, completion: completion,
           restoreKeepAlive: {
             KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
           },
@@ -123,18 +133,34 @@ extension DriveManager {
   /// not flash back to "mounted".
   private func finishDiskOperation(
     failure: DiskOperationFailure?, name: String, disk: PhysicalDisk? = nil,
-    volume: Volume? = nil, restoreKeepAlive: () -> Void,
-    endProgress: @escaping () -> Void
+    volume: Volume? = nil, allowsErrorAlerts: Bool = true,
+    completion: ((Result<Void, Error>) -> Void)? = nil,
+    restoreKeepAlive: () -> Void, endProgress: @escaping () -> Void
   ) {
     guard let failure else {
-      refreshDrives(qos: .userInitiated, then: endProgress)
+      refreshDrives(qos: .userInitiated) {
+        endProgress()
+        completion?(.success(()))
+      }
       return
     }
     restoreKeepAlive()
     endProgress()
-    handleDiskUtilError(
-      DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: failure.timeout),
-      for: name, volume: volume, disk: disk, operation: failure.operation)
+    let raw = DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: failure.timeout)
+    if allowsErrorAlerts {
+      handleDiskUtilError(raw, for: name, volume: volume, disk: disk, operation: failure.operation)
+    }
+    let parsed = DiskUtilErrorClassifier.classify(raw, for: name, operation: failure.operation)
+    let reason =
+      DiskUtilErrorClassifier.presentation(
+        for: parsed, name: name, operation: failure.operation, details: raw)?.message ?? raw
+    completion?(.failure(DiskOperationError(message: reason)))
     refreshDrives(qos: .userInitiated)
   }
+}
+
+/// Why a disk operation did not happen, in words fit for the user.
+struct DiskOperationError: LocalizedError, Equatable {
+  let message: String
+  var errorDescription: String? { message }
 }

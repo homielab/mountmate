@@ -124,6 +124,24 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertFalse(KeepAliveManager.shared.isSuppressed(volumeID: key))
   }
 
+  /// Refused ejects report through `completion` exactly once and, with
+  /// `allowsErrorAlerts: false`, raise no alert.
+  @MainActor
+  func testRefusedEjectCallsCompletionOnceWithoutAlert() {
+    let manager = DriveManager.shared
+    let target = disk("disk-eject-completion-test", volumes: [])
+    manager.setEjecting(target.id, true)
+    defer { manager.setEjecting(target.id, false) }
+    manager.userActionError = nil
+
+    var results: [Result<Void, Error>] = []
+    manager.eject(disk: target, allowsErrorAlerts: false) { results.append($0) }
+
+    XCTAssertEqual(results.count, 1)
+    if case .success = results[0] { XCTFail("an ignored eject must not succeed") }
+    XCTAssertNil(manager.userActionError)
+  }
+
   func testEjectCandidatesAreEmptyWithoutDisks() {
     XCTAssertEqual(BulkVolumeActions.ejectCandidates(in: [], unverifiedDiskIDs: []), [])
   }

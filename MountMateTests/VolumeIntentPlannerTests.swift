@@ -54,6 +54,45 @@ final class VolumeIntentPlannerTests: XCTestCase {
     XCTAssertEqual(VolumeIntentPlanner.match(name: "Backup", in: [twin, other]), .ambiguous)
   }
 
+  func testEjectPlanRunsTheDiskHoldingAnExternalVolume() {
+    let target = disk("disk2", volumes: [volume("Backup"), volume("Photos")])
+    let disks = [disk("disk1", volumes: [volume("Other")]), target]
+    XCTAssertEqual(
+      VolumeIntentPlanner.ejectPlan(name: "photos", in: disks, unverifiedDiskIDs: []),
+      .run(target))
+  }
+
+  func testEjectPlanRefusesProtectedInternalAndUnverified() {
+    let identity: IntentMessages.Localize = { $0 }
+    let disks = [
+      disk("disk2", volumes: [volume("Guarded", isProtected: true)]),
+      disk("disk3", type: .internalDisk, volumes: [volume("Macintosh HD")]),
+      disk("disk4", volumes: [volume("Unknown")]),
+    ]
+    func plan(_ name: String) -> VolumeIntentPlanner.EjectPlan {
+      VolumeIntentPlanner.ejectPlan(
+        name: name, in: disks, unverifiedDiskIDs: ["disk4"], localize: identity)
+    }
+    XCTAssertEqual(
+      plan("Guarded"),
+      .failure(IntentMessages.volumeProtected(name: "Guarded", localize: identity)))
+    XCTAssertEqual(
+      plan("Macintosh HD"),
+      .failure(IntentMessages.volumeNotFound(name: "Macintosh HD", localize: identity)))
+    XCTAssertEqual(
+      plan("Unknown"),
+      .failure(IntentMessages.ejectUnverified(name: "disk4", localize: identity)))
+    XCTAssertEqual(
+      plan("Nope"), .failure(IntentMessages.volumeNotFound(name: "Nope", localize: identity)))
+  }
+
+  func testEjectPlanOfADiskImageIgnoresUnverifiedState() {
+    let image = disk("disk5", type: .diskImage, volumes: [volume("Image")])
+    XCTAssertEqual(
+      VolumeIntentPlanner.ejectPlan(name: "Image", in: [image], unverifiedDiskIDs: ["disk5"]),
+      .run(image))
+  }
+
   func testCandidatesLeaveOutSystemVolumesAndInternalDisks() {
     let disks = [
       disk("disk2", volumes: [volume("A"), volume("EFI", category: .system)]),

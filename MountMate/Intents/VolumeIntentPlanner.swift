@@ -63,4 +63,42 @@ enum VolumeIntentPlanner {
       return volume.isMounted ? .run(volume) : .alreadyDone(volume)
     }
   }
+
+  enum EjectPlan: Equatable {
+    /// Eject this whole disk.
+    case run(PhysicalDisk)
+    /// The intent fails with this message.
+    case failure(String)
+  }
+
+  /// What "Eject Volume" does for a volume name: the disk holding that volume
+  /// is ejected. Only ordinary volumes of external disks match (internal disks
+  /// are never found); a protected volume or a disk nothing could verify is
+  /// refused.
+  static func ejectPlan(
+    name: String, in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>,
+    localize: IntentMessages.Localize = IntentMessages.defaultLocalize
+  ) -> EjectPlan {
+    let external = disks.filter(\.isRemovable)
+    let volumes = external.flatMap(\.allVolumes).filter { $0.category == .user }
+    switch match(name: name, in: volumes) {
+    case .notFound:
+      return .failure(IntentMessages.volumeNotFound(name: name, localize: localize))
+    case .ambiguous:
+      return .failure(IntentMessages.volumeNameAmbiguous(name: name, localize: localize))
+    case .found(let volume):
+      if volume.isProtected {
+        return .failure(IntentMessages.volumeProtected(name: volume.name, localize: localize))
+      }
+      guard let disk = external.first(where: { $0.allVolumes.contains { $0.id == volume.id } })
+      else {
+        return .failure(IntentMessages.volumeNotFound(name: name, localize: localize))
+      }
+      if disk.type != .diskImage && unverifiedDiskIDs.contains(disk.id) {
+        return .failure(
+          IntentMessages.ejectUnverified(name: disk.name ?? disk.id, localize: localize))
+      }
+      return .run(disk)
+    }
+  }
 }

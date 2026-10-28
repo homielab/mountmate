@@ -95,6 +95,13 @@ enum IntentMessages {
     String(format: localize("“%@” is protected and cannot be unmounted."), name)
   }
 
+  static func ejectUnverified(name: String, localize: Localize = defaultLocalize) -> String {
+    String(
+      format: localize(
+        "MountMate could not determine whether “%@” is an external disk, so it was not ejected. Try again in a moment."
+      ), name)
+  }
+
   static func shareNotFound(localize: Localize = defaultLocalize) -> String {
     localize("That network share is no longer saved in MountMate.")
   }
