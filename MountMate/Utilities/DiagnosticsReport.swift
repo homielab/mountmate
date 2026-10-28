@@ -53,15 +53,32 @@ enum DiagnosticsReport {
   // MARK: Formatting
 
   /// Removes what could identify the user or a drive from a log message.
-  static func sanitize(_ text: String, homeDirectory: String = NSHomeDirectory()) -> String {
+  /// `mountPoints` are the saved shares' custom mount points; they are named
+  /// after the share, so they are hidden wherever they appear.
+  static func sanitize(
+    _ text: String, homeDirectory: String = NSHomeDirectory(), mountPoints: [String] = []
+  ) -> String {
     var result = text
-    if homeDirectory.count > 1 {
+    let hidesHome = homeDirectory.count > 1
+    // Longest first, so a mount point inside another one is hidden whole.
+    for mountPoint in mountPoints.sorted(by: { $0.count > $1.count }) {
+      var forms = [mountPoint]
+      if hidesHome, mountPoint.hasPrefix(homeDirectory + "/") {
+        forms.append("~" + mountPoint.dropFirst(homeDirectory.count))
+      }
+      for form in forms where form.count > 1 {
+        result = result.replacingOccurrences(of: form, with: "<mountpoint>")
+      }
+    }
+    if hidesHome {
       result = result.replacingOccurrences(of: homeDirectory, with: "~")
     }
     let rules: [(pattern: String, template: String)] = [
       (#"/Users/[^/\s"']+"#, "/Users/<user>"),
-      // Volume names may contain spaces, so the rest of the line goes.
+      // Volume and share names may contain spaces, so the rest of the line goes.
       (#"/Volumes/[^\n]*"#, "/Volumes/<volume>"),
+      // Default share mount points: ~/mountmate/<share name>.
+      (#"(~|/Users/<user>)/mountmate/[^\n]*"#, "$1/mountmate/<share>"),
       (#"(?i)\b(smb|nfs|afp|cifs|ftp|webdav|https?)://[^\s"']+"#, "$1://<server>"),
     ]
     for rule in rules {
@@ -69,6 +86,16 @@ enum DiagnosticsReport {
         of: rule.pattern, with: rule.template, options: .regularExpression)
     }
     return result
+  }
+
+  /// The custom mount points of `shares`, as full paths.
+  static func customMountPoints(
+    of shares: [NetworkShare], homeDirectory: String = NSHomeDirectory()
+  ) -> [String] {
+    shares.compactMap { share in
+      guard let custom = share.customMountPoint, !custom.isEmpty else { return nil }
+      return NetworkMountTable.configuredMountPoint(for: share, homeDirectory: homeDirectory)
+    }
   }
 
   static func format(
@@ -81,6 +108,7 @@ enum DiagnosticsReport {
     lines: [LogLine],
     generatedAt: Date,
     homeDirectory: String = NSHomeDirectory(),
+    mountPoints: [String] = [],
     timeZone: TimeZone = .current
   ) -> String {
     let stamp = ISO8601DateFormatter()
@@ -106,7 +134,8 @@ enum DiagnosticsReport {
       out.append("  (no log entries)")
     }
     for line in lines {
-      let message = sanitize(line.message, homeDirectory: homeDirectory)
+      let message = sanitize(
+        line.message, homeDirectory: homeDirectory, mountPoints: mountPoints)
       out.append("\(stamp.string(from: line.date)) [\(line.category)] \(line.level): \(message)")
     }
     return out.joined(separator: "\n") + "\n"
@@ -150,7 +179,8 @@ enum DiagnosticsReport {
 
   /// The whole report for this run. Slow: call it off the main thread.
   static func build(
-    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, now: Date = Date()
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, mountPoints: [String] = [],
+    now: Date = Date()
   ) throws -> String {
     let info = Bundle.main.infoDictionary
     return format(
@@ -161,18 +191,20 @@ enum DiagnosticsReport {
       failingDiskCount: failingDiskCount,
       almostFullVolumeCount: almostFullVolumeCount,
       lines: try collectLogLines(now: now),
-      generatedAt: now)
+      generatedAt: now,
+      mountPoints: mountPoints)
   }
 
   /// Builds the report in the background and puts it on the pasteboard.
   /// Returns false when the log could not be read.
   static func copyToPasteboard(
-    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, mountPoints: [String] = []
   ) async -> Bool {
     let report = await Task.detached(priority: .userInitiated) { () -> String? in
       do {
         return try build(
-          failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount)
+          failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount,
+          mountPoints: mountPoints)
       } catch {
         Log.app.error(
           "Could not build the diagnostics report: \(error.localizedDescription, privacy: .public)"

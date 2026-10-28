@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Copy Diagnostics hides share mount points**: paths of mounted network shares (the default `~/mountmate/<share name>` folder and any custom mount point you set) are replaced with `<share>` or `<mountpoint>`, so the report no longer shows share names.
 - **VoiceOver skips decorative icons**: the error banner, the error screen and "Loading Disks..." are each read as one element, without "exclamation mark triangle" or a separate "in progress" first, and the icons in the empty states and the network share sheets are no longer read aloud.
 - **Network share texts name every protocol**: the Network Shares settings (Import Mounted tooltip, login note, empty-import message, empty-list hint) said "SMB" only, although SMB, NFS and AFP shares are accepted. They now say "SMB, NFS or AFP" in all seven languages.
 - **Encrypted volumes with a saved password reconnect on their own**: Keep Alive, Mount Again on Wake, Mount All and the Mount Volume shortcut now unlock a locked APFS volume with its password saved in the Keychain instead of staying on "Reconnecting…" or "Cannot Reconnect". They never show a password prompt; if the saved password is rejected, MountMate stops trying it until you unlock the volume yourself.

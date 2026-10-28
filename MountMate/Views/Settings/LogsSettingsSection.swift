@@ -54,9 +54,12 @@ struct LogsSettingsSection: View {
       in: DriveManager.shared.physicalDisks ?? [],
       threshold: LowSpaceRules.threshold() ?? Double(LowSpaceRules.defaultPercent) / 100
     ).count
+    let mountPoints = DiagnosticsReport.customMountPoints(
+      of: PersistenceManager.shared.networkShares)
     Task {
       let copied = await DiagnosticsReport.copyToPasteboard(
-        failingDiskCount: failing.count, almostFullVolumeCount: almostFull)
+        failingDiskCount: failing.count, almostFullVolumeCount: almostFull,
+        mountPoints: mountPoints)
       diagnosticsState = copied ? .copied : .failed
     }
   }

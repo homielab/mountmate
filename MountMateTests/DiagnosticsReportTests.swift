@@ -46,6 +46,66 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertTrue(result.contains("smb://<server>"))
   }
 
+  func testSanitizeHidesDefaultShareMountPoints() {
+    let text = "Mounted at /Users/alice/mountmate/My NAS (smb)"
+    let result = DiagnosticsReport.sanitize(text, homeDirectory: "/Users/alice")
+    XCTAssertEqual(result, "Mounted at ~/mountmate/<share>")
+    let tilde = DiagnosticsReport.sanitize("Opened ~/mountmate/My NAS", homeDirectory: "/")
+    XCTAssertEqual(tilde, "Opened ~/mountmate/<share>")
+    let otherUser = DiagnosticsReport.sanitize(
+      "Mounted at /Users/bob/mountmate/Bob Share", homeDirectory: "/Users/alice")
+    XCTAssertEqual(otherUser, "Mounted at /Users/<user>/mountmate/<share>")
+  }
+
+  func testSanitizeHidesCustomMountPoints() {
+    let mountPoints = ["/Users/alice/Shares/Family Photos", "/mnt/Media Box"]
+    let text =
+      "Mounted at /Users/alice/Shares/Family Photos; ~/Shares/Family Photos busy; /mnt/Media Box ok"
+    let result = DiagnosticsReport.sanitize(
+      text, homeDirectory: "/Users/alice", mountPoints: mountPoints)
+    XCTAssertEqual(result, "Mounted at <mountpoint>; <mountpoint> busy; <mountpoint> ok")
+  }
+
+  func testCustomMountPointsAreFullPathsOfSharesWithOne() {
+    let shares = [
+      NetworkShare(name: "NAS", server: "nas.local", sharePath: "media", username: ""),
+      NetworkShare(
+        name: "Photos", server: "nas.local", sharePath: "photos", username: "",
+        customMountPoint: "Shares/Photos"),
+      NetworkShare(
+        name: "Box", server: "box.local", sharePath: "b", username: "",
+        customMountPoint: "~/Box Mount"),
+    ]
+    XCTAssertEqual(
+      DiagnosticsReport.customMountPoints(of: shares, homeDirectory: "/Users/alice"),
+      ["/Users/alice/Shares/Photos", NSHomeDirectory() + "/Box Mount"])
+  }
+
+  func testSampleReportHasNoShareNames() {
+    let shareName = "Family Photos"
+    let shares = [
+      NetworkShare(name: "My NAS", server: "nas.local", sharePath: "media", username: ""),
+      NetworkShare(
+        name: shareName, server: "nas.local", sharePath: "photos", username: "",
+        customMountPoint: "/Users/alice/Shares/\(shareName)"),
+    ]
+    let report = DiagnosticsReport.format(
+      appVersion: "1", build: "1", macOS: "x", flags: [],
+      lines: [
+        line(-30, "Mounting smb://nas.local/media at /Users/alice/mountmate/My NAS"),
+        line(-20, "Created /Users/alice/Shares/Family Photos"),
+        line(-10, "Unmounted ~/Shares/Family Photos"),
+      ],
+      generatedAt: now, homeDirectory: "/Users/alice",
+      mountPoints: DiagnosticsReport.customMountPoints(of: shares, homeDirectory: "/Users/alice"),
+      timeZone: utc)
+    XCTAssertFalse(report.contains("My NAS"))
+    XCTAssertFalse(report.contains("Family"))
+    XCTAssertFalse(report.contains("alice"))
+    XCTAssertTrue(report.contains("~/mountmate/<share>"))
+    XCTAssertTrue(report.contains("Created <mountpoint>"))
+  }
+
   func testReportKeepsPrivateMarkerAndDropsHome() {
     let report = DiagnosticsReport.format(
       appVersion: "1", build: "1", macOS: "x", flags: [],
