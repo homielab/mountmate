@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **NFS shares with a port or IPv6 server**: an NFS share whose server is an IPv6 address (`fd00::2`, `[fd00::2]`) or has a port (`nas:2049`, `[fd00::2]:2049`) now mounts; before, the address went to `mount_nfs` as typed and the mount always failed.
 - **Copy Diagnostics hides share mount points**: paths of mounted network shares (the default `~/mountmate/<share name>` folder and any custom mount point you set) are replaced with `<share>` or `<mountpoint>`, so the report no longer shows share names.
 - **VoiceOver skips decorative icons**: the error banner, the error screen and "Loading Disks..." are each read as one element, without "exclamation mark triangle" or a separate "in progress" first, and the icons in the empty states and the network share sheets are no longer read aloud.
 - **Network share texts name every protocol**: the Network Shares settings (Import Mounted tooltip, login note, empty-import message, empty-list hint) said "SMB" only, although SMB, NFS and AFP shares are accepted. They now say "SMB, NFS or AFP" in all seven languages.

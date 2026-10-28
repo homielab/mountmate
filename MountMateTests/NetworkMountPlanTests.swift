@@ -242,6 +242,21 @@ final class NetworkMountPlanTests: XCTestCase {
       ["-o", "resvport", "nas:/export", "/mp"])
   }
 
+  func testNFSArgumentsBracketAnIPv6HostAndPassThePortAsAnOption() {
+    func arguments(_ server: String) -> [String] {
+      let share = NetworkShare(
+        name: "s", server: server, sharePath: "export", username: "", shareProtocol: .nfs)
+      return NetworkMountPlan.nfsArguments(share: share, mountPoint: "/mp")
+    }
+    XCTAssertEqual(arguments("fd00::2"), ["-o", "resvport", "[fd00::2]:/export", "/mp"])
+    XCTAssertEqual(arguments("[fd00::2]"), ["-o", "resvport", "[fd00::2]:/export", "/mp"])
+    XCTAssertEqual(
+      arguments("[fd00::2]:2049"), ["-o", "resvport,port=2049", "[fd00::2]:/export", "/mp"])
+    XCTAssertEqual(arguments("nas:2049"), ["-o", "resvport,port=2049", "nas:/export", "/mp"])
+    XCTAssertEqual(
+      arguments("192.168.1.5:2049"), ["-o", "resvport,port=2049", "192.168.1.5:/export", "/mp"])
+  }
+
   // MARK: Keychain failure
 
   func testKeychainFailureNamesTheShareAndStatus() {

@@ -259,13 +259,24 @@ enum NetworkMountPlan {
   }
 
   /// The `mount_nfs` arguments for a share: the canonical `server:/export`
-  /// form on `resvport`.
+  /// form on `resvport`. The server field may hold a port or an IPv6 host
+  /// (`nas:2049`, `fd00::2`, `[fd00::2]:2049`), which `mount_nfs` cannot take
+  /// raw: the colons would be read as the host/path separator. The host goes
+  /// in front of `:/export`, an IPv6 one in brackets (`[fd00::2]:/export`, as
+  /// mount_nfs parses it), and the port becomes the `port=N` option
+  /// (`man mount_nfs`: "Connect to an NFS server at the given port number").
   static func nfsArguments(share: NetworkShare, mountPoint: String) -> [String] {
     let exportPath =
       "/"
       + share.sharePath.trimmingCharacters(
         in: CharacterSet(charactersIn: "/"))
-    return ["-o", "resvport", "\(share.server):\(exportPath)", mountPoint]
+    let address = NetworkShare.hostAndPort(fromServer: share.server)
+    let host = address.host.contains(":") ? "[\(address.host)]" : address.host
+    var options = ["resvport"]
+    if let port = address.port {
+      options.append("port=\(port)")
+    }
+    return ["-o", options.joined(separator: ","), "\(host):\(exportPath)", mountPoint]
   }
 
   /// After NetFS reports the share as already mounted (EEXIST) or our folder
