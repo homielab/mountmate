@@ -116,34 +116,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       IOAllowPowerChange(powerRootPort, notificationID)
 
     case kIOMessageSystemWillSleepValue:
-      guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else {
-        IOAllowPowerChange(powerRootPort, notificationID)
-        return
-      }
-      Log.app.notice("System will sleep. Ejecting all user volumes.")
+      let isEnabled = UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled")
       let rootPort = powerRootPort
-      // Both the completion and the cap below call this on the main thread;
-      // the flag makes the second call a no-op.
-      var hasAllowed = false
-      let allowSleep: () -> Void = {
-        guard !hasAllowed else { return }
-        hasAllowed = true
-        IOAllowPowerChange(rootPort, notificationID)
-      }
-      // Cap the delay: a hung unmount must not keep the Mac awake.
-      DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepUnmountTimeout) {
-        if !hasAllowed {
+      // Answers exactly once: on completion, or at the cap so a hung unmount
+      // does not keep the Mac awake.
+      let gate = SleepAllowGate(
+        isEnabled: isEnabled, timeout: Self.sleepUnmountTimeout,
+        onTimeout: {
           Log.app.error("Unmount on sleep still running; allowing sleep anyway.")
           WakeRemountManager.shared.sleepTimedOut()
           NotificationManager.shared.sleepUnmountTimedOut()
-        }
-        allowSleep()
-      }
+        },
+        allow: { IOAllowPowerChange(rootPort, notificationID) })
+      guard isEnabled else { return }
+      Log.app.notice("System will sleep. Ejecting all user volumes.")
       // The unmount is not a user decision — keep-alive targets reconnect on
       // wake, so pass suppressReconnect: false.
       WakeRemountManager.shared.begin(volumes: DriveManager.shared.unmountAllCandidates)
       DriveManager.shared.unmountAllDrives(
-        suppressReconnect: false, reportFailures: false, completion: allowSleep,
+        suppressReconnect: false, reportFailures: false, completion: gate.complete,
         unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
 
     default:
