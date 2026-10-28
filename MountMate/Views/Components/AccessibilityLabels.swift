@@ -14,6 +14,7 @@ enum AccessibilityLabels {
     case unmount = "Unmount"
     case edit = "Edit"
     case delete = "Delete"
+    case openInFinder = "Open in Finder"
 
     /// Localization key of the "<Verb> “%@”" format string.
     var formatKey: String {
@@ -23,6 +24,7 @@ enum AccessibilityLabels {
       case .unmount: return "Unmount “%@”"
       case .edit: return "Edit “%@”"
       case .delete: return "Delete “%@”"
+      case .openInFinder: return "Open in Finder “%@”"
       }
     }
   }

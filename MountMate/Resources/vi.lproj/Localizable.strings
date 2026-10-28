@@ -87,7 +87,7 @@
 "Русский" = "Tiếng Nga";
 "Tiếng Việt" = "Tiếng Việt";
 "中文（简体）" = "Tiếng Trung (Giản thể)";
-"中文（繁体）" = "Tiếng Trung (Phồn thể)";
+"中文（繁體）" = "Tiếng Trung (Phồn thể)";
 
 // About & Updates Section
 "About & Updates" = "Giới thiệu & Cập nhật";
@@ -328,6 +328,7 @@
 "Could not mount “%@”: %@ (error %d)." = "Không thể gắn “%@”: %@ (lỗi %d).";
 "Could not read storage details." = "Không thể đọc thông tin dung lượng.";
 "Delete “%@”" = "Xóa “%@”";
+"Open in Finder “%@”" = "Mở “%@” trong Finder";
 "Delete “%@”?" = "Xóa “%@”?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate không thể đọc mật khẩu đã lưu cho “%@” từ Chuỗi khóa (lỗi %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate không thể xóa mật khẩu đã lưu khỏi Chuỗi khóa (lỗi %d).";

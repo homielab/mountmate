@@ -87,7 +87,7 @@
 "Русский" = "Російська";
 "Tiếng Việt" = "В'єтнамська";
 "中文（简体）" = "Китайська (спрощена)";
-"中文（繁体）" = "Китайська (традиційна)";
+"中文（繁體）" = "Китайська (традиційна)";
 
 // About & Updates Section
 "About & Updates" = "Про програму та оновлення";
@@ -328,6 +328,7 @@
 "Could not mount “%@”: %@ (error %d)." = "Не вдалося підключити «%@»: %@ (помилка %d).";
 "Could not read storage details." = "Не вдалося прочитати відомості про сховище.";
 "Delete “%@”" = "Видалити «%@»";
+"Open in Finder “%@”" = "Відкрити «%@» у Finder";
 "Delete “%@”?" = "Видалити «%@»?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate не вдалося прочитати збережений пароль для «%@» зі в’язки ключів (помилка %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate не вдалося видалити збережений пароль зі в’язки ключів (помилка %d).";

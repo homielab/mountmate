@@ -87,7 +87,7 @@
 "Русский" = "俄语";
 "Tiếng Việt" = "越南语";
 "中文（简体）" = "中文（简体）";
-"中文（繁体）" = "中文（繁体）";
+"中文（繁體）" = "中文（繁体）";
 
 // About & Updates Section
 "About & Updates" = "关于与更新";
@@ -328,6 +328,7 @@
 "Could not mount “%@”: %@ (error %d)." = "无法挂载“%@”：%@（错误 %d）。";
 "Could not read storage details." = "无法读取存储详细信息。";
 "Delete “%@”" = "删除“%@”";
+"Open in Finder “%@”" = "在访达中打开“%@”";
 "Delete “%@”?" = "删除“%@”？";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate 无法从钥匙串读取“%@”的已存储密码（错误 %d）。";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate 无法从钥匙串移除已存储的密码（错误 %d）。";

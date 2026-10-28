@@ -105,7 +105,7 @@ struct NetworkShareRow: View {
           }
           .buttonStyle(.borderless)
           .help("Open in Finder")
-          .accessibilityLabel(Text("Open in Finder"))
+          .accessibilityLabel(Text(AccessibilityLabels.action(.openInFinder, name: share.name)))
         }
 
         // Mount / Unmount action button

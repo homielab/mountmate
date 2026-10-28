@@ -87,7 +87,7 @@
 "Русский" = "Русский";
 "Tiếng Việt" = "Вьетнамский";
 "中文（简体）" = "Китайский (упрощённый)";
-"中文（繁体）" = "Китайский (традиционный)";
+"中文（繁體）" = "Китайский (традиционный)";
 
 // About & Updates Section
 "About & Updates" = "О приложении и обновлениях";
@@ -328,6 +328,7 @@
 "Could not mount “%@”: %@ (error %d)." = "Не удалось смонтировать «%@»: %@ (ошибка %d).";
 "Could not read storage details." = "Не удалось прочитать сведения о хранилище.";
 "Delete “%@”" = "Удалить «%@»";
+"Open in Finder “%@”" = "Открыть «%@» в Finder";
 "Delete “%@”?" = "Удалить «%@»?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate не удалось прочитать сохранённый пароль для «%@» из связки ключей (ошибка %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate не удалось удалить сохранённый пароль из связки ключей (ошибка %d).";

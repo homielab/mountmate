@@ -87,7 +87,7 @@
 "Русский" = "Russian";
 "Tiếng Việt" = "Vietnamese";
 "中文（简体）" = "Chinese (Simplified)";
-"中文（繁体）" = "Chinese (Traditional)";
+"中文（繁體）" = "Chinese (Traditional)";
 
 // About & Updates Section
 "About & Updates" = "About & Updates";
@@ -327,6 +327,7 @@
 "Could not mount “%@”: %@ (error %d)." = "Could not mount “%@”: %@ (error %d).";
 "Could not read storage details." = "Could not read storage details.";
 "Delete “%@”" = "Delete “%@”";
+"Open in Finder “%@”" = "Open in Finder “%@”";
 "Delete “%@”?" = "Delete “%@”?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate could not read the saved password for “%@” from the Keychain (error %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate could not remove the saved password from the Keychain (error %d).";

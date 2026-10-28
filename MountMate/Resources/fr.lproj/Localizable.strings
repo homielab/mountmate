@@ -87,7 +87,7 @@
 "Русский" = "Russe";
 "Tiếng Việt" = "Vietnamien";
 "中文（简体）" = "Chinois (simplifié)";
-"中文（繁体）" = "Chinois (traditionnel)";
+"中文（繁體）" = "Chinois (traditionnel)";
 
 // About & Updates Section
 "About & Updates" = "À propos & Mises à jour";
@@ -328,6 +328,7 @@
 "Could not mount “%@”: %@ (error %d)." = "Impossible de monter « %@ » : %@ (erreur %d).";
 "Could not read storage details." = "Impossible de lire les détails du stockage.";
 "Delete “%@”" = "Supprimer « %@ »";
+"Open in Finder “%@”" = "Ouvrir « %@ » dans le Finder";
 "Delete “%@”?" = "Supprimer « %@ » ?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate n’a pas pu lire le mot de passe enregistré pour « %@ » dans le trousseau (erreur %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate n’a pas pu supprimer le mot de passe enregistré du trousseau (erreur %d).";

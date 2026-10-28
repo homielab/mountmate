@@ -84,7 +84,7 @@ struct ShortcutsLanguageSettingsSection: View {
         Text("Русский").tag("ru")
         Text("Tiếng Việt").tag("vi")
         Text("中文（简体）").tag("zh-Hans")
-        Text("中文（繁体）").tag("zh-Hant")
+        Text("中文（繁體）").tag("zh-Hant")
       } label: {
         Label("Language", systemImage: "globe")
       }

@@ -74,6 +74,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **VoiceOver names the share on Open in Finder**: the Open in Finder button of each saved network share in Settings now says which share it opens ("Open in Finder “NAS”") in all seven languages, instead of the same "Open in Finder" on every row.
+- **Traditional Chinese name in the language picker**: the picker's source label for Traditional Chinese is now written in Traditional script (中文（繁體）) instead of mixing in the Simplified 繁体.
 - **Permission prompts in your language**: the macOS prompts asking for access to removable volumes and to the local network are now shown in French, Russian, Ukrainian, Vietnamese and Chinese (Simplified and Traditional) instead of always in English.
 - **Mount All and Unmount All skip busy volumes**: a volume that is already being mounted, unmounted or unlocked is left out of Mount All, Unmount All (button, shortcut and unmount on sleep), so two operations no longer collide with a spurious "busy" error or end the other's spinner early. Unmount All now shows a spinner on each row it works on.
 - **Changing a custom mount point** no longer leaves the volume unmounted with a spinner that never stops: the volume is mounted again at the new location once the change is saved.
