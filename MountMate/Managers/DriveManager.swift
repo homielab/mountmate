@@ -548,6 +548,7 @@ class DriveManager: ObservableObject {
       setBusy(volume.id, true)
     }
 
+    let locked = LockedVolumes()
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       let failures = BulkVolumeActions.runConcurrently(volumesToMount) { volume in
         BulkVolumeActions.mountWithRetry(
@@ -558,24 +559,47 @@ class DriveManager: ObservableObject {
               after: result, firstSeen: self?.firstSeen(of: volume), now: Date())
           },
           wait: { Thread.sleep(forTimeInterval: MountRetryRules.retryDelay) },
-          didFinish: { Self.postDidFinishManualMount($0) })
+          didFinish: { Self.postDidFinishManualMount($0) },
+          foundLocked: { locked.append($0, $1) })
       }
       DispatchQueue.main.async {
         guard let self else { return }
-        if reportFailures {
-          self.reportBulkFailures(
-            failures,
-            title: NSLocalizedString("Mount Failed", comment: "Alert title"),
-            format: NSLocalizedString(
-              "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
+        // Locked volumes get one silent try of their saved password before
+        // the list refreshes; their spinner stays until it is done.
+        let unlocks = DispatchGroup()
+        for (volume, result) in locked.values {
+          unlocks.enter()
+          self.unlocker.unlockSilently(
+            volume, afterMount: result,
+            hasSavedPassword: self.volumeIDsWithSavedPassword.contains(volume.id),
+            approvesMount: true
+          ) { _ in unlocks.leave() }
         }
-        self.refreshDrives(qos: .userInitiated) {
-          for volume in volumesToMount { self.setBusy(volume.id, false) }
-          self.isMountingAll = false
-          self.openInFinderAfterMounting(volumesToMount.map(\.id), trigger: trigger)
-          completion?(failures.map(\.name))
+        unlocks.notify(queue: .main) {
+          self.finishMountAll(
+            volumesToMount, failures: failures, reportFailures: reportFailures,
+            trigger: trigger, completion: completion)
         }
       }
+    }
+  }
+
+  private func finishMountAll(
+    _ volumesToMount: [Volume], failures: [Volume], reportFailures: Bool,
+    trigger: MountTrigger, completion: (([String]) -> Void)?
+  ) {
+    if reportFailures {
+      reportBulkFailures(
+        failures,
+        title: NSLocalizedString("Mount Failed", comment: "Alert title"),
+        format: NSLocalizedString(
+          "Could not mount: %@", comment: "Bulk mount failure; list of volume names"))
+    }
+    refreshDrives(qos: .userInitiated) {
+      for volume in volumesToMount { self.setBusy(volume.id, false) }
+      self.isMountingAll = false
+      self.openInFinderAfterMounting(volumesToMount.map(\.id), trigger: trigger)
+      completion?(failures.map(\.name))
     }
   }
 
@@ -635,4 +659,15 @@ class DriveManager: ObservableObject {
       executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier], timeout: timeout)
     return PlistDecoding.decode(result.stdout, context: "diskutil info")
   }
+}
+
+/// Locked volumes Mount All found, with their mount result; filled from
+/// parallel mounts.
+private final class LockedVolumes: @unchecked Sendable {
+  private let lock = NSLock()
+  private var items: [(Volume, ProcessResult)] = []
+  func append(_ volume: Volume, _ result: ProcessResult) {
+    lock.withLock { items.append((volume, result)) }
+  }
+  var values: [(Volume, ProcessResult)] { lock.withLock { items } }
 }

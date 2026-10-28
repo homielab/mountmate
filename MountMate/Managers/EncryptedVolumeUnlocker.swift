@@ -66,6 +66,21 @@ enum UnlockRetryDecision: Equatable {
   }
 }
 
+/// Whether an automatic or bulk mount that found a volume locked tries its
+/// saved Keychain password, silently and once.
+enum SilentUnlockRules {
+  /// - Parameters:
+  ///   - mountFailedLocked: the mount failed only because the volume is locked.
+  ///   - hasSavedPassword: a Keychain password is saved for the volume.
+  ///   - savedPasswordRejected: diskutil already rejected that password; it is
+  ///     not tried again until the user unlocks the volume by hand.
+  static func shouldTrySavedPassword(
+    mountFailedLocked: Bool, hasSavedPassword: Bool, savedPasswordRejected: Bool
+  ) -> Bool {
+    mountFailedLocked && hasSavedPassword && !savedPasswordRejected
+  }
+}
+
 /// Unlocks encrypted APFS volumes: tries the saved Keychain password, asks
 /// for one when needed, and saves it only after it worked. The passphrase
 /// reaches `diskutil` through stdin only, never arguments or logs.
@@ -113,6 +128,61 @@ final class EncryptedVolumeUnlocker {
       self.performUnlock(volume: volume, passphrase: saved, isSavedPassword: true)
     }
     return true
+  }
+
+  /// Main thread. Tries the saved Keychain password of a volume that an
+  /// automatic or bulk mount (Keep Alive, Mount Again on Wake, Mount All,
+  /// Shortcuts) found locked, without ever prompting or showing an alert. A
+  /// rejected password is remembered and not tried again until a manual
+  /// unlock succeeds, so a sweep does not retry it every 30 seconds.
+  ///
+  /// - Parameter approvesMount: post the single-use mount approval, for
+  ///   mounts the user asked for (Mount All, Shortcuts).
+  /// - Parameter completion: Main thread; true when the volume was unlocked
+  ///   (and mounted). Called synchronously when nothing is tried.
+  func unlockSilently(
+    _ volume: Volume, afterMount mountResult: ProcessResult, hasSavedPassword: Bool,
+    approvesMount: Bool, completion: @escaping (Bool) -> Void
+  ) {
+    guard
+      SilentUnlockRules.shouldTrySavedPassword(
+        mountFailedLocked: DiskUtilErrorClassifier.isLockedVolumeFailure(mountResult),
+        hasSavedPassword: hasSavedPassword,
+        savedPasswordRejected: rejectedSavedPasswords.contains(volume.id))
+    else {
+      completion(false)
+      return
+    }
+    DispatchQueue.global(qos: .userInitiated).async {
+      guard let saved = self.store.load(account: volume.id), !saved.isEmpty else {
+        DispatchQueue.main.async { completion(false) }
+        return
+      }
+      let userInfo = ["deviceIdentifier": volume.id]
+      if approvesMount {
+        NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
+      }
+      let result = self.host.runDiskUtil(
+        arguments: ["apfs", "unlockVolume", volume.id, "-stdinpassphrase"],
+        input: Data(saved.utf8))
+      if approvesMount {
+        NotificationCenter.default.post(
+          name: .didFinishManualMount, object: nil, userInfo: userInfo)
+      }
+      DispatchQueue.main.async {
+        if result.succeeded {
+          self.rejectedSavedPasswords.remove(volume.id)
+        } else if DiskUtilErrorClassifier.isWrongPassphrase(result) {
+          self.rejectedSavedPasswords.insert(volume.id)
+          Log.drive.notice(
+            "Saved password of a locked volume was rejected; not retried until unlocked by hand")
+        } else {
+          Log.drive.error(
+            "Silent unlock with saved password failed: \(result.stderr, privacy: .private)")
+        }
+        completion(result.succeeded)
+      }
+    }
   }
 
   /// Saves the passphrase the user asked to remember, but only once it has

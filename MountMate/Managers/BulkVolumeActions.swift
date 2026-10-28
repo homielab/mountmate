@@ -186,13 +186,15 @@ enum BulkVolumeActions {
   /// `retryDelay` when `shouldRetry` says the failure looks like the race of a
   /// freshly plugged-in volume. `didFinish` runs exactly once, after the last
   /// attempt, whatever the outcome, so the mount approval is always withdrawn.
-  /// Locked (encrypted) volumes are expected to stay unmounted: not a failure.
+  /// Locked (encrypted) volumes are not a failure: `foundLocked` gets them
+  /// with the final result, so the caller can try a saved password.
   static func mountWithRetry(
     _ volume: Volume,
     attempt: (Volume) -> ProcessResult,
     shouldRetry: (ProcessResult, Volume) -> Bool,
     wait: () -> Void,
-    didFinish: (Volume) -> Void
+    didFinish: (Volume) -> Void,
+    foundLocked: (Volume, ProcessResult) -> Void = { _, _ in }
   ) -> Bool {
     defer { didFinish(volume) }
     var result = attempt(volume)
@@ -200,7 +202,10 @@ enum BulkVolumeActions {
       wait()
       result = attempt(volume)
     }
-    return result.succeeded || DiskUtilErrorClassifier.isLockedVolumeFailure(result)
+    guard !result.succeeded else { return true }
+    guard DiskUtilErrorClassifier.isLockedVolumeFailure(result) else { return false }
+    foundLocked(volume, result)
+    return true
   }
 
   private final class Results<Output>: @unchecked Sendable {

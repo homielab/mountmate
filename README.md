@@ -116,7 +116,7 @@ Everything in the list above, in full:
 - **Keyboard and VoiceOver**: rows in the popover take keyboard focus (Tab, Up/Down; Return or Space mounts or unmounts on macOS 14+), VoiceOver gets row actions, and animations stop with Reduce motion
 - **Block USB Auto-Mount**: stop selected disks from mounting when plugged in or at login; **Block at Startup** (optional) also writes a rule to `/etc/fstab` and asks for your admin password
 - **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at a folder you choose
-- **Encrypted APFS volumes**: unlock them from MountMate, with the password optionally saved in the Keychain ("Forget Saved Password" in the right-click menu removes it)
+- **Encrypted APFS volumes**: unlock them from MountMate, with the password optionally saved in the Keychain ("Forget Saved Password" in the right-click menu removes it); Keep Alive, Mount Again on Wake and Mount All use a saved password silently
 - **RAID**: Apple RAID sets show up as one disk instead of their members
 - **Display options** (Settings → General → Display): **Show Count in Menu Bar** puts the number of mounted volumes and shares (protected volumes not counted) next to the icon; **Show Internal Disks** lists the Mac's own disks too; **Show Only Volumes** hides the disk rows and lists just the volumes; **Hide EFI Partitions**
 - **Ignore, Protect, Pin**: right-click a volume to **Ignore** it (hide it, for example system partitions), **Protect** it from "Unmount All" and the sleep unmount, or **Pin to Top** to list it first; review the lists under Settings → Management

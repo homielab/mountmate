@@ -70,13 +70,13 @@ extension DriveManager {
             Self.postDidFinishManualMount(volume)
           }
           self.handleMountResult(
-            retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts, trigger: trigger,
-            completion: completion)
+            retryResult, for: volume, allowsErrorAlerts: allowsErrorAlerts,
+            isUserInitiated: isUserInitiated, trigger: trigger, completion: completion)
         }
       } else {
         self.handleMountResult(
-          result, for: volume, allowsErrorAlerts: allowsErrorAlerts, trigger: trigger,
-          completion: completion)
+          result, for: volume, allowsErrorAlerts: allowsErrorAlerts,
+          isUserInitiated: isUserInitiated, trigger: trigger, completion: completion)
       }
     }
   }
@@ -117,32 +117,51 @@ extension DriveManager {
 
   private func handleMountResult(
     _ result: ProcessResult, for volume: Volume, allowsErrorAlerts: Bool = true,
-    trigger: MountTrigger, completion: ((Result<Void, Error>) -> Void)? = nil
+    isUserInitiated: Bool, trigger: MountTrigger,
+    completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     DispatchQueue.main.async {
-      guard !result.succeeded else {
+      let succeed = {
         // Keep the spinner until the list shows the volume as mounted.
         self.refreshDrives(qos: .userInitiated) {
           self.setBusy(volume.id, false)
           self.openInFinderAfterMounting([volume.id], trigger: trigger)
           completion?(.success(()))
         }
+      }
+      let fail = {
+        // Cleared before handling the error: a locked volume starts an unlock
+        // that marks the volume busy again.
+        self.setBusy(volume.id, false)
+        if allowsErrorAlerts {
+          self.handleDiskUtilError(
+            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
+            for: volume.name, volume: volume, operation: .mount)
+        }
+        self.refreshDrives(qos: .userInitiated) {
+          completion?(
+            .failure(
+              MountFailure(
+                message: DiskUtilErrorClassifier.failureMessage(
+                  for: result, timeout: Self.mountUnmountTimeout))))
+        }
+      }
+      guard !result.succeeded else {
+        succeed()
         return
       }
-      // Cleared before handling the error: a locked volume starts an unlock
-      // that marks the volume busy again.
-      self.setBusy(volume.id, false)
-      if allowsErrorAlerts {
-        self.handleDiskUtilError(
-          DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
-          for: volume.name, volume: volume, operation: .mount)
+      guard !allowsErrorAlerts else {
+        fail()
+        return
       }
-      self.refreshDrives(qos: .userInitiated) {
-        completion?(
-          .failure(
-            MountFailure(
-              message: DiskUtilErrorClassifier.failureMessage(
-                for: result, timeout: Self.mountUnmountTimeout))))
+      // No prompt here (Keep Alive, Wake, Shortcuts): a locked volume gets one
+      // silent try of its saved password; the spinner stays meanwhile.
+      self.unlocker.unlockSilently(
+        volume, afterMount: result,
+        hasSavedPassword: self.volumeIDsWithSavedPassword.contains(volume.id),
+        approvesMount: isUserInitiated
+      ) { unlocked in
+        unlocked ? succeed() : fail()
       }
     }
   }

@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Encrypted volumes with a saved password reconnect on their own**: Keep Alive, Mount Again on Wake, Mount All and the Mount Volume shortcut now unlock a locked APFS volume with its password saved in the Keychain instead of staying on "Reconnecting…" or "Cannot Reconnect". They never show a password prompt; if the saved password is rejected, MountMate stops trying it until you unlock the volume yourself.
 - **Pasted share URLs**: pasting a full address such as `smb://nas.local/Public` into the Server field of the network share sheet now saves the host `nas.local` and the share path `Public` (used when the Share field is empty) instead of the host "nas.local/Public", which could not mount. Leading and trailing slashes in the share path (`/Public/`) are dropped too. Shares saved before are not changed.
 - **Faster retry after a slow disk list**: when listing disks fails after plugging in a drive or waking the Mac (for example a one-off `diskutil` timeout), the retry 5 seconds later now runs at the same priority as the original refresh instead of as low-priority background work, so the new drive appears without an extra delay, also on battery.
 - **Keep Alive skips an outdated drive list**: when MountMate could not refresh the disk list, or could not confirm a disk's details, Keep Alive now waits for fresh data instead of trying to remount drives that may be gone and reporting "Cannot Reconnect" for them.

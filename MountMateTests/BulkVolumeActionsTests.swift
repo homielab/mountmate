@@ -406,6 +406,25 @@ final class BulkVolumeActionsTests: XCTestCase {
     return (ok, attempts, waits, finished)
   }
 
+  func testMountWithRetryHandsALockedVolumeToTheCaller() {
+    let locked = ProcessResult(
+      stdout: "", stderr: "it is encrypted and locked", exitCode: 1, timedOut: false)
+    var found: [String] = []
+    let ok = BulkVolumeActions.mountWithRetry(
+      volume("1", mounted: false), attempt: { _ in locked }, shouldRetry: { _, _ in false },
+      wait: {}, didFinish: { _ in }, foundLocked: { volume, _ in found.append(volume.id) })
+    XCTAssertTrue(ok)
+    XCTAssertEqual(found, ["1"])
+
+    found = []
+    _ = BulkVolumeActions.mountWithRetry(
+      volume("2", mounted: false),
+      attempt: { _ in ProcessResult(stdout: "", stderr: "busy", exitCode: 1, timedOut: false) },
+      shouldRetry: { _, _ in false }, wait: {}, didFinish: { _ in },
+      foundLocked: { volume, _ in found.append(volume.id) })
+    XCTAssertEqual(found, [])
+  }
+
   func testMountWithRetryPostsFinishOnceWhenTheMountSucceeds() {
     let run = runMount([result(0)], retry: true)
     XCTAssertTrue(run.ok)
