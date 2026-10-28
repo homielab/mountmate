@@ -12,7 +12,7 @@ extension DriveManager {
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
     guard startEjectIfIdle(disk) else {
-      completion?(.failure(DiskOperationError(message: "Eject already in progress")))
+      completion?(.failure(DiskOperationError.ejectInProgress()))
       return
     }
     // Nothing could confirm what this disk is (it may be the internal
@@ -163,4 +163,11 @@ extension DriveManager {
 struct DiskOperationError: LocalizedError, Equatable {
   let message: String
   var errorDescription: String? { message }
+
+  /// The disk is already being ejected.
+  static func ejectInProgress(
+    localize: MountFailure.Localize = MountFailure.defaultLocalize
+  ) -> DiskOperationError {
+    DiskOperationError(message: localize("This disk is already being ejected."))
+  }
 }

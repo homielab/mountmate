@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "Размонтирует все смонтированные сетевые папки, сохранённые в MountMate.";
 "Network shares mounted." = "Сетевые папки смонтированы.";
 "Network shares unmounted." = "Сетевые папки размонтированы.";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "С этим томом уже выполняется другая операция.";
+"Timed out waiting for the mount to finish." = "Истекло время ожидания завершения монтирования.";
+"This disk is already being ejected." = "Этот диск уже извлекается.";

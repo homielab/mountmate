@@ -155,7 +155,7 @@ extension KeepAliveManager {
       DispatchQueue.main.async { completion(result) }
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
-      finish(.failure(MountFailure(message: "Timed out waiting for the mount to finish")))
+      finish(.failure(MountFailure.timedOut()))
     }
     mounter(volume, finish)
   }

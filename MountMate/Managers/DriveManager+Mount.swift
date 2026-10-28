@@ -159,7 +159,7 @@ extension DriveManager {
     Log.drive.info(
       "Skipped a mount or unmount of \(volume.deviceIdentifier, privacy: .public): another operation is running"
     )
-    completion?(.failure(MountFailure(message: "Another operation on this volume is running")))
+    completion?(.failure(MountFailure.busy()))
     return true
   }
 

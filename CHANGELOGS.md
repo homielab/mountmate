@@ -74,6 +74,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Translated busy and time-out errors**: "Another operation on this volume is running", "Timed out waiting for the mount to finish" and "This disk is already being ejected", shown by Shortcuts actions and Keep Alive, now appear in your language instead of always in English.
 - **VoiceOver names the share on Open in Finder**: the Open in Finder button of each saved network share in Settings now says which share it opens ("Open in Finder “NAS”") in all seven languages, instead of the same "Open in Finder" on every row.
 - **Traditional Chinese name in the language picker**: the picker's source label for Traditional Chinese is now written in Traditional script (中文（繁體）) instead of mixing in the Simplified 繁体.
 - **Permission prompts in your language**: the macOS prompts asking for access to removable volumes and to the local network are now shown in French, Russian, Ukrainian, Vietnamese and Chinese (Simplified and Traditional) instead of always in English.

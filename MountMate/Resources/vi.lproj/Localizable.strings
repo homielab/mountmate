@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "Unmount mọi chia sẻ mạng đã lưu trong MountMate đang được mount.";
 "Network shares mounted." = "Đã mount các chia sẻ mạng.";
 "Network shares unmounted." = "Đã unmount các chia sẻ mạng.";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "Một thao tác khác đang chạy trên phân vùng này.";
+"Timed out waiting for the mount to finish." = "Đã hết thời gian chờ mount hoàn tất.";
+"This disk is already being ejected." = "Ổ đĩa này đang được đẩy ra.";

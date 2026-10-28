@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "Unmounts every mounted network share saved in MountMate.";
 "Network shares mounted." = "Network shares mounted.";
 "Network shares unmounted." = "Network shares unmounted.";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "Another operation on this volume is running.";
+"Timed out waiting for the mount to finish." = "Timed out waiting for the mount to finish.";
+"This disk is already being ejected." = "This disk is already being ejected.";

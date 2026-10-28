@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "卸載 MountMate 中儲存且已掛載的所有網路共享。";
 "Network shares mounted." = "網路共享已掛載。";
 "Network shares unmounted." = "網路共享已卸載。";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "此卷宗上的另一項操作正在進行。";
+"Timed out waiting for the mount to finish." = "等待掛載完成逾時。";
+"This disk is already being ejected." = "此磁碟正在推出。";

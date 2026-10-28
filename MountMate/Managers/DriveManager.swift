@@ -6,8 +6,22 @@ import SwiftUI
 
 /// Why a mount did not succeed (the `diskutil` failure message).
 struct MountFailure: LocalizedError {
+  typealias Localize = (String) -> String
+
+  static let defaultLocalize: Localize = { NSLocalizedString($0, comment: "Mount error message") }
+
   let message: String
   var errorDescription: String? { message }
+
+  /// Another mount, unmount or unlock of the volume is still running.
+  static func busy(localize: Localize = defaultLocalize) -> MountFailure {
+    MountFailure(message: localize("Another operation on this volume is running."))
+  }
+
+  /// A Keep Alive remount did not report back in time.
+  static func timedOut(localize: Localize = defaultLocalize) -> MountFailure {
+    MountFailure(message: localize("Timed out waiting for the mount to finish."))
+  }
 }
 
 class DriveManager: ObservableObject {

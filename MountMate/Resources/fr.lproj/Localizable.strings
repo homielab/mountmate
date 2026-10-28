@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "Démonte tous les partages réseau montés enregistrés dans MountMate.";
 "Network shares mounted." = "Partages réseau montés.";
 "Network shares unmounted." = "Partages réseau démontés.";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "Une autre opération est en cours sur ce volume.";
+"Timed out waiting for the mount to finish." = "Le montage n’a pas abouti dans le délai imparti.";
+"This disk is already being ejected." = "Ce disque est déjà en cours d’éjection.";

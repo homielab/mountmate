@@ -555,3 +555,8 @@
 "Unmounts every mounted network share saved in MountMate." = "Відключає всі підключені мережеві папки, збережені в MountMate.";
 "Network shares mounted." = "Мережеві папки підключено.";
 "Network shares unmounted." = "Мережеві папки відключено.";
+
+/* Mount and eject errors */
+"Another operation on this volume is running." = "З цим томом уже виконується інша операція.";
+"Timed out waiting for the mount to finish." = "Час очікування завершення підключення вичерпано.";
+"This disk is already being ejected." = "Цей диск уже виймається.";
