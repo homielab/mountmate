@@ -200,6 +200,29 @@ final class NetworkShareParsingTests: XCTestCase {
       nfsV4.endpoint, MountedNetworkShare.Endpoint(host: "10.0.0.5", path: "exports/public"))
   }
 
+  func testNFSMountMatchesOnlyTheShareWithTheSameExportCase() throws {
+    let upper = NetworkShare(
+      name: "Upper", server: "nas", sharePath: "/export/Data", username: "",
+      shareProtocol: .nfs)
+    let lower = NetworkShare(
+      name: "lower", server: "nas", sharePath: "/export/data", username: "",
+      shareProtocol: .nfs)
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "nas:/export/Data", mountPoint: "/Volumes/Data", fileSystemType: "nfs"))
+
+    XCTAssertEqual(mounted.endpoint, MountedNetworkShare.Endpoint(host: "nas", path: "export/Data"))
+    XCTAssertTrue(mounted.matches(upper))
+    XCTAssertFalse(mounted.matches(lower))
+    let saved = [lower, upper]
+    XCTAssertEqual(
+      NetworkMountTable.mounts(of: upper, in: [mounted], savedShares: saved, adoptions: [:]),
+      [mounted])
+    XCTAssertTrue(
+      NetworkMountTable.mounts(of: lower, in: [mounted], savedShares: saved, adoptions: [:])
+        .isEmpty)
+  }
+
   func testMountPathComparison() {
     XCTAssertTrue(NetworkMountTable.samePath("/Users/me/mountmate/A", "/Users/me/mountmate/a/"))
     XCTAssertTrue(

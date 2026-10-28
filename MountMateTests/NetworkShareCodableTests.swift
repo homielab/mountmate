@@ -148,4 +148,16 @@ final class NetworkShareCodableTests: XCTestCase {
     XCTAssertFalse(a.hasSameEndpoint(as: c))
     XCTAssertFalse(a.hasSameEndpoint(as: d))
   }
+
+  func testNFSExportPathCaseMattersButSMBShareNameCaseDoesNot() {
+    func share(_ path: String, _ shareProtocol: ShareProtocol) -> NetworkShare {
+      NetworkShare(
+        name: path, server: "nas.local", sharePath: path, username: "",
+        shareProtocol: shareProtocol)
+    }
+    XCTAssertFalse(share("/export/Data", .nfs).hasSameEndpoint(as: share("/export/data", .nfs)))
+    XCTAssertTrue(share("/export/Data", .nfs).hasSameEndpoint(as: share("export/Data/", .nfs)))
+    XCTAssertTrue(share("Data", .smb).hasSameEndpoint(as: share("data", .smb)))
+    XCTAssertTrue(share("Data", .afp).hasSameEndpoint(as: share("data", .afp)))
+  }
 }

@@ -65,7 +65,8 @@ struct MountedNetworkShare: Equatable, Sendable {
         host = rest[..<colon]
         rest = rest[rest.index(after: colon)...]
       }
-      return Endpoint(host: normalizedHost(String(host)), path: normalizedPath(String(rest)))
+      return Endpoint(
+        host: normalizedHost(String(host)), path: normalizedPath(String(rest), shareProtocol: .nfs))
     case .smb, .afp:
       var rest = Substring(source)
       while rest.hasPrefix("/") { rest = rest.dropFirst() }
@@ -78,13 +79,17 @@ struct MountedNetworkShare: Equatable, Sendable {
         authority = rest
         path = ""
       }
-      return Endpoint(host: normalizedHost(String(authority)), path: normalizedPath(String(path)))
+      return Endpoint(
+        host: normalizedHost(String(authority)),
+        path: normalizedPath(String(path), shareProtocol: shareProtocol))
     }
   }
 
   /// The endpoint a saved share points at, normalized like a mount source.
   static func endpoint(for share: NetworkShare) -> Endpoint {
-    Endpoint(host: normalizedHost(share.server), path: normalizedPath(share.sharePath))
+    Endpoint(
+      host: normalizedHost(share.server),
+      path: normalizedPath(share.sharePath, shareProtocol: share.shareProtocol))
   }
 
   /// Reduces a host (as typed by the user or printed in a mount source) to a
@@ -127,10 +132,15 @@ struct MountedNetworkShare: Equatable, Sendable {
     return result
   }
 
-  /// Percent-decodes a share path, strips surrounding slashes and lowercases
-  /// it (SMB/AFP share names are case-insensitive).
-  static func normalizedPath(_ raw: String) -> String {
+  /// Percent-decodes a share path and strips surrounding slashes. SMB/AFP
+  /// share names are case-insensitive, so those are lowercased; NFS export
+  /// paths are case-sensitive and keep their case.
+  static func normalizedPath(_ raw: String, shareProtocol: ShareProtocol) -> String {
     let decoded = raw.removingPercentEncoding ?? raw
-    return decoded.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+    let trimmed = decoded.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    switch shareProtocol {
+    case .smb, .afp: return trimmed.lowercased()
+    case .nfs: return trimmed
+    }
   }
 }
