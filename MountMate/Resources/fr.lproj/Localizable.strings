@@ -113,6 +113,7 @@
 //=============================================
 
 // Titles
+"Eject “%@”" = "Éjecter « %@ »";
 "Eject Failed" = "Échec de l'éjection";
 "Mount Failed" = "Échec du montage";
 "Unmount Failed" = "Échec du démontage";
@@ -163,6 +164,7 @@
 
 "Add Share" = "Ajouter un partage";
 "Add Network Share" = "Ajouter un partage réseau";
+"Edit “%@”" = "Modifier « %@ »";
 "Edit Network Share" = "Modifier un partage réseau";
 "MountMate can automatically mount these SMB shares at login." = "MountMate peut monter automatiquement ces partages SMB à l'ouverture de session.";
 "No Network Shares Configured" = "Aucun partage réseau configuré";
@@ -325,6 +327,7 @@
 "Could not mount “%@” (error %d)." = "Impossible de monter « %@ » (erreur %d).";
 "Could not mount “%@”: %@ (error %d)." = "Impossible de monter « %@ » : %@ (erreur %d).";
 "Could not read storage details." = "Impossible de lire les détails du stockage.";
+"Delete “%@”" = "Supprimer « %@ »";
 "Delete “%@”?" = "Supprimer « %@ » ?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate n’a pas pu lire le mot de passe enregistré pour « %@ » dans le trousseau (erreur %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate n’a pas pu supprimer le mot de passe enregistré du trousseau (erreur %d).";

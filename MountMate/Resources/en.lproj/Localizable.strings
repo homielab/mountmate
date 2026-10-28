@@ -113,6 +113,7 @@
 //=============================================
 
 // Titles
+"Eject “%@”" = "Eject “%@”";
 "Eject Failed" = "Eject Failed";
 "Mount Failed" = "Mount Failed";
 "Unmount Failed" = "Unmount Failed";
@@ -163,6 +164,7 @@
 
 "Add Share" = "Add Share";
 "Add Network Share" = "Add Network Share";
+"Edit “%@”" = "Edit “%@”";
 "Edit Network Share" = "Edit Network Share";
 "MountMate can automatically mount these SMB shares at login." = "MountMate can automatically mount these SMB shares at login.";
 "No Network Shares Configured" = "No Network Shares Configured";
@@ -324,6 +326,7 @@
 "Could not mount “%@” (error %d)." = "Could not mount “%@” (error %d).";
 "Could not mount “%@”: %@ (error %d)." = "Could not mount “%@”: %@ (error %d).";
 "Could not read storage details." = "Could not read storage details.";
+"Delete “%@”" = "Delete “%@”";
 "Delete “%@”?" = "Delete “%@”?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate could not read the saved password for “%@” from the Keychain (error %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate could not remove the saved password from the Keychain (error %d).";

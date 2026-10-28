@@ -202,6 +202,12 @@ struct NetworkShareMainRow: View {
             ? NSLocalizedString("Eject", comment: "Tooltip")
             : NSLocalizedString("Mount", comment: "Tooltip")
         )
+        .accessibilityLabel(
+          Text(
+            isMounted
+              ? AccessibilityLabels.action(.eject, name: share.name)
+              : AccessibilityLabels.action(.mount, name: share.name))
+        )
         .padding(.leading, 8)
       }
       .padding(.vertical, 4)

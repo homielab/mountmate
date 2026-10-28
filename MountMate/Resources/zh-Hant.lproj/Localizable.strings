@@ -113,6 +113,7 @@
 //=============================================
 
 // Titles
+"Eject “%@”" = "推出「%@」";
 "Eject Failed" = "推出失敗";
 "Mount Failed" = "掛載失敗";
 "Unmount Failed" = "卸載失敗";
@@ -163,6 +164,7 @@
 
 "Add Share" = "新增共用";
 "Add Network Share" = "新增網路共享";
+"Edit “%@”" = "編輯「%@」";
 "Edit Network Share" = "編輯網路共享";
 "MountMate can automatically mount these SMB shares at login." = "MountMate 可以在登入時自動掛載這些 SMB 共享。";
 "No Network Shares Configured" = "未設定網路共享";
@@ -325,6 +327,7 @@
 "Could not mount “%@” (error %d)." = "無法掛載「%@」（錯誤 %d）。";
 "Could not mount “%@”: %@ (error %d)." = "無法掛載「%@」：%@（錯誤 %d）。";
 "Could not read storage details." = "無法讀取儲存空間詳細資訊。";
+"Delete “%@”" = "刪除「%@」";
 "Delete “%@”?" = "刪除「%@」？";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate 無法從鑰匙圈讀取「%@」的已儲存密碼（錯誤 %d）。";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate 無法從鑰匙圈移除已儲存的密碼（錯誤 %d）。";

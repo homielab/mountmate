@@ -116,7 +116,9 @@ struct DiskHeaderRow: View {
           }
         }
         .help("Eject")
-        .accessibilityLabel(Text("Eject"))
+        .accessibilityLabel(
+          Text(AccessibilityLabels.action(.eject, name: disk.name ?? disk.id))
+        )
         .accessibilityValue(Text.busyValue(isEjecting))
       }
     }

@@ -113,6 +113,7 @@
 //=============================================
 
 // Titles
+"Eject “%@”" = "Đẩy ra “%@”";
 "Eject Failed" = "Đẩy ra thất bại";
 "Mount Failed" = "Gắn thất bại";
 "Unmount Failed" = "Tháo thất bại";
@@ -163,6 +164,7 @@
 
 "Add Share" = "Thêm chia sẻ";
 "Add Network Share" = "Thêm Chia sẻ Mạng";
+"Edit “%@”" = "Sửa “%@”";
 "Edit Network Share" = "Sửa Chia sẻ Mạng";
 "MountMate can automatically mount these SMB shares at login." = "MountMate có thể tự động gắn các chia sẻ SMB này khi đăng nhập.";
 "No Network Shares Configured" = "Chưa cấu hình Chia sẻ Mạng";
@@ -325,6 +327,7 @@
 "Could not mount “%@” (error %d)." = "Không thể gắn “%@” (lỗi %d).";
 "Could not mount “%@”: %@ (error %d)." = "Không thể gắn “%@”: %@ (lỗi %d).";
 "Could not read storage details." = "Không thể đọc thông tin dung lượng.";
+"Delete “%@”" = "Xóa “%@”";
 "Delete “%@”?" = "Xóa “%@”?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate không thể đọc mật khẩu đã lưu cho “%@” từ Chuỗi khóa (lỗi %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate không thể xóa mật khẩu đã lưu khỏi Chuỗi khóa (lỗi %d).";

@@ -113,6 +113,7 @@
 //=============================================
 
 // Titles
+"Eject “%@”" = "Извлечь «%@»";
 "Eject Failed" = "Не удалось извлечь";
 "Mount Failed" = "Не удалось смонтировать";
 "Unmount Failed" = "Не удалось отмонтировать";
@@ -163,6 +164,7 @@
 
 "Add Share" = "Добавить ресурс";
 "Add Network Share" = "Добавить сетевой ресурс";
+"Edit “%@”" = "Редактировать «%@»";
 "Edit Network Share" = "Редактировать сетевой ресурс";
 "MountMate can automatically mount these SMB shares at login." = "MountMate может автоматически монтировать эти SMB-ресурсы при входе.";
 "No Network Shares Configured" = "Сетевые ресурсы не настроены";
@@ -325,6 +327,7 @@
 "Could not mount “%@” (error %d)." = "Не удалось смонтировать «%@» (ошибка %d).";
 "Could not mount “%@”: %@ (error %d)." = "Не удалось смонтировать «%@»: %@ (ошибка %d).";
 "Could not read storage details." = "Не удалось прочитать сведения о хранилище.";
+"Delete “%@”" = "Удалить «%@»";
 "Delete “%@”?" = "Удалить «%@»?";
 "MountMate could not read the saved password for “%@” from the Keychain (error %d)." = "MountMate не удалось прочитать сохранённый пароль для «%@» из связки ключей (ошибка %d).";
 "MountMate could not remove the saved password from the Keychain (error %d)." = "MountMate не удалось удалить сохранённый пароль из связки ключей (ошибка %d).";

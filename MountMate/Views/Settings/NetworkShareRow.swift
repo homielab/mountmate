@@ -138,14 +138,18 @@ struct NetworkShareRow: View {
         .disabled(isWorking)
         .buttonStyle(.borderless)
         .help(isMounted ? "Unmount Share" : "Mount Share")
-        .accessibilityLabel(isMounted ? Text("Unmount Share") : Text("Mount Share"))
+        .accessibilityLabel(
+          Text(
+            isMounted
+              ? AccessibilityLabels.action(.unmount, name: share.name)
+              : AccessibilityLabels.action(.mount, name: share.name)))
 
         Button(action: onEdit) {
           Image(systemName: "pencil")
         }
         .buttonStyle(.borderless)
         .help("Edit Share")
-        .accessibilityLabel(Text("Edit Share"))
+        .accessibilityLabel(Text(AccessibilityLabels.action(.edit, name: share.name)))
 
         Button(
           role: .destructive,
@@ -159,7 +163,7 @@ struct NetworkShareRow: View {
         .buttonStyle(.borderless)
         .disabled(isWorking)
         .help("Delete Share")
-        .accessibilityLabel(Text("Delete Share"))
+        .accessibilityLabel(Text(AccessibilityLabels.action(.delete, name: share.name)))
       }
     }
     .padding(.vertical, 4)
