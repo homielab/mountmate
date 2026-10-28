@@ -129,59 +129,39 @@ class DiskMounter: ObservableObject {
         return nil
       }
 
-      // Approve non-physical media (disk images).
-      if DiskMounter.isDiskImage(description) {
-        return nil
-      }
-
       let volumeUUIDString = DiskMounter.uuidString(
         description[kDADiskDescriptionVolumeUUIDKey as String])
       let diskUUIDString = DiskMounter.uuidString(
         description[kDADiskDescriptionMediaUUIDKey as String])
 
-      // Only mount requests explicitly initiated by MountMate bypass the
-      // runtime block. Disk Arbitration does not identify the source of a
-      // request from Finder, Terminal, or the OS.
-      if this.withLedger({
-        $0.consumeApproval(
-          bsdName: bsdName, volumeUUID: volumeUUIDString, diskUUID: diskUUIDString)
-      }) {
-        return nil
-      }
+      let decision = MountApprovalDecision.decide(
+        MountApprovalDecision.Input(
+          isDiskImage: DiskMounter.isDiskImage(description),
+          consumeApproval: {
+            this.withLedger {
+              $0.consumeApproval(
+                bsdName: bsdName, volumeUUID: volumeUUIDString, diskUUID: diskUUIDString)
+            }
+          },
+          blockUSBAutoMount: this.blockUSBAutoMount,
+          busProtocol: { DiskMounter.busProtocol(of: disk, description: description) },
+          volumeUUID: volumeUUIDString,
+          diskUUID: diskUUIDString,
+          isBlockedVolumeID: { id in
+            PersistenceManager.shared.blockedVolumes.contains { $0.id == id }
+          },
+          allowRequestedMounts: this.allowRequestedMounts,
+          isAutomaticMount: { this.withLedger { $0.isAutomaticMount(bsdName: bsdName) } }))
 
-      var shouldBlock = false
-      // True when the per-volume blocked list (not the global USB/SD block)
-      // decided shouldBlock, so a missing startup rule can be added for it.
-      var blockedByList = false
-
-      // Global USB block. The feature is named "Block USB Auto-Mount", so
-      // it is scoped to USB drives and SD cards.
-      if this.blockUSBAutoMount,
-        let proto = DiskMounter.busProtocol(of: disk, description: description),
-        DiskMounter.isUSBOrSDProtocol(proto)
-      {
-        shouldBlock = true
-      }
-
-      if let volUUID = volumeUUIDString {
-        let dUUID = diskUUIDString ?? "NONE"
-        let compositeId = "\(dUUID)-\(volUUID)"
-        if PersistenceManager.shared.blockedVolumes.contains(where: { $0.id == compositeId }) {
-          shouldBlock = true
-          blockedByList = true
-        }
-      }
-
-      if shouldBlock && this.allowRequestedMounts
-        && !this.withLedger({ $0.isAutomaticMount(bsdName: bsdName) })
-      {
+      switch decision {
+      case .allow(.requestedMount):
         Log.mounter.notice(
           "Allowing requested mount of blocked volume \(bsdName ?? "unknown volume", privacy: .public)."
         )
         return nil
-      }
-
-      if shouldBlock {
+      case .allow:
+        return nil
+      case .dissent(let blockedByList):
         if blockedByList {
           // The volume is connected but macOS still tried to auto-mount it,
           // so it has no startup rule yet. Add one (when "Block at Startup"
@@ -193,9 +173,6 @@ class DiskMounter: ObservableObject {
         let dissenter = DADissenterCreate(kCFAllocatorDefault, DAReturn(kDAReturnNotPermitted), nil)
         return Unmanaged.passRetained(dissenter)
       }
-
-      // Approved.
-      return nil
     }
 
     let appearedCallback: DADiskAppearedCallback = { disk, context in
@@ -276,14 +253,6 @@ class DiskMounter: ObservableObject {
         as? [String: Any]
     else { return nil }
     return characteristics["Physical Interconnect"] as? String
-  }
-
-  /// "USB", "SD" or "Secure Digital", ignoring case.
-  fileprivate static func isUSBOrSDProtocol(_ proto: String) -> Bool {
-    let value = proto.trimmingCharacters(in: .whitespaces)
-    return ["USB", "SD", "Secure Digital"].contains {
-      value.caseInsensitiveCompare($0) == .orderedSame
-    }
   }
 
   /// Runs once per app launch, shortly after the Disk Arbitration session
