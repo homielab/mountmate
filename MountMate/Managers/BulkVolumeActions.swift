@@ -56,11 +56,16 @@ enum BulkVolumeActions {
     disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
   }
 
-  /// `diskutil eject` for a disk. A sleeping disk needs time to wake, hence
-  /// the longer timeout (same as the single-disk Eject).
+  /// How long an eject may take. A sleeping (spun-down) disk has to wake
+  /// before it can be ejected, which can take well over the default 15 s.
+  /// Used by the single-disk Eject and by "Eject All External Disks".
+  static let ejectTimeout: TimeInterval = 60
+
+  /// `diskutil eject` for a disk, with the longer `ejectTimeout`.
   static func diskutilEject(_ disk: PhysicalDisk) -> Bool {
     runProcess(
-      executable: "/usr/sbin/diskutil", arguments: ejectArguments(for: disk), timeout: 60
+      executable: "/usr/sbin/diskutil", arguments: ejectArguments(for: disk),
+      timeout: ejectTimeout
     ).succeeded
   }
 
@@ -93,23 +98,33 @@ enum BulkVolumeActions {
     return result.succeeded || DiskUtilErrorClassifier.isLockedVolumeFailure(result)
   }
 
-  private final class Results: @unchecked Sendable {
+  private final class Results<Output>: @unchecked Sendable {
     private let lock = NSLock()
-    private var succeeded: [Bool]
-    init(count: Int) { succeeded = Array(repeating: false, count: count) }
-    func set(_ index: Int, _ ok: Bool) { lock.withLock { succeeded[index] = ok } }
-    var values: [Bool] { lock.withLock { succeeded } }
+    private var outputs: [Output?]
+    init(count: Int) { outputs = Array(repeating: nil, count: count) }
+    func set(_ index: Int, _ output: Output) { lock.withLock { outputs[index] = output } }
+    var values: [Output] { lock.withLock { outputs.compactMap { $0 } } }
   }
 
-  /// Runs `runner` for every item (volumes, or disks) in parallel (at most
-  /// one per CPU core) and returns the items it failed for, in the original
-  /// order. Blocks until all are done; call off the main thread.
-  static func runConcurrently<Item>(_ volumes: [Item], runner: (Item) -> Bool) -> [Item] {
-    let results = Results(count: volumes.count)
-    DispatchQueue.concurrentPerform(iterations: volumes.count) { index in
-      results.set(index, runner(volumes[index]))
+  /// Runs `transform` for every item in parallel (at most one per CPU core)
+  /// and returns its outputs in the original order. Blocks until all are
+  /// done; call off the main thread.
+  static func mapConcurrently<Item, Output>(
+    _ items: [Item], transform: (Item) -> Output
+  ) -> [Output] {
+    let results = Results<Output>(count: items.count)
+    DispatchQueue.concurrentPerform(iterations: items.count) { index in
+      results.set(index, transform(items[index]))
     }
-    return zip(volumes, results.values).filter { !$0.1 }.map(\.0)
+    return results.values
+  }
+
+  /// Runs `runner` for every item (volumes, disks or shares) in parallel and
+  /// returns the items it failed for, in the original order. Blocks until all
+  /// are done; call off the main thread.
+  static func runConcurrently<Item>(_ items: [Item], runner: (Item) -> Bool) -> [Item] {
+    let succeeded = mapConcurrently(items, transform: runner)
+    return zip(items, succeeded).filter { !$0.1 }.map(\.0)
   }
 
   /// One alert naming every volume that failed; nil when none did.
@@ -117,10 +132,19 @@ enum BulkVolumeActions {
     failureAlert(forNames: failures.map(\.name), title: title, format: format)
   }
 
-  /// Same for any list of names (disks, volumes).
-  static func failureAlert(forNames names: [String], title: String, format: String) -> AppAlert? {
+  /// Same for any list of names (disks, volumes, shares). `reasons`, when
+  /// given, are listed one per line under the names (each already says which
+  /// item it is about); `kind` lets the alert offer a follow-up such as Force
+  /// Unmount.
+  static func failureAlert(
+    forNames names: [String], title: String, format: String, reasons: [String] = [],
+    kind: AppAlertKind = .basic
+  ) -> AppAlert? {
     guard !names.isEmpty else { return nil }
-    return AppAlert(
-      title: title, message: String(format: format, names.joined(separator: ", ")), kind: .basic)
+    var message = String(format: format, names.joined(separator: ", "))
+    if !reasons.isEmpty {
+      message += "\n\n" + reasons.joined(separator: "\n")
+    }
+    return AppAlert(title: title, message: message, kind: kind)
   }
 }

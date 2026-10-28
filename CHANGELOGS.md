@@ -71,6 +71,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Eject All Manually Connected Shares**: the shares are now ejected at the same time, so one share on a server that does not answer no longer keeps the others (and the spinner) waiting. The alert says why each share could not be ejected (busy, timed out, no longer mounted) and offers Force Unmount when that may help.
 - **Busy volumes**: while a volume is mounting, unmounting or being verified, its right-click menu no longer offers Mount, Mount Read-Only, Unmount, Verify or Rename, and a second mount or unmount started meanwhile (for example by Keep Alive or a shortcut) is skipped instead of running a second `diskutil` and clearing the spinner early.
 - **Keep Alive backoff for volumes**: automatic reconnect attempts (Keep Alive sweep, Mount Again on Wake) no longer reset a volume's retry backoff, so a broken or unplugged volume is retried less and less often and shows "Retrying in N s" instead of being retried every 30 seconds forever. Mounting it yourself still starts over.
 - **VoiceOver reads what a button acts on**: the Eject button of a disk row, the Mount/Eject button of a network share row and the Mount/Unmount, Edit and Delete buttons of a share in Settings now announce "Eject “Backup”" instead of just "Eject" or "Edit Share", in all seven languages, so rows no longer sound identical when several drives or shares are listed.

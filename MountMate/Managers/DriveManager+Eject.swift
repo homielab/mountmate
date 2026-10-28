@@ -20,31 +20,26 @@ extension DriveManager {
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: disk.allVolumes)
     KeepAliveManager.shared.suppress(volumes: disk.allVolumes)
     setEjecting(disk.id, true)
-    // A RAID master is a virtual logical disk. `eject` is only valid for a
-    // physical device, while unmountDisk safely unmounts every volume in the
-    // set and produces the same Finder-visible result.
-    let ejectArgs = disk.isRAIDSet ? ["unmountDisk", disk.id] : ["eject", disk.id]
-    // A sleeping (spun-down) disk has to wake before it can be ejected,
-    // which can take well over the default 15s. The first attempt often
-    // unmounts the volumes but fails the eject while the drive spins up,
-    // so allow more time and retry once, 2 s later, before reporting an
-    // error (#70).
-    let ejectTimeout: TimeInterval = 60
+    // A RAID master is a virtual logical disk: `ejectArguments` unmounts its
+    // volumes instead. A sleeping (spun-down) disk has to wake before it can
+    // be ejected: the first attempt often unmounts the volumes but fails the
+    // eject while the drive spins up, so allow `ejectTimeout` and retry once,
+    // 2 s later, before reporting an error (#70).
+    let ejectArgs = BulkVolumeActions.ejectArguments(for: disk)
+    let ejectTimeout = BulkVolumeActions.ejectTimeout
     let runEject = {
       runProcess(executable: "/usr/sbin/diskutil", arguments: ejectArgs, timeout: ejectTimeout)
     }
     let finish: (ProcessResult) -> Void = { result in
       DispatchQueue.main.async {
-        if !result.succeeded {
-          KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
-          self.setEjecting(disk.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: ejectTimeout),
-            for: disk.name ?? disk.id, disk: disk, operation: .eject)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }
-        }
+        self.finishDiskOperation(
+          failure: result.succeeded
+            ? nil : (result: result, operation: .eject, timeout: ejectTimeout),
+          name: disk.name ?? disk.id, disk: disk,
+          restoreKeepAlive: {
+            KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
+          },
+          endProgress: { self.setEjecting(disk.id, false) })
       }
     }
     DispatchQueue.global(qos: .userInitiated).async {
@@ -78,22 +73,18 @@ extension DriveManager {
       let outcome = ForceEjectOutcome.choose(
         unmountResult: forceUnmountResult, ejectResult: ejectResult)
       DispatchQueue.main.async {
-        let failure: (result: ProcessResult, operation: DiskOperation)? =
+        let failure: DiskOperationFailure? =
           switch outcome {
           case .succeeded: nil
-          case .unmountFailed(let result): (result, .unmount)
-          case .ejectFailed(let result): (result, .eject)
+          case .unmountFailed(let result): (result, .unmount, timeout)
+          case .ejectFailed(let result): (result, .eject, timeout)
           }
-        if let failure {
-          KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
-          self.setEjecting(disk.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: timeout),
-            for: disk.name ?? disk.id, disk: disk, operation: failure.operation)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setEjecting(disk.id, false) }
-        }
+        self.finishDiskOperation(
+          failure: failure, name: disk.name ?? disk.id, disk: disk,
+          restoreKeepAlive: {
+            KeepAliveManager.shared.unsuppress(volumes: disk.allVolumes, keeping: wasSuppressed)
+          },
+          endProgress: { self.setEjecting(disk.id, false) })
       }
     }
   }
@@ -107,17 +98,42 @@ extension DriveManager {
         executable: "/usr/sbin/diskutil", arguments: ["unmount", "force", volume.deviceIdentifier],
         timeout: Self.mountUnmountTimeout)
       DispatchQueue.main.async {
-        if !result.succeeded {
-          KeepAliveManager.shared.unsuppress(volumes: [volume], keeping: wasSuppressed)
-          self.setBusy(volume.id, false)
-          self.handleDiskUtilError(
-            DiskUtilErrorClassifier.failureMessage(for: result, timeout: Self.mountUnmountTimeout),
-            for: volume.name, volume: volume, operation: .unmount)
-          self.refreshDrives(qos: .userInitiated)
-        } else {
-          self.refreshDrives(qos: .userInitiated) { self.setBusy(volume.id, false) }
-        }
+        self.finishDiskOperation(
+          failure: result.succeeded
+            ? nil : (result: result, operation: .unmount, timeout: Self.mountUnmountTimeout),
+          name: volume.name, volume: volume,
+          restoreKeepAlive: {
+            KeepAliveManager.shared.unsuppress(volumes: [volume], keeping: wasSuppressed)
+          },
+          endProgress: { self.setBusy(volume.id, false) })
       }
     }
+  }
+
+  /// The diskutil call that failed, which operation it was and its timeout.
+  typealias DiskOperationFailure = (
+    result: ProcessResult, operation: DiskOperation, timeout: TimeInterval
+  )
+
+  /// The common end of Eject, Force Eject and Force Unmount, on the main
+  /// thread. On failure: let Keep Alive watch the volumes again, end the
+  /// progress state, report the translated error and refresh. On success the
+  /// progress state ends only once the refreshed list is in, so the row does
+  /// not flash back to "mounted".
+  private func finishDiskOperation(
+    failure: DiskOperationFailure?, name: String, disk: PhysicalDisk? = nil,
+    volume: Volume? = nil, restoreKeepAlive: () -> Void,
+    endProgress: @escaping () -> Void
+  ) {
+    guard let failure else {
+      refreshDrives(qos: .userInitiated, then: endProgress)
+      return
+    }
+    restoreKeepAlive()
+    endProgress()
+    handleDiskUtilError(
+      DiskUtilErrorClassifier.failureMessage(for: failure.result, timeout: failure.timeout),
+      for: name, volume: volume, disk: disk, operation: failure.operation)
+    refreshDrives(qos: .userInitiated)
   }
 }

@@ -194,6 +194,24 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertNil(BulkVolumeActions.failureAlert(for: [], title: "T", format: "%@"))
   }
 
+  func testFailureAlertListsReasonsUnderTheNamesAndKeepsItsKind() {
+    let alert = BulkVolumeActions.failureAlert(
+      forNames: ["A", "B"], title: "Eject Failed", format: "Could not eject: %@",
+      reasons: ["“A” is busy.", "“B” timed out."], kind: .forceUnmount {})
+    XCTAssertEqual(alert?.message, "Could not eject: A, B\n\n“A” is busy.\n“B” timed out.")
+    guard case .forceUnmount = alert?.kind else { return XCTFail("expected Force Unmount") }
+  }
+
+  func testEjectTimeoutLeavesASleepingDiskTimeToWake() {
+    XCTAssertEqual(BulkVolumeActions.ejectTimeout, 60)
+    XCTAssertGreaterThan(BulkVolumeActions.ejectTimeout, DriveManager.mountUnmountTimeout)
+  }
+
+  func testMapConcurrentlyKeepsTheOriginalOrder() {
+    XCTAssertEqual(
+      BulkVolumeActions.mapConcurrently(Array(0..<20)) { $0 * 2 }, (0..<20).map { $0 * 2 })
+  }
+
   // MARK: - Mount with retry
 
   private func result(_ code: Int32?, stderr: String = "") -> ProcessResult {

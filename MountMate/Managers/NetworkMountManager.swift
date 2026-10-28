@@ -348,28 +348,71 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     }
   }
 
-  func unmountAllManuallyConnectedShares(completion: @escaping ([String]) -> Void) {
-    let shares = manuallyConnectedShares
-    guard !shares.isEmpty else {
-      completion([])
-      return
-    }
+  /// A share to unmount at a known mount point (from the mount table).
+  struct ShareUnmountTarget: Equatable, Sendable {
+    let name: String
+    let mountPoint: String
+  }
 
+  /// A share that could not be unmounted, with the translated reason and
+  /// whether `umount -f` is worth offering.
+  struct ShareUnmountFailure: Equatable {
+    let target: ShareUnmountTarget
+    let failure: NetworkMountPlan.UnmountFailure
+  }
+
+  /// Unmounts every target in parallel, so one share on a hung server does
+  /// not hold up the others, and returns the ones that failed in the original
+  /// order. Blocks until all are done; call off the main thread. `umount` is
+  /// injectable for tests.
+  static func unmountShares(
+    _ targets: [ShareUnmountTarget], force: Bool,
+    umount: (ShareUnmountTarget, Bool) -> ProcessResult = { target, force in
+      runProcess(
+        executable: "/sbin/umount", arguments: (force ? ["-f"] : []) + [target.mountPoint])
+    }
+  ) -> [ShareUnmountFailure] {
+    let results = BulkVolumeActions.mapConcurrently(targets) { umount($0, force) }
+    return zip(targets, results).compactMap { target, result in
+      guard !result.succeeded else { return nil }
+      return ShareUnmountFailure(
+        target: target,
+        failure: NetworkMountPlan.unmountFailure(for: result, shareName: target.name))
+    }
+  }
+
+  func unmountAllManuallyConnectedShares(
+    completion: @escaping ([ShareUnmountFailure]) -> Void
+  ) {
     // Manually connected shares are unmounted where the mount table says they
     // are (read on the main thread, before going to the background). No
     // fallback to a configured path: that could hit a saved share's folder.
-    let targets = shares.compactMap { share -> (name: String, mountPoint: String)? in
+    let targets = manuallyConnectedShares.compactMap { share -> ShareUnmountTarget? in
       guard let mountPoint = mountPointsByShareID[share.id] else { return nil }
-      return (name: share.name, mountPoint: mountPoint)
+      return ShareUnmountTarget(name: share.name, mountPoint: mountPoint)
     }
+    unmountManualShares(targets, force: false, completion: completion)
+  }
 
+  /// `umount -f` for manually connected shares that failed to unmount: only
+  /// after the user confirmed it.
+  func forceUnmountManualShares(
+    _ targets: [ShareUnmountTarget], completion: @escaping ([ShareUnmountFailure]) -> Void
+  ) {
+    unmountManualShares(targets, force: true, completion: completion)
+  }
+
+  private func unmountManualShares(
+    _ targets: [ShareUnmountTarget], force: Bool,
+    completion: @escaping ([ShareUnmountFailure]) -> Void
+  ) {
+    guard !targets.isEmpty else {
+      completion([])
+      return
+    }
     isUnmountingManualShares = true
     DispatchQueue.global(qos: .userInitiated).async {
-      let failures = targets.compactMap { target -> String? in
-        let result = runProcess(executable: "/sbin/umount", arguments: [target.mountPoint])
-        return !result.succeeded ? target.name : nil
-      }
-
+      let failures = Self.unmountShares(targets, force: force)
       DispatchQueue.main.async {
         self.isUnmountingManualShares = false
         self.refreshMountStatus()
