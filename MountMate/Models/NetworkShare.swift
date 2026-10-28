@@ -60,10 +60,14 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
 extension NetworkShare {
   /// Cleans up a server address typed or pasted by the user: trims
   /// whitespace and drops a leading `smb://`, `afp://` or `nfs://`. A pasted
-  /// URL such as `smb://nas.local/Public/sub` is split at the first "/" into
-  /// the host (`nas.local`) and the share path (`Public/sub`, cleaned with
-  /// `cleanedSharePathInput`); the path is empty when there is none.
-  static func cleanedServerInput(_ raw: String) -> (server: String, sharePath: String) {
+  /// URL such as `smb://admin@nas.local:445/Public/sub` is split into the
+  /// server (`nas.local:445`, a port is kept), the share path (`Public/sub`,
+  /// cleaned with `cleanedSharePathInput`) and the username (`admin`,
+  /// percent-decoded; a password after ":" is dropped). The path and the
+  /// username are empty when there are none.
+  static func cleanedServerInput(_ raw: String) -> (
+    server: String, sharePath: String, username: String
+  ) {
     var server = raw.trimmingCharacters(in: .whitespacesAndNewlines)
     for scheme in ShareProtocol.allCases.map({ "\($0.urlScheme)://" }) {
       if server.lowercased().hasPrefix(scheme) {
@@ -76,7 +80,42 @@ extension NetworkShare {
       sharePath = cleanedSharePathInput(String(server[slash...]))
       server = String(server[..<slash])
     }
-    return (server.trimmingCharacters(in: .whitespacesAndNewlines), sharePath)
+    var username = ""
+    // The last "@" ends the user info, so "user@domain.com@nas" keeps its
+    // whole login.
+    if let at = server.lastIndex(of: "@") {
+      let userInfo = server[..<at]
+      let user = userInfo.firstIndex(of: ":").map { userInfo[..<$0] } ?? userInfo
+      username = String(user).removingPercentEncoding ?? String(user)
+      server = String(server[server.index(after: at)...])
+    }
+    return (
+      server.trimmingCharacters(in: .whitespacesAndNewlines), sharePath,
+      username.trimmingCharacters(in: .whitespacesAndNewlines)
+    )
+  }
+
+  /// Splits a saved server field into the host and port to connect to:
+  /// `nas:445` → (`nas`, 445), `[fe80::1]:445` → (`fe80::1`, 445). A bare
+  /// IPv6 address (`fe80::1`, several colons) has no port, and a `user@`
+  /// prefix left by an older version is dropped. The host has no brackets.
+  static func hostAndPort(fromServer raw: String) -> (host: String, port: Int?) {
+    var address = Substring(raw.trimmingCharacters(in: .whitespacesAndNewlines))
+    if let at = address.lastIndex(of: "@") {
+      address = address[address.index(after: at)...]
+    }
+    if address.hasPrefix("["), let close = address.firstIndex(of: "]") {
+      let host = address[address.index(after: address.startIndex)..<close]
+      let rest = address[address.index(after: close)...]
+      let port = rest.hasPrefix(":") ? Int(rest.dropFirst()) : nil
+      return (String(host), port)
+    }
+    if address.filter({ $0 == ":" }).count == 1, let colon = address.firstIndex(of: ":"),
+      let port = Int(address[address.index(after: colon)...])
+    {
+      return (String(address[..<colon]), port)
+    }
+    return (String(address), nil)
   }
 
   /// Cleans up a share path typed or pasted by the user: trims whitespace and

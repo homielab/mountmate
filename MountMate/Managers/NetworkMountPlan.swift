@@ -202,7 +202,11 @@ enum NetworkMountPlan {
     var urlComponents = URLComponents()
     urlComponents.scheme = share.shareProtocol.urlScheme
     urlComponents.user = user
-    urlComponents.host = share.server
+    // `admin@nas:445` or `[fe80::1]` in the server field: the host alone
+    // goes in `host` (IPv6 in brackets, or the URL is nil), the port apart.
+    let address = NetworkShare.hostAndPort(fromServer: share.server)
+    urlComponents.host = address.host.contains(":") ? "[\(address.host)]" : address.host
+    urlComponents.port = address.port
     urlComponents.path = "/\(share.sharePath)"
     return urlComponents.url
   }

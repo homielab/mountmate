@@ -421,4 +421,41 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertNil(
       MountedNetworkShare(source: "//nas/x", mountPoint: "/Volumes/x", fileSystemType: ""))
   }
+
+  func testPastedURLWithUserAndPortSplitsIntoHostPortUserAndPath() {
+    let parts = NetworkShare.cleanedServerInput("smb://admin@nas:445/Public")
+    XCTAssertEqual(parts.server, "nas:445")
+    XCTAssertEqual(parts.username, "admin")
+    XCTAssertEqual(parts.sharePath, "Public")
+    let address = NetworkShare.hostAndPort(fromServer: parts.server)
+    XCTAssertEqual(address.host, "nas")
+    XCTAssertEqual(address.port, 445)
+  }
+
+  func testServerInputUserInfoVariants() {
+    XCTAssertEqual(NetworkShare.cleanedServerInput("nas").username, "")
+    let withPassword = NetworkShare.cleanedServerInput("afp://bob:secret@tc.local/Data")
+    XCTAssertEqual(withPassword.username, "bob")
+    XCTAssertEqual(withPassword.server, "tc.local")
+    let email = NetworkShare.cleanedServerInput("smb://me@corp.com@files/x")
+    XCTAssertEqual(email.username, "me@corp.com")
+    XCTAssertEqual(email.server, "files")
+    let domain = NetworkShare.cleanedServerInput("smb://CORP%3Bjane@files/x")
+    XCTAssertEqual(domain.username, "CORP;jane")
+  }
+
+  func testHostAndPortHandlesIPv6AndMissingPort() {
+    XCTAssertEqual(NetworkShare.hostAndPort(fromServer: "nas.local").host, "nas.local")
+    XCTAssertNil(NetworkShare.hostAndPort(fromServer: "nas.local").port)
+    XCTAssertEqual(NetworkShare.hostAndPort(fromServer: "fe80::1").host, "fe80::1")
+    XCTAssertNil(NetworkShare.hostAndPort(fromServer: "fe80::1").port)
+    XCTAssertEqual(NetworkShare.hostAndPort(fromServer: "[fe80::1]").host, "fe80::1")
+    let bracketed = NetworkShare.hostAndPort(fromServer: "[fe80::1]:445")
+    XCTAssertEqual(bracketed.host, "fe80::1")
+    XCTAssertEqual(bracketed.port, 445)
+    XCTAssertEqual(NetworkShare.hostAndPort(fromServer: "admin@nas:139").host, "nas")
+    let ipv6Paste = NetworkShare.cleanedServerInput("smb://[fe80::1]:445/Public")
+    XCTAssertEqual(ipv6Paste.server, "[fe80::1]:445")
+    XCTAssertEqual(ipv6Paste.sharePath, "Public")
+  }
 }

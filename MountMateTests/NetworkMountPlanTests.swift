@@ -327,4 +327,37 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertTrue(result.canForce)
     XCTAssertEqual(result.message, "Could not unmount “Photos”: umount: Input/output error")
   }
+
+  // MARK: - connectionURL host and port
+
+  func testConnectionURLSetsPortFromPastedServer() throws {
+    let parts = NetworkShare.cleanedServerInput("smb://admin@nas:445/Public")
+    let share = NetworkShare(
+      name: "Public", server: parts.server, sharePath: parts.sharePath,
+      username: parts.username)
+    let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: share))
+    XCTAssertEqual(url.host, "nas")
+    XCTAssertEqual(url.port, 445)
+    XCTAssertEqual(url.absoluteString, "smb://nas:445/Public")
+  }
+
+  func testConnectionURLDropsUserSavedInServerField() throws {
+    let share = NetworkShare(
+      name: "Public", server: "admin@nas:445", sharePath: "Public", username: "admin")
+    let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: share))
+    XCTAssertEqual(url.absoluteString, "smb://nas:445/Public")
+  }
+
+  func testConnectionURLBracketsIPv6Hosts() throws {
+    let bare = NetworkShare(name: "P", server: "fe80::1", sharePath: "P", username: "")
+    XCTAssertEqual(
+      try XCTUnwrap(NetworkMountPlan.connectionURL(for: bare)).absoluteString,
+      "smb://[fe80::1]/P")
+    let withPort = NetworkShare(
+      name: "P", server: "[fe80::1]:445", sharePath: "P", username: "",
+      shareProtocol: .afp)
+    let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: withPort))
+    XCTAssertEqual(url.absoluteString, "afp://[fe80::1]:445/P")
+    XCTAssertEqual(url.port, 445)
+  }
 }
