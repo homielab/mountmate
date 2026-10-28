@@ -45,6 +45,33 @@ final class LocalizationKeyParityTests: XCTestCase {
     }
   }
 
+  /// The permission prompts macOS shows (removable volumes, local network)
+  /// come from InfoPlist.strings, so every language must translate every
+  /// usage description in Info.plist, and English must say what Info.plist says.
+  func testAllLanguagesTranslateThePermissionPrompts() throws {
+    let infoPlistURL = URL(fileURLWithPath: #filePath)
+      .deletingLastPathComponent().deletingLastPathComponent()
+      .appendingPathComponent("MountMate/Info.plist")
+    let infoPlist = try XCTUnwrap(NSDictionary(contentsOf: infoPlistURL) as? [String: Any])
+    let usageKeys = Set(infoPlist.keys.filter { $0.hasSuffix("UsageDescription") })
+    XCTAssertEqual(
+      usageKeys, ["NSRemovableVolumesUsageDescription", "NSLocalNetworkUsageDescription"])
+
+    for language in languages {
+      XCTAssertEqual(try keys(language, table: "InfoPlist", type: "strings"), usageKeys, language)
+    }
+
+    let lproj = try XCTUnwrap(
+      Bundle(for: DriveManager.self).path(forResource: "en", ofType: "lproj"))
+    let english = try XCTUnwrap(
+      NSDictionary(
+        contentsOf: URL(fileURLWithPath: lproj).appendingPathComponent("InfoPlist.strings"))
+        as? [String: String])
+    for key in usageKeys {
+      XCTAssertEqual(english[key], infoPlist[key] as? String, key)
+    }
+  }
+
   /// Format arguments (`%@`, `%d`, `%lld`, `%1$@`…) of a string as
   /// `position:specifier`, sorted. Plain placeholders count up in order, so
   /// "%@ … %@" equals "%1$@ … %2$@", while a translation that changes the
@@ -140,8 +167,12 @@ final class LocalizationKeyParityTests: XCTestCase {
       let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("MountMate/Resources/\(language).lproj/Localizable.strings")
-      let text = try String(contentsOf: url, encoding: .utf8)
-      XCTAssertEqual(Self.duplicateKeys(inStringsText: text), [], "\(language): duplicate keys")
+      for table in ["Localizable", "InfoPlist"] {
+        let file = url.deletingLastPathComponent().appendingPathComponent("\(table).strings")
+        let text = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertEqual(
+          Self.duplicateKeys(inStringsText: text), [], "\(language) \(table): duplicate keys")
+      }
     }
   }
 

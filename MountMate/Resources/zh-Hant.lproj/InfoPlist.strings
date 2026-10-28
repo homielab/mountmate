@@ -1,0 +1,7 @@
+/*
+  InfoPlist.strings (Traditional Chinese)
+  Permission prompts macOS shows on behalf of MountMate.
+*/
+
+"NSRemovableVolumesUsageDescription" = "MountMate 需要取用 USB 隨身碟和 SD 卡等可移除磁碟卷，以顯示其狀態並讓你掛載或卸載它們。";
+"NSLocalNetworkUsageDescription" = "MountMate 使用本機網路列出可掛載的共享伺服器（SMB 和 NFS）。";

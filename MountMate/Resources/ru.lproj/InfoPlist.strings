@@ -1,0 +1,7 @@
+/*
+  InfoPlist.strings (Russian)
+  Permission prompts macOS shows on behalf of MountMate.
+*/
+
+"NSRemovableVolumesUsageDescription" = "MountMate нужен доступ к съёмным томам, таким как USB-накопители и SD-карты, чтобы показывать их состояние и позволять монтировать или отмонтировать их.";
+"NSLocalNetworkUsageDescription" = "MountMate использует локальную сеть, чтобы показать список общих серверов (SMB и NFS), которые можно смонтировать.";

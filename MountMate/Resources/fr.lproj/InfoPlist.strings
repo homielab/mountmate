@@ -1,0 +1,7 @@
+/*
+  InfoPlist.strings (French)
+  Permission prompts macOS shows on behalf of MountMate.
+*/
+
+"NSRemovableVolumesUsageDescription" = "MountMate a besoin d'accéder aux volumes amovibles comme les clés USB et les cartes SD pour afficher leur état et vous permettre de les monter ou de les démonter.";
+"NSLocalNetworkUsageDescription" = "MountMate utilise le réseau local pour lister les serveurs partagés (SMB et NFS) qui peuvent être montés.";

@@ -1,0 +1,7 @@
+/*
+  InfoPlist.strings (Vietnamese)
+  Permission prompts macOS shows on behalf of MountMate.
+*/
+
+"NSRemovableVolumesUsageDescription" = "MountMate cần quyền truy cập ổ đĩa rời như USB và thẻ SD để hiển thị trạng thái và cho phép bạn gắn hoặc tháo chúng.";
+"NSLocalNetworkUsageDescription" = "MountMate dùng mạng cục bộ để liệt kê các máy chủ chia sẻ (SMB và NFS) có thể gắn.";
