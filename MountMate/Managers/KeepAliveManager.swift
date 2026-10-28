@@ -268,6 +268,14 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.unlock()
   }
 
+  /// Resumes the volume only for a mount the user asked for. Automatic mounts
+  /// (keep-alive sweep, mount again on wake) must NOT reset the backoff, or a
+  /// broken volume would be retried at the base interval forever.
+  func resumeIfUserInitiated(volume: Volume, isUserInitiated: Bool) {
+    guard isUserInitiated else { return }
+    resume(volume: volume)
+  }
+
   /// Runs a reconnect sweep immediately (e.g. after wake, network recovery,
   /// or a manual "Reconnect now" action).
   ///
@@ -430,6 +438,11 @@ class KeepAliveManager: ObservableObject {
   /// Number of consecutive failed attempts recorded for a share. For tests.
   func retryAttempt(forShareID shareID: UUID) -> Int {
     retryStateLock.withLock { shareRetries.attempt(for: shareID) }
+  }
+
+  /// Number of consecutive failed attempts recorded for a volume. For tests.
+  func retryAttempt(forVolumeID volumeID: String) -> Int {
+    retryStateLock.withLock { volumeRetries.attempt(for: volumeID) }
   }
 
   /// When the share may next be retried (nil: right away).

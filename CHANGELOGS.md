@@ -70,6 +70,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Keep Alive backoff for volumes**: automatic reconnect attempts (Keep Alive sweep, Mount Again on Wake) no longer reset a volume's retry backoff, so a broken or unplugged volume is retried less and less often and shows "Retrying in N s" instead of being retried every 30 seconds forever. Mounting it yourself still starts over.
 - **VoiceOver reads what a button acts on**: the Eject button of a disk row, the Mount/Eject button of a network share row and the Mount/Unmount, Edit and Delete buttons of a share in Settings now announce "Eject “Backup”" instead of just "Eject" or "Edit Share", in all seven languages, so rows no longer sound identical when several drives or shares are listed.
 - **Mount All**: each volume now shows its spinner while it mounts, a second Mount All is ignored until the first one is done, a freshly plugged-in volume that fails to mount is retried once like a single mount, and the one-time approval for a "Block auto-mount" volume is withdrawn as soon as the mount ends instead of lingering for a minute.
 - **Network shares: Force Unmount**: ejecting a share from the popover that is busy, whose server went away or whose unmount timed out now offers a confirmed "Force Unmount" (`umount -f`) instead of a raw `umount` message, and unmount errors are translated in all seven languages.

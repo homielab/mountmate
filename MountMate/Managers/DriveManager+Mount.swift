@@ -27,7 +27,7 @@ extension DriveManager {
       let userInfo = ["deviceIdentifier": volume.deviceIdentifier]
       NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
     }
-    KeepAliveManager.shared.resume(volume: volume)
+    KeepAliveManager.shared.resumeIfUserInitiated(volume: volume, isUserInitiated: isUserInitiated)
     // Stays set through the retry below and is cleared in handleMountResult.
     setBusy(volume.id, true)
     DispatchQueue.global(qos: .userInitiated).async {

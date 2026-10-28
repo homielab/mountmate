@@ -123,6 +123,28 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertNil(manager.nextRetryDate(forVolumeID: id))
   }
 
+  func testAutomaticMountKeepsVolumeBackoffAndUserMountResetsIt() {
+    let manager = KeepAliveManager.shared
+    let uuid = UUID().uuidString
+    let volume = Volume(
+      id: uuid, deviceIdentifier: "disk9s1", diskUUID: nil, name: "Backoff Drive",
+      isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: "exfat", usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+    let key = volume.compositeId ?? ""
+    XCTAssertFalse(key.isEmpty)
+
+    manager.recordAttempt(volumeID: key)
+    manager.resumeIfUserInitiated(volume: volume, isUserInitiated: false)
+    manager.recordAttempt(volumeID: key)
+    XCTAssertEqual(manager.retryAttempt(forVolumeID: key), 2)
+    XCTAssertNotNil(manager.nextRetryDate(forVolumeID: key))
+
+    manager.resumeIfUserInitiated(volume: volume, isUserInitiated: true)
+    XCTAssertEqual(manager.retryAttempt(forVolumeID: key), 0)
+    XCTAssertNil(manager.nextRetryDate(forVolumeID: key))
+  }
+
   // MARK: - Network changes
 
   private final class FakeNetworkMonitor: NetworkChangeMonitoring {
