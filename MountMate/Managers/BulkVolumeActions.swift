@@ -19,20 +19,29 @@ enum BulkVolumeActions {
   }
 
   /// The volumes "Unmount All" unmounts: mounted, ordinary, not protected.
-  static func unmountCandidates(in disks: [PhysicalDisk]) -> [Volume] {
-    disks
-      .flatMap(\.allVolumes)
-      .filter { $0.isMounted && $0.category == .user && !$0.isProtected }
-  }
-
-  /// The volumes "Mount All" mounts. `.user` leaves out EFI partitions
-  /// (category `.system`), which diskutil cannot mount.
-  static func mountCandidates(
-    in disks: [PhysicalDisk], isBlocked: (Volume) -> Bool
+  /// A volume with an operation in flight (`busyVolumeIDs`) is skipped: a
+  /// second `diskutil` would race the first and end its spinner early.
+  static func unmountCandidates(
+    in disks: [PhysicalDisk], busyVolumeIDs: Set<String> = []
   ) -> [Volume] {
     disks
       .flatMap(\.allVolumes)
-      .filter { !$0.isMounted && $0.category == .user && !isBlocked($0) }
+      .filter {
+        $0.isMounted && $0.category == .user && !$0.isProtected && !busyVolumeIDs.contains($0.id)
+      }
+  }
+
+  /// The volumes "Mount All" mounts. `.user` leaves out EFI partitions
+  /// (category `.system`), which diskutil cannot mount. Volumes with an
+  /// operation in flight (`busyVolumeIDs`) are skipped like in `unmountCandidates`.
+  static func mountCandidates(
+    in disks: [PhysicalDisk], busyVolumeIDs: Set<String> = [], isBlocked: (Volume) -> Bool
+  ) -> [Volume] {
+    disks
+      .flatMap(\.allVolumes)
+      .filter {
+        !$0.isMounted && $0.category == .user && !busyVolumeIDs.contains($0.id) && !isBlocked($0)
+      }
   }
 
   /// The disks "Eject All External Disks" ejects: physical external disks

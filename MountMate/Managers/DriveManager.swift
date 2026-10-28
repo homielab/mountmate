@@ -348,7 +348,7 @@ class DriveManager: ObservableObject {
 
   /// The volumes "Unmount All" would unmount right now.
   var unmountAllCandidates: [Volume] {
-    BulkVolumeActions.unmountCandidates(in: bulkActionDisks)
+    BulkVolumeActions.unmountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs)
   }
 
   /// The disks "Eject All External Disks" would eject right now.
@@ -462,6 +462,7 @@ class DriveManager: ObservableObject {
     }
     unmountAllRunCount += 1
     isUnmountingAll = true
+    for volume in drivesToUnmount { setBusy(volume.id, true) }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       let failures = BulkVolumeActions.runConcurrently(
@@ -481,6 +482,7 @@ class DriveManager: ObservableObject {
               "Could not unmount: %@", comment: "Bulk unmount failure; list of volume names"))
         }
         self.refreshDrives(qos: .userInitiated) {
+          for volume in drivesToUnmount { self.setBusy(volume.id, false) }
           self.unmountAllRunCount -= 1
           self.isUnmountingAll = self.unmountAllRunCount > 0
           finished?(failures.map(\.name))
@@ -503,7 +505,9 @@ class DriveManager: ObservableObject {
       completion?([])
       return
     }
-    let volumesToMount = BulkVolumeActions.mountCandidates(in: bulkActionDisks) {
+    let volumesToMount = BulkVolumeActions.mountCandidates(
+      in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs
+    ) {
       PersistenceManager.shared.isVolumeBlocked($0)
     }
 

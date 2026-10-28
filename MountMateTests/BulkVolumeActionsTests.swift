@@ -63,6 +63,35 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertEqual(candidates.map(\.id), ["a", "e"])
   }
 
+  func testBusyVolumesAreLeftOutOfUnmountAndMountCandidates() {
+    let disks = [
+      disk(
+        "disk2",
+        volumes: [
+          volume("a"), volume("b"), volume("c", mounted: false), volume("d", mounted: false),
+        ])
+    ]
+    XCTAssertEqual(
+      BulkVolumeActions.unmountCandidates(in: disks, busyVolumeIDs: ["a"]).map(\.id), ["b"])
+    XCTAssertEqual(
+      BulkVolumeActions.mountCandidates(in: disks, busyVolumeIDs: ["d"]) { _ in false }.map(\.id),
+      ["c"])
+  }
+
+  func testEmptyBusySetKeepsTheCandidatesUnchanged() {
+    let disks = [
+      disk(
+        "disk2",
+        volumes: [volume("a"), volume("b", mounted: false)])
+    ]
+    XCTAssertEqual(
+      BulkVolumeActions.unmountCandidates(in: disks, busyVolumeIDs: []).map(\.id),
+      BulkVolumeActions.unmountCandidates(in: disks).map(\.id))
+    XCTAssertEqual(
+      BulkVolumeActions.mountCandidates(in: disks, busyVolumeIDs: []) { _ in false }.map(\.id),
+      ["b"])
+  }
+
   // MARK: - Eject candidates
 
   func testEjectCandidatesAreExternalDisksCountedOnceWhateverTheirVolumes() {
