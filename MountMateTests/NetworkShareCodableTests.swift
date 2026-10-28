@@ -89,10 +89,44 @@ final class NetworkShareCodableTests: XCTestCase {
   }
 
   func testCleanedServerInputStripsWhitespaceAndScheme() {
-    XCTAssertEqual(NetworkShare.cleanedServerInput("  nas.local \n"), "nas.local")
-    XCTAssertEqual(NetworkShare.cleanedServerInput("smb://nas.local/"), "nas.local")
-    XCTAssertEqual(NetworkShare.cleanedServerInput("AFP://tc.local"), "tc.local")
-    XCTAssertEqual(NetworkShare.cleanedServerInput("nfs://10.0.0.2"), "10.0.0.2")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("  nas.local \n").server, "nas.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("smb://nas.local/").server, "nas.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("smb://nas.local/").sharePath, "")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("AFP://tc.local").server, "tc.local")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("nfs://10.0.0.2").server, "10.0.0.2")
+  }
+
+  func testCleanedServerInputSplitsPastedURLIntoHostAndPath() {
+    let sub = NetworkShare.cleanedServerInput("smb://nas.local/Public/sub")
+    XCTAssertEqual(sub.server, "nas.local")
+    XCTAssertEqual(sub.sharePath, "Public/sub")
+    let noScheme = NetworkShare.cleanedServerInput(" nas/Public/ ")
+    XCTAssertEqual(noScheme.server, "nas")
+    XCTAssertEqual(noScheme.sharePath, "Public")
+    let nfs = NetworkShare.cleanedServerInput("nfs://10.0.0.2//volume1/media")
+    XCTAssertEqual(nfs.server, "10.0.0.2")
+    XCTAssertEqual(nfs.sharePath, "volume1/media")
+  }
+
+  func testCleanedSharePathInputTrimsSlashes() {
+    XCTAssertEqual(NetworkShare.cleanedSharePathInput("/Public/"), "Public")
+    XCTAssertEqual(NetworkShare.cleanedSharePathInput(" Public/sub/ "), "Public/sub")
+    XCTAssertEqual(NetworkShare.cleanedSharePathInput("Media"), "Media")
+    XCTAssertEqual(NetworkShare.cleanedSharePathInput("/"), "")
+  }
+
+  func testPastedURLBuildsConnectionURLWithoutDoubleSlash() throws {
+    let parts = NetworkShare.cleanedServerInput("smb://nas.local/Public")
+    let share = NetworkShare(
+      name: "Public", server: parts.server, sharePath: parts.sharePath, username: "")
+    let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: share))
+    XCTAssertEqual(url.absoluteString, "smb://nas.local/Public")
+    let typed = NetworkShare(
+      name: "Public", server: "nas.local",
+      sharePath: NetworkShare.cleanedSharePathInput("/Public/"), username: "")
+    XCTAssertEqual(
+      try XCTUnwrap(NetworkMountPlan.connectionURL(for: typed)).absoluteString,
+      "smb://nas.local/Public")
   }
 
   func testDisplayNameValidation() {

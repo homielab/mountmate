@@ -59,9 +59,11 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
 
 extension NetworkShare {
   /// Cleans up a server address typed or pasted by the user: trims
-  /// whitespace and drops a leading `smb://`, `afp://` or `nfs://` and any
-  /// trailing slashes.
-  static func cleanedServerInput(_ raw: String) -> String {
+  /// whitespace and drops a leading `smb://`, `afp://` or `nfs://`. A pasted
+  /// URL such as `smb://nas.local/Public/sub` is split at the first "/" into
+  /// the host (`nas.local`) and the share path (`Public/sub`, cleaned with
+  /// `cleanedSharePathInput`); the path is empty when there is none.
+  static func cleanedServerInput(_ raw: String) -> (server: String, sharePath: String) {
     var server = raw.trimmingCharacters(in: .whitespacesAndNewlines)
     for scheme in ShareProtocol.allCases.map({ "\($0.urlScheme)://" }) {
       if server.lowercased().hasPrefix(scheme) {
@@ -69,8 +71,21 @@ extension NetworkShare {
         break
       }
     }
-    while server.hasSuffix("/") { server.removeLast() }
-    return server.trimmingCharacters(in: .whitespacesAndNewlines)
+    var sharePath = ""
+    if let slash = server.firstIndex(of: "/") {
+      sharePath = cleanedSharePathInput(String(server[slash...]))
+      server = String(server[..<slash])
+    }
+    return (server.trimmingCharacters(in: .whitespacesAndNewlines), sharePath)
+  }
+
+  /// Cleans up a share path typed or pasted by the user: trims whitespace and
+  /// the leading and trailing slashes (`/Public/` → `Public`), since the
+  /// connection URL adds its own "/".
+  static func cleanedSharePathInput(_ raw: String) -> String {
+    raw.trimmingCharacters(in: .whitespacesAndNewlines)
+      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      .trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
   /// Why `name` cannot be used as a display name, or nil if it can. Without

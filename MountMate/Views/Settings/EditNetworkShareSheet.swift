@@ -23,10 +23,13 @@ struct EditNetworkShareSheet: View {
   @State private var saveError: String?
   @State private var showBrowser = false
 
-  // Inputs as they will be saved: trimmed, pasted URL scheme removed.
-  private var cleanedServer: String { NetworkShare.cleanedServerInput(server) }
+  // Inputs as they will be saved: trimmed, pasted URL scheme removed. A
+  // pasted URL's path (smb://nas/Public) is the share path when that field
+  // is empty.
+  private var cleanedServer: String { NetworkShare.cleanedServerInput(server).server }
   private var cleanedSharePath: String {
-    sharePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    let typed = NetworkShare.cleanedSharePathInput(sharePath)
+    return typed.isEmpty ? NetworkShare.cleanedServerInput(server).sharePath : typed
   }
   private var cleanedUsername: String {
     username.trimmingCharacters(in: .whitespacesAndNewlines)
