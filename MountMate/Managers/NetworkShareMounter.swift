@@ -228,15 +228,23 @@ final class NetworkShareMounter {
   /// (issue #71). The folder is only removed when MountMate created it, the
   /// mount table shows nothing mounted there, and it is not a mount point;
   /// rmdir(2) itself only removes an empty directory and refuses mount points.
+  /// The decision is `MountPointCleanupRule.shouldRemove`.
   private func cleanUpMountPoint(_ mountPoint: String, ifCreated created: Bool) {
     guard created else { return }
     // If the mount table can't be read, leave the folder alone.
-    guard let mountTable = host.currentMountTable(),
-      !mountTable.contains(where: { NetworkMountTable.samePath($0.mountPoint, mountPoint) })
+    let mountTable = host.currentMountTable()
+    // isMounted(at:) only runs when no network share is mounted there, so
+    // stat() on it cannot hang; it also catches non-network filesystems
+    // mounted on the folder.
+    guard
+      MountPointCleanupRule.shouldRemove(
+        created: created,
+        tableReadable: mountTable != nil,
+        inMountTable: mountTable?.contains(where: {
+          NetworkMountTable.samePath($0.mountPoint, mountPoint)
+        }) ?? false,
+        isMountPoint: isMounted(at: mountPoint))
     else { return }
-    // No network share is mounted there, so stat() on it cannot hang; this
-    // also catches non-network filesystems mounted on the folder.
-    guard !isMounted(at: mountPoint) else { return }
     _ = rmdir(mountPoint)
   }
 
