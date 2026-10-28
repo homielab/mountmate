@@ -10,6 +10,7 @@ import SwiftUI
 enum FeedbackHUD {
   private static var panel: NSPanel?
   private static var hideWork: DispatchWorkItem?
+  private static var visibility = HUDVisibility()
 
   static func show(_ message: String, systemImage: String = "checkmark.circle.fill") {
     guard Thread.isMainThread else {
@@ -31,6 +32,7 @@ enum FeedbackHUD {
     }
 
     hideWork?.cancel()
+    let generation = visibility.show()
     panel.alphaValue = 0
     panel.orderFrontRegardless()
     NSAnimationContext.runAnimationGroup {
@@ -41,13 +43,19 @@ enum FeedbackHUD {
       element: NSApp as Any, notification: .announcementRequested,
       userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.high.rawValue])
 
+    // A later show() may come while this one is fading out; only the
+    // current generation hides the shared panel.
     let work = DispatchWorkItem {
+      guard visibility.isCurrent(generation) else { return }
       NSAnimationContext.runAnimationGroup(
         {
           $0.duration = 0.3
           panel.animator().alphaValue = 0
         },
-        completionHandler: { panel.orderOut(nil) })
+        completionHandler: {
+          guard visibility.isCurrent(generation) else { return }
+          panel.orderOut(nil)
+        })
     }
     hideWork = work
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: work)
