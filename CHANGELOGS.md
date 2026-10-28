@@ -72,6 +72,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Renamed volumes keep their new name everywhere**: after Rename Volume… or a rename in Finder, Settings → Management (Protected, Blocked, Keep Alive, Unmount When Idle, Ignored) and the "blocked disk still mounted" notification show the current name instead of the one the volume had when you saved the setting.
 - **Eject All Manually Connected Shares**: the shares are now ejected at the same time, so one share on a server that does not answer no longer keeps the others (and the spinner) waiting. The alert says why each share could not be ejected (busy, timed out, no longer mounted) and offers Force Unmount when that may help.
 - **Busy volumes**: while a volume is mounting, unmounting or being verified, its right-click menu no longer offers Mount, Mount Read-Only, Unmount, Verify or Rename, and a second mount or unmount started meanwhile (for example by Keep Alive or a shortcut) is skipped instead of running a second `diskutil` and clearing the spinner early.
 - **Keep Alive backoff for volumes**: automatic reconnect attempts (Keep Alive sweep, Mount Again on Wake) no longer reset a volume's retry backoff, so a broken or unplugged volume is retried less and less often and shows "Retrying in N s" instead of being retried every 30 seconds forever. Mounting it yourself still starts over.

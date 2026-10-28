@@ -144,6 +144,101 @@ class PersistenceManager: ObservableObject {
     .filter { seen.insert($0.id).inserted }
   }
 
+  // MARK: - Names
+
+  /// Entries whose volume is present under a different name, with the new
+  /// name; nil when nothing changed (so callers neither assign nor save).
+  /// Matches by id; entries of absent volumes keep their last-known name.
+  static func renamed(
+    _ entries: [ManagedVolumeInfo], using volumes: [Volume],
+    key: (Volume) -> String? = { $0.managedVolumeInfo?.id }
+  ) -> [ManagedVolumeInfo]? {
+    let names = currentNames(of: volumes, key: key)
+    var changed = false
+    let result = entries.map { entry -> ManagedVolumeInfo in
+      guard let name = names[entry.id], name != entry.name else { return entry }
+      changed = true
+      var copy = entry
+      copy.name = name
+      return copy
+    }
+    return changed ? result : nil
+  }
+
+  static func renamed(_ entries: [IdleUnmountVolume], using volumes: [Volume])
+    -> [IdleUnmountVolume]?
+  {
+    let names = currentNames(of: volumes, key: { $0.managedVolumeInfo?.id })
+    var changed = false
+    let result = entries.map { entry -> IdleUnmountVolume in
+      guard let name = names[entry.id], name != entry.name else { return entry }
+      changed = true
+      var copy = entry
+      copy.name = name
+      return copy
+    }
+    return changed ? result : nil
+  }
+
+  static func renamed(_ entries: [VolumeCustomMountPoint], using volumes: [Volume])
+    -> [VolumeCustomMountPoint]?
+  {
+    let names = currentNames(
+      of: volumes,
+      key: { volume in
+        volume.stableVolumeUUID.map { "\(volume.diskUUID ?? volume.deviceIdentifier)-\($0)" }
+      })
+    var changed = false
+    let result = entries.map { entry -> VolumeCustomMountPoint in
+      guard let name = names[entry.id], name != entry.name else { return entry }
+      changed = true
+      var copy = entry
+      copy.name = name
+      return copy
+    }
+    return changed ? result : nil
+  }
+
+  private static func currentNames(of volumes: [Volume], key: (Volume) -> String?) -> [String:
+    String]
+  {
+    var names: [String: String] = [:]
+    for volume in volumes {
+      if let id = key(volume) { names[id] = volume.name }
+    }
+    return names
+  }
+
+  /// Brings the saved names up to date after a successful refresh (Rename
+  /// Volume, a rename in Finder). Saves only the lists that changed.
+  /// Main thread only.
+  func refreshNames(from volumes: [Volume]) {
+    if let list = Self.renamed(protectedVolumes, using: volumes) {
+      protectedVolumes = list
+      saveProtectedVolumes()
+    }
+    if let list = Self.renamed(blockedVolumes, using: volumes) {
+      blockedVolumes = list
+      saveBlockedVolumes()
+    }
+    if let list = Self.renamed(keepAliveVolumes, using: volumes) {
+      keepAliveVolumes = list
+      saveKeepAliveVolumes()
+    }
+    if let list = Self.renamed(ignoredVolumes, using: volumes, key: { $0.ignoreIdentifier }) {
+      ignoredVolumes = list
+      saveIgnoredVolumes()
+    }
+    if let list = Self.renamed(idleUnmountVolumes, using: volumes) {
+      idleUnmountVolumes = list
+      saveIdleUnmountVolumes()
+    }
+    if let list = Self.renamed(customMountPoints, using: volumes) {
+      customMountPoints = list
+      saveCustomMountPoints()
+    }
+  }
+
   // MARK: - Actions
 
   @discardableResult

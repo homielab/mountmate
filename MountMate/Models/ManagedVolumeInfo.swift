@@ -5,7 +5,7 @@ import Foundation
 struct ManagedVolumeInfo: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let diskUUID: String
-  let name: String  // The last-known name of the volume
+  var name: String  // The last-known name of the volume (see `PersistenceManager.renamed`)
 
   var id: String {
     "\(diskUUID)-\(volumeUUID)"
@@ -15,7 +15,7 @@ struct ManagedVolumeInfo: Codable, Hashable, Identifiable, Sendable {
 struct VolumeCustomMountPoint: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let backingDiskIdentifier: String
-  let name: String
+  var name: String
   var mountPoint: String
   /// No longer written or read (security-scoped bookmarks were never used).
   /// Kept so entries saved by older versions still decode.
@@ -30,7 +30,7 @@ struct VolumeCustomMountPoint: Codable, Hashable, Identifiable, Sendable {
 struct IdleUnmountVolume: Codable, Hashable, Identifiable, Sendable {
   let volumeUUID: String
   let diskUUID: String
-  let name: String  // The last-known name of the volume
+  var name: String  // The last-known name of the volume (see `PersistenceManager.renamed`)
   /// Minutes without disk activity before the volume is unmounted; 0 = off.
   var minutes: Int
 

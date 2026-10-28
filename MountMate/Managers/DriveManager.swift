@@ -243,6 +243,7 @@ class DriveManager: ObservableObject {
         self.unverifiedDiskIDs = unverifiedDiskIDs
       }
       self.recordFirstSeen(of: disks)
+      PersistenceManager.shared.refreshNames(from: disks.flatMap(\.allVolumes))
       NotificationManager.shared.disksRefreshed(disks)
       self.isFetchInProgress = false
       self.isRefreshing = false
