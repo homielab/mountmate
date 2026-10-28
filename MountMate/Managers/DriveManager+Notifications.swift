@@ -45,6 +45,9 @@ extension DriveManager {
       }
     }
     refreshDebounceTimer?.invalidate()
+    let qos = Self.coalescedRefreshQoS(
+      pendingNotificationRefreshQoS, Self.refreshQoS(for: notification.name))
+    pendingNotificationRefreshQoS = qos
     // Short debounce: coalesces bursts (a disk with several volumes posts one
     // notification per volume) without making plug-ins feel slow.
     refreshDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) {
@@ -56,7 +59,41 @@ extension DriveManager {
       } else {
         Log.drive.info("Disk notification received. Refreshing list.")
       }
-      self?.refreshDrives()
+      self?.pendingNotificationRefreshQoS = nil
+      self?.refreshDrives(qos: qos)
+    }
+  }
+
+  /// QoS of the list refresh a notification triggers. A plugged-in disk, a
+  /// disk that appeared or vanished and waking up are moments the user waits
+  /// for the list, so they must not be throttled like background work; an
+  /// unmount only removes a row and can run at `.utility`.
+  static func refreshQoS(for name: Notification.Name) -> DispatchQoS.QoSClass {
+    switch name {
+    case NSWorkspace.didMountNotification, .diskAppearanceDidChange,
+      NSWorkspace.didWakeNotification:
+      return .userInitiated
+    default:
+      return .utility
+    }
+  }
+
+  /// QoS for notifications coalesced into one refresh: the highest one wins.
+  static func coalescedRefreshQoS(
+    _ pending: DispatchQoS.QoSClass?, _ next: DispatchQoS.QoSClass
+  ) -> DispatchQoS.QoSClass {
+    guard let pending else { return next }
+    return rank(of: pending) >= rank(of: next) ? pending : next
+  }
+
+  private static func rank(of qos: DispatchQoS.QoSClass) -> Int {
+    switch qos {
+    case .userInteractive: return 5
+    case .userInitiated: return 4
+    case .default: return 3
+    case .utility: return 2
+    case .background: return 1
+    default: return 0
     }
   }
 }

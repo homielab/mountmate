@@ -70,6 +70,8 @@ class DriveManager: ObservableObject {
   let driveExpansionSubject = PassthroughSubject<Bool, Never>()
 
   var refreshDebounceTimer: Timer?
+  /// Highest QoS asked for by the notifications the debounce timer coalesces.
+  var pendingNotificationRefreshQoS: DispatchQoS.QoSClass?
   private var isFetchInProgress = false
   private var needsFollowupRefresh = false
   /// Callbacks waiting for the fetch in progress to finish (success or failure).
@@ -126,7 +128,8 @@ class DriveManager: ObservableObject {
       knownNetworkMountPoints = DiskEventFilter.networkMountPoints(in: entries)
     }
     setupDiskChangeObservers()
-    refreshDrives()
+    // The popover can open right after launch; don't let the first list wait.
+    refreshDrives(qos: .userInitiated)
     unlocker.loadSavedPasswordAccounts()
   }
 
@@ -181,7 +184,7 @@ class DriveManager: ObservableObject {
   ///   started after this call has finished, successfully or not. Operations
   ///   use it to keep their spinner until the list shows the new state.
   func refreshDrives(
-    qos: DispatchQoS.QoSClass = .background, then completion: (() -> Void)? = nil
+    qos: DispatchQoS.QoSClass = .utility, then completion: (() -> Void)? = nil
   ) {
     // The in-progress flags are only touched on the main thread; callers on
     // background queues (keep-alive, mount completions) hop over first.

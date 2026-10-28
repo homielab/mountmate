@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Faster list after plugging in a disk**: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.
 - Internal: the rule that decides when the mount point folder of a failed network mount is removed is now a separate, unit-tested function (refactor, no behaviour change; the guard from #71 that keeps a live share's files safe is unchanged).
 - Internal groundwork for a Shortcuts "Eject Volume" action: ejecting a disk can now report its result to a caller without showing an alert. Nothing changes in the app yet.
 - **Keep Alive lets a NAS sleep**: its periodic checks of network shares no longer ask each server for its capacity, so they no longer keep a NAS from spinning down. The capacity ring is read when you open the popover or Settings (at most once a minute) and when a share mounts.
