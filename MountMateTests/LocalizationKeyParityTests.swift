@@ -28,6 +28,15 @@ final class LocalizationKeyParityTests: XCTestCase {
     }
   }
 
+  func testAllLanguagesHaveTheSameShortcutPhrases() throws {
+    let english = try keys("en", table: "AppShortcuts", type: "strings")
+    XCTAssertFalse(english.isEmpty)
+    for language in languages.dropFirst() {
+      XCTAssertEqual(
+        try keys(language, table: "AppShortcuts", type: "strings"), english, language)
+    }
+  }
+
   func testAllLanguagesHaveTheSamePluralKeys() throws {
     let english = try keys("en", table: "Localizable", type: "stringsdict")
     for language in languages.dropFirst() {

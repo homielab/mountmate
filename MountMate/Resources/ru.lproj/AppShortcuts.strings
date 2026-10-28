@@ -8,3 +8,5 @@
 "Unmount a network share with ${applicationName}" = "Размонтировать сетевую папку в ${applicationName}";
 "Mount a volume with ${applicationName}" = "Смонтировать том в ${applicationName}";
 "Unmount a volume with ${applicationName}" = "Размонтировать том в ${applicationName}";
+"Mount all network shares with ${applicationName}" = "Смонтировать все сетевые папки в ${applicationName}";
+"Unmount all network shares with ${applicationName}" = "Размонтировать все сетевые папки в ${applicationName}";

@@ -544,3 +544,13 @@
 "“%@” is busy: a file on it is still in use." = "“%@” is busy: a file on it is still in use.";
 "“%@” is no longer mounted." = "“%@” is no longer mounted.";
 "Could not unmount “%@” (code %d)." = "Could not unmount “%@” (code %d).";
+
+// MARK: - Mount / Unmount All Saved Shares
+"Mount All Saved Shares" = "Mount All Saved Shares";
+"Unmount All Saved Shares" = "Unmount All Saved Shares";
+"Mount All Network Shares" = "Mount All Network Shares";
+"Unmount All Network Shares" = "Unmount All Network Shares";
+"Mounts every network share saved in MountMate that is not mounted yet." = "Mounts every network share saved in MountMate that is not mounted yet.";
+"Unmounts every mounted network share saved in MountMate." = "Unmounts every mounted network share saved in MountMate.";
+"Network shares mounted." = "Network shares mounted.";
+"Network shares unmounted." = "Network shares unmounted.";

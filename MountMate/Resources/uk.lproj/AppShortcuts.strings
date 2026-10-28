@@ -8,3 +8,5 @@
 "Unmount a network share with ${applicationName}" = "Відключити мережеву папку в ${applicationName}";
 "Mount a volume with ${applicationName}" = "Підключити том в ${applicationName}";
 "Unmount a volume with ${applicationName}" = "Відключити том в ${applicationName}";
+"Mount all network shares with ${applicationName}" = "Підключити всі мережеві папки в ${applicationName}";
+"Unmount all network shares with ${applicationName}" = "Відключити всі мережеві папки в ${applicationName}";

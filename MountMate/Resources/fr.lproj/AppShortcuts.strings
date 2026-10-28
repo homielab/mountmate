@@ -8,3 +8,5 @@
 "Unmount a network share with ${applicationName}" = "Démonter un partage réseau avec ${applicationName}";
 "Mount a volume with ${applicationName}" = "Monter un volume avec ${applicationName}";
 "Unmount a volume with ${applicationName}" = "Démonter un volume avec ${applicationName}";
+"Mount all network shares with ${applicationName}" = "Monter tous les partages réseau avec ${applicationName}";
+"Unmount all network shares with ${applicationName}" = "Démonter tous les partages réseau avec ${applicationName}";

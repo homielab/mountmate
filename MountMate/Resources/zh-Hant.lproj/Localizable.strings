@@ -544,3 +544,13 @@
 "“%@” is busy: a file on it is still in use." = "「%@」正忙：其中的檔案仍在使用。";
 "“%@” is no longer mounted." = "「%@」已不再掛載。";
 "Could not unmount “%@” (code %d)." = "無法卸載「%@」（代碼 %d）。";
+
+// MARK: - Mount / Unmount All Saved Shares
+"Mount All Saved Shares" = "掛載所有已儲存的共享";
+"Unmount All Saved Shares" = "卸載所有已儲存的共享";
+"Mount All Network Shares" = "掛載所有網路共享";
+"Unmount All Network Shares" = "卸載所有網路共享";
+"Mounts every network share saved in MountMate that is not mounted yet." = "掛載 MountMate 中儲存且尚未掛載的所有網路共享。";
+"Unmounts every mounted network share saved in MountMate." = "卸載 MountMate 中儲存且已掛載的所有網路共享。";
+"Network shares mounted." = "網路共享已掛載。";
+"Network shares unmounted." = "網路共享已卸載。";

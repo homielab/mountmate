@@ -120,7 +120,7 @@ struct DriveListView: View {
         }
       }
       if !networkShares.isEmpty {
-        Section(header: Label("Saved Network Shares", systemImage: "server.rack")) {
+        Section(header: SavedSharesSectionHeader(shares: networkShares)) {
           ForEach(networkShares) { share in NetworkShareMainRow(share: share) }
         }
       }

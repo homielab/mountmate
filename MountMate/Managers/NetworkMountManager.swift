@@ -25,6 +25,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   @Published private(set) var usageByShareID: [UUID: ShareUsage] = [:]
   @Published var manuallyConnectedShares: [NetworkShare] = []
   @Published var isUnmountingManualShares = false
+  /// "Mount All Saved Shares" / "Unmount All Saved Shares" is running.
+  @Published private(set) var isMountingSavedShares = false
+  @Published private(set) var isUnmountingSavedShares = false
 
   private let shareAdoption = ShareAdoption()
 
@@ -352,6 +355,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   struct ShareUnmountTarget: Equatable, Sendable {
     let name: String
     let mountPoint: String
+    /// The saved share, so a failed unmount can undo its keep-alive
+    /// suppression; nil for manually connected shares.
+    var shareID: UUID? = nil
   }
 
   /// A share that could not be unmounted, with the translated reason and
@@ -417,6 +423,105 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
         self.isUnmountingManualShares = false
         self.refreshMountStatus()
         completion(failures)
+      }
+    }
+  }
+
+  /// A saved share that could not be mounted, with the (sanitized) error.
+  struct ShareMountFailure: Equatable {
+    let name: String
+    let reason: String?
+  }
+
+  /// What "Mount All Saved Shares" and "Unmount All Saved Shares" act on now.
+  /// Main thread.
+  var savedShareCandidates: SavedShareBulkRules.Candidates {
+    SavedShareBulkRules.candidates(
+      shares: PersistenceManager.shared.networkShares, mountedIDs: mountedShareIDs)
+  }
+
+  /// Mounts every saved share that is not mounted, all at once (each through
+  /// `mount(share:userInitiated:true)`, so it clears keep-alive suppression
+  /// like a click on its row), and reports the ones that failed in their
+  /// saved order. Main thread.
+  func mountAllShares(
+    trigger: MountTrigger, completion: @escaping ([ShareMountFailure]) -> Void
+  ) {
+    let shares = savedShareCandidates.mount
+    guard !shares.isEmpty, !isMountingSavedShares else {
+      completion([])
+      return
+    }
+    isMountingSavedShares = true
+    var failures = [UUID: ShareMountFailure]()
+    let group = DispatchGroup()
+    for share in shares {
+      group.enter()
+      mount(share: share, userInitiated: true) { success, error in
+        DispatchQueue.main.async {
+          if success {
+            self.openInFinderAfterMounting(share, trigger: trigger)
+          } else {
+            failures[share.id] = ShareMountFailure(name: share.name, reason: error)
+          }
+          group.leave()
+        }
+      }
+    }
+    group.notify(queue: .main) {
+      self.isMountingSavedShares = false
+      completion(shares.compactMap { failures[$0.id] })
+    }
+  }
+
+  /// Unmounts every mounted saved share in parallel and reports the ones that
+  /// failed, with their reasons. Main thread.
+  func unmountAllShares(completion: @escaping ([ShareUnmountFailure]) -> Void) {
+    unmountSavedShares(savedShareCandidates.unmount, force: false, completion: completion)
+  }
+
+  /// `umount -f` for saved shares that failed to unmount: only after the
+  /// user confirmed it.
+  func forceUnmountSavedShares(
+    withIDs ids: Set<UUID>, completion: @escaping ([ShareUnmountFailure]) -> Void
+  ) {
+    let shares = PersistenceManager.shared.networkShares.filter { ids.contains($0.id) }
+    unmountSavedShares(shares, force: true, completion: completion)
+  }
+
+  private func unmountSavedShares(
+    _ shares: [NetworkShare], force: Bool,
+    completion: @escaping ([ShareUnmountFailure]) -> Void
+  ) {
+    guard !shares.isEmpty, !isUnmountingSavedShares else {
+      completion([])
+      return
+    }
+    isUnmountingSavedShares = true
+    // Suppress keep-alive before unmounting (see `attemptUnmount`); undone
+    // below for the shares that stay mounted.
+    let wasSuppressed = Set(
+      shares.map(\.id).filter { KeepAliveManager.shared.isSuppressed(shareID: $0) })
+    for share in shares { markShareUnmountedByUser(share) }
+    let lastKnown = mountPointsByShareID
+
+    DispatchQueue.global(qos: .userInitiated).async {
+      // Unmount where each share really is; one that is gone already counts
+      // as unmounted.
+      let targets = shares.compactMap { share -> ShareUnmountTarget? in
+        guard let mountPoint = self.liveMountPoint(for: share, lastKnown: lastKnown[share.id])
+        else { return nil }
+        return ShareUnmountTarget(name: share.name, mountPoint: mountPoint, shareID: share.id)
+      }
+      let failures = Self.unmountShares(targets, force: force)
+      DispatchQueue.main.async {
+        for id in failures.compactMap(\.target.shareID) where !wasSuppressed.contains(id) {
+          KeepAliveManager.shared.unsuppress(shareID: id)
+        }
+        self.refreshMountStatus {
+          self.isUnmountingSavedShares = false
+          completion(failures)
+        }
       }
     }
   }

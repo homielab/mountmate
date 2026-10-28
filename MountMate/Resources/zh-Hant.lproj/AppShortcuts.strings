@@ -8,3 +8,5 @@
 "Unmount a network share with ${applicationName}" = "用 ${applicationName} 卸載網路共享";
 "Mount a volume with ${applicationName}" = "用 ${applicationName} 掛載磁碟卷";
 "Unmount a volume with ${applicationName}" = "用 ${applicationName} 卸載磁碟卷";
+"Mount all network shares with ${applicationName}" = "用 ${applicationName} 掛載所有網路共享";
+"Unmount all network shares with ${applicationName}" = "用 ${applicationName} 卸載所有網路共享";

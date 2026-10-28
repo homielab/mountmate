@@ -8,3 +8,5 @@
 "Unmount a network share with ${applicationName}" = "Unmount chia sẻ mạng bằng ${applicationName}";
 "Mount a volume with ${applicationName}" = "Mount phân vùng bằng ${applicationName}";
 "Unmount a volume with ${applicationName}" = "Unmount phân vùng bằng ${applicationName}";
+"Mount all network shares with ${applicationName}" = "Mount tất cả chia sẻ mạng bằng ${applicationName}";
+"Unmount all network shares with ${applicationName}" = "Unmount tất cả chia sẻ mạng bằng ${applicationName}";

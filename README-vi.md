@@ -34,7 +34,7 @@ Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/release
 - Tự mount SMB và NFS khi đăng nhập (share AFP cũ giữ nguyên kèm nhãn không còn hỗ trợ) và để Keep Alive nối lại khi bị rớt.
 - Cảnh báo "Almost full" và SMART, cùng thông báo tuỳ chọn.
 - Ignore, Protect hoặc Pin phân vùng, hiện Apple RAID thành một ổ, tuỳ chỉnh danh sách trong popover.
-- Tự động hoá bằng 7 hành động Shortcuts (cả Spotlight, Siri, Automator).
+- Tự động hoá bằng 9 hành động Shortcuts (cả Spotlight, Siri, Automator).
 - 100% native (không Electron), 7 ngôn ngữ, hỗ trợ bàn phím và VoiceOver; phụ thuộc duy nhất là Sparkle để cập nhật.
 
 Xem [Chi tiết tính năng](#-chi-tiết-tính-năng) để biết từng mục làm gì.
@@ -97,7 +97,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
 - **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI
 - **Ignore, Protect, Pin**: chuột phải một phân vùng để **Ignore** (ẩn đi, ví dụ phân vùng hệ thống), **Protect** (không bị "Unmount All" và unmount khi ngủ) hoặc **Pin to Top** (xếp lên đầu); xem lại các danh sách trong Settings → Management
-- **Network Shares**: tự mount SMB và NFS khi đăng nhập (share AFP cũ có nhãn không còn hỗ trợ); nút "Browse Network…" trong sheet share liệt kê server SMB và NFS trong mạng nội bộ và điền sẵn địa chỉ
+- **Network Shares**: tự mount SMB và NFS khi đăng nhập (share AFP cũ có nhãn không còn hỗ trợ); nút "Browse Network…" trong sheet share liệt kê server SMB và NFS trong mạng nội bộ và điền sẵn địa chỉ. Tiêu đề mục "Saved Network Shares" có nút Mount All và Unmount All (mỗi nút chỉ hiện khi có share đã lưu cần đến) để mount/unmount mọi share đã lưu cùng lúc; một thông báo liệt kê từng share lỗi kèm lý do và đề nghị Force Unmount khi có thể giúp
 - **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập; share hoặc ổ đang chờ sẽ hiện lúc thử lại kế tiếp và nút "Reconnect Now" (kết nối lại ngay)
 - **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
 - **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau
@@ -106,7 +106,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **Cảnh báo gần đầy** (Settings → General → Behavior; mặc định bật, ngưỡng 80%, 90% hoặc 95%): phân vùng đã mount dùng từ ngưỡng trở lên có nhãn "Almost full" và vòng tròn màu cam (rê chuột hoặc VoiceOver: "Almost full: 94% used, 12 GB free"); khi bật Thông báo, bạn nhận một thông báo cho mỗi phân vùng sau mỗi lần mount. Ổ ảnh đĩa, phân vùng hệ thống và phân vùng chỉ đọc không tính, và MountMate không tự unmount hay xoá gì.
 - **Cảnh báo SMART**: ổ có kết quả kiểm tra sức khoẻ SMART (từ `diskutil`) là "Failing" sẽ có tam giác cảnh báo đỏ cạnh tên (rê chuột hoặc VoiceOver: "SMART status: failing — back up this disk"); khi bật Thông báo, bạn còn nhận một thông báo cho mỗi ổ. Ổ báo Verified, Not Supported hoặc không báo gì thì không hiện gì, và MountMate không bao giờ tự unmount hay eject vì cảnh báo này.
 - **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng
-- **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 7 hành động: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount Network Share và Unmount Network Share (chọn một share đã lưu), cùng Mount Volume và Unmount Volume (chọn phân vùng hoặc gõ tên, không phân biệt hoa thường; tên không có là lỗi, phân vùng được Protect không bị unmount). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
+- **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 9 hành động: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount All Network Shares và Unmount All Network Shares (mọi share đã lưu), Mount Network Share và Unmount Network Share (chọn một share đã lưu), cùng Mount Volume và Unmount Volume (chọn phân vùng hoặc gõ tên, không phân biệt hoa thường; tên không có là lỗi, phân vùng được Protect không bị unmount). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
 - **Force Eject**: ép eject ổ đang được sử dụng
 - **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều

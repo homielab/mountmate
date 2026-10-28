@@ -544,3 +544,13 @@
 "“%@” is busy: a file on it is still in use." = "«%@» зайнятий: файл на ньому досі використовується.";
 "“%@” is no longer mounted." = "«%@» більше не підключений.";
 "Could not unmount “%@” (code %d)." = "Не вдалося відмонтувати «%@» (код %d).";
+
+// MARK: - Mount / Unmount All Saved Shares
+"Mount All Saved Shares" = "Підключити всі збережені ресурси";
+"Unmount All Saved Shares" = "Відключити всі збережені ресурси";
+"Mount All Network Shares" = "Підключити всі мережеві папки";
+"Unmount All Network Shares" = "Відключити всі мережеві папки";
+"Mounts every network share saved in MountMate that is not mounted yet." = "Підключає всі мережеві папки, збережені в MountMate, які ще не підключено.";
+"Unmounts every mounted network share saved in MountMate." = "Відключає всі підключені мережеві папки, збережені в MountMate.";
+"Network shares mounted." = "Мережеві папки підключено.";
+"Network shares unmounted." = "Мережеві папки відключено.";

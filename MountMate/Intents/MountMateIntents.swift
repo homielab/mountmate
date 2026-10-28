@@ -65,6 +65,32 @@ enum IntentActions {
     }
   }
 
+  /// Reads the mount table first: right after Shortcuts launches the app the
+  /// mounted shares are not known yet.
+  static func refreshedNetworkManager() async -> NetworkMountManager {
+    let manager = NetworkMountManager.shared
+    await withCheckedContinuation { continuation in
+      manager.refreshMountStatus(readUsage: false) { continuation.resume() }
+    }
+    return manager
+  }
+
+  /// The saved shares that could not be mounted.
+  static func mountAllShares() async -> [NetworkMountManager.ShareMountFailure] {
+    let manager = await refreshedNetworkManager()
+    return await withCheckedContinuation { continuation in
+      manager.mountAllShares(trigger: .shortcuts) { continuation.resume(returning: $0) }
+    }
+  }
+
+  /// The saved shares that could not be unmounted.
+  static func unmountAllShares() async -> [NetworkMountManager.ShareUnmountFailure] {
+    let manager = await refreshedNetworkManager()
+    return await withCheckedContinuation { continuation in
+      manager.unmountAllShares { continuation.resume(returning: $0) }
+    }
+  }
+
   /// Decides what to do for a volume name after refreshing the drive list.
   static func volumePlan(name: String, mount: Bool) async -> VolumeIntentPlanner.Plan {
     let manager = await refreshedDriveManager()
@@ -141,6 +167,42 @@ struct EjectAllIntent: AppIntent {
       throw IntentFailure(message: IntentMessages.ejectFailure(names: failed))
     }
     return .result(dialog: IntentDialog(stringLiteral: IntentMessages.disksEjected()))
+  }
+}
+
+struct MountAllSharesIntent: AppIntent {
+  static var title: LocalizedStringResource = "Mount All Network Shares"
+  static var description = IntentDescription(
+    "Mounts every network share saved in MountMate that is not mounted yet.")
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    let failures = await IntentActions.mountAllShares()
+    guard failures.isEmpty else {
+      throw IntentFailure(
+        message: IntentMessages.bulkShareFailure(
+          names: failures.map(\.name), mount: true,
+          reasons: SavedShareBulkRules.mountFailureReasons(failures)))
+    }
+    return .result(dialog: IntentDialog(stringLiteral: IntentMessages.sharesMounted()))
+  }
+}
+
+struct UnmountAllSharesIntent: AppIntent {
+  static var title: LocalizedStringResource = "Unmount All Network Shares"
+  static var description = IntentDescription(
+    "Unmounts every mounted network share saved in MountMate.")
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ProvidesDialog {
+    let failures = await IntentActions.unmountAllShares()
+    guard failures.isEmpty else {
+      throw IntentFailure(
+        message: IntentMessages.bulkShareFailure(
+          names: failures.map(\.target.name), mount: false,
+          reasons: failures.map(\.failure.message)))
+    }
+    return .result(dialog: IntentDialog(stringLiteral: IntentMessages.sharesUnmounted()))
   }
 }
 
@@ -269,6 +331,14 @@ struct MountMateShortcuts: AppShortcutsProvider {
       intent: UnmountShareIntent(),
       phrases: ["Unmount a network share with \(.applicationName)"],
       shortTitle: "Unmount Network Share", systemImageName: "network.slash")
+    AppShortcut(
+      intent: MountAllSharesIntent(),
+      phrases: ["Mount all network shares with \(.applicationName)"],
+      shortTitle: "Mount All Network Shares", systemImageName: "network")
+    AppShortcut(
+      intent: UnmountAllSharesIntent(),
+      phrases: ["Unmount all network shares with \(.applicationName)"],
+      shortTitle: "Unmount All Network Shares", systemImageName: "network.slash")
     AppShortcut(
       intent: MountVolumeIntent(),
       phrases: ["Mount a volume with \(.applicationName)"],

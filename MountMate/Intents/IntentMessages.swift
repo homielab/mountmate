@@ -61,6 +61,24 @@ enum IntentMessages {
     return String(format: localize("Could not unmount “%@”: %@"), name, reason)
   }
 
+  static func sharesMounted(localize: Localize = defaultLocalize) -> String {
+    localize("Network shares mounted.")
+  }
+
+  static func sharesUnmounted(localize: Localize = defaultLocalize) -> String {
+    localize("Network shares unmounted.")
+  }
+
+  /// Error text when several shares failed: their names, then one reason per
+  /// line (each reason names its share).
+  static func bulkShareFailure(
+    names: [String], mount: Bool, reasons: [String], localize: Localize = defaultLocalize
+  ) -> String {
+    let summary = volumeFailure(names: names, mount: mount, localize: localize)
+    let lines = reasons.filter { !$0.isEmpty }
+    return lines.isEmpty ? summary : summary + "\n\n" + lines.joined(separator: "\n")
+  }
+
   static func volumeNotFound(name: String, localize: Localize = defaultLocalize) -> String {
     String(format: localize("No volume named “%@”."), name)
   }

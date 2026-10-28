@@ -544,3 +544,13 @@
 "“%@” is busy: a file on it is still in use." = "“%@” đang bận: vẫn còn tệp trên đó đang được sử dụng.";
 "“%@” is no longer mounted." = "“%@” không còn được gắn nữa.";
 "Could not unmount “%@” (code %d)." = "Không thể tháo “%@” (mã %d).";
+
+// MARK: - Mount / Unmount All Saved Shares
+"Mount All Saved Shares" = "Mount tất cả chia sẻ đã lưu";
+"Unmount All Saved Shares" = "Unmount tất cả chia sẻ đã lưu";
+"Mount All Network Shares" = "Mount tất cả chia sẻ mạng";
+"Unmount All Network Shares" = "Unmount tất cả chia sẻ mạng";
+"Mounts every network share saved in MountMate that is not mounted yet." = "Mount mọi chia sẻ mạng đã lưu trong MountMate mà chưa được mount.";
+"Unmounts every mounted network share saved in MountMate." = "Unmount mọi chia sẻ mạng đã lưu trong MountMate đang được mount.";
+"Network shares mounted." = "Đã mount các chia sẻ mạng.";
+"Network shares unmounted." = "Đã unmount các chia sẻ mạng.";

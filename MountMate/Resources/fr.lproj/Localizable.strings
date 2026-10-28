@@ -544,3 +544,13 @@
 "“%@” is busy: a file on it is still in use." = "« %@ » est occupé : un fichier qu’il contient est encore utilisé.";
 "“%@” is no longer mounted." = "« %@ » n’est plus monté.";
 "Could not unmount “%@” (code %d)." = "Impossible de démonter « %@ » (code %d).";
+
+// MARK: - Mount / Unmount All Saved Shares
+"Mount All Saved Shares" = "Monter tous les partages enregistrés";
+"Unmount All Saved Shares" = "Démonter tous les partages enregistrés";
+"Mount All Network Shares" = "Monter tous les partages réseau";
+"Unmount All Network Shares" = "Démonter tous les partages réseau";
+"Mounts every network share saved in MountMate that is not mounted yet." = "Monte tous les partages réseau enregistrés dans MountMate qui ne sont pas encore montés.";
+"Unmounts every mounted network share saved in MountMate." = "Démonte tous les partages réseau montés enregistrés dans MountMate.";
+"Network shares mounted." = "Partages réseau montés.";
+"Network shares unmounted." = "Partages réseau démontés.";
