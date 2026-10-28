@@ -45,6 +45,20 @@ enum MenuBarIconState: Equatable {
   }
 }
 
+// MARK: - Mounted Count
+
+/// The number next to the menu bar icon, also spoken by VoiceOver.
+enum MountedCount {
+  /// Mounted user volumes that are not protected (partitions and APFS
+  /// container volumes), plus mounted saved shares and manually connected
+  /// shares. Ignored volumes never reach `disks` (DiskListParser drops them).
+  static func total(disks: [PhysicalDisk], networkMountedCount: Int, manualCount: Int) -> Int {
+    let physicalCount = disks.flatMap(\.allVolumes)
+      .filter { $0.isMounted && $0.category == .user && !$0.isProtected }.count
+    return physicalCount + networkMountedCount + manualCount
+  }
+}
+
 // MARK: - Dynamic Menu Bar Icon
 
 struct MenuBarIconView: View {
@@ -68,13 +82,10 @@ struct MenuBarIconView: View {
   var currentIcon: String { iconState.symbolName }
 
   var mountedCount: Int {
-    let physicalCount = (driveManager.physicalDisks ?? [])
-      .flatMap { $0.partitions + $0.containers.flatMap { $0.volumes } }
-      .filter { $0.isMounted && $0.category == .user && !$0.isProtected }.count
-
-    let networkCount = networkManager.mountedShareIDs.count
-    let manualNetworkCount = networkManager.manuallyConnectedShares.count
-    return physicalCount + networkCount + manualNetworkCount
+    MountedCount.total(
+      disks: driveManager.physicalDisks ?? [],
+      networkMountedCount: networkManager.mountedShareIDs.count,
+      manualCount: networkManager.manuallyConnectedShares.count)
   }
 
   /// Spoken by VoiceOver: the icon and the count are one element, so the count is a value, not a label.
