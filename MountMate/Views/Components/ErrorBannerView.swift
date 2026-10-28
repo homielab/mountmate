@@ -8,15 +8,19 @@ struct ErrorBannerView: View {
 
   var body: some View {
     HStack(alignment: .top, spacing: 8) {
-      Image(systemName: "exclamationmark.triangle.fill")
-        .font(.system(size: 14, weight: .bold))
-        .foregroundStyle(.white)
-        .padding(.top, 2)
+      HStack(alignment: .top, spacing: 8) {
+        Image(systemName: "exclamationmark.triangle.fill")
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(.white)
+          .padding(.top, 2)
+          .accessibilityHidden(true)
 
-      Text(message)
-        .font(.caption)
-        .foregroundStyle(.white)
-        .fixedSize(horizontal: false, vertical: true)
+        Text(message)
+          .font(.caption)
+          .foregroundStyle(.white)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .accessibilityElement(children: .combine)
 
       Spacer()
 

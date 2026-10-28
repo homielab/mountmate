@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **VoiceOver skips decorative icons**: the error banner, the error screen and "Loading Disks..." are each read as one element, without "exclamation mark triangle" or a separate "in progress" first, and the icons in the empty states and the network share sheets are no longer read aloud.
 - **Network share texts name every protocol**: the Network Shares settings (Import Mounted tooltip, login note, empty-import message, empty-list hint) said "SMB" only, although SMB, NFS and AFP shares are accepted. They now say "SMB, NFS or AFP" in all seven languages.
 - **Encrypted volumes with a saved password reconnect on their own**: Keep Alive, Mount Again on Wake, Mount All and the Mount Volume shortcut now unlock a locked APFS volume with its password saved in the Keychain instead of staying on "Reconnecting…" or "Cannot Reconnect". They never show a password prompt; if the saved password is rejected, MountMate stops trying it until you unlock the volume yourself.
 - **Share addresses with a user or port**: an SMB or AFP address such as `smb://admin@nas:445/Public` in the Server field now mounts: the user fills the Username field when it is empty (a password in the address is dropped), the port is used for the connection, and IPv6 addresses (`fe80::1` or `[fe80::1]:445`) work too. Before, such a share always failed with "Invalid share configuration". Opening and saving a share saved this way fixes it.

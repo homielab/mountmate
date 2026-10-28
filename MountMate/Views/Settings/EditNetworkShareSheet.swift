@@ -77,6 +77,7 @@ struct EditNetworkShareSheet: View {
         Image(systemName: "externaldrive.connected.to.line.below")
           .font(.title2)
           .foregroundStyle(.blue)
+          .accessibilityHidden(true)
         Text(shareToEdit == nil ? "Add Network Share" : "Edit Network Share")
           .font(.headline)
       }
@@ -106,6 +107,7 @@ struct EditNetworkShareSheet: View {
             HStack(alignment: .top, spacing: 6) {
               Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
+                .accessibilityHidden(true)
               Text(
                 NSLocalizedString(
                   "Apple has removed support for AFP in modern macOS versions. Consider switching this share to SMB or NFS.",

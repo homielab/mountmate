@@ -147,6 +147,7 @@ struct NetworkSharesSettingsView: View {
           .font(.system(size: 32))
           .foregroundStyle(.blue)
       }
+      .accessibilityHidden(true)
 
       VStack(spacing: 4) {
         Text("No Network Shares Configured")

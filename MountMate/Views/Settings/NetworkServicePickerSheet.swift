@@ -19,6 +19,7 @@ struct NetworkServicePickerSheet: View {
         Image(systemName: "wifi")
           .font(.title2)
           .foregroundStyle(.blue)
+          .accessibilityHidden(true)
         Text("Shared Servers on This Network")
           .font(.headline)
       }
@@ -61,6 +62,7 @@ struct NetworkServicePickerSheet: View {
                 Image(systemName: "chevron.right")
                   .font(.caption)
                   .foregroundStyle(.secondary)
+                  .accessibilityHidden(true)
               }
             }
             .buttonStyle(.plain)
@@ -93,6 +95,7 @@ struct NetworkServicePickerSheet: View {
       Image(systemName: systemImage)
         .font(.title2)
         .foregroundStyle(.secondary)
+        .accessibilityHidden(true)
       Text(text)
         .font(.callout)
         .foregroundStyle(.secondary)

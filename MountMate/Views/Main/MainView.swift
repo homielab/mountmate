@@ -83,6 +83,7 @@ struct MainView: View {
     VStack(spacing: 8) {
       Image(systemName: "externaldrive.fill.badge.questionmark").font(.system(size: 40))
         .foregroundColor(.secondary)
+        .accessibilityHidden(true)
       Text(NSLocalizedString("No Drives Found", comment: "Empty state title")).font(.headline)
       Text(
         NSLocalizedString(

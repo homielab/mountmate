@@ -8,18 +8,22 @@ struct ErrorView: View {
 
   var body: some View {
     VStack(spacing: 12) {
-      Image(systemName: "exclamationmark.triangle.fill")
-        .font(.system(size: 40))
-        .foregroundStyle(.red)
+      VStack(spacing: 12) {
+        Image(systemName: "exclamationmark.triangle.fill")
+          .font(.system(size: 40))
+          .foregroundStyle(.red)
+          .accessibilityHidden(true)
 
-      Text(alertInfo.title)
-        .font(.headline)
+        Text(alertInfo.title)
+          .font(.headline)
 
-      Text(alertInfo.message)
-        .font(.body)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.center)
-        .padding(.horizontal)
+        Text(alertInfo.message)
+          .font(.body)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal)
+      }
+      .accessibilityElement(children: .combine)
 
       Button(action: onRetry) {
         Label("Try Again", systemImage: "arrow.clockwise")

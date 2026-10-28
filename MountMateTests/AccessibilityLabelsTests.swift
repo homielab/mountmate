@@ -76,4 +76,72 @@ final class AccessibilityLabelsTests: XCTestCase {
         "\(language): the Simplified-script key is gone")
     }
   }
+
+  // MARK: - Decorative icons
+
+  private func source(_ relativePath: String) throws -> String {
+    let url = URL(fileURLWithPath: #filePath)
+      .deletingLastPathComponent().deletingLastPathComponent()
+      .appendingPathComponent("MountMate/\(relativePath)")
+    return try String(contentsOf: url, encoding: .utf8)
+  }
+
+  /// True when `.accessibilityHidden(true)` follows `anchor` within the next
+  /// few lines, i.e. in the modifier chain of that image (or its container).
+  static func isHidden(after anchor: String, in text: String, within lines: Int = 5) -> Bool {
+    guard let range = text.range(of: anchor) else { return false }
+    let following = text[range.upperBound...].split(
+      separator: "\n", omittingEmptySubsequences: false)
+    return following.prefix(lines + 1).contains { $0.contains(".accessibilityHidden(true)") }
+  }
+
+  func testIsHiddenLooksOnlyAtTheNextFewLines() {
+    let text = "Image(systemName: \"a\")\n  .font(.title)\n  .accessibilityHidden(true)\n"
+    XCTAssertTrue(Self.isHidden(after: "\"a\"", in: text))
+    XCTAssertFalse(Self.isHidden(after: "\"a\"", in: text, within: 0))
+    XCTAssertFalse(Self.isHidden(after: "\"missing\"", in: text))
+  }
+
+  /// Icons next to a text that already says the same thing are skipped by
+  /// VoiceOver, so it doesn't read "exclamationmark triangle" before an error.
+  func testDecorativeIconsAreHiddenFromVoiceOver() throws {
+    let icons: [(file: String, anchor: String)] = [
+      (
+        "Views/Components/ErrorBannerView.swift",
+        "Image(systemName: \"exclamationmark.triangle.fill\")"
+      ),
+      ("Views/Main/ErrorView.swift", "Image(systemName: \"exclamationmark.triangle.fill\")"),
+      ("Views/Main/MainView.swift", "Image(systemName: \"externaldrive.fill.badge.questionmark\")"),
+      ("Views/Settings/NetworkSharesSettingsView.swift", "Image(systemName: \"server.rack\")"),
+      (
+        "Views/Settings/EditNetworkShareSheet.swift",
+        "Image(systemName: \"externaldrive.connected.to.line.below\")"
+      ),
+      (
+        "Views/Settings/EditNetworkShareSheet.swift",
+        "Image(systemName: \"exclamationmark.triangle.fill\")"
+      ),
+      ("Views/Settings/NetworkServicePickerSheet.swift", "Image(systemName: \"wifi\")"),
+      ("Views/Settings/NetworkServicePickerSheet.swift", "Image(systemName: \"chevron.right\")"),
+      ("Views/Settings/NetworkServicePickerSheet.swift", "Image(systemName: systemImage)"),
+    ]
+    for icon in icons {
+      let text = try source(icon.file)
+      XCTAssertTrue(
+        Self.isHidden(after: icon.anchor, in: text), "\(icon.file): \(icon.anchor) is not hidden")
+    }
+  }
+
+  /// The error banner, the error screen and the loading screen each read as
+  /// one VoiceOver element.
+  func testStatusViewsReadAsOneElement() throws {
+    for file in [
+      "Views/Components/ErrorBannerView.swift", "Views/Main/ErrorView.swift",
+      "Views/Main/LoadingView.swift",
+    ] {
+      XCTAssertTrue(
+        try source(file).contains(".accessibilityElement(children: .combine)"),
+        "\(file) is not combined")
+    }
+  }
 }
