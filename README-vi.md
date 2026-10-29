@@ -109,7 +109,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 10 hành động: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount All Network Shares và Unmount All Network Shares (mọi share đã lưu), Mount Network Share và Unmount Network Share (chọn một share đã lưu), Mount Volume và Unmount Volume (chọn phân vùng hoặc gõ tên, không phân biệt hoa thường; tên không có là lỗi, phân vùng được Protect không bị unmount), cùng Eject Volume (eject ổ ngoài chứa phân vùng bạn chọn hoặc gõ tên; ổ có phân vùng được Protect bị từ chối, không ép buộc). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
 - **Force Eject**: ép eject ổ đang được sử dụng
 - **Force Unmount cho network share**: nếu eject một share thất bại vì share đang bận hoặc server không còn, MountMate giải thích lý do (đã dịch) và đề nghị Force Unmount sau khi bạn xác nhận
-- **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên
+- **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên; nút phím tắt trong Settings đọc theo tên hành động và bắt đầu ghi bằng Space, Return hoặc thao tác nhấn của VoiceOver
 - **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
 - Chạy gọn nhẹ trên **thanh menu**
 - **Sao chép chẩn đoán** (Cài đặt → Chung → Nhật ký): chép phiên bản MountMate và macOS, các cài đặt bật/tắt và nhật ký 1 giờ gần nhất của MountMate vào clipboard để dán vào báo lỗi; không có mật khẩu, đường dẫn, tên ổ đĩa hay tên thư mục chia sẻ (xem [Gửi log khi báo lỗi](#-gửi-log-khi-báo-lỗi))

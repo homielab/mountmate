@@ -7,6 +7,8 @@ import SwiftUI
 struct KeyboardShortcutRecorder: NSViewRepresentable {
   @Binding var shortcut: HotkeyShortcut?
   @Binding var isRecording: Bool
+  /// VoiceOver label, naming the action the shortcut runs.
+  let accessibilityName: String
 
   func makeCoordinator() -> Coordinator {
     Coordinator(self)
@@ -16,6 +18,7 @@ struct KeyboardShortcutRecorder: NSViewRepresentable {
     let button = ShortcutRecorderButton()
     button.shortcut = shortcut
     button.isRecording = isRecording
+    button.recorderLabel = accessibilityName
 
     let coordinator = context.coordinator
     button.onShortcut = { newShortcut in
@@ -32,6 +35,7 @@ struct KeyboardShortcutRecorder: NSViewRepresentable {
     context.coordinator.parent = self
     nsView.shortcut = shortcut
     nsView.isRecording = isRecording
+    nsView.recorderLabel = accessibilityName
   }
 
   final class Coordinator {
@@ -48,6 +52,9 @@ final class ShortcutRecorderButton: NSButton {
     didSet { updateTitle() }
   }
   var isRecording = false {
+    didSet { updateTitle() }
+  }
+  var recorderLabel = "" {
     didSet { updateTitle() }
   }
   var onShortcut: ((HotkeyShortcut) -> Void)?
@@ -68,6 +75,17 @@ final class ShortcutRecorderButton: NSButton {
   }
 
   override func mouseDown(with event: NSEvent) {
+    startRecording()
+  }
+
+  /// VoiceOver's press (VO-Space) starts recording like a click.
+  override func accessibilityPerformPress() -> Bool {
+    startRecording()
+    return true
+  }
+
+  /// Also the button's action, so Space on the focused button records.
+  @objc private func startRecording() {
     onRecordingChanged?(true)
     window?.makeFirstResponder(self)
     updateTitle()
@@ -75,7 +93,11 @@ final class ShortcutRecorderButton: NSButton {
 
   override func keyDown(with event: NSEvent) {
     guard isRecording else {
-      super.keyDown(with: event)
+      if Self.startKeyCodes.contains(Int(event.keyCode)) {
+        startRecording()
+      } else {
+        super.keyDown(with: event)
+      }
       return
     }
 
@@ -108,6 +130,8 @@ final class ShortcutRecorderButton: NSButton {
     isBordered = true
     focusRingType = .default
     setButtonType(.momentaryPushIn)
+    target = self
+    action = #selector(startRecording)
     updateTitle()
     layoutObserver = NotificationCenter.default.addObserver(
       forName: .keyboardLayoutDidChange, object: nil, queue: .main
@@ -118,6 +142,9 @@ final class ShortcutRecorderButton: NSButton {
     if let layoutObserver { NotificationCenter.default.removeObserver(layoutObserver) }
   }
 
+  /// Space, Return and keypad Enter start recording on the focused button.
+  private static let startKeyCodes: Set<Int> = [kVK_Space, kVK_Return, kVK_ANSI_KeypadEnter]
+
   private func updateTitle() {
     title =
       isRecording
@@ -125,7 +152,7 @@ final class ShortcutRecorderButton: NSButton {
       : (shortcut?.displayString
         ?? NSLocalizedString("Not Set", comment: "Keyboard shortcut recorder: no shortcut assigned"))
     toolTip = title
-    setAccessibilityLabel(
-      NSLocalizedString("Keyboard Shortcut", comment: "Keyboard shortcut recorder label"))
+    setAccessibilityLabel(AccessibilityLabels.shortcutRecorder(name: recorderLabel))
+    setAccessibilityValue(title)
   }
 }

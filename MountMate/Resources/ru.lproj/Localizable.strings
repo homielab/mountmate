@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "Отмонтировать все томы";
 "Mount All Volumes" = "Смонтировать все томы";
 "Press Shortcut…" = "Нажмите сочетание клавиш…";
-"Keyboard Shortcut" = "Сочетание клавиш";
+"Shortcut for “%@”" = "Сочетание клавиш для «%@»";
 "Shortcut Already Assigned" = "Сочетание уже назначено";
 "This shortcut is already assigned to the other action." = "Это сочетание уже назначено другому действию.";
 "Language" = "Язык";

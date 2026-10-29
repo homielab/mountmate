@@ -63,6 +63,25 @@ final class AccessibilityLabelsTests: XCTestCase {
       "Open in Finder “NAS”")
   }
 
+  /// Each shortcut recorder names its action, so the three recorders in
+  /// Settings sound different; every language has the format key.
+  func testShortcutRecorderLabelNamesTheAction() throws {
+    let english = try languageBundle("en")
+    let names = ["Unmount All Volumes", "Mount All Volumes", "Eject All External Disks"]
+    let labels = names.map { AccessibilityLabels.shortcutRecorder(name: $0, bundle: english) }
+    XCTAssertEqual(labels[1], "Shortcut for “Mount All Volumes”")
+    XCTAssertEqual(Set(labels).count, names.count)
+    for language in languages {
+      let bundle = try languageBundle(language)
+      let label = AccessibilityLabels.shortcutRecorder(name: "Mount All", bundle: bundle)
+      XCTAssertTrue(label.contains("Mount All"), "\(language): \(label)")
+      XCTAssertFalse(label.contains("%"), "\(language): \(label)")
+      XCTAssertNotEqual(
+        bundle.localizedString(forKey: "Shortcut for “%@”", value: "<missing>", table: nil),
+        "<missing>", language)
+    }
+  }
+
   /// The language picker names Traditional Chinese in Traditional script
   /// (繁體, not the Simplified 繁体) wherever the label is shown untranslated.
   func testTraditionalChineseLabelUsesTraditionalScript() throws {

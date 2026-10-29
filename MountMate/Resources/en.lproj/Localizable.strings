@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "Unmount All Volumes";
 "Mount All Volumes" = "Mount All Volumes";
 "Press Shortcut…" = "Press Shortcut…";
-"Keyboard Shortcut" = "Keyboard Shortcut";
+"Shortcut for “%@”" = "Shortcut for “%@”";
 "Shortcut Already Assigned" = "Shortcut Already Assigned";
 "This shortcut is already assigned to the other action." = "This shortcut is already assigned to the other action.";
 "Language" = "Language";

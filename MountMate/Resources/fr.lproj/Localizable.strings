@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "Démonter tous les volumes";
 "Mount All Volumes" = "Monter tous les volumes";
 "Press Shortcut…" = "Appuyez sur le raccourci…";
-"Keyboard Shortcut" = "Raccourci clavier";
+"Shortcut for “%@”" = "Raccourci pour « %@ »";
 "Shortcut Already Assigned" = "Raccourci déjà attribué";
 "This shortcut is already assigned to the other action." = "Ce raccourci est déjà attribué à l’autre action.";
 "Language" = "Langue";

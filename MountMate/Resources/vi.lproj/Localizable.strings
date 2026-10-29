@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "Tháo tất cả phân vùng";
 "Mount All Volumes" = "Gắn tất cả phân vùng";
 "Press Shortcut…" = "Nhấn phím tắt…";
-"Keyboard Shortcut" = "Phím tắt";
+"Shortcut for “%@”" = "Phím tắt cho “%@”";
 "Shortcut Already Assigned" = "Phím tắt đã được gán";
 "This shortcut is already assigned to the other action." = "Phím tắt này đã được gán cho thao tác khác.";
 "Language" = "Ngôn ngữ";

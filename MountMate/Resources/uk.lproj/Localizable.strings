@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "Відмонтувати всі томи";
 "Mount All Volumes" = "Підключити всі томи";
 "Press Shortcut…" = "Натисніть комбінацію клавіш…";
-"Keyboard Shortcut" = "Клавіатурне скорочення";
+"Shortcut for “%@”" = "Клавіатурне скорочення для «%@»";
 "Shortcut Already Assigned" = "Скорочення вже призначено";
 "This shortcut is already assigned to the other action." = "Це скорочення вже призначено іншій дії.";
 "Language" = "Мова";

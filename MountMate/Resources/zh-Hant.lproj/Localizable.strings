@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "卸載所有磁碟卷";
 "Mount All Volumes" = "掛載所有磁碟卷";
 "Press Shortcut…" = "按下快速鍵…";
-"Keyboard Shortcut" = "鍵盤快速鍵";
+"Shortcut for “%@”" = "「%@」的快速鍵";
 "Shortcut Already Assigned" = "快速鍵已指派";
 "This shortcut is already assigned to the other action." = "此快速鍵已指派給其他操作。";
 "Language" = "語言";

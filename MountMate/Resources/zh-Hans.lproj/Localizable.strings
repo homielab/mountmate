@@ -77,7 +77,7 @@
 "Unmount All Volumes" = "卸载所有卷宗";
 "Mount All Volumes" = "挂载所有卷宗";
 "Press Shortcut…" = "按下快捷键…";
-"Keyboard Shortcut" = "键盘快捷键";
+"Shortcut for “%@”" = "“%@”的快捷键";
 "Shortcut Already Assigned" = "快捷键已分配";
 "This shortcut is already assigned to the other action." = "此快捷键已分配给其他操作。";
 "Language" = "语言";

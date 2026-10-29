@@ -4,7 +4,8 @@ import SwiftUI
 
 /// One recordable global shortcut with its conflict and availability warnings.
 struct ShortcutRow: View {
-  let description: LocalizedStringKey
+  /// Localized name of the action, shown next to the recorder and read by VoiceOver.
+  let description: String
   let action: HotkeyAction
   /// The action being recorded across all rows; hides the warnings while recording.
   @Binding var recordingShortcut: HotkeyAction?
@@ -28,7 +29,8 @@ struct ShortcutRow: View {
           isRecording: Binding(
             get: { recordingShortcut == action },
             set: { setRecording($0, for: action) }
-          )
+          ),
+          accessibilityName: description
         )
         .frame(width: 150, height: 26)
         if action == .ejectAll, hotkeyManager.shortcut(for: action) != nil {

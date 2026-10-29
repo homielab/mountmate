@@ -132,7 +132,7 @@ Everything in the list above, in full:
 - **Shortcuts**: the Shortcuts app (and Spotlight, Siri, Automator via "Run Shortcut") gets ten actions: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount All Network Shares and Unmount All Network Shares (every saved share), Mount Network Share and Unmount Network Share (pick any saved share), Mount Volume and Unmount Volume (pick a volume or type its name; case is ignored, an unknown name is an error, a protected volume is not unmounted), and Eject Volume (ejects the external disk holding the volume you pick or name; a disk with a protected volume is refused and nothing is forced). Build "arrive home → mount the NAS" or "before bed → unmount all" automations; a failure is shown as the shortcut's error. Needs MountMate to be installed; it starts in the background when a shortcut runs
 - **Force Eject**: Safely force eject drives that are in use
 - **Force Unmount for network shares**: if ejecting a share fails because it is busy or its server is gone, MountMate explains why (translated) and offers a confirmed Force Unmount
-- **VoiceOver**: icon-only buttons and the menu bar icon are announced by name
+- **VoiceOver**: icon-only buttons and the menu bar icon are announced by name; the keyboard shortcut buttons in Settings are named by their action and start recording with Space, Return or VoiceOver's press
 - **Localized** in 7 languages, with correct plural forms
 - Runs quietly in the **menu bar**
 - **Copy Diagnostics** (Settings → General → Logs): puts the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log on the clipboard for a bug report, without passwords, paths, or disk and share names (see [Sending Logs](#-sending-logs))

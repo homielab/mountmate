@@ -64,9 +64,15 @@ struct ShortcutsLanguageSettingsSection: View {
 
       if hotkeysEnabled {
         VStack(alignment: .leading, spacing: 8) {
-          shortcutRow("Unmount All Volumes", action: .unmountAll)
-          shortcutRow("Mount All Volumes", action: .mountAll)
-          shortcutRow("Eject All External Disks", action: .ejectAll)
+          shortcutRow(
+            NSLocalizedString("Unmount All Volumes", comment: "Keyboard shortcut action"),
+            action: .unmountAll)
+          shortcutRow(
+            NSLocalizedString("Mount All Volumes", comment: "Keyboard shortcut action"),
+            action: .mountAll)
+          shortcutRow(
+            NSLocalizedString("Eject All External Disks", comment: "Keyboard shortcut action"),
+            action: .ejectAll)
           Text(
             "Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app."
           )
@@ -130,7 +136,7 @@ struct ShortcutsLanguageSettingsSection: View {
     NSApplication.shared.terminate(nil)
   }
 
-  private func shortcutRow(_ description: LocalizedStringKey, action: HotkeyAction) -> some View {
+  private func shortcutRow(_ description: String, action: HotkeyAction) -> some View {
     ShortcutRow(
       description: description, action: action, recordingShortcut: $recordingShortcut,
       hotkeysEnabled: hotkeysEnabled,

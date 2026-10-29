@@ -40,6 +40,18 @@ enum AccessibilityLabels {
       name)
   }
 
+  /// Label of a keyboard shortcut recorder, naming the action it sets so
+  /// the recorders in Settings sound different, e.g.
+  /// `Shortcut for “Mount All Volumes”`. The recorder's value is the
+  /// shortcut itself (or "Not Set").
+  static func shortcutRecorder(name: String, bundle: Bundle = .main) -> String {
+    String(
+      format: NSLocalizedString(
+        "Shortcut for “%@”", bundle: bundle,
+        comment: "Accessibility label of a keyboard shortcut recorder; %@ is the action"),
+      name)
+  }
+
   /// VoiceOver value of a row that expands and collapses, e.g. a disk
   /// header: "Expanded" or "Collapsed".
   static func expansionValue(isExpanded: Bool, bundle: Bundle = .main) -> String {
