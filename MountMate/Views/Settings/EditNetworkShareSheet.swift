@@ -63,9 +63,7 @@ struct EditNetworkShareSheet: View {
   }
 
   private var connectionStringPreview: String {
-    let srv = cleanedServer.isEmpty ? "server" : cleanedServer
-    let path = cleanedSharePath.isEmpty ? "share" : cleanedSharePath
-    return "\(shareProtocol.urlScheme)://\(srv)/\(path)"
+    NetworkMountPlan.connectionPreview(for: makeShare())
   }
 
   var body: some View {

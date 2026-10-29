@@ -229,6 +229,25 @@ enum NetworkMountPlan {
     return urlComponents.url
   }
 
+  /// What the share sheet shows as "Preview": the address MountMate really
+  /// connects to. SMB/AFP: the NetFS URL (`connectionURL`, with a domain
+  /// login in its user part as it is sent); NFS: the `server:/export` target
+  /// `mount_nfs` gets, plus `-o port=N` when the server field has a port.
+  /// Empty fields show the placeholders "server" and "share".
+  static func connectionPreview(for share: NetworkShare) -> String {
+    var share = share
+    if share.server.isEmpty { share.server = "server" }
+    if share.sharePath.isEmpty { share.sharePath = "share" }
+    if share.shareProtocol == .nfs {
+      let arguments = nfsArguments(share: share, mountPoint: "")
+      let port = arguments[1].split(separator: ",").first { $0.hasPrefix("port=") }
+      return port.map { "\(arguments[2]) -o \($0)" } ?? arguments[2]
+    }
+    let user = netFSUserPlacement(for: share).urlUser
+    return connectionURL(for: share, user: user)?.absoluteString
+      ?? "\(share.shareProtocol.urlScheme)://\(share.server)/\(share.sharePath)"
+  }
+
   /// Where the SMB/AFP username goes: (URL user component, `user` argument).
   ///
   /// Domain logins ("DOMAIN;user", or "DOMAIN\user" in Windows notation) go

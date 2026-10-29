@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Share preview shows the real address**: the "Preview" line in Add/Edit Share now shows exactly what MountMate connects to: IPv6 hosts in brackets, the port, encoded spaces, and for NFS the `server:/export` target (with `-o port=N`) instead of a made-up `nfs://` URL.
 - **Remount and Force Unmount while a volume is busy**: Remount (after changing or removing a custom mount point) and Force Unmount no longer start while a mount or unmount is still running on the same volume, which made two diskutil commands race, hid the spinner too early and showed a wrong error. They are skipped like a second Mount or Unmount; a new mount point then takes effect the next time the volume mounts.
 - **Network share onto a folder with files**: a share is no longer mounted onto a folder that already holds files (for example a custom mount point set to ~/Documents), which hid those files until the share was unmounted. The mount is refused with a message asking for an empty folder; an empty folder or one with only .DS_Store is used as before.
 - **Network share mount point checked at Save**: a custom mount point that resolves to the root folder (`/`, `//`, `~/../..`) or a path or display name with control characters such as a line break is refused in the share sheet with a clear message, instead of failing later with a NetFS error when mounting. `~` and `..` are resolved first, so `~/x/..` (your home folder) is accepted.
