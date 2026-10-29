@@ -41,6 +41,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// When the last share capacity read started (`ShareUsageReadRules`).
   /// Main thread only.
   private var lastUsageReadAt: Date?
+  /// Shares that read asked for, answered or not; a share drops out when it
+  /// unmounts, so mounting it again reads it right away. Main thread only.
+  private var usageReadShareIDs = Set<UUID>()
 
   private init() {
     // Initial check
@@ -129,13 +132,16 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       // Usage is read after completion so a slow server never delays
       // mounts or keep-alive sweeps.
       let now = Date()
+      let mountedIDs = Set(parsedData.mountPoints.keys)
+      self.usageReadShareIDs.formIntersection(mountedIDs)
       guard
         ShareUsageReadRules.shouldRead(
-          requested: readUsage, mountedShareIDs: Set(parsedData.mountPoints.keys),
-          knownUsageIDs: Set(self.usageByShareID.keys), lastReadAt: self.lastUsageReadAt,
+          requested: readUsage, mountedShareIDs: mountedIDs,
+          attemptedShareIDs: self.usageReadShareIDs, lastReadAt: self.lastUsageReadAt,
           now: now)
       else { return }
       self.lastUsageReadAt = now
+      self.usageReadShareIDs = mountedIDs
       let mounts = Array(parsedData.mountPoints)
       DispatchQueue.global(qos: .userInitiated).async {
         self.readShareUsage(of: mounts, ticket: ticket)
