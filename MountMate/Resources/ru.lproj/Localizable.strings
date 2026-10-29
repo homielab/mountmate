@@ -376,6 +376,7 @@
 /* Unmount When Idle */
 "Unmount When Idle" = "Отключать при простое";
 "Unmount When Idle (Off While Kept Mounted)" = "Отключать при простое (недоступно, пока том удерживается)";
+"Unmount When Idle (Off While Protected)" = "Отключать при простое (недоступно для защищённого тома)";
 "Off" = "Выкл.";
 "After %d min Without Use" = "Через %d мин без использования";
 "No Volumes Unmounted When Idle" = "Нет томов, отключаемых при простое";

@@ -83,6 +83,13 @@ final class VolumeMenuRulesTests: XCTestCase {
         $0.canUnmountWhenIdle = true
         $0.isKeepAlive = true
       }.idleUnmountDisabled)
+    let protected = rules(volume(mounted: true, isProtected: true)) {
+      $0.canUnmountWhenIdle = true
+      $0.idleUnmountMinutes = 15
+    }
+    XCTAssertTrue(protected.showsIdleUnmount)
+    XCTAssertTrue(protected.idleUnmountDisabled)
+    XCTAssertTrue(protected.isCurrentIdleChoice(15))
   }
 
   func testForgetSavedPasswordOnlyWithSavedPassword() {

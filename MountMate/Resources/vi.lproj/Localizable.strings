@@ -376,6 +376,7 @@
 /* Unmount When Idle */
 "Unmount When Idle" = "Tự ngắt khi không dùng";
 "Unmount When Idle (Off While Kept Mounted)" = "Tự ngắt khi không dùng (tắt khi đang giữ gắn kết)";
+"Unmount When Idle (Off While Protected)" = "Tự ngắt khi không dùng (tắt khi đang được bảo vệ)";
 "Off" = "Tắt";
 "After %d min Without Use" = "Sau %d phút không dùng";
 "No Volumes Unmounted When Idle" = "Không có phân vùng tự ngắt khi không dùng";

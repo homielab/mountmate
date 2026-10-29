@@ -376,6 +376,7 @@
 /* Unmount When Idle */
 "Unmount When Idle" = "閒置時卸載";
 "Unmount When Idle (Off While Kept Mounted)" = "閒置時卸載（保持掛載時無法使用）";
+"Unmount When Idle (Off While Protected)" = "閒置時卸載（受保護時無法使用）";
 "Off" = "關閉";
 "After %d min Without Use" = "%d 分鐘未使用後";
 "No Volumes Unmounted When Idle" = "沒有閒置時卸載的磁碟卷";

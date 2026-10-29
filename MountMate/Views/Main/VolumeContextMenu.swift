@@ -199,7 +199,7 @@ struct VolumeContextMenu: View {
   }
 
   /// "Unmount When Idle" submenu: Off or a number of minutes, the current
-  /// choice checked. Unavailable while the volume is kept mounted.
+  /// choice checked. Unavailable while the volume is kept mounted or protected.
   private func idleUnmountMenu(_ rules: VolumeMenuRules) -> some View {
     Menu {
       ForEach(PersistenceManager.idleUnmountChoices, id: \.self) { minutes in
@@ -217,16 +217,24 @@ struct VolumeContextMenu: View {
         }
       }
     } label: {
-      Label(
-        rules.idleUnmountDisabled
-          ? NSLocalizedString(
-            "Unmount When Idle (Off While Kept Mounted)",
-            comment: "Volume context menu: idle unmount unavailable for keep-alive volumes")
-          : NSLocalizedString(
-            "Unmount When Idle", comment: "Volume context menu: idle unmount submenu"),
-        systemImage: "moon.zzz")
+      Label(idleUnmountTitle(rules), systemImage: "moon.zzz")
     }
     .disabled(rules.idleUnmountDisabled)
+  }
+
+  private func idleUnmountTitle(_ rules: VolumeMenuRules) -> String {
+    if rules.isKeepAlive {
+      return NSLocalizedString(
+        "Unmount When Idle (Off While Kept Mounted)",
+        comment: "Volume context menu: idle unmount unavailable for keep-alive volumes")
+    }
+    if rules.isProtected {
+      return NSLocalizedString(
+        "Unmount When Idle (Off While Protected)",
+        comment: "Volume context menu: idle unmount unavailable for protected volumes")
+    }
+    return NSLocalizedString(
+      "Unmount When Idle", comment: "Volume context menu: idle unmount submenu")
   }
 
   private func showPersistenceError() {

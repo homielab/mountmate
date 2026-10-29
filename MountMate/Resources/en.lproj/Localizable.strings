@@ -376,6 +376,7 @@
 /* Unmount When Idle */
 "Unmount When Idle" = "Unmount When Idle";
 "Unmount When Idle (Off While Kept Mounted)" = "Unmount When Idle (Off While Kept Mounted)";
+"Unmount When Idle (Off While Protected)" = "Unmount When Idle (Off While Protected)";
 "Off" = "Off";
 "After %d min Without Use" = "After %d min Without Use";
 "No Volumes Unmounted When Idle" = "No Volumes Unmounted When Idle";

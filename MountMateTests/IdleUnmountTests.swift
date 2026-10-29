@@ -122,13 +122,14 @@ final class IdleUnmountTests: XCTestCase {
   private let diskUUID = "0A1B2C3D-0000-1111-2222-333344445555"
 
   private func volume(
-    mounted: Bool = true, mountPoint: String? = "/Volumes/Backup", category: DriveCategory = .user
+    mounted: Bool = true, mountPoint: String? = "/Volumes/Backup", category: DriveCategory = .user,
+    isProtected: Bool = false
   ) -> Volume {
     Volume(
       id: volumeUUID, deviceIdentifier: "disk4s2", diskUUID: diskUUID, name: "Backup",
       isMounted: mounted, mountPoint: mounted ? mountPoint : nil, freeSpace: nil, totalSize: nil,
       usedSpace: nil, usedBytes: nil, fileSystemType: "apfs", usagePercentage: nil,
-      category: category, isProtected: false, snapshots: [], storageError: nil)
+      category: category, isProtected: isProtected, snapshots: [], storageError: nil)
   }
 
   private func disk(_ type: PhysicalDiskType, volumes: [Volume]) -> PhysicalDisk {
@@ -164,6 +165,7 @@ final class IdleUnmountTests: XCTestCase {
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume(mounted: false)])]), [])
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume(category: .system)])]), [])
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume(mountPoint: "/")])]), [])
+    XCTAssertEqual(candidates([disk(.physical, volumes: [volume(isProtected: true)])]), [])
     XCTAssertEqual(
       candidates([disk(.physical, volumes: [volume()])], keepAlive: [compositeId]), [])
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume()])], busy: [volumeUUID]), [])

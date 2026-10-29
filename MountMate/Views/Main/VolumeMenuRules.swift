@@ -76,8 +76,8 @@ struct VolumeMenuRules: Equatable {
   /// "Unmount When Idle" submenu: external physical disks only.
   var showsIdleUnmount: Bool { canUnmountWhenIdle }
 
-  /// Idle unmount is off while the volume is kept mounted.
-  var idleUnmountDisabled: Bool { isKeepAlive }
+  /// Idle unmount is off while the volume is kept mounted or protected.
+  var idleUnmountDisabled: Bool { isKeepAlive || isProtected }
 
   func isCurrentIdleChoice(_ minutes: Int) -> Bool { minutes == idleUnmountMinutes }
 

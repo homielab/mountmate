@@ -376,6 +376,7 @@
 /* Unmount When Idle */
 "Unmount When Idle" = "Démonter après inactivité";
 "Unmount When Idle (Off While Kept Mounted)" = "Démonter après inactivité (désactivé si maintenu monté)";
+"Unmount When Idle (Off While Protected)" = "Démonter après inactivité (désactivé si protégé)";
 "Off" = "Désactivé";
 "After %d min Without Use" = "Après %d min sans utilisation";
 "No Volumes Unmounted When Idle" = "Aucun volume démonté après inactivité";
