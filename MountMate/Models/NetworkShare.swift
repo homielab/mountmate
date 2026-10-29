@@ -59,7 +59,9 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
 
 extension NetworkShare {
   /// Cleans up a server address typed or pasted by the user: trims
-  /// whitespace and drops a leading `smb://`, `afp://` or `nfs://`. A pasted
+  /// whitespace and drops a leading `smb://`, `afp://` or `nfs://`, or a bare
+  /// `//` (as in `mount` output). A Windows UNC path (`\\nas\Public`) has its
+  /// backslashes turned into slashes first. A pasted
   /// URL such as `smb://admin@nas.local:445/Public/sub` is split into the
   /// server (`nas.local:445`, a port is kept), the share path (`Public/sub`,
   /// cleaned with `cleanedSharePathInput`) and the username (`admin`,
@@ -69,11 +71,14 @@ extension NetworkShare {
     server: String, sharePath: String, username: String
   ) {
     var server = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-    for scheme in ShareProtocol.allCases.map({ "\($0.urlScheme)://" }) {
-      if server.lowercased().hasPrefix(scheme) {
-        server = String(server.dropFirst(scheme.count))
-        break
-      }
+    // Only a UNC path is converted, so a backslash elsewhere (a
+    // `DOMAIN\user` login) is left alone.
+    if server.hasPrefix("\\\\") {
+      server = server.replacingOccurrences(of: "\\", with: "/")
+    }
+    let prefixes = ShareProtocol.allCases.map { "\($0.urlScheme)://" } + ["//"]
+    if let prefix = prefixes.first(where: { server.lowercased().hasPrefix($0) }) {
+      server = String(server.dropFirst(prefix.count))
     }
     var sharePath = ""
     if let slash = server.firstIndex(of: "/") {

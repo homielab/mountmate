@@ -455,6 +455,36 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertEqual(address.port, 445)
   }
 
+  func testPastedDoubleSlashAndUNCPathsSplitLikeURLs() {
+    let bare = NetworkShare.cleanedServerInput("//nas/Public")
+    XCTAssertEqual(bare.server, "nas")
+    XCTAssertEqual(bare.sharePath, "Public")
+    XCTAssertEqual(bare.username, "")
+    let full = NetworkShare.cleanedServerInput("//admin@nas:445/Pub/sub")
+    XCTAssertEqual(full.server, "nas:445")
+    XCTAssertEqual(full.sharePath, "Pub/sub")
+    XCTAssertEqual(full.username, "admin")
+    let unc = NetworkShare.cleanedServerInput(#"\\nas\Public\sub"#)
+    XCTAssertEqual(unc.server, "nas")
+    XCTAssertEqual(unc.sharePath, "Public/sub")
+    XCTAssertEqual(unc.username, "")
+    XCTAssertEqual(NetworkShare.cleanedServerInput(#"  \\nas  "#).server, "nas")
+  }
+
+  func testSchemesAndBareHostStillParseAsBefore() {
+    for scheme in ["smb", "afp", "nfs", "SMB"] {
+      let parts = NetworkShare.cleanedServerInput("\(scheme)://nas/Public")
+      XCTAssertEqual(parts.server, "nas", scheme)
+      XCTAssertEqual(parts.sharePath, "Public", scheme)
+    }
+    let bare = NetworkShare.cleanedServerInput("nas")
+    XCTAssertEqual(bare.server, "nas")
+    XCTAssertEqual(bare.sharePath, "")
+    let domainUser = NetworkShare.cleanedServerInput(#"smb://CORP\jane@files/x"#)
+    XCTAssertEqual(domainUser.username, #"CORP\jane"#)
+    XCTAssertEqual(domainUser.server, "files")
+  }
+
   func testServerInputUserInfoVariants() {
     XCTAssertEqual(NetworkShare.cleanedServerInput("nas").username, "")
     let withPassword = NetworkShare.cleanedServerInput("afp://bob:secret@tc.local/Data")

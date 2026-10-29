@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Pasting `//nas/Public` or `\\nas\Public` into the server address**: an address copied from `mount` output (`//admin@nas:445/Public`) or a Windows UNC path is now split into the server, share path and username like an `smb://` URL, instead of leaving the server empty and Save disabled.
 - **Custom mount point**: a path that means the root folder, such as `//`, `/.` or `/x/..`, is now refused with "Cannot Be Root", and `..` and `.` in a valid path are resolved before it is checked and used.
 - **Importing a mounted share keeps its port**: an SMB or AFP share connected on another port (`smb://user@nas:8445/share`) is now imported as server `nas:8445` (`[fd00::2]:8445` for an IPv6 address) instead of `nas`, so it mounts again on the same port.
 - **Network share names are trimmed**: spaces around a share's display name are removed when you save it, and a name of only spaces falls back to the share path's last part (like an empty name), so a share can no longer get an invisible mount folder such as `~/mountmate/   `.
