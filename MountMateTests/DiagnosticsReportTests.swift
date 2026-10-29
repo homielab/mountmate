@@ -138,4 +138,49 @@ final class DiagnosticsReportTests: XCTestCase {
     // Only on/off switches belong in the report.
     XCTAssertEqual(DiagnosticsReport.flagKeys.count, 17)
   }
+
+  func testShareSummaryCountsSavedShares() {
+    let mounted = NetworkShare(
+      name: "Family Photos", server: "nas.local", sharePath: "photos", username: "alice")
+    let idle = NetworkShare(
+      name: "Backup", server: "10.0.0.5", sharePath: "/export/backup", username: "",
+      mountAtLogin: false, keepMounted: false, shareProtocol: .nfs)
+    let full = NetworkShare(
+      name: "Media", server: "nas.local", sharePath: "media", username: "", mountAtLogin: false)
+    let tb: Int64 = 1_000_000_000_000
+    let summary = DiagnosticsReport.shareSummary(
+      of: [mounted, idle, full], mountedIDs: [mounted.id, full.id],
+      usage: [
+        mounted.id: ShareUsage(totalBytes: tb, freeBytes: tb / 2),
+        full.id: ShareUsage(totalBytes: tb, freeBytes: tb / 100),
+        idle.id: ShareUsage(totalBytes: tb, freeBytes: 0),
+      ],
+      threshold: 0.9)
+    XCTAssertEqual(summary.savedByProtocol, [.smb: 2, .nfs: 1])
+    XCTAssertEqual(summary.saved, 3)
+    XCTAssertEqual(summary.mounted, 2)
+    XCTAssertEqual(summary.keepAlive, 2)
+    XCTAssertEqual(summary.mountAtLogin, 1)
+    XCTAssertEqual(summary.almostFull, 1)
+
+    let report = DiagnosticsReport.format(
+      appVersion: "1", build: "1", macOS: "x", flags: [], shares: summary, lines: [],
+      generatedAt: now, timeZone: utc)
+    XCTAssertTrue(report.contains("Network shares (saved): 3\n"))
+    XCTAssertTrue(report.contains("  By protocol: SMB 2, NFS 1, AFP 0\n"))
+    XCTAssertTrue(report.contains("  Mounted: 2\n"))
+    XCTAssertTrue(report.contains("  Keep Alive: 2\n"))
+    XCTAssertTrue(report.contains("  Mount at login: 1\n"))
+    XCTAssertTrue(report.contains("  Almost full: 1\n"))
+    for secret in ["Family", "Backup", "Media", "nas.local", "10.0.0.5", "photos", "alice"] {
+      XCTAssertFalse(report.contains(secret), secret)
+    }
+  }
+
+  func testReportWithoutSharesSaysZero() {
+    let report = DiagnosticsReport.format(
+      appVersion: "1", build: "1", macOS: "x", flags: [], lines: [], generatedAt: now,
+      timeZone: utc)
+    XCTAssertTrue(report.contains("Network shares (saved): 0\n"))
+  }
 }

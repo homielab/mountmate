@@ -3,7 +3,7 @@ import Foundation
 import OSLog
 
 /// A text report users can paste into a bug report: app and macOS version,
-/// on/off settings and the last hour of MountMate's own log. It never holds
+/// on/off settings, network share counts and the last hour of MountMate's own log. It never holds
 /// paths, volume or share names, or passwords.
 enum DiagnosticsReport {
   struct LogLine: Equatable {
@@ -17,6 +17,38 @@ enum DiagnosticsReport {
   struct Flag: Equatable {
     let name: String
     let isOn: Bool
+  }
+
+  /// Counts about the saved network shares: no names, servers or paths.
+  struct ShareSummary: Equatable {
+    var savedByProtocol: [ShareProtocol: Int] = [:]
+    var mounted = 0
+    var keepAlive = 0
+    var mountAtLogin = 0
+    var almostFull = 0
+
+    var saved: Int { savedByProtocol.values.reduce(0, +) }
+  }
+
+  /// Counts `shares`; `mountedIDs` and `usage` come from the share manager.
+  static func shareSummary(
+    of shares: [NetworkShare], mountedIDs: Set<UUID>, usage: [UUID: ShareUsage],
+    threshold: Double?
+  ) -> ShareSummary {
+    var summary = ShareSummary()
+    for share in shares {
+      summary.savedByProtocol[share.shareProtocol, default: 0] += 1
+      let isMounted = mountedIDs.contains(share.id)
+      if isMounted { summary.mounted += 1 }
+      if share.keepMounted { summary.keepAlive += 1 }
+      if share.mountAtLogin { summary.mountAtLogin += 1 }
+      if isMounted, let shareUsage = usage[share.id],
+        LowSpaceRules.warning(for: shareUsage, threshold: threshold) != nil
+      {
+        summary.almostFull += 1
+      }
+    }
+    return summary
   }
 
   static let maxLines = 2000
@@ -110,6 +142,7 @@ enum DiagnosticsReport {
     flags: [Flag],
     failingDiskCount: Int = 0,
     almostFullVolumeCount: Int = 0,
+    shares: ShareSummary = ShareSummary(),
     lines: [LogLine],
     generatedAt: Date,
     homeDirectory: String = NSHomeDirectory(),
@@ -130,6 +163,18 @@ enum DiagnosticsReport {
     out += [
       "", "Disks reporting SMART failing: \(failingDiskCount)",
       "Volumes almost full: \(almostFullVolumeCount)",
+      "",
+      "Network shares (saved): \(shares.saved)",
+    ]
+    let byProtocol = ShareProtocol.allCases.map {
+      "\($0.displayName) \(shares.savedByProtocol[$0] ?? 0)"
+    }
+    out += [
+      "  By protocol: \(byProtocol.joined(separator: ", "))",
+      "  Mounted: \(shares.mounted)",
+      "  Keep Alive: \(shares.keepAlive)",
+      "  Mount at login: \(shares.mountAtLogin)",
+      "  Almost full: \(shares.almostFull)",
     ]
     out += [
       "",
@@ -184,8 +229,8 @@ enum DiagnosticsReport {
 
   /// The whole report for this run. Slow: call it off the main thread.
   static func build(
-    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, mountPoints: [String] = [],
-    now: Date = Date()
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0,
+    shares: ShareSummary = ShareSummary(), mountPoints: [String] = [], now: Date = Date()
   ) throws -> String {
     let info = Bundle.main.infoDictionary
     return format(
@@ -195,6 +240,7 @@ enum DiagnosticsReport {
       flags: flags(),
       failingDiskCount: failingDiskCount,
       almostFullVolumeCount: almostFullVolumeCount,
+      shares: shares,
       lines: try collectLogLines(now: now),
       generatedAt: now,
       mountPoints: mountPoints)
@@ -203,13 +249,14 @@ enum DiagnosticsReport {
   /// Builds the report in the background and puts it on the pasteboard.
   /// Returns false when the log could not be read.
   static func copyToPasteboard(
-    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, mountPoints: [String] = []
+    failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0,
+    shares: ShareSummary = ShareSummary(), mountPoints: [String] = []
   ) async -> Bool {
     let report = await Task.detached(priority: .userInitiated) { () -> String? in
       do {
         return try build(
           failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount,
-          mountPoints: mountPoints)
+          shares: shares, mountPoints: mountPoints)
       } catch {
         Log.app.error(
           "Could not build the diagnostics report: \(error.localizedDescription, privacy: .public)"
