@@ -6,6 +6,13 @@ import Foundation
 /// Mounts the volumes that "Unmount All Disks on Sleep" unmounted when the Mac
 /// wakes up. Main thread only.
 final class WakeRemountManager {
+  /// Runs `work` after the given delay.
+  typealias Scheduler = (_ delay: TimeInterval, _ work: @escaping () -> Void) -> Void
+  /// Refreshes the drive list and delivers the current volumes.
+  typealias VolumeRefresher = (_ completion: @escaping ([Volume]) -> Void) -> Void
+  /// Mounts `volume` for wake and reports whether the mount succeeded.
+  typealias Mounter = (_ volume: Volume, _ completion: @escaping (Bool) -> Void) -> Void
+
   static let shared = WakeRemountManager()
 
   /// Settings → General → Behavior; on unless the user turned it off.
@@ -14,14 +21,58 @@ final class WakeRemountManager {
 
   /// Seconds after wake to look for the disks (they come back a moment after
   /// the Mac). The last attempt ends the plan.
-  private static let attemptDelays: [TimeInterval] = [3, 10]
+  static let attemptDelays: [TimeInterval] = [3, 10]
+
+  static let mainQueueScheduler: Scheduler = { delay, work in
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+  }
+
+  static let liveVolumeRefresher: VolumeRefresher = { completion in
+    DriveManager.shared.refreshDrives(qos: .userInitiated) {
+      completion(DriveManager.shared.bulkActionDisks.flatMap(\.allVolumes))
+    }
+  }
+
+  static let liveMounter: Mounter = { volume, completion in
+    // Not a user action: a blocked volume stays blocked, and no alert
+    // appears for a disk nobody is looking at.
+    DriveManager.shared.mount(
+      volume: volume, allowsErrorAlerts: false, isUserInitiated: false, trigger: .wake
+    ) { result in
+      if case .success = result {
+        completion(true)
+      } else {
+        completion(false)
+      }
+    }
+  }
 
   private let defaults: UserDefaults
+  private let schedule: Scheduler
+  private let refreshVolumes: VolumeRefresher
+  private let isBusy: (String) -> Bool
+  private let mount: Mounter
+  private let notifyLeftover: ([String]) -> Void
   private var wakeToken: NSObjectProtocol?
-  private var isRunning = false
+  private(set) var isRunning = false
+  private(set) var generation = 0
 
-  init(defaults: UserDefaults = .standard) {
+  init(
+    defaults: UserDefaults = .standard,
+    schedule: @escaping Scheduler = WakeRemountManager.mainQueueScheduler,
+    refreshVolumes: @escaping VolumeRefresher = WakeRemountManager.liveVolumeRefresher,
+    isBusy: @escaping (String) -> Bool = { DriveManager.shared.isBusy($0) },
+    mount: @escaping Mounter = WakeRemountManager.liveMounter,
+    notifyLeftover: @escaping ([String]) -> Void = {
+      NotificationManager.shared.sleepUnmountLeftoverMounted(names: $0)
+    }
+  ) {
     self.defaults = defaults
+    self.schedule = schedule
+    self.refreshVolumes = refreshVolumes
+    self.isBusy = isBusy
+    self.mount = mount
+    self.notifyLeftover = notifyLeftover
   }
 
   var isEnabled: Bool {
@@ -30,6 +81,8 @@ final class WakeRemountManager {
 
   /// A plan left from before the app (re)started is stale: forget it.
   func start() {
+    generation &+= 1
+    isRunning = false
     clearPlan()
     guard wakeToken == nil else { return }
     wakeToken = NSWorkspace.shared.notificationCenter.addObserver(
@@ -75,6 +128,8 @@ final class WakeRemountManager {
   /// Called before the unmount on sleep starts. Does nothing (and drops an
   /// old plan) when the setting is off.
   func begin(volumes: [Volume]) {
+    generation &+= 1
+    isRunning = false
     plan = isEnabled ? WakeRemountPlan(volumes: volumes) : nil
   }
 
@@ -96,60 +151,74 @@ final class WakeRemountManager {
 
   // MARK: - Wake
 
-  private func handleWake() {
-    guard !isRunning, let current = plan, !current.isEmpty else {
+  func handleWake() {
+    guard !isRunning else { return }
+    guard let current = plan, !current.isEmpty else {
       clearPlan()
       return
     }
     isRunning = true
+    generation &+= 1
+    let currentGeneration = generation
     Log.drive.notice(
       "System woke from sleep. Remounting \(current.entries.count, privacy: .public) volume(s) unmounted before sleep."
     )
-    attempt(index: 0, announceUnfinished: true)
+    attempt(index: 0, generation: currentGeneration, announceUnfinished: true)
   }
 
-  private func attempt(index: Int, announceUnfinished: Bool) {
-    DispatchQueue.main.asyncAfter(deadline: .now() + Self.attemptDelays[index]) { [weak self] in
-      DriveManager.shared.refreshDrives(qos: .userInitiated) {
-        self?.remount(index: index, announceUnfinished: announceUnfinished)
+  private func attempt(index: Int, generation: Int, announceUnfinished: Bool) {
+    schedule(Self.attemptDelays[index]) { [weak self] in
+      guard let self, self.isRunning, self.generation == generation else { return }
+      self.refreshVolumes { [weak self] volumes in
+        guard let self, self.isRunning, self.generation == generation else { return }
+        self.remount(
+          index: index, generation: generation, volumes: volumes,
+          announceUnfinished: announceUnfinished)
       }
     }
   }
 
-  private func remount(index: Int, announceUnfinished: Bool) {
+  private func remount(
+    index: Int, generation: Int, volumes: [Volume], announceUnfinished: Bool
+  ) {
     guard let current = plan, !current.isEmpty else {
       finish()
       return
     }
-    let volumes = DriveManager.shared.bulkActionDisks.flatMap(\.allVolumes)
     let present = Set(volumes.compactMap(\.stableVolumeUUID))
     let mounted = Set(volumes.filter(\.isMounted).compactMap(\.stableVolumeUUID))
 
     if announceUnfinished {
       let names = current.unfinishedNames(stillMounted: mounted)
       if !names.isEmpty {
-        NotificationManager.shared.sleepUnmountLeftoverMounted(names: names)
+        notifyLeftover(names)
       }
     }
 
     let entries = current.volumesToMount(presentUUIDs: present, mountedUUIDs: mounted)
+    // Drop only the volumes that are already mounted; volumes being mounted
+    // below stay in the plan until their mount succeeds, so a failed mount is
+    // retried on the next attempt.
+    plan = current.remaining(afterMounted: mounted)
     let byUUID = Dictionary(
       volumes.compactMap { volume in volume.stableVolumeUUID.map { ($0, volume) } },
       uniquingKeysWith: { first, _ in first })
     for entry in entries {
-      guard let volume = byUUID[entry.volumeUUID], !DriveManager.shared.isBusy(volume.id) else {
+      guard let volume = byUUID[entry.volumeUUID], !isBusy(volume.id) else {
         continue
       }
-      // Not a user action: a blocked volume stays blocked, and no alert
-      // appears for a disk nobody is looking at.
-      DriveManager.shared.mount(
-        volume: volume, allowsErrorAlerts: false, isUserInitiated: false, trigger: .wake)
+      mount(volume) { [weak self] succeeded in
+        guard let self, self.isRunning, self.generation == generation, succeeded else { return }
+        self.plan = self.plan?.remaining(afterMounted: [entry.volumeUUID])
+        if self.plan == nil {
+          self.finish()
+        }
+      }
     }
 
-    // Keep the entries that are not connected yet for the next attempt.
-    plan = current.remaining(afterMounted: mounted.union(entries.map(\.volumeUUID)))
+    guard isRunning, self.generation == generation else { return }
     if index + 1 < Self.attemptDelays.count, plan?.isEmpty == false {
-      attempt(index: index + 1, announceUnfinished: false)
+      attempt(index: index + 1, generation: generation, announceUnfinished: false)
     } else {
       finish()
     }
