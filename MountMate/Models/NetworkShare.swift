@@ -64,7 +64,8 @@ extension NetworkShare {
   /// backslashes turned into slashes first. A pasted
   /// URL such as `smb://admin@nas.local:445/Public/sub` is split into the
   /// server (`nas.local:445`, a port is kept), the share path (`Public/sub`,
-  /// cleaned with `cleanedSharePathInput`) and the username (`admin`,
+  /// percent-decoded and cleaned with `cleanedSharePathInput`) and the
+  /// username (`admin`,
   /// percent-decoded; a password after ":" is dropped). The path and the
   /// username are empty when there are none.
   static func cleanedServerInput(_ raw: String) -> (
@@ -82,7 +83,10 @@ extension NetworkShare {
     }
     var sharePath = ""
     if let slash = server.firstIndex(of: "/") {
-      sharePath = cleanedSharePathInput(String(server[slash...]))
+      // A path pasted from a URL is percent-encoded (`My%20Share` from
+      // Finder's Connect to Server); the connection URL encodes it again.
+      let pastedPath = String(server[slash...])
+      sharePath = cleanedSharePathInput(pastedPath.removingPercentEncoding ?? pastedPath)
       server = String(server[..<slash])
     }
     var username = ""

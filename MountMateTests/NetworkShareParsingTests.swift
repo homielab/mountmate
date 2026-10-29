@@ -471,6 +471,24 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertEqual(NetworkShare.cleanedServerInput(#"  \\nas  "#).server, "nas")
   }
 
+  func testPastedPercentEncodedPathIsDecodedOnce() throws {
+    let finder = NetworkShare.cleanedServerInput("smb://nas/My%20Share")
+    XCTAssertEqual(finder.sharePath, "My Share")
+    XCTAssertEqual(NetworkShare.cleanedServerInput("//nas/a%2Fb").sharePath, "a/b")
+    // Only a pasted URL is decoded: a path typed in its own field is kept.
+    XCTAssertEqual(NetworkShare.cleanedSharePathInput("My%20Share"), "My%20Share")
+
+    let share = NetworkShare(
+      name: "My Share", server: finder.server, sharePath: finder.sharePath, username: "")
+    let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: share))
+    XCTAssertEqual(url.absoluteString, "smb://nas/My%20Share")
+    let mounted = try XCTUnwrap(
+      MountedNetworkShare(
+        source: "//nas/My%20Share", mountPoint: "/Users/me/mountmate/My Share",
+        fileSystemType: "smbfs"))
+    XCTAssertTrue(mounted.matches(share))
+  }
+
   func testSchemesAndBareHostStillParseAsBefore() {
     for scheme in ["smb", "afp", "nfs", "SMB"] {
       let parts = NetworkShare.cleanedServerInput("\(scheme)://nas/Public")
