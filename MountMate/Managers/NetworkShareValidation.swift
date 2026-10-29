@@ -34,7 +34,14 @@ enum NetworkShareValidation {
 
     // Two shares must never use the same mount folder: mounting one would
     // look like the other is mounted, and unmounting one would unmount both.
+    // Checked on the resolved folder (`~`, `..` and `//` applied), so the
+    // problem shows at Save instead of as a NetFS error when mounting.
     let path = mountPoint(candidate)
+    if let pathError = CustomMountPointValidator.pathRuleError(
+      CustomMountPointValidator.normalizedPath(path))
+    {
+      return pathError
+    }
     if let clash = otherShares.first(where: {
       NetworkMountTable.samePath(mountPoint($0), path)
     }) {

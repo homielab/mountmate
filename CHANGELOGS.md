@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Network share mount point checked at Save**: a custom mount point that resolves to the root folder (`/`, `//`, `~/../..`) or a path or display name with control characters such as a line break is refused in the share sheet with a clear message, instead of failing later with a NetFS error when mounting. `~` and `..` are resolved first, so `~/x/..` (your home folder) is accepted.
 - **Protected volumes and Unmount When Idle**: a volume marked Protected is no longer unmounted for being idle, like Unmount All and the sleep unmount already skip it. Its "Unmount When Idle" submenu is greyed out as "(Off While Protected)"; the chosen delay is kept and applies again once you unprotect the volume.
 - **Recording a keyboard shortcut without the mouse**: in Settings → Keyboard Shortcuts, Space or Return on a focused shortcut button, or VoiceOver's press, now starts recording, and VoiceOver names each button by its action ("Shortcut for “Mount All Volumes”") followed by the current shortcut, instead of three identical "Keyboard Shortcut" buttons.
 - **Pasting a share address with spaces**: an address copied from Finder's Connect to Server such as `smb://nas/My%20Share` now saves the share path as `My Share` and mounts, instead of failing because the path was encoded twice (`My%2520Share`). A share path typed in its own field is kept as typed.

@@ -13,14 +13,10 @@ enum CustomMountPointValidator {
     return URL(fileURLWithPath: expanded).standardizedFileURL.path
   }
 
-  /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.
-  /// - Parameter mountedVolumeName: the name of another volume already
-  ///   mounted at the (normalized) path, if any.
-  static func validationError(
-    for rawPath: String, mountedVolumeName: (String) -> String?
-  ) -> String? {
-    let path = normalizedPath(rawPath)
-
+  /// Why the already normalized `path` can never be a mount point (empty,
+  /// relative, the root folder, control characters), or nil. Pure: it never
+  /// touches the file system, so it is safe for folders on a hung share.
+  static func pathRuleError(_ path: String) -> String? {
     guard !path.isEmpty else {
       return NSLocalizedString(
         "Custom Mount Point Empty Path",
@@ -43,6 +39,17 @@ enum CustomMountPointValidator {
         "Custom Mount Point Control Characters",
         comment: "Custom mount point validation")
     }
+    return nil
+  }
+
+  /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.
+  /// - Parameter mountedVolumeName: the name of another volume already
+  ///   mounted at the (normalized) path, if any.
+  static func validationError(
+    for rawPath: String, mountedVolumeName: (String) -> String?
+  ) -> String? {
+    let path = normalizedPath(rawPath)
+    if let error = pathRuleError(path) { return error }
     if let mountedVolumeName = mountedVolumeName(path) {
       return String(
         format: NSLocalizedString(

@@ -60,4 +60,70 @@ final class NetworkShareValidationTests: XCTestCase {
       NetworkShareValidation.error(
         candidate: candidate, original: nil, otherShares: [saved], mountPoint: mountUnderVolumes))
   }
+
+  // MARK: - Mount point path rules
+
+  private let resolveLikeTheApp: (NetworkShare) -> String = {
+    NetworkMountTable.configuredMountPoint(for: $0, homeDirectory: "/Users/test")
+  }
+
+  private func error(customMountPoint: String?, name: String = "Media") -> String? {
+    var candidate = share(name: name)
+    candidate.customMountPoint = customMountPoint
+    return NetworkShareValidation.error(
+      candidate: candidate, original: nil, otherShares: [], mountPoint: resolveLikeTheApp)
+  }
+
+  private var rootError: String {
+    NSLocalizedString("Custom Mount Point Cannot Be Root", comment: "")
+  }
+
+  private var controlCharacterError: String {
+    NSLocalizedString("Custom Mount Point Control Characters", comment: "")
+  }
+
+  func testRejectsTheRootFolderAsMountPoint() {
+    XCTAssertEqual(error(customMountPoint: "/"), rootError)
+    XCTAssertEqual(error(customMountPoint: "//"), rootError)
+    XCTAssertEqual(error(customMountPoint: "/Volumes/.."), rootError)
+    XCTAssertEqual(error(customMountPoint: "/./"), rootError)
+  }
+
+  func testResolvesTildeAndDotSegmentsBeforeChecking() {
+    // `~/x/..` is the home folder: allowed.
+    XCTAssertNil(error(customMountPoint: "~/x/.."))
+    // Climbing out of the home folder up to `/` is refused.
+    let homeDepth =
+      FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
+      .pathComponents.count - 1
+    let upToRoot = "~" + String(repeating: "/..", count: homeDepth)
+    XCTAssertEqual(error(customMountPoint: upToRoot), rootError)
+    // A relative path is under the home folder: `../..` from /Users/test is `/`.
+    XCTAssertEqual(error(customMountPoint: "../.."), rootError)
+  }
+
+  func testRejectsControlCharactersInTheMountPoint() {
+    XCTAssertEqual(error(customMountPoint: "/Volumes/Me\ndia"), controlCharacterError)
+    XCTAssertEqual(error(customMountPoint: "~/mountmate/a\u{7}b"), controlCharacterError)
+  }
+
+  func testRejectsControlCharactersInTheNameUsedAsDefaultMountPoint() {
+    XCTAssertEqual(error(customMountPoint: nil, name: "Me\ndia"), controlCharacterError)
+  }
+
+  func testAcceptsValidMountPoints() {
+    XCTAssertNil(error(customMountPoint: nil))
+    XCTAssertNil(error(customMountPoint: "~/mountmate/Media"))
+    XCTAssertNil(error(customMountPoint: "/Volumes/Media Share"))
+    XCTAssertNil(error(customMountPoint: "/Users/test/../test/Shares/Media"))
+    XCTAssertNil(error(customMountPoint: "Shares/Média"))
+  }
+
+  func testPathRulesAreSharedWithVolumeMountPoints() {
+    XCTAssertEqual(CustomMountPointValidator.pathRuleError("/"), rootError)
+    XCTAssertEqual(
+      CustomMountPointValidator.validationError(for: "//", mountedVolumeName: { _ in nil }),
+      rootError)
+    XCTAssertNil(CustomMountPointValidator.pathRuleError("/Volumes/Data"))
+  }
 }
