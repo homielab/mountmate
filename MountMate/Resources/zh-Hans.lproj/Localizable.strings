@@ -574,3 +574,4 @@
 "Could not eject “%@”." = "无法推出“%@”。";
 "Could not eject “%@”: %@" = "无法推出“%@”：%@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "包含“%@”的磁盘有受保护的卷宗，因此未推出。";
+"“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "未将“%1$@”挂载到“%2$@”，因为该文件夹不是空的：挂载后其中的文件将被隐藏，直到卸载该共享。请选择一个空文件夹作为挂载点。";

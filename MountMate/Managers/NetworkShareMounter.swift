@@ -132,6 +132,15 @@ final class NetworkShareMounter {
       )
     }
 
+    // Never mount on top of a folder that holds the user's files.
+    if let message = NetworkMountPlan.occupiedFolderBlock(
+      share: share, mountPoint: mountPoint,
+      entries: Self.folderEntries(atPath: mountPoint))
+    {
+      finish(false, message)
+      return
+    }
+
     // Let's try creating the directory first.
     var createdMountPoint = false
     do {
@@ -188,6 +197,27 @@ final class NetworkShareMounter {
       cleanUpMountPoint(mountPoint, ifCreated: createdMountPoint)
     }
     host.refreshMountStatus { finish(resolution.success, resolution.message) }
+  }
+
+  /// The names in the folder at `path`, or nil when it does not exist, is
+  /// not a readable folder, or does not answer within `timeout` (a folder
+  /// under a stale mount can block forever; the read is then abandoned).
+  static func folderEntries(atPath path: String, timeout: TimeInterval = 2) -> [String]? {
+    final class Box: @unchecked Sendable {
+      var value: [String]?
+    }
+    let box = Box()
+    let done = DispatchSemaphore(value: 0)
+    DispatchQueue.global(qos: .userInitiated).async {
+      box.value = try? FileManager.default.contentsOfDirectory(atPath: path)
+      done.signal()
+    }
+    // The semaphore orders the write to `box` before this read.
+    guard done.wait(timeout: .now() + timeout) == .success else {
+      Log.network.notice("Reading the mount point folder timed out; mounting anyway.")
+      return nil
+    }
+    return box.value
   }
 
   /// Unmounts a share an automatic mount left behind after the user ejected it

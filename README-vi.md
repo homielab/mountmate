@@ -92,7 +92,7 @@ Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm t
 - **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M` (Eject All External Disks không có phím mặc định); đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại). Một thông báo nhỏ ở đầu màn hình cho biết phím tắt vừa làm gì ("Đã tháo 3 phân vùng", "Không có gì để gắn", "Đã đẩy ra 1 ổ đĩa, 1 lỗi")
 - **Bàn phím và VoiceOver**: các hàng trong popover nhận focus bàn phím (Tab, Lên/Xuống; Return hoặc Space để mount/unmount phân vùng, hoặc mở rộng/thu gọn ổ đĩa, trên macOS 14+), VoiceOver có action cho từng hàng, animation tắt khi bật Reduce motion
 - **Chặn tự mount USB**: ngăn các ổ đã chọn tự mount khi cắm hoặc khi đăng nhập; **Block at Startup** (tuỳ chọn) ghi thêm một rule vào `/etc/fstab` và hỏi mật khẩu quản trị
-- **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục bạn chọn
+- **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục trống bạn chọn (thư mục đã có file bị từ chối để không che file)
 - **Ổ APFS mã hoá**: mở khoá ngay trong MountMate, có thể lưu mật khẩu vào Keychain ("Forget Saved Password" trong menu chuột phải để xoá); Keep Alive, Mount Again on Wake và Mount All tự dùng mật khẩu đã lưu, không hỏi
 - **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
 - **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI

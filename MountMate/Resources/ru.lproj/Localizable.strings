@@ -574,3 +574,4 @@
 "Could not eject “%@”." = "Не удалось извлечь «%@».";
 "Could not eject “%@”: %@" = "Не удалось извлечь «%@»: %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "На диске с «%@» есть защищённый том, поэтому он не извлечён.";
+"“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "«%1$@» не смонтирован в «%2$@», так как эта папка не пуста: монтирование скрыло бы её файлы до отключения ресурса. Выберите пустую папку в качестве точки монтирования.";

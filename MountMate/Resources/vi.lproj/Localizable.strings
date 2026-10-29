@@ -574,3 +574,4 @@
 "Could not eject “%@”." = "Không đẩy ra được “%@”.";
 "Could not eject “%@”: %@" = "Không đẩy ra được “%@”: %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "Ổ chứa “%@” có phân vùng được bảo vệ nên không được đẩy ra.";
+"“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "Không gắn “%1$@” tại “%2$@” vì thư mục này không trống: gắn vào đó sẽ che các tệp của nó cho đến khi tháo thư mục chia sẻ. Hãy chọn một thư mục trống làm điểm gắn.";

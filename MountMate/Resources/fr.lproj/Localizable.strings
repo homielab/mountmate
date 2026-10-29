@@ -574,3 +574,4 @@
 "Could not eject “%@”." = "Impossible d’éjecter « %@ ».";
 "Could not eject “%@”: %@" = "Impossible d’éjecter « %@ » : %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "Le disque qui contient « %@ » a un volume protégé, il n’a donc pas été éjecté.";
+"“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "« %1$@ » n’a pas été monté sur « %2$@ », car ce dossier n’est pas vide : le montage masquerait ses fichiers jusqu’au démontage du partage. Choisissez un dossier vide comme point de montage.";

@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Network share onto a folder with files**: a share is no longer mounted onto a folder that already holds files (for example a custom mount point set to ~/Documents), which hid those files until the share was unmounted. The mount is refused with a message asking for an empty folder; an empty folder or one with only .DS_Store is used as before.
 - **Network share mount point checked at Save**: a custom mount point that resolves to the root folder (`/`, `//`, `~/../..`) or a path or display name with control characters such as a line break is refused in the share sheet with a clear message, instead of failing later with a NetFS error when mounting. `~` and `..` are resolved first, so `~/x/..` (your home folder) is accepted.
 - **Protected volumes and Unmount When Idle**: a volume marked Protected is no longer unmounted for being idle, like Unmount All and the sleep unmount already skip it. Its "Unmount When Idle" submenu is greyed out as "(Off While Protected)"; the chosen delay is kept and applies again once you unprotect the volume.
 - **Recording a keyboard shortcut without the mouse**: in Settings → Keyboard Shortcuts, Space or Return on a focused shortcut button, or VoiceOver's press, now starts recording, and VoiceOver names each button by its action ("Shortcut for “Mount All Volumes”") followed by the current shortcut, instead of three identical "Keyboard Shortcut" buttons.

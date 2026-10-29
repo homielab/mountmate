@@ -91,6 +91,47 @@ final class NetworkMountPlanTests: XCTestCase {
     }
   }
 
+  // MARK: folder with the user's files
+
+  private func occupiedBlock(_ entries: [String]?) -> String? {
+    NetworkMountPlan.occupiedFolderBlock(
+      share: share, mountPoint: "/Users/me/Documents", entries: entries)
+  }
+
+  func testEmptyFolderIsMountedOnto() {
+    XCTAssertNil(occupiedBlock([]))
+  }
+
+  func testFolderWithOnlyDSStoreIsMountedOnto() {
+    XCTAssertNil(occupiedBlock([".DS_Store"]))
+  }
+
+  func testFolderWithFilesIsBlockedWithAMessage() {
+    let message = occupiedBlock([".DS_Store", "Report.pdf"])
+    XCTAssertNotNil(message)
+    XCTAssertTrue(message?.contains("Photos") == true, message ?? "")
+    XCTAssertTrue(message?.contains("/Users/me/Documents") == true, message ?? "")
+    XCTAssertNotNil(occupiedBlock([".hidden"]), "any other entry, hidden too, blocks")
+  }
+
+  func testUnreadableOrMissingFolderDoesNotBlock() {
+    XCTAssertNil(occupiedBlock(nil))
+  }
+
+  func testFolderEntriesReadsAFolderAndIsNilOtherwise() throws {
+    let folder = FileManager.default.temporaryDirectory
+      .appendingPathComponent("NetworkMountPlanTests-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    XCTAssertEqual(NetworkShareMounter.folderEntries(atPath: folder.path), [])
+    let file = folder.appendingPathComponent("note.txt")
+    try Data("x".utf8).write(to: file)
+    XCTAssertEqual(NetworkShareMounter.folderEntries(atPath: folder.path), ["note.txt"])
+    XCTAssertNil(NetworkShareMounter.folderEntries(atPath: file.path), "a file is not a folder")
+    XCTAssertNil(
+      NetworkShareMounter.folderEntries(atPath: folder.appendingPathComponent("missing").path))
+  }
+
   // MARK: mount result to message and clean-up
 
   private func resolve(

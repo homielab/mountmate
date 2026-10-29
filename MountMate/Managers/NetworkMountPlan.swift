@@ -148,6 +148,24 @@ enum NetworkMountPlan {
     return .proceed
   }
 
+  /// Why a share must not be mounted onto an existing folder: mounting on
+  /// top of a folder that holds files (e.g. a custom mount point set to
+  /// ~/Documents) hides them until the share is unmounted, which looks like
+  /// data loss. `entries` is the folder's listing, nil when the folder does
+  /// not exist or could not be read in time; then the mount goes ahead as
+  /// before. An empty folder (a leftover mount point) or one holding only
+  /// Finder's .DS_Store is fine.
+  static func occupiedFolderBlock(
+    share: NetworkShare, mountPoint: String, entries: [String]?
+  ) -> String? {
+    guard let entries, entries.contains(where: { $0 != ".DS_Store" }) else { return nil }
+    return String(
+      format: NSLocalizedString(
+        "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point.",
+        comment: "Network share mount error: 1 = share name, 2 = mount point path"),
+      share.name, mountPoint)
+  }
+
   /// Turns the result of the protocol-specific step into what the callers
   /// hear and which clean-up follows. An automatic mount that succeeded
   /// although the user ejected the share meanwhile (`isSuppressed`) is
