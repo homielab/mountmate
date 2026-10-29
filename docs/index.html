@@ -16,7 +16,7 @@
     <meta name="title" content="MountMate – macOS Drive Manager" />
     <meta
       name="description"
-      content="MountMate - A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+      content="Free macOS menu bar app to mount, unmount and eject drives, connect SMB/NFS network shares and keep disks awake with Keep Alive. Install with Homebrew."
     />
     <meta
       name="keywords"
@@ -34,6 +34,8 @@
       media="(prefers-color-scheme: dark)"
     />
 
+    <link rel="canonical" href="https://mountmate.homielab.com/" />
+
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -48,7 +50,7 @@
     />
     <meta
       property="og:description"
-      content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+      content="Free macOS menu bar app to mount, unmount and eject drives, connect SMB/NFS network shares and keep disks awake with Keep Alive. Install with Homebrew."
     />
     <meta
       property="og:image"
@@ -70,18 +72,22 @@
     />
     <meta
       property="twitter:description"
-      content="A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly."
+      content="Free macOS menu bar app to mount, unmount and eject drives, connect SMB/NFS network shares and keep disks awake with Keep Alive. Install with Homebrew."
     />
     <meta
       property="twitter:image"
       content="https://mountmate.homielab.com/assets/og-image.png"
+    />
+    <meta
+      property="twitter:image:alt"
+      content="MountMate – Drive management, perfected."
     />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "MountMate",
-        "description": "A lightweight and elegant macOS menubar app to mount and unmount your external drives effortlessly.",
+        "description": "Free macOS menu bar app to mount, unmount and eject drives, connect SMB/NFS network shares and keep disks awake with Keep Alive. Install with Homebrew.",
         "url": "https://mountmate.homielab.com/",
         "image": "https://mountmate.homielab.com/assets/og-image.png",
         "operatingSystem": "macOS 13.0 or later",
@@ -90,6 +96,16 @@
         "downloadUrl": "https://github.com/homielab/mountmate/releases/latest",
         "inLanguage": ["en", "fr", "ru", "uk", "vi", "zh-Hans", "zh-Hant"],
         "author": { "@type": "Organization", "name": "homielab" },
+        "featureList": [
+          "Mount, unmount and eject external drives from the menu bar",
+          "Mount SMB and NFS network shares with Keychain passwords",
+          "Keep Alive stops drives from sleeping and reconnects shares",
+          "Unlock encrypted APFS volumes",
+          "Block disks from mounting at startup",
+          "Unmount when idle and mount again on wake",
+          "Global keyboard shortcuts and Shortcuts app actions",
+          "Install with Homebrew"
+        ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
     </script>
@@ -910,12 +926,12 @@
         <!-- Using full screenshots for the hero -->
         <img
           src="screenshots/light-full.png"
-          alt="MountMate Full Desktop"
+          alt="MountMate menu bar popover open on a macOS desktop in light mode, listing external drives and network shares"
           class="hero-image light-img"
         />
         <img
           src="screenshots/dark-full.png"
-          alt="MountMate Full Desktop"
+          alt="MountMate menu bar popover open on a macOS desktop in dark mode, listing external drives and network shares"
           class="hero-image dark-img"
         />
       </div>
@@ -942,12 +958,12 @@
             <!-- Using the cropped menubar screenshots for features -->
             <img
               src="screenshots/light.png"
-              alt="MountMate Menubar UI"
+              alt="MountMate drive list in light mode with mount, unmount and eject buttons for each volume"
               class="light-img"
             />
             <img
               src="screenshots/dark.png"
-              alt="MountMate Menubar UI"
+              alt="MountMate drive list in dark mode with mount, unmount and eject buttons for each volume"
               class="dark-img"
             />
           </div>

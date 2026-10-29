@@ -36,6 +36,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Website search results and link previews** now describe what MountMate does (network shares, Keep Alive, Homebrew), and the screenshots have descriptive text for screen readers that tells the light and dark versions apart.
+
 - Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).
 - **Faster list after plugging in a disk**: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.
 - Internal: the decision to allow or refuse a disk mount (disk images, mounts MountMate asked for, Block USB Auto-Mount for USB drives and SD cards, the blocked volumes list, Allow Requested Mounts) is now a separate, unit-tested `MountApprovalDecision` covering every combination. No change in behavior.
