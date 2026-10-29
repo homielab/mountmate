@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Adding shares found on the network no longer skips distinct shares**: an NFS export whose path differs only in case from a saved one (`/export/Data` and `/export/data`), or an SMB and an NFS share on the same server and path, are now added as separate shares instead of being treated as duplicates. SMB and AFP share names still match case-insensitively, and a server written with a port (`nas:445`) matches the same server without one.
 - **Expand and collapse a disk with the keyboard or VoiceOver**: a disk's header row now takes keyboard focus and Return or Space (macOS 14+) shows or hides its volumes; VoiceOver reads it as a button with the value "Expanded" or "Collapsed" and toggles it with its default action. Before, only a mouse click or Expand All worked.
 - **NFS export paths are case-sensitive**: two NFS shares whose export paths differ only in case (`/export/Data` and `/export/data`) are no longer rejected as duplicates, and each mounted export is shown on the share with the exact same path. SMB and AFP share names are still compared without case.
 - **NFS shares with a port or IPv6 server**: an NFS share whose server is an IPv6 address (`fd00::2`, `[fd00::2]`) or has a port (`nas:2049`, `[fd00::2]:2049`) now mounts; before, the address went to `mount_nfs` as typed and the mount always failed.

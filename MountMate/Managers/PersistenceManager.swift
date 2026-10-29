@@ -377,7 +377,7 @@ class PersistenceManager: ObservableObject {
     saveNetworkShares()
   }
 
-  /// Adds discovered shares without creating duplicate entries for the same SMB endpoint.
+  /// Adds discovered shares without creating duplicate entries for the same endpoint.
   @discardableResult
   func addNetworkSharesIfNeeded(_ shares: [NetworkShare]) -> Int {
     var addedCount = 0
@@ -407,25 +407,14 @@ class PersistenceManager: ObservableObject {
     return "\(name) (\(index))"
   }
 
+  /// Whether a saved share already points at the same endpoint: same
+  /// protocol, same host (ignoring `user@`, `:port` and IPv6 brackets) and
+  /// same path (case-insensitive for SMB/AFP, case-sensitive for NFS).
   func containsNetworkShare(matching share: NetworkShare) -> Bool {
-    let server = share.server.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    let path =
-      share.sharePath
-      .removingPercentEncoding?
-      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-      .lowercased()
-      ?? share.sharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-
+    let endpoint = MountedNetworkShare.endpoint(for: share)
     return networkShares.contains { existing in
-      let existingServer = existing.server
-        .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-      let existingPath =
-        existing.sharePath
-        .removingPercentEncoding?
-        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        .lowercased()
-        ?? existing.sharePath.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-      return existingServer == server && existingPath == path
+      existing.shareProtocol == share.shareProtocol
+        && MountedNetworkShare.endpoint(for: existing) == endpoint
     }
   }
 
