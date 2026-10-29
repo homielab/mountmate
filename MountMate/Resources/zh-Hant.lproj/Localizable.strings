@@ -498,6 +498,7 @@
 "SMART status: failing — back up this disk" = "SMART 狀態：故障 — 請備份此磁碟";
 "Almost Full" = "快滿了";
 "Volume Almost Full" = "磁碟區快滿了";
+"Network Share Almost Full" = "網路共享快滿了";
 "Warn when a volume is almost full" = "磁碟區快滿時發出警告";
 "Almost full from" = "使用量達到以下比例時視為快滿";
 "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "標示已掛載且快滿的磁碟區；開啟通知後，每次掛載只提醒一次。不會卸載或刪除任何內容。";

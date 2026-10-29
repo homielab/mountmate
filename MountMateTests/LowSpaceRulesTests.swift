@@ -162,4 +162,78 @@ final class LowSpaceRulesTests: XCTestCase {
         LowSpaceRules.warning(for: volume, on: .physical, threshold: 0.8)?.percentUsed, 80)
     }
   }
+
+  // MARK: - Network shares
+
+  private static let tebibyte: Int64 = 1 << 40
+
+  /// A share of 2 TiB with `used` (fraction) taken.
+  private func share(used: Double, total: Int64 = 2 * tebibyte) -> ShareUsage {
+    ShareUsage(totalBytes: total, freeBytes: Int64(Double(total) * (1 - used)))
+  }
+
+  func testShareWarnsAtAndAboveTheThresholdOnly() {
+    XCTAssertNil(LowSpaceRules.warning(for: share(used: 0.896), threshold: 0.95))
+    XCTAssertNil(LowSpaceRules.warning(for: share(used: 0.894), threshold: 0.9))
+    let full = LowSpaceRules.warning(for: share(used: 0.95), threshold: 0.95)
+    XCTAssertEqual(full?.percentUsed, 95)
+    XCTAssertEqual(full?.free, ShareUsage.formatted(share(used: 0.95).freeBytes))
+    // Like volumes: 89.6% shows as "90%", so it warns at 90.
+    XCTAssertEqual(LowSpaceRules.warning(for: share(used: 0.896), threshold: 0.9)?.percentUsed, 90)
+  }
+
+  func testShareWithoutSizeOrWithTheWarningOffGetsNone() {
+    XCTAssertNil(LowSpaceRules.warning(for: share(used: 0.99), threshold: nil))
+    XCTAssertNil(
+      LowSpaceRules.warning(for: ShareUsage(totalBytes: 0, freeBytes: 0), threshold: 0.9))
+  }
+
+  func testShareTrackerAnnouncesOnceAndAgainAfterDroppingBelowTheMargin() {
+    var tracker = LowSpaceAlertTracker()
+    let nas = UUID()
+    let other = UUID()
+    func announce(_ used: Double, threshold: Double = 0.95) -> [UUID] {
+      tracker.newWarnings(
+        shareUsage: [nas: share(used: used), other: share(used: 0.2)],
+        mountedShareIDs: [nas, other], threshold: threshold
+      ).map(\.shareID)
+    }
+    XCTAssertEqual(announce(0.95), [nas])
+    XCTAssertTrue(announce(0.97).isEmpty)
+    // 91% is above 95 - 5: still remembered.
+    XCTAssertTrue(announce(0.91).isEmpty)
+    XCTAssertTrue(announce(0.96).isEmpty)
+    // 90% is forgotten, so filling up again warns again.
+    XCTAssertTrue(announce(0.9).isEmpty)
+    XCTAssertEqual(announce(0.95), [nas])
+  }
+
+  func testShareTrackerForgetsUnmountedSharesButNotUnreadOnes() {
+    var tracker = LowSpaceAlertTracker()
+    let nas = UUID()
+    let full = [nas: share(used: 0.96)]
+    XCTAssertEqual(
+      tracker.newWarnings(shareUsage: full, mountedShareIDs: [nas], threshold: 0.95).count, 1)
+    // Mounted, capacity not read this time: still remembered.
+    XCTAssertTrue(
+      tracker.newWarnings(shareUsage: [:], mountedShareIDs: [nas], threshold: 0.95).isEmpty)
+    XCTAssertTrue(
+      tracker.newWarnings(shareUsage: full, mountedShareIDs: [nas], threshold: 0.95).isEmpty)
+    // Unmounted, then mounted again: announced again.
+    XCTAssertTrue(
+      tracker.newWarnings(shareUsage: [:], mountedShareIDs: [], threshold: 0.95).isEmpty)
+    XCTAssertEqual(
+      tracker.newWarnings(shareUsage: full, mountedShareIDs: [nas], threshold: 0.95).count, 1)
+  }
+
+  func testShareTrackerIgnoresSharesThatAreNotMountedOrHaveNoSize() {
+    var tracker = LowSpaceAlertTracker()
+    let stale = UUID()
+    let empty = UUID()
+    XCTAssertTrue(
+      tracker.newWarnings(
+        shareUsage: [stale: share(used: 0.99), empty: ShareUsage(totalBytes: 0, freeBytes: 0)],
+        mountedShareIDs: [empty], threshold: 0.9
+      ).isEmpty)
+  }
 }

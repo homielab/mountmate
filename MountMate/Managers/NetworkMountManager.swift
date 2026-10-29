@@ -10,6 +10,14 @@ struct ShareUsage: Equatable {
 
   var usedBytes: Int64 { max(0, totalBytes - freeBytes) }
   var percentage: Double { min(1, Double(usedBytes) / Double(totalBytes)) }
+
+  /// "12 GB": how the share row and the low-space warning show a size.
+  static func formatted(_ bytes: Int64) -> String {
+    let formatter = ByteCountFormatter()
+    formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
+    formatter.countStyle = .file
+    return formatter.string(fromByteCount: bytes)
+  }
 }
 
 class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
@@ -178,6 +186,11 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       if self.usageByShareID != usage {
         self.usageByShareID = usage
       }
+      let names = Dictionary(
+        (PersistenceManager.shared.networkShares + self.manuallyConnectedShares)
+          .map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+      NotificationManager.shared.sharesRefreshed(
+        usage: usage, mountedShareIDs: Set(self.mountPointsByShareID.keys), names: names)
     }
   }
 

@@ -498,6 +498,7 @@
 "SMART status: failing — back up this disk" = "État SMART : défaillant — sauvegardez ce disque";
 "Almost Full" = "Presque plein";
 "Volume Almost Full" = "Volume presque plein";
+"Network Share Almost Full" = "Partage réseau presque plein";
 "Warn when a volume is almost full" = "Avertir quand un volume est presque plein";
 "Almost full from" = "Presque plein à partir de";
 "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Signale un volume monté presque plein et, si les notifications sont activées, vous prévient une fois à chaque montage. Rien n’est démonté ni supprimé.";

@@ -7,6 +7,9 @@ struct NetworkShareMainRow: View {
   var isManual: Bool = false
   @ObservedObject var networkManager = NetworkMountManager.shared
   @ObservedObject private var keepAliveManager = KeepAliveManager.shared
+  // Read so the row redraws when the low-space setting changes.
+  @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
+  @AppStorage(LowSpaceRules.thresholdKey) private var lowSpacePercent = LowSpaceRules.defaultPercent
   @State private var isWorking = false
   @State private var isHovering = false
 
@@ -22,17 +25,18 @@ struct NetworkShareMainRow: View {
     isMounted ? networkManager.usageByShareID[share.id] : nil
   }
 
+  /// Set when the mounted share is almost full (see `LowSpaceRules`).
+  private var lowSpace: LowSpaceRules.Warning? {
+    usage.flatMap { LowSpaceRules.warning(for: $0, threshold: LowSpaceRules.threshold()) }
+  }
+
   private var statusText: String {
     if let usage {
-      let formatter = ByteCountFormatter()
-      formatter.allowedUnits = [.useGB, .useMB, .useKB, .useTB]
-      formatter.countStyle = .file
       return String(
         format: NSLocalizedString(
           "DiskUsageUsedFree", comment: "Disk usage format: used / total (free)"),
-        formatter.string(fromByteCount: usage.usedBytes),
-        formatter.string(fromByteCount: usage.totalBytes),
-        formatter.string(fromByteCount: usage.freeBytes))
+        ShareUsage.formatted(usage.usedBytes), ShareUsage.formatted(usage.totalBytes),
+        ShareUsage.formatted(usage.freeBytes))
     }
     if isMounted { return NSLocalizedString("Mounted", comment: "Status") }
     if keepAliveManager.reconnectingShareIDs.contains(share.id) {
@@ -111,7 +115,8 @@ struct NetworkShareMainRow: View {
             if let usage {
               CircularProgressRing(
                 progress: usage.percentage,
-                color: CircularProgressRing.usageColor(for: usage.percentage),
+                color: lowSpace == nil
+                  ? CircularProgressRing.usageColor(for: usage.percentage) : .orange,
                 lineWidth: 3.0
               ).frame(width: 26, height: 26)
             }
@@ -139,6 +144,19 @@ struct NetworkShareMainRow: View {
                 .background(Color.secondary.opacity(0.12))
                 .clipShape(.rect(cornerRadius: 3))
               }
+            }
+
+            if let warning = lowSpace {
+              let message = LowSpaceRules.message(for: warning)
+              Text("Almost Full")
+                .font(.caption2).fontWeight(.semibold)
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.orange.opacity(0.15))
+                .clipShape(.rect(cornerRadius: 4))
+                .help(message)
+                .accessibilityLabel(Text(message))
             }
 
             Text(statusText)

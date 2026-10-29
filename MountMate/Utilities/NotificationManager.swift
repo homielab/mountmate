@@ -147,7 +147,8 @@ final class SystemNotificationCenter: NotificationCentering {
 /// Optional macOS notifications for events that happen in the background:
 /// keep-alive reconnect failures and recoveries, blocked volumes that could
 /// not be unmounted, unmount-on-sleep running out of time, idle unmounts,
-/// failing disks, almost full volumes and disks pulled out without ejecting.
+/// failing disks, almost full volumes and network shares, and disks pulled
+/// out without ejecting.
 ///
 /// Off by default. Permission is requested only when the user turns the
 /// setting on. Main thread only.
@@ -178,6 +179,7 @@ final class NotificationManager: NSObject, ObservableObject {
   private var keepAliveThrottle = BackgroundEventThrottle()
   private var smartTracker = SMARTAlertTracker()
   private var lowSpaceTracker = LowSpaceAlertTracker()
+  private var shareLowSpaceTracker = LowSpaceAlertTracker()
   private var removalTracker = UnexpectedRemovalTracker()
   private var cancellables = Set<AnyCancellable>()
 
@@ -405,6 +407,32 @@ final class NotificationManager: NSObject, ObservableObject {
             "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.",
             comment: "Notification: a volume is almost full"),
           volume.name, warning.percentUsed))
+    }
+  }
+
+  /// Network share capacity was read. Announces each share that is almost
+  /// full, once, like `disksRefreshed` does for volumes.
+  /// - Parameters:
+  ///   - usage: capacity by share ID, as last read.
+  ///   - mountedShareIDs: the shares mounted now; the others are forgotten.
+  ///   - names: the name shown for each share.
+  func sharesRefreshed(
+    usage: [UUID: ShareUsage], mountedShareIDs: Set<UUID>, names: [UUID: String]
+  ) {
+    guard isEnabled, let threshold = LowSpaceRules.threshold(defaults: defaults) else { return }
+    for (shareID, warning) in shareLowSpaceTracker.newWarnings(
+      shareUsage: usage, mountedShareIDs: mountedShareIDs, threshold: threshold)
+    {
+      guard let name = names[shareID] else { continue }
+      post(
+        id: "lowSpace.share.\(shareID.uuidString)",
+        title: NSLocalizedString(
+          "Network Share Almost Full", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.",
+            comment: "Notification: a volume is almost full"),
+          name, warning.percentUsed))
     }
   }
 

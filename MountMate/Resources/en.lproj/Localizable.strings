@@ -498,6 +498,7 @@
 "SMART status: failing — back up this disk" = "SMART status: failing — back up this disk";
 "Almost Full" = "Almost Full";
 "Volume Almost Full" = "Volume Almost Full";
+"Network Share Almost Full" = "Network Share Almost Full";
 "Warn when a volume is almost full" = "Warn when a volume is almost full";
 "Almost full from" = "Almost full from";
 "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted.";

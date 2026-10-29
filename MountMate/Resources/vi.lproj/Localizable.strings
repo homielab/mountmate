@@ -498,6 +498,7 @@
 "SMART status: failing — back up this disk" = "Trạng thái SMART: sắp hỏng — hãy sao lưu ổ đĩa này";
 "Almost Full" = "Gần đầy";
 "Volume Almost Full" = "Ổ gần đầy";
+"Network Share Almost Full" = "Chia sẻ mạng gần đầy";
 "Warn when a volume is almost full" = "Cảnh báo khi phân vùng gần đầy";
 "Almost full from" = "Gần đầy từ";
 "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Đánh dấu phân vùng đã mount sắp đầy và, khi bật Thông báo, báo một lần mỗi lần mount. Không có gì bị unmount hay xoá.";

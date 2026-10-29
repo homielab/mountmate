@@ -187,6 +187,27 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertEqual(center.added.count, 2)
   }
 
+  func testAlmostFullNetworkShareIsAnnouncedOncePerMountWhenTheWarningIsOn() {
+    let manager = makeManager()
+    let nas = UUID()
+    let full = [nas: ShareUsage(totalBytes: 2_000, freeBytes: 100)]
+    let names = [nas: "NAS"]
+    manager.sharesRefreshed(usage: full, mountedShareIDs: [nas], names: names)
+    XCTAssertTrue(center.added.isEmpty)
+    manager.isEnabled = true
+    manager.sharesRefreshed(usage: full, mountedShareIDs: [nas], names: names)
+    manager.sharesRefreshed(usage: full, mountedShareIDs: [nas], names: names)
+    XCTAssertEqual(center.added.map(\.identifier), ["lowSpace.share.\(nas.uuidString)"])
+    XCTAssertTrue(center.added.first?.content.body.contains("NAS") ?? false)
+    manager.sharesRefreshed(usage: [:], mountedShareIDs: [], names: names)
+    manager.sharesRefreshed(usage: full, mountedShareIDs: [nas], names: names)
+    XCTAssertEqual(center.added.count, 2)
+    defaults.set(false, forKey: LowSpaceRules.enabledKey)
+    manager.sharesRefreshed(usage: [:], mountedShareIDs: [], names: names)
+    manager.sharesRefreshed(usage: full, mountedShareIDs: [nas], names: names)
+    XCTAssertEqual(center.added.count, 2)
+  }
+
   func testIsOffByDefaultAndReadsTheSavedSetting() {
     XCTAssertFalse(makeManager().isEnabled)
     defaults.set(true, forKey: NotificationManager.enabledKey)

@@ -43,6 +43,17 @@ enum LowSpaceRules {
     return Warning(percentUsed: Int((min(1, used) * 100).rounded()), free: volume.freeSpace)
   }
 
+  /// A warning when a mounted network share is at least `threshold` full.
+  /// A share that reports no size (`totalBytes` 0) gets none.
+  static func warning(for usage: ShareUsage, threshold: Double?) -> Warning? {
+    guard let threshold, usage.totalBytes > 0 else { return nil }
+    let used = usage.percentage
+    guard used >= threshold - 0.005 else { return nil }
+    return Warning(
+      percentUsed: Int((min(1, used) * 100).rounded()),
+      free: ShareUsage.formatted(usage.freeBytes))
+  }
+
   /// Volumes of `disks` that warrant a warning.
   static func warnings(
     in disks: [PhysicalDisk], threshold: Double?
@@ -90,16 +101,50 @@ struct LowSpaceAlertTracker: Sendable {
     in disks: [PhysicalDisk], threshold: Double?
   ) -> [(volume: Volume, warning: Warning)] {
     let mounted = disks.flatMap(\.allVolumes).filter(\.isMounted)
-    announced.formIntersection(mounted.map(\.id))
-    if let threshold {
-      for volume in mounted {
-        if let used = volume.usagePercentage, used <= threshold - Self.rearmMargin {
-          announced.remove(volume.id)
-        }
-      }
-    }
+    forget(
+      keeping: Set(mounted.map(\.id)),
+      usage: mounted.compactMap { volume in volume.usagePercentage.map { (volume.id, $0) } },
+      threshold: threshold)
     return LowSpaceRules.warnings(in: disks, threshold: threshold)
       .filter { announced.insert($0.volume.id).inserted }
+  }
+
+  /// The same for network shares: the warnings of `usage` (capacity by share
+  /// ID) not announced yet. Shares no longer in `mountedShareIDs` or used at
+  /// most `threshold - rearmMargin` are forgotten; a mounted share whose
+  /// capacity could not be read keeps its state.
+  mutating func newWarnings(
+    shareUsage usage: [UUID: ShareUsage], mountedShareIDs: Set<UUID>, threshold: Double?
+  ) -> [(shareID: UUID, warning: Warning)] {
+    forget(
+      keeping: Set(mountedShareIDs.map(\.uuidString)),
+      usage: usage.filter { $0.value.totalBytes > 0 }.map {
+        ($0.key.uuidString, $0.value.percentage)
+      },
+      threshold: threshold)
+    return
+      usage
+      .filter { mountedShareIDs.contains($0.key) }
+      .sorted { $0.key.uuidString < $1.key.uuidString }
+      .compactMap { id, usage in
+        LowSpaceRules.warning(for: usage, threshold: threshold).map { (id, $0) }
+      }
+      .filter { announced.insert($0.shareID.uuidString).inserted }
+  }
+
+  /// Drops what is not in `present`, and what is used (fraction) at most
+  /// `threshold - rearmMargin`.
+  private mutating func forget(
+    keeping present: Set<String>, usage: [(key: String, used: Double)], threshold: Double?
+  ) {
+    announced.formIntersection(present)
+    guard let threshold else { return }
+    // A hair of tolerance: 0.95 - 0.05 is 0.8999…, so a volume or share at exactly 90%
+    // would never count as dropped below the margin.
+    let rearmBelow = threshold - Self.rearmMargin + 1e-9
+    for (key, used) in usage where used <= rearmBelow {
+      announced.remove(key)
+    }
   }
 
   typealias Warning = LowSpaceRules.Warning

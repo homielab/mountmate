@@ -498,6 +498,7 @@
 "SMART status: failing — back up this disk" = "Состояние SMART: сбой — сделайте резервную копию этого диска";
 "Almost Full" = "Почти заполнен";
 "Volume Almost Full" = "Том почти заполнен";
+"Network Share Almost Full" = "Сетевая папка почти заполнена";
 "Warn when a volume is almost full" = "Предупреждать, когда том почти заполнен";
 "Almost full from" = "Почти заполнен от";
 "Marks a mounted volume that is nearly full, and with Notifications on tells you once each time it is mounted. Nothing is unmounted or deleted." = "Отмечает смонтированный том, который почти заполнен, и при включённых уведомлениях сообщает один раз при каждом монтировании. Ничего не размонтируется и не удаляется.";
