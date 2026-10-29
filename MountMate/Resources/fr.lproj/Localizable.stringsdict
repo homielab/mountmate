@@ -306,5 +306,69 @@
 			<string>%d partages exportés, sans leurs mots de passe.</string>
 		</dict>
 	</dict>
+	<key>hotkey.shares.mounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d partage réseau monté</string>
+			<key>other</key>
+			<string>%d partages réseau montés</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d partage réseau démonté</string>
+			<key>other</key>
+			<string>%d partages réseau démontés</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.mount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Impossible de monter %d partage réseau</string>
+			<key>other</key>
+			<string>Impossible de monter %d partages réseau</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Impossible de démonter %d partage réseau</string>
+			<key>other</key>
+			<string>Impossible de démonter %d partages réseau</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

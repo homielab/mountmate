@@ -45,6 +45,10 @@ extension HotkeyAction {
       return NSLocalizedString("Mount All Volumes", comment: "Keyboard shortcut action")
     case .ejectAll:
       return NSLocalizedString("Eject All External Disks", comment: "Keyboard shortcut action")
+    case .mountAllShares:
+      return NSLocalizedString("Mount All Network Shares", comment: "Keyboard shortcut action")
+    case .unmountAllShares:
+      return NSLocalizedString("Unmount All Network Shares", comment: "Keyboard shortcut action")
     }
   }
 }

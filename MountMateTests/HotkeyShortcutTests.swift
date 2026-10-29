@@ -118,6 +118,33 @@ final class HotkeyShortcutTests: XCTestCase {
     XCTAssertNil(HotkeyManager(defaults: defaults).ejectShortcut)
   }
 
+  func testNetworkShareActionsHaveNoDefaultAndRoundTripSeparately() {
+    let mountShares = HotkeyShortcut(keyCode: UInt16(kVK_ANSI_N), modifiers: [.command, .option])
+    let unmountShares = HotkeyShortcut(
+      keyCode: UInt16(kVK_ANSI_N), modifiers: [.command, .option, .shift])
+    let manager = HotkeyManager(defaults: defaults)
+    XCTAssertNil(manager.shortcut(for: .mountAllShares))
+    XCTAssertNil(manager.shortcut(for: .unmountAllShares))
+
+    XCTAssertNil(manager.setShortcut(mountShares, for: .mountAllShares))
+    XCTAssertNil(manager.setShortcut(unmountShares, for: .unmountAllShares))
+    let reloaded = HotkeyManager(defaults: defaults)
+    XCTAssertEqual(reloaded.shortcut(for: .mountAllShares), mountShares)
+    XCTAssertEqual(reloaded.shortcut(for: .unmountAllShares), unmountShares)
+    XCTAssertNil(reloaded.shortcut(for: .ejectAll))
+
+    manager.clearShortcut(for: .mountAllShares)
+    XCTAssertNil(manager.shortcut(for: .mountAllShares))
+    XCTAssertNil(HotkeyManager(defaults: defaults).shortcut(for: .mountAllShares))
+    XCTAssertEqual(
+      HotkeyManager(defaults: defaults).shortcut(for: .unmountAllShares), unmountShares)
+  }
+
+  func testOnlyMountAndUnmountAllHaveDefaults() {
+    XCTAssertEqual(
+      HotkeyAction.allCases.filter(\.hasDefaultShortcut), [.unmountAll, .mountAll])
+  }
+
   func testClearingMountAllKeepsItsShortcut() {
     let manager = HotkeyManager(defaults: defaults)
     manager.clearShortcut(for: .mountAll)

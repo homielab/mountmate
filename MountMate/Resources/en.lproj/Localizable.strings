@@ -572,6 +572,8 @@
 "Nothing to unmount" = "Nothing to unmount";
 "Nothing to mount" = "Nothing to mount";
 "Nothing to eject" = "Nothing to eject";
+"No network shares to mount" = "No network shares to mount";
+"No network shares to unmount" = "No network shares to unmount";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
 
 // MARK: - Shortcuts: eject volume

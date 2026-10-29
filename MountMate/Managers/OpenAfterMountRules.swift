@@ -7,7 +7,7 @@ import Foundation
 enum MountTrigger: Sendable, CaseIterable {
   /// Mount or Mount Read-Only in the popover (row button or right-click menu).
   case popover
-  /// Mount All (keyboard shortcut).
+  /// Mount All or Mount All Network Shares (keyboard shortcut).
   case mountAll
   /// A Shortcuts action.
   case shortcuts

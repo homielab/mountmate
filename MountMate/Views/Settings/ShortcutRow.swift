@@ -33,7 +33,7 @@ struct ShortcutRow: View {
           accessibilityName: description
         )
         .frame(width: 150, height: 26)
-        if action == .ejectAll, hotkeyManager.shortcut(for: action) != nil {
+        if !action.hasDefaultShortcut, hotkeyManager.shortcut(for: action) != nil {
           Button {
             hotkeyManager.clearShortcut(for: action)
           } label: {

@@ -572,6 +572,8 @@
 "Nothing to unmount" = "Нічого відмонтовувати";
 "Nothing to mount" = "Нічого монтувати";
 "Nothing to eject" = "Нічого виймати";
+"No network shares to mount" = "Немає мережевих папок для монтування";
+"No network shares to unmount" = "Немає мережевих папок для відмонтування";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
 
 // MARK: - Shortcuts: eject volume

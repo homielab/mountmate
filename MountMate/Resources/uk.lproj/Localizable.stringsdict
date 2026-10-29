@@ -382,5 +382,85 @@
 			<string>Експортовано %d ресурсу без паролів.</string>
 		</dict>
 	</dict>
+	<key>hotkey.shares.mounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Змонтовано %d мережеву папку</string>
+			<key>few</key>
+			<string>Змонтовано %d мережеві папки</string>
+			<key>many</key>
+			<string>Змонтовано %d мережевих папок</string>
+			<key>other</key>
+			<string>Змонтовано %d мережевої папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Відмонтовано %d мережеву папку</string>
+			<key>few</key>
+			<string>Відмонтовано %d мережеві папки</string>
+			<key>many</key>
+			<string>Відмонтовано %d мережевих папок</string>
+			<key>other</key>
+			<string>Відмонтовано %d мережевої папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.mount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не вдалося змонтувати %d мережеву папку</string>
+			<key>few</key>
+			<string>Не вдалося змонтувати %d мережеві папки</string>
+			<key>many</key>
+			<string>Не вдалося змонтувати %d мережевих папок</string>
+			<key>other</key>
+			<string>Не вдалося змонтувати %d мережевої папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не вдалося відмонтувати %d мережеву папку</string>
+			<key>few</key>
+			<string>Не вдалося відмонтувати %d мережеві папки</string>
+			<key>many</key>
+			<string>Не вдалося відмонтувати %d мережевих папок</string>
+			<key>other</key>
+			<string>Не вдалося відмонтувати %d мережевої папки</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

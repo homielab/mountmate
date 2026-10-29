@@ -166,6 +166,8 @@ enum HotkeyAction: Hashable, CaseIterable, Sendable {
   case unmountAll
   case mountAll
   case ejectAll
+  case mountAllShares
+  case unmountAllShares
 
   /// Carbon hot key ID (EventHotKeyID.id).
   fileprivate var hotKeyID: UInt32 {
@@ -173,6 +175,25 @@ enum HotkeyAction: Hashable, CaseIterable, Sendable {
     case .unmountAll: return 1
     case .mountAll: return 2
     case .ejectAll: return 3
+    case .mountAllShares: return 4
+    case .unmountAllShares: return 5
+    }
+  }
+
+  /// Actions without a default shortcut: nothing is registered until the
+  /// user records one, and the shortcut can be cleared again.
+  var hasDefaultShortcut: Bool {
+    self == .unmountAll || self == .mountAll
+  }
+
+  /// UserDefaults keys of the saved key code and modifiers.
+  fileprivate var defaultsKeys: (keyCode: String, modifiers: String) {
+    switch self {
+    case .unmountAll: return ("hotkeyUnmountKeyCode", "hotkeyUnmountModifiers")
+    case .mountAll: return ("hotkeyMountKeyCode", "hotkeyMountModifiers")
+    case .ejectAll: return ("hotkeyEjectKeyCode", "hotkeyEjectModifiers")
+    case .mountAllShares: return ("hotkeyMountSharesKeyCode", "hotkeyMountSharesModifiers")
+    case .unmountAllShares: return ("hotkeyUnmountSharesKeyCode", "hotkeyUnmountSharesModifiers")
     }
   }
 
@@ -218,9 +239,10 @@ class HotkeyManager: ObservableObject {
 
   @Published private(set) var unmountShortcut: HotkeyShortcut
   @Published private(set) var mountShortcut: HotkeyShortcut
-  /// "Eject All External Disks" has no default shortcut: nothing is
-  /// registered until the user records one.
-  @Published private(set) var ejectShortcut: HotkeyShortcut?
+  /// Shortcuts of the actions without a default (Eject All External Disks,
+  /// Mount and Unmount All Network Shares); an action is missing until the
+  /// user records one.
+  @Published private(set) var optionalShortcuts: [HotkeyAction: HotkeyShortcut] = [:]
   @Published var isListening = false
   /// Actions whose shortcut could not be registered while listening,
   /// usually because another app already uses the combination.
@@ -249,8 +271,11 @@ class HotkeyManager: ObservableObject {
       keyCodeKey: "hotkeyMountKeyCode",
       modifiersKey: "hotkeyMountModifiers",
       fallback: .defaultMount)
-    ejectShortcut = Self.loadOptionalShortcut(
-      defaults: defaults, keyCodeKey: "hotkeyEjectKeyCode", modifiersKey: "hotkeyEjectModifiers")
+    for action in HotkeyAction.allCases where !action.hasDefaultShortcut {
+      optionalShortcuts[action] = Self.loadOptionalShortcut(
+        defaults: defaults, keyCodeKey: action.defaultsKeys.keyCode,
+        modifiersKey: action.defaultsKeys.modifiers)
+    }
     setupObserver()
   }
 
@@ -301,23 +326,26 @@ class HotkeyManager: ObservableObject {
 
   // MARK: - Shortcut Configuration
 
+  /// The Eject All External Disks shortcut, nil until the user records one.
+  var ejectShortcut: HotkeyShortcut? { optionalShortcuts[.ejectAll] }
+
   /// The action's shortcut; nil only for an action without a default that
-  /// the user has not assigned (Eject All).
+  /// the user has not assigned.
   func shortcut(for action: HotkeyAction) -> HotkeyShortcut? {
     switch action {
     case .unmountAll: return unmountShortcut
     case .mountAll: return mountShortcut
-    case .ejectAll: return ejectShortcut
+    case .ejectAll, .mountAllShares, .unmountAllShares: return optionalShortcuts[action]
     }
   }
 
-  /// Removes the shortcut of an action that has no default (Eject All).
-  /// Mount All and Unmount All keep theirs.
+  /// Removes the shortcut of an action that has no default. Mount All and
+  /// Unmount All keep theirs.
   func clearShortcut(for action: HotkeyAction) {
-    guard action == .ejectAll else { return }
-    ejectShortcut = nil
-    defaults.removeObject(forKey: "hotkeyEjectKeyCode")
-    defaults.removeObject(forKey: "hotkeyEjectModifiers")
+    guard !action.hasDefaultShortcut else { return }
+    optionalShortcuts[action] = nil
+    defaults.removeObject(forKey: action.defaultsKeys.keyCode)
+    defaults.removeObject(forKey: action.defaultsKeys.modifiers)
     reregisterIfListening()
   }
 
@@ -343,19 +371,14 @@ class HotkeyManager: ObservableObject {
     }
 
     switch action {
-    case .unmountAll:
-      unmountShortcut = normalizedShortcut
-      defaults.set(Int(normalizedShortcut.keyCode), forKey: "hotkeyUnmountKeyCode")
-      defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyUnmountModifiers")
-    case .mountAll:
-      mountShortcut = normalizedShortcut
-      defaults.set(Int(normalizedShortcut.keyCode), forKey: "hotkeyMountKeyCode")
-      defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyMountModifiers")
-    case .ejectAll:
-      ejectShortcut = normalizedShortcut
-      defaults.set(Int(normalizedShortcut.keyCode), forKey: "hotkeyEjectKeyCode")
-      defaults.set(Int(normalizedShortcut.modifiers.rawValue), forKey: "hotkeyEjectModifiers")
+    case .unmountAll: unmountShortcut = normalizedShortcut
+    case .mountAll: mountShortcut = normalizedShortcut
+    case .ejectAll, .mountAllShares, .unmountAllShares:
+      optionalShortcuts[action] = normalizedShortcut
     }
+    defaults.set(Int(normalizedShortcut.keyCode), forKey: action.defaultsKeys.keyCode)
+    defaults.set(
+      Int(normalizedShortcut.modifiers.rawValue), forKey: action.defaultsKeys.modifiers)
 
     reregisterIfListening()
     return nil
@@ -369,7 +392,7 @@ class HotkeyManager: ObservableObject {
 
   // MARK: - Listening
 
-  /// Registers both shortcuts. Main thread only.
+  /// Registers every assigned shortcut. Main thread only.
   func startListening() {
     guard !isListening else { return }
     installEventHandlerIfNeeded()
@@ -418,7 +441,7 @@ class HotkeyManager: ObservableObject {
     #endif
   }
 
-  /// Unregisters both shortcuts. Main thread only.
+  /// Unregisters every shortcut. Main thread only.
   func stopListening() {
     for ref in hotKeyRefs.values {
       UnregisterEventHotKey(ref)
@@ -492,6 +515,29 @@ class HotkeyManager: ObservableObject {
       let attempted = drives.ejectAllCandidates.count
       drives.ejectAllDisks { failures in
         Self.showFeedback(for: action, attempted: attempted, failed: failures.count)
+      }
+    case .mountAllShares:
+      #if DEBUG
+        Log.hotkey.notice("Triggered Mount All Network Shares")
+      #endif
+      let shares = NetworkMountManager.shared
+      // A Mount All already running reports nothing new: no HUD.
+      guard !shares.isMountingSavedShares else { return }
+      let attempted = shares.savedShareCandidates.mount.count
+      shares.mountAllShares(trigger: .mountAll) { failures in
+        Self.showFeedback(for: action, attempted: attempted, failed: failures.count)
+        NetworkMountManager.reportMountAllFailures(failures)
+      }
+    case .unmountAllShares:
+      #if DEBUG
+        Log.hotkey.notice("Triggered Unmount All Network Shares")
+      #endif
+      let shares = NetworkMountManager.shared
+      guard !shares.isUnmountingSavedShares else { return }
+      let attempted = shares.savedShareCandidates.unmount.count
+      shares.unmountAllShares { failures in
+        Self.showFeedback(for: action, attempted: attempted, failed: failures.count)
+        NetworkMountManager.reportUnmountAllFailures(failures, offerForce: true)
       }
     }
   }

@@ -56,4 +56,30 @@ final class HotkeyConflictRulesTests: XCTestCase {
     XCTAssertNil(manager.setShortcut(cmdOptM, for: .ejectAll))
     XCTAssertEqual(manager.shortcut(for: .ejectAll), cmdOptM)
   }
+
+  func testNetworkShareActionsConflictWithEveryOtherAction() throws {
+    let suite = "HotkeyConflictRulesTests.\(UUID().uuidString)"
+    let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let manager = HotkeyManager(defaults: defaults)
+    let cmdOptN = HotkeyShortcut(keyCode: UInt16(kVK_ANSI_N), modifiers: [.command, .option])
+
+    XCTAssertEqual(manager.setShortcut(.defaultUnmount, for: .unmountAllShares), .unmountAll)
+    XCTAssertNil(manager.setShortcut(cmdOptM, for: .ejectAll))
+    XCTAssertEqual(manager.setShortcut(cmdOptM, for: .mountAllShares), .ejectAll)
+    XCTAssertNil(manager.setShortcut(cmdOptN, for: .mountAllShares))
+    XCTAssertEqual(manager.setShortcut(cmdOptN, for: .unmountAllShares), .mountAllShares)
+    XCTAssertEqual(manager.setShortcut(cmdOptN, for: .mountAll), .mountAllShares)
+    XCTAssertNil(manager.shortcut(for: .unmountAllShares))
+    XCTAssertEqual(manager.shortcut(for: .mountAll), .defaultMount)
+  }
+
+  func testDuplicateShareShortcutKeepsTheEarlierAction() {
+    let assigned: [HotkeyAction: HotkeyShortcut] = [
+      .unmountAll: .defaultUnmount, .mountAll: cmdShiftM, .mountAllShares: cmdOptM,
+      .unmountAllShares: cmdOptM,
+    ]
+    XCTAssertEqual(
+      HotkeyConflictRules.duplicates(among: assigned), [.unmountAllShares: .mountAllShares])
+  }
 }

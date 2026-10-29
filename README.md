@@ -43,7 +43,7 @@ Or [download the latest .dmg](https://github.com/homielab/mountmate/releases) an
 
 - Mount, unmount, mount read-only and force eject any external drive from the menu bar with one click.
 - See free space for drives and mounted network shares at a glance.
-- Unmount All, Mount All and Eject All External Disks from the popover or with global keyboard shortcuts.
+- Unmount All, Mount All and Eject All External Disks from the popover or with global keyboard shortcuts, and Mount or Unmount All Network Shares with their own shortcuts.
 - Unmount disks when the Mac sleeps, when the screen locks or after they sit idle, and mount them again on wake or unlock.
 - Stop USB disks from auto-mounting at plug-in or login, optionally also at startup (`/etc/fstab`).
 - Mount a volume or network share at a mount point you choose.
@@ -112,7 +112,7 @@ Everything in the list above, in full:
 - **Rename Volume…**: right-click a mounted, writable external volume to give it a new name (`diskutil rename`); the name is checked first (no `/` or `:`, at most 11 characters on FAT/exFAT), and file systems macOS cannot rename (such as NTFS) get a clear error
 - Check **free space** for drives and for mounted network shares (used / total)
 - **Eject All External Disks**: one button (next to Unmount All), an optional shortcut (none by default) or a Shortcuts action unmounts and ejects every external disk so you can unplug them; internal disks, disk images, disks with a protected volume and disks already ejecting or with a volume still mounting or unmounting are skipped, nothing is forced, and failures are listed in one alert
-- **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default (Eject All External Disks has none until you record one); change them in Settings (the key shown follows your keyboard layout). A small message at the top of the screen says what a shortcut did ("Unmounted 3 volumes", "Nothing to mount", "Ejected 1 disk, 1 failed")
+- **Keyboard Shortcuts**: Unmount All with `⌘⌥⇧U` and Mount All with `⌘⇧M` by default (Eject All External Disks, Mount All Network Shares and Unmount All Network Shares have none until you record one); change them in Settings (the key shown follows your keyboard layout). A small message at the top of the screen says what a shortcut did ("Unmounted 3 volumes", "Nothing to mount", "Ejected 1 disk, 1 failed", "Mounted 2 network shares"); a share that fails also gets the same alert as the Mount All / Unmount All buttons of the Saved Network Shares header
 - **Keyboard and VoiceOver**: rows in the popover take keyboard focus (Tab, Up/Down; Return or Space mounts or unmounts a volume, or expands or collapses a disk, on macOS 14+), VoiceOver gets row actions, and animations stop with Reduce motion
 - **Block USB Auto-Mount**: stop selected disks from mounting when plugged in or at login; **Block at Startup** (optional) also writes a rule to `/etc/fstab` and asks for your admin password
 - **Custom mount point**: mount a volume at a path you choose (right-click → Custom Mount Point…), or a network share at an empty folder you choose (a folder with files is refused, so they are never hidden)

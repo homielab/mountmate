@@ -572,6 +572,8 @@
 "Nothing to unmount" = "Không có gì để tháo";
 "Nothing to mount" = "Không có gì để gắn";
 "Nothing to eject" = "Không có gì để đẩy ra";
+"No network shares to mount" = "Không có chia sẻ mạng nào để gắn";
+"No network shares to unmount" = "Không có chia sẻ mạng nào để tháo";
 "hotkey.feedback.mixed" = "%1$@, %2$@";
 
 // MARK: - Shortcuts: eject volume

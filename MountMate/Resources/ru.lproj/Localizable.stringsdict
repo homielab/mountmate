@@ -382,5 +382,85 @@
 			<string>Экспортировано %d ресурса без паролей.</string>
 		</dict>
 	</dict>
+	<key>hotkey.shares.mounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Смонтирована %d сетевая папка</string>
+			<key>few</key>
+			<string>Смонтировано %d сетевые папки</string>
+			<key>many</key>
+			<string>Смонтировано %d сетевых папок</string>
+			<key>other</key>
+			<string>Смонтировано %d сетевой папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Размонтирована %d сетевая папка</string>
+			<key>few</key>
+			<string>Размонтировано %d сетевые папки</string>
+			<key>many</key>
+			<string>Размонтировано %d сетевых папок</string>
+			<key>other</key>
+			<string>Размонтировано %d сетевой папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.mount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не удалось смонтировать %d сетевую папку</string>
+			<key>few</key>
+			<string>Не удалось смонтировать %d сетевые папки</string>
+			<key>many</key>
+			<string>Не удалось смонтировать %d сетевых папок</string>
+			<key>other</key>
+			<string>Не удалось смонтировать %d сетевой папки</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Не удалось размонтировать %d сетевую папку</string>
+			<key>few</key>
+			<string>Не удалось размонтировать %d сетевые папки</string>
+			<key>many</key>
+			<string>Не удалось размонтировать %d сетевых папок</string>
+			<key>other</key>
+			<string>Не удалось размонтировать %d сетевой папки</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

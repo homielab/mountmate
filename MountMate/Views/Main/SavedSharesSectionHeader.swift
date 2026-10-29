@@ -47,48 +47,13 @@ struct SavedSharesSectionHeader: View {
 
   private func mountAll() {
     networkManager.mountAllShares(trigger: .popover) { failures in
-      guard
-        let alert = BulkVolumeActions.failureAlert(
-          forNames: failures.map(\.name),
-          title: NSLocalizedString("Mount Failed", comment: "Alert title"),
-          format: NSLocalizedString(
-            "Could not mount: %@", comment: "Bulk mount failure; list of share names"),
-          reasons: SavedShareBulkRules.mountFailureReasons(failures))
-      else { return }
-      DriveManager.shared.userActionError = alert
+      NetworkMountManager.reportMountAllFailures(failures)
     }
   }
 
   private func unmountAll() {
     networkManager.unmountAllShares { failures in
-      Self.report(failures, offerForce: true)
+      NetworkMountManager.reportUnmountAllFailures(failures, offerForce: true)
     }
-  }
-
-  /// One alert for every share that could not be unmounted, with its reason,
-  /// offering Force Unmount where it may help; a forced attempt that fails
-  /// again is only reported.
-  private static func report(
-    _ failures: [NetworkMountManager.ShareUnmountFailure], offerForce: Bool
-  ) {
-    let forceable =
-      offerForce ? Set(failures.filter(\.failure.canForce).compactMap(\.target.shareID)) : []
-    let kind: AppAlertKind =
-      forceable.isEmpty
-      ? .basic
-      : .forceUnmount {
-        NetworkMountManager.shared.forceUnmountSavedShares(withIDs: forceable) { failures in
-          report(failures, offerForce: false)
-        }
-      }
-    guard
-      let alert = BulkVolumeActions.failureAlert(
-        forNames: failures.map(\.target.name),
-        title: NSLocalizedString("Unmount Failed", comment: "Alert title"),
-        format: NSLocalizedString(
-          "Could not unmount: %@", comment: "Bulk unmount failure; list of share names"),
-        reasons: failures.map(\.failure.message), kind: kind)
-    else { return }
-    DriveManager.shared.userActionError = alert
   }
 }

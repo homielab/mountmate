@@ -35,6 +35,14 @@ final class HotkeyFeedbackTests: XCTestCase {
       (.ejectAll, 2, 0, "Ejected 2 disks"),
       (.ejectAll, 1, 1, "Ejected 1 disk, 1 failed"),
       (.ejectAll, 0, 3, "Could not eject 3 disks"),
+      (.mountAllShares, 0, 0, "No network shares to mount"),
+      (.mountAllShares, 1, 0, "Mounted 1 network share"),
+      (.mountAllShares, 2, 1, "Mounted 2 network shares, 1 failed"),
+      (.mountAllShares, 0, 2, "Could not mount 2 network shares"),
+      (.unmountAllShares, 0, 0, "No network shares to unmount"),
+      (.unmountAllShares, 3, 0, "Unmounted 3 network shares"),
+      (.unmountAllShares, 1, 1, "Unmounted 1 network share, 1 failed"),
+      (.unmountAllShares, 0, 1, "Could not unmount 1 network share"),
     ]
     for (action, succeeded, failed, expected) in cases {
       XCTAssertEqual(
@@ -47,6 +55,8 @@ final class HotkeyFeedbackTests: XCTestCase {
     XCTAssertEqual(try message(.unmountAll, 2, 0, language: "ru"), "Отмонтировано 2 тома")
     XCTAssertEqual(try message(.unmountAll, 5, 0, language: "ru"), "Отмонтировано 5 томов")
     XCTAssertEqual(try message(.ejectAll, 21, 0, language: "ru"), "Извлечён 21 диск")
+    XCTAssertEqual(
+      try message(.mountAllShares, 5, 0, language: "ru"), "Смонтировано 5 сетевых папок")
   }
 
   func testEveryLanguageTranslatesEveryCase() throws {

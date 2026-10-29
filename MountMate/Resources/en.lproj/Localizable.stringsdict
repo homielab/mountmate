@@ -306,5 +306,69 @@
 			<string>Exported %d shares without their passwords.</string>
 		</dict>
 	</dict>
+	<key>hotkey.shares.mounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Mounted %d network share</string>
+			<key>other</key>
+			<string>Mounted %d network shares</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Unmounted %d network share</string>
+			<key>other</key>
+			<string>Unmounted %d network shares</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.mount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Could not mount %d network share</string>
+			<key>other</key>
+			<string>Could not mount %d network shares</string>
+		</dict>
+	</dict>
+	<key>hotkey.shares.unmount.failed</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Could not unmount %d network share</string>
+			<key>other</key>
+			<string>Could not unmount %d network shares</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

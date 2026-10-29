@@ -3,13 +3,15 @@
 import Foundation
 
 /// The short confirmation shown after a global keyboard shortcut ran
-/// "Unmount All", "Mount All" or "Eject All External Disks". The menu is
+/// "Unmount All", "Mount All", "Eject All External Disks" or Mount / Unmount
+/// All Network Shares. The menu is
 /// usually closed then, so without it a press that did nothing looks the
 /// same as one that worked. Pure: `bundle` and `locale` let tests pick a
 /// language.
 enum HotkeyFeedback {
   /// "Unmounted 3 volumes", "Nothing to mount", "Ejected 1 disk, 1 failed"…
-  /// - Parameter succeeded: volumes (disks for Eject All) the action handled.
+  /// - Parameter succeeded: volumes (disks for Eject All, shares for the
+  ///   network share actions) the action handled.
   /// - Parameter failed: the ones that could not be handled.
   static func message(
     action: HotkeyAction, succeeded: Int, failed: Int, bundle: Bundle = .main,
@@ -68,6 +70,14 @@ enum HotkeyFeedback {
         nothing = "Nothing to eject"
         done = "hotkey.ejected"
         allFailed = "hotkey.eject.failed"
+      case .mountAllShares:
+        nothing = "No network shares to mount"
+        done = "hotkey.shares.mounted"
+        allFailed = "hotkey.shares.mount.failed"
+      case .unmountAllShares:
+        nothing = "No network shares to unmount"
+        done = "hotkey.shares.unmounted"
+        allFailed = "hotkey.shares.unmount.failed"
       }
     }
   }

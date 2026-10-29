@@ -64,9 +64,9 @@ struct ShortcutsLanguageSettingsSection: View {
 
       if hotkeysEnabled {
         VStack(alignment: .leading, spacing: 8) {
-          shortcutRow(HotkeyAction.unmountAll.localizedName, action: .unmountAll)
-          shortcutRow(HotkeyAction.mountAll.localizedName, action: .mountAll)
-          shortcutRow(HotkeyAction.ejectAll.localizedName, action: .ejectAll)
+          ForEach(HotkeyAction.allCases, id: \.self) { action in
+            shortcutRow(action.localizedName, action: action)
+          }
           Text(
             "Click a shortcut to record a new key combination. It must include ⌘ or ⌃. Some shortcuts may be reserved by macOS or another app."
           )
