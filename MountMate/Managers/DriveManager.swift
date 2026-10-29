@@ -262,7 +262,9 @@ class DriveManager: ObservableObject {
       }
       self.recordFirstSeen(of: disks)
       PersistenceManager.shared.refreshNames(from: disks.flatMap(\.allVolumes))
-      NotificationManager.shared.disksRefreshed(disks)
+      NotificationManager.shared.disksRefreshed(
+        disks, unverifiedDiskIDs: unverifiedDiskIDs, ejectingDiskIDs: self.busyEjectingDiskIDs,
+        busyVolumeIDs: self.busyVolumeIDs)
       self.isFetchInProgress = false
       self.isRefreshing = false
       self.refreshError = nil

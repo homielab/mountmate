@@ -12,6 +12,7 @@ struct BehaviorSettingsSection: View {
   @AppStorage(ScreenLockRules.enabledKey) private var unmountOnLockEnabled = false
   @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
   @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
+  @AppStorage(UnexpectedRemovalTracker.enabledKey) private var unexpectedRemovalEnabled = false
   @AppStorage(OpenAfterMountRules.enabledKey) private var openFinderAfterMount = false
   @AppStorage(LowSpaceRules.thresholdKey) private var lowSpacePercent = LowSpaceRules.defaultPercent
 
@@ -126,6 +127,16 @@ struct BehaviorSettingsSection: View {
       .help(
         "Notifies you when Keep Alive cannot reconnect a mount and when it is back, when a blocked disk could not be unmounted, when unmounting before sleep took too long, and when a volume is unmounted because it was idle."
       )
+      if notificationManager.isEnabled {
+        Toggle(isOn: $unexpectedRemovalEnabled) {
+          Label(
+            "Notify when a disk is disconnected without ejecting",
+            systemImage: "externaldrive.badge.xmark")
+        }
+        .help(
+          "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched."
+        )
+      }
       Toggle(isOn: $lowSpaceEnabled) {
         Label(
           "Warn when a volume is almost full", systemImage: "externaldrive.badge.exclamationmark")

@@ -40,12 +40,19 @@ final class NotificationManagerTests: XCTestCase {
   /// Stands in for `NotificationCenter.default`, so the test host app
   /// becoming active cannot trigger an extra permission check.
   private var activation: NotificationCenter!
+  /// Stands in for `NSWorkspace.shared.notificationCenter`.
+  private var workspace: NotificationCenter!
+  /// The kernel mount table the manager sees.
+  private var mountedPaths: Set<String>? = []
+  private var clock = Date(timeIntervalSince1970: 1_000_000)
 
   override func setUp() {
     suiteName = "NotificationManagerTests-\(UUID().uuidString)"
     defaults = UserDefaults(suiteName: suiteName)
     center = FakeNotificationCenter()
     activation = NotificationCenter()
+    workspace = NotificationCenter()
+    mountedPaths = []
   }
 
   override func tearDown() {
@@ -58,7 +65,68 @@ final class NotificationManagerTests: XCTestCase {
   private func makeManager() -> NotificationManager {
     NotificationManager(
       center: center, defaults: defaults, activationNotifications: activation,
-      performOnMain: { $0() })
+      workspaceNotifications: workspace, performOnMain: { $0() },
+      mountedPaths: { [unowned self] in self.mountedPaths }, now: { [unowned self] in self.clock })
+  }
+
+  private func cardWithBackup() -> PhysicalDisk {
+    var card = disk("disk4", smart: .verified)
+    card.partitions = [
+      Volume(
+        id: "v1", deviceIdentifier: "disk4s1", diskUUID: nil, name: "Backup", isMounted: true,
+        mountPoint: "/Volumes/Backup", freeSpace: nil, totalSize: nil, usedSpace: nil,
+        usedBytes: nil, fileSystemType: "ExFAT", usagePercentage: nil, category: .user,
+        isProtected: false, snapshots: [])
+    ]
+    return card
+  }
+
+  func testPulledOutVolumeIsAnnouncedWhenTheWarningIsOn() {
+    let manager = makeManager()
+    manager.start()
+    manager.isEnabled = true
+    // Off by default: nothing is watched.
+    manager.disksRefreshed([cardWithBackup()])
+    manager.disksRefreshed([])
+    XCTAssertEqual(center.added.count, 0)
+
+    defaults.set(true, forKey: UnexpectedRemovalTracker.enabledKey)
+    manager.disksRefreshed([cardWithBackup()])
+    manager.disksRefreshed([])
+    XCTAssertEqual(center.added.map(\.identifier), ["removed.v1"])
+    XCTAssertEqual(
+      center.added.first?.content.body,
+      "“Backup” was disconnected without being ejected. Check your files.")
+  }
+
+  func testRequestedUnmountOrEjectIsNotAnnounced() {
+    let manager = makeManager()
+    manager.start()
+    manager.isEnabled = true
+    defaults.set(true, forKey: UnexpectedRemovalTracker.enabledKey)
+
+    manager.disksRefreshed([cardWithBackup()])
+    workspace.post(
+      name: NSWorkspace.willUnmountNotification, object: nil,
+      userInfo: [NSWorkspace.volumeURLUserInfoKey: URL(fileURLWithPath: "/Volumes/Backup")])
+    manager.disksRefreshed([])
+
+    manager.disksRefreshed([cardWithBackup()])
+    manager.disksRefreshed([], ejectingDiskIDs: ["disk4"])
+    XCTAssertEqual(center.added.count, 0)
+  }
+
+  func testNothingIsAnnouncedAcrossSleepAndRightAfterWake() {
+    let manager = makeManager()
+    manager.start()
+    manager.isEnabled = true
+    defaults.set(true, forKey: UnexpectedRemovalTracker.enabledKey)
+
+    manager.disksRefreshed([cardWithBackup()])
+    workspace.post(name: NSWorkspace.willSleepNotification, object: nil)
+    workspace.post(name: NSWorkspace.didWakeNotification, object: nil)
+    manager.disksRefreshed([])
+    XCTAssertEqual(center.added.count, 0)
   }
 
   private func disk(_ id: String, smart: SMARTStatus) -> PhysicalDisk {

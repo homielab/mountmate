@@ -136,6 +136,6 @@ final class DiagnosticsReportTests: XCTestCase {
 
   func testFlagsListHasNoFreeTextSettings() {
     // Only on/off switches belong in the report.
-    XCTAssertEqual(DiagnosticsReport.flagKeys.count, 16)
+    XCTAssertEqual(DiagnosticsReport.flagKeys.count, 17)
   }
 }

@@ -409,7 +409,8 @@ struct DiskListParser {
       usagePercentage: usagePercentage, category: category, isProtected: isProtected,
       snapshots: snapshots,
       storageError: storageError,
-      isReadOnly: mountPoint.map { readOnlyMountPoints.contains($0) } ?? false)
+      isReadOnly: mountPoint.map { readOnlyMountPoints.contains($0) } ?? false,
+      isTimeMachine: DiskTopology.isTimeMachineVolume(volumeData))
   }
 
   private static func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {

@@ -504,6 +504,10 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.";
 "Almost full: %1$d%% used, %2$@ free" = "Almost full: %1$d%% used, %2$@ free";
 "Almost full: %d%% used" = "Almost full: %d%% used";
+"Disconnected Without Ejecting" = "Disconnected Without Ejecting";
+"“%@” was disconnected without being ejected. Check your files." = "“%@” was disconnected without being ejected. Check your files.";
+"Notify when a disk is disconnected without ejecting" = "Notify when a disk is disconnected without ejecting";
+"Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched.";
 
 // MARK: - Network Browser
 

@@ -504,6 +504,10 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "“%1$@” đã đầy %2$d%%. Hãy giải phóng dung lượng trước khi việc sao chép và sao lưu bắt đầu lỗi.";
 "Almost full: %1$d%% used, %2$@ free" = "Gần đầy: đã dùng %1$d%%, còn trống %2$@";
 "Almost full: %d%% used" = "Gần đầy: đã dùng %d%%";
+"Disconnected Without Ejecting" = "Ổ bị ngắt khi chưa eject";
+"“%@” was disconnected without being ejected. Check your files." = "“%@” bị ngắt khi chưa eject. Kiểm tra lại tệp.";
+"Notify when a disk is disconnected without ejecting" = "Báo khi ổ bị rút mà chưa eject";
+"Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Báo cho bạn khi ổ USB hay thẻ nhớ bị rút ra lúc một phân vùng của nó vẫn đang mount, để bạn kiểm tra việc chép đã xong chưa. Không theo dõi ảnh đĩa, ổ trong và phân vùng Time Machine.";
 
 // MARK: - Network Browser
 

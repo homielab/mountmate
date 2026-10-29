@@ -504,6 +504,10 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "Том «%1$@» заповнений на %2$d%%. Звільніть місце, доки копіювання та резервні копії не почали завершуватися помилкою.";
 "Almost full: %1$d%% used, %2$@ free" = "Майже заповнений: зайнято %1$d%%, вільно %2$@";
 "Almost full: %d%% used" = "Майже заповнений: зайнято %d%%";
+"Disconnected Without Ejecting" = "Від’єднано без вийняття";
+"“%@” was disconnected without being ejected. Check your files." = "«%@» від’єднано без вийняття. Перевірте свої файли.";
+"Notify when a disk is disconnected without ejecting" = "Сповіщати, якщо диск від’єднано без вийняття";
+"Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Повідомляє, коли USB-накопичувач або карту пам’яті витягнули, поки один із його томів ще змонтований, щоб ви перевірили, що копіювання завершилося. Образи дисків, внутрішні диски й томи Time Machine не відстежуються.";
 
 // MARK: - Network Browser
 

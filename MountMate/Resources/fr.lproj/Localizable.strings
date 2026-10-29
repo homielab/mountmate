@@ -504,6 +504,10 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "« %1$@ » est plein à %2$d %%. Libérez de l’espace avant que les copies et les sauvegardes n’échouent.";
 "Almost full: %1$d%% used, %2$@ free" = "Presque plein : %1$d %% utilisés, %2$@ libres";
 "Almost full: %d%% used" = "Presque plein : %d %% utilisés";
+"Disconnected Without Ejecting" = "Déconnecté sans éjection";
+"“%@” was disconnected without being ejected. Check your files." = "« %@ » a été déconnecté sans être éjecté. Vérifiez vos fichiers.";
+"Notify when a disk is disconnected without ejecting" = "Avertir quand un disque est déconnecté sans être éjecté";
+"Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Vous prévient quand une clé USB ou une carte mémoire est retirée alors qu’un de ses volumes est encore monté, pour vérifier que les copies sont terminées. Les images disque, les disques internes et les volumes Time Machine ne sont pas surveillés.";
 
 // MARK: - Network Browser
 

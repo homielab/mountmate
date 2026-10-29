@@ -49,7 +49,13 @@ enum DiskTopology {
     {
       return true
     }
-    return (volume["VolumeName"] as? String) == "Backups.backupdb"
+    if (volume["VolumeName"] as? String) == "Backups.backupdb" { return true }
+    // Time Machine mounts its own backups and snapshots under a hidden
+    // `.timemachine` folder.
+    if let mountPoint = volume["MountPoint"] as? String {
+      return mountPoint.split(separator: "/").contains(".timemachine")
+    }
+    return false
   }
 
   /// Sealed system snapshot volumes show up as a nested BSD slice of their
@@ -95,6 +101,9 @@ struct Volume: Identifiable, Hashable, Sendable {
 
   /// Mounted read-only (see `DriveManager.mount(volume:readOnly:)`).
   var isReadOnly: Bool = false
+
+  /// A Time Machine backup volume; see `DiskTopology.isTimeMachineVolume`.
+  var isTimeMachine: Bool = false
 
   /// The volume's UUID, or nil when the volume has none. DriveManager
   /// falls back to the BSD device identifier (e.g. "disk4s1") for `id`,

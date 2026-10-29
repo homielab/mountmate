@@ -146,7 +146,8 @@ final class SystemNotificationCenter: NotificationCentering {
 
 /// Optional macOS notifications for events that happen in the background:
 /// keep-alive reconnect failures and recoveries, blocked volumes that could
-/// not be unmounted, unmount-on-sleep running out of time, and idle unmounts.
+/// not be unmounted, unmount-on-sleep running out of time, idle unmounts,
+/// failing disks, almost full volumes and disks pulled out without ejecting.
 ///
 /// Off by default. Permission is requested only when the user turns the
 /// setting on. Main thread only.
@@ -164,6 +165,7 @@ final class NotificationManager: NSObject, ObservableObject {
         requestAuthorization()
       } else {
         keepAliveThrottle.reset()
+        removalTracker.reset()
       }
     }
   }
@@ -176,12 +178,16 @@ final class NotificationManager: NSObject, ObservableObject {
   private var keepAliveThrottle = BackgroundEventThrottle()
   private var smartTracker = SMARTAlertTracker()
   private var lowSpaceTracker = LowSpaceAlertTracker()
+  private var removalTracker = UnexpectedRemovalTracker()
   private var cancellables = Set<AnyCancellable>()
 
   private let center: NotificationCentering
   private let defaults: UserDefaults
   private let activationNotifications: NotificationCenter
+  private let workspaceNotifications: NotificationCenter
   private let performOnMain: (@escaping () -> Void) -> Void
+  private let mountedPaths: () -> Set<String>?
+  private let now: () -> Date
 
   /// What the notification buttons do; replaced in tests.
   var reconnectNow: () -> Void = { KeepAliveManager.shared.sweepNow(resetBackoff: true) }
@@ -190,6 +196,10 @@ final class NotificationManager: NSObject, ObservableObject {
   /// - Parameters:
   ///   - activationNotifications: where `didBecomeActiveNotification` is
   ///     observed to re-read the permission.
+  ///   - workspaceNotifications: where unmount requests, sleep and wake are
+  ///     observed for the pulled-out disk warning.
+  ///   - mountedPaths: the mount points in the kernel mount table, or nil
+  ///     when it cannot be read.
   ///   - performOnMain: how the notification center's callbacks get back to
   ///     the main thread. Tests run them right away, so they don't depend on
   ///     how many main-queue hops a permission check takes.
@@ -197,14 +207,22 @@ final class NotificationManager: NSObject, ObservableObject {
     center: NotificationCentering = SystemNotificationCenter(),
     defaults: UserDefaults = .standard,
     activationNotifications: NotificationCenter = .default,
+    workspaceNotifications: NotificationCenter = NSWorkspace.shared.notificationCenter,
     performOnMain: @escaping (@escaping () -> Void) -> Void = {
       DispatchQueue.main.async(execute: $0)
-    }
+    },
+    mountedPaths: @escaping () -> Set<String>? = {
+      MountTable.entries().map { Set($0.map(\.mountPoint)) }
+    },
+    now: @escaping () -> Date = Date.init
   ) {
     self.center = center
     self.defaults = defaults
     self.activationNotifications = activationNotifications
+    self.workspaceNotifications = workspaceNotifications
     self.performOnMain = performOnMain
+    self.mountedPaths = mountedPaths
+    self.now = now
     isEnabled = defaults.bool(forKey: Self.enabledKey)
     super.init()
   }
@@ -220,6 +238,30 @@ final class NotificationManager: NSObject, ObservableObject {
       .sink { [weak self] _ in
         guard let self, self.isEnabled else { return }
         self.refreshAuthorizationStatus()
+      }
+      .store(in: &cancellables)
+    observeRemovalEvents()
+  }
+
+  /// An unmount the user or an app asked for (Finder, `diskutil`, MountMate)
+  /// posts `willUnmount`; a disk pulled out does not. Sleep and wake pause
+  /// the pulled-out disk warning.
+  private func observeRemovalEvents() {
+    workspaceNotifications.publisher(for: NSWorkspace.willUnmountNotification)
+      .sink { [weak self] notification in
+        guard let self,
+          let url = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL
+        else { return }
+        self.removalTracker.recordRequestedUnmount(mountPoint: url.path, at: self.now())
+      }
+      .store(in: &cancellables)
+    workspaceNotifications.publisher(for: NSWorkspace.willSleepNotification)
+      .sink { [weak self] _ in self?.removalTracker.systemWillSleep() }
+      .store(in: &cancellables)
+    workspaceNotifications.publisher(for: NSWorkspace.didWakeNotification)
+      .sink { [weak self] _ in
+        guard let self else { return }
+        self.removalTracker.systemDidWake(at: self.now())
       }
       .store(in: &cancellables)
   }
@@ -324,10 +366,20 @@ final class NotificationManager: NSObject, ObservableObject {
   }
 
   /// A refresh finished. Announces each disk that reports a failing SMART
-  /// status and each volume that is almost full, once. With notifications off nothing is remembered, so turning
-  /// them on announces a disk that is still failing.
-  func disksRefreshed(_ disks: [PhysicalDisk]) {
+  /// status, each volume that is almost full and each volume pulled out
+  /// without ejecting, once. With notifications off nothing is remembered,
+  /// so turning them on announces a disk that is still failing.
+  /// - Parameters:
+  ///   - ejectingDiskIDs, busyVolumeIDs: MountMate's own ejects and unmounts
+  ///     in flight; their volumes vanishing is expected.
+  func disksRefreshed(
+    _ disks: [PhysicalDisk], unverifiedDiskIDs: Set<String> = [],
+    ejectingDiskIDs: Set<String> = [], busyVolumeIDs: Set<String> = []
+  ) {
     guard isEnabled else { return }
+    announceRemovals(
+      in: disks, unverifiedDiskIDs: unverifiedDiskIDs, ejectingDiskIDs: ejectingDiskIDs,
+      busyVolumeIDs: busyVolumeIDs)
     for disk in smartTracker.newlyFailing(in: disks) {
       post(
         id: "smart.\(disk.id)",
@@ -340,6 +392,10 @@ final class NotificationManager: NSObject, ObservableObject {
     }
     // Nothing is remembered while the warning is off, like with SMART.
     guard let threshold = LowSpaceRules.threshold(defaults: defaults) else { return }
+    announceLowSpace(in: disks, threshold: threshold)
+  }
+
+  private func announceLowSpace(in disks: [PhysicalDisk], threshold: Double) {
     for (volume, warning) in lowSpaceTracker.newWarnings(in: disks, threshold: threshold) {
       post(
         id: "lowSpace.\(volume.id)",
@@ -349,6 +405,33 @@ final class NotificationManager: NSObject, ObservableObject {
             "“%1$@” is %2$d%% full. Free up space before copies and backups start failing.",
             comment: "Notification: a volume is almost full"),
           volume.name, warning.percentUsed))
+    }
+  }
+
+  /// Nothing is remembered while the warning is off: turning it on starts
+  /// from the next refresh.
+  private func announceRemovals(
+    in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>, ejectingDiskIDs: Set<String>,
+    busyVolumeIDs: Set<String>
+  ) {
+    guard UnexpectedRemovalTracker.isEnabled(defaults: defaults) else {
+      removalTracker.reset()
+      return
+    }
+    let removals = removalTracker.removals(
+      in: disks, unverifiedDiskIDs: unverifiedDiskIDs, ejectingDiskIDs: ejectingDiskIDs,
+      busyVolumeIDs: busyVolumeIDs, mountedPaths: mountedPaths(), now: now())
+    for removal in removals {
+      Log.drive.notice(
+        "Volume \(removal.name, privacy: .private) disappeared without being ejected.")
+      post(
+        id: "removed.\(removal.volumeID)",
+        title: NSLocalizedString("Disconnected Without Ejecting", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%@” was disconnected without being ejected. Check your files.",
+            comment: "Notification: a disk was pulled out while its volume was mounted"),
+          removal.name))
     }
   }
 

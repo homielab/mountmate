@@ -504,6 +504,10 @@
 "“%1$@” is %2$d%% full. Free up space before copies and backups start failing." = "「%1$@」已使用 %2$d%%。請在拷貝與備份開始失敗之前釋出空間。";
 "Almost full: %1$d%% used, %2$@ free" = "快滿了：已使用 %1$d%%，剩餘 %2$@";
 "Almost full: %d%% used" = "快滿了：已使用 %d%%";
+"Disconnected Without Ejecting" = "未推出即中斷連線";
+"“%@” was disconnected without being ejected. Check your files." = "「%@」未推出就中斷連線。請檢查你的檔案。";
+"Notify when a disk is disconnected without ejecting" = "磁碟未推出就中斷連線時通知";
+"Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "當 USB 隨身碟或記憶卡在其中某個磁碟區仍掛載時被拔出，會通知你，以便檢查拷貝是否已完成。不監看磁碟映像檔、內建磁碟和 Time Machine 磁碟區。";
 
 // MARK: - Network Browser
 
