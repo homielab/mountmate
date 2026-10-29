@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Expand and collapse a disk with the keyboard or VoiceOver**: a disk's header row now takes keyboard focus and Return or Space (macOS 14+) shows or hides its volumes; VoiceOver reads it as a button with the value "Expanded" or "Collapsed" and toggles it with its default action. Before, only a mouse click or Expand All worked.
 - **NFS export paths are case-sensitive**: two NFS shares whose export paths differ only in case (`/export/Data` and `/export/data`) are no longer rejected as duplicates, and each mounted export is shown on the share with the exact same path. SMB and AFP share names are still compared without case.
 - **NFS shares with a port or IPv6 server**: an NFS share whose server is an IPv6 address (`fd00::2`, `[fd00::2]`) or has a port (`nas:2049`, `[fd00::2]:2049`) now mounts; before, the address went to `mount_nfs` as typed and the mount always failed.
 - **Copy Diagnostics hides share mount points**: paths of mounted network shares (the default `~/mountmate/<share name>` folder and any custom mount point you set) are replaced with `<share>` or `<mountpoint>`, so the report no longer shows share names.

@@ -25,6 +25,7 @@ struct DiskHeaderRow: View {
           .rotationEffect(.degrees(isExpanded ? 90 : 0))
           .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isExpanded)
           .frame(width: 12)
+          .accessibilityHidden(true)
 
         ZStack {
           Image(systemName: "internaldrive.fill")
@@ -83,12 +84,12 @@ struct DiskHeaderRow: View {
         }
       }
       .accessibilityElement(children: .combine)
+      .accessibilityAddTraits(.isButton)
+      .accessibilityValue(Text(AccessibilityLabels.expansionValue(isExpanded: isExpanded)))
+      .accessibilityAction { toggleExpanded() }
       .contentShape(Rectangle())
-      .onTapGesture {
-        Motion.perform(.easeInOut(duration: 0.2)) {
-          isExpanded.toggle()
-        }
-      }
+      .onTapGesture { toggleExpanded() }
+      .rowKeyboardNavigation(primaryAction: toggleExpanded)
       .contextMenu {
         Button("Ignore This Disk") {
           for volume in disk.allVolumes { PersistenceManager.shared.ignore(volume: volume) }
@@ -129,5 +130,12 @@ struct DiskHeaderRow: View {
     .background(isHovering ? Color.primary.opacity(0.08) : Color.clear)
     .clipShape(.rect(cornerRadius: 6))
     .onHover { hovering in self.isHovering = hovering }
+  }
+
+  /// Shows or hides the disk's volumes (click, Return/Space, VoiceOver).
+  private func toggleExpanded() {
+    Motion.perform(.easeInOut(duration: 0.2)) {
+      isExpanded.toggle()
+    }
   }
 }

@@ -39,4 +39,16 @@ enum AccessibilityLabels {
         comment: "Accessibility label of the \(action.rawValue) button"),
       name)
   }
+
+  /// VoiceOver value of a row that expands and collapses, e.g. a disk
+  /// header: "Expanded" or "Collapsed".
+  static func expansionValue(isExpanded: Bool, bundle: Bundle = .main) -> String {
+    isExpanded
+      ? NSLocalizedString(
+        "Accessibility Expanded", bundle: bundle,
+        comment: "Accessibility value of a disk row whose volumes are shown")
+      : NSLocalizedString(
+        "Accessibility Collapsed", bundle: bundle,
+        comment: "Accessibility value of a disk row whose volumes are hidden")
+  }
 }

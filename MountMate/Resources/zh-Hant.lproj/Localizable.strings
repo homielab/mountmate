@@ -391,6 +391,8 @@
 "An unknown error occurred while trying to eject “%@”." = "嘗試推出「%@」時發生未知錯誤。";
 "Accessibility Busy" = "進行中";
 "Accessibility Error" = "錯誤";
+"Accessibility Expanded" = "已展開";
+"Accessibility Collapsed" = "已收合";
 
 /* Notifications */
 "Notifications" = "通知";

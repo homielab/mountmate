@@ -391,6 +391,8 @@
 "An unknown error occurred while trying to eject “%@”." = "An unknown error occurred while trying to eject “%@”.";
 "Accessibility Busy" = "In progress";
 "Accessibility Error" = "Error";
+"Accessibility Expanded" = "Expanded";
+"Accessibility Collapsed" = "Collapsed";
 
 /* Notifications */
 "Notifications" = "Notifications";

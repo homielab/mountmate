@@ -391,6 +391,8 @@
 "An unknown error occurred while trying to eject “%@”." = "Đã xảy ra lỗi không xác định khi cố gắng đẩy ra “%@”.";
 "Accessibility Busy" = "Đang xử lý";
 "Accessibility Error" = "Lỗi";
+"Accessibility Expanded" = "Đã mở rộng";
+"Accessibility Collapsed" = "Đã thu gọn";
 
 /* Notifications */
 "Notifications" = "Thông báo";

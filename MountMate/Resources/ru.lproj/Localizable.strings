@@ -391,6 +391,8 @@
 "An unknown error occurred while trying to eject “%@”." = "Произошла неизвестная ошибка при попытке извлечь «%@».";
 "Accessibility Busy" = "Выполняется";
 "Accessibility Error" = "Ошибка";
+"Accessibility Expanded" = "Развёрнуто";
+"Accessibility Collapsed" = "Свёрнуто";
 
 /* Notifications */
 "Notifications" = "Уведомления";

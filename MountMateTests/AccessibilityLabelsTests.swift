@@ -144,4 +144,43 @@ final class AccessibilityLabelsTests: XCTestCase {
         "\(file) is not combined")
     }
   }
+
+  // MARK: - Disk header row
+
+  /// A disk header tells VoiceOver whether its volumes are shown, in every
+  /// language.
+  func testExpansionValueIsLocalizedInEveryLanguage() throws {
+    let english = try languageBundle("en")
+    XCTAssertEqual(
+      AccessibilityLabels.expansionValue(isExpanded: true, bundle: english), "Expanded")
+    XCTAssertEqual(
+      AccessibilityLabels.expansionValue(isExpanded: false, bundle: english), "Collapsed")
+    for language in languages {
+      let bundle = try languageBundle(language)
+      let expanded = AccessibilityLabels.expansionValue(isExpanded: true, bundle: bundle)
+      let collapsed = AccessibilityLabels.expansionValue(isExpanded: false, bundle: bundle)
+      XCTAssertFalse(expanded.hasPrefix("Accessibility "), "\(language): Expanded is missing")
+      XCTAssertFalse(collapsed.hasPrefix("Accessibility "), "\(language): Collapsed is missing")
+      XCTAssertNotEqual(expanded, collapsed, "\(language)")
+    }
+  }
+
+  /// The disk header expands and collapses with the mouse, the keyboard and
+  /// VoiceOver: a button with an Expanded/Collapsed value, a default action
+  /// and Return/Space, while the chevron stays silent.
+  func testDiskHeaderTogglesForKeyboardAndVoiceOver() throws {
+    let text = try source("Views/Main/DiskHeaderRow.swift")
+    for snippet in [
+      ".accessibilityAddTraits(.isButton)",
+      ".accessibilityValue(Text(AccessibilityLabels.expansionValue(isExpanded: isExpanded)))",
+      ".accessibilityAction { toggleExpanded() }",
+      ".onTapGesture { toggleExpanded() }",
+      ".rowKeyboardNavigation(primaryAction: toggleExpanded)",
+    ] {
+      XCTAssertTrue(text.contains(snippet), "DiskHeaderRow is missing \(snippet)")
+    }
+    XCTAssertTrue(
+      Self.isHidden(after: "Image(systemName: \"chevron.right\")", in: text, within: 6),
+      "the disk header chevron is not hidden")
+  }
 }
