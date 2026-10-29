@@ -258,5 +258,53 @@
 			<string>%d échecs</string>
 		</dict>
 	</dict>
+	<key>shares.backup.imported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d partage importé.</string>
+			<key>other</key>
+			<string>%d partages importés.</string>
+		</dict>
+	</dict>
+	<key>shares.backup.skipped</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d ignoré (déjà enregistré ou invalide).</string>
+			<key>other</key>
+			<string>%d ignorés (déjà enregistrés ou invalides).</string>
+		</dict>
+	</dict>
+	<key>shares.backup.exported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d partage exporté, sans son mot de passe.</string>
+			<key>other</key>
+			<string>%d partages exportés, sans leurs mots de passe.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

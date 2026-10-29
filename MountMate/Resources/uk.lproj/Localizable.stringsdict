@@ -322,5 +322,65 @@
 			<string>помилок: %d</string>
 		</dict>
 	</dict>
+	<key>shares.backup.imported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Імпортовано %d ресурс.</string>
+			<key>few</key>
+			<string>Імпортовано %d ресурси.</string>
+			<key>many</key>
+			<string>Імпортовано %d ресурсів.</string>
+			<key>other</key>
+			<string>Імпортовано %d ресурсу.</string>
+		</dict>
+	</dict>
+	<key>shares.backup.skipped</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Пропущено %d (уже збережений або хибний).</string>
+			<key>few</key>
+			<string>Пропущено %d (уже збережені або хибні).</string>
+			<key>many</key>
+			<string>Пропущено %d (уже збережені або хибні).</string>
+			<key>other</key>
+			<string>Пропущено %d (уже збережені або хибні).</string>
+		</dict>
+	</dict>
+	<key>shares.backup.exported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Експортовано %d ресурс без пароля.</string>
+			<key>few</key>
+			<string>Експортовано %d ресурси без паролів.</string>
+			<key>many</key>
+			<string>Експортовано %d ресурсів без паролів.</string>
+			<key>other</key>
+			<string>Експортовано %d ресурсу без паролів.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

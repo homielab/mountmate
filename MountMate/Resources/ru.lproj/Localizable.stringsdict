@@ -322,5 +322,65 @@
 			<string>ошибок: %d</string>
 		</dict>
 	</dict>
+	<key>shares.backup.imported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Импортирован %d ресурс.</string>
+			<key>few</key>
+			<string>Импортировано %d ресурса.</string>
+			<key>many</key>
+			<string>Импортировано %d ресурсов.</string>
+			<key>other</key>
+			<string>Импортировано %d ресурса.</string>
+		</dict>
+	</dict>
+	<key>shares.backup.skipped</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Пропущен %d (уже сохранён или неверен).</string>
+			<key>few</key>
+			<string>Пропущено %d (уже сохранены или неверны).</string>
+			<key>many</key>
+			<string>Пропущено %d (уже сохранены или неверны).</string>
+			<key>other</key>
+			<string>Пропущено %d (уже сохранены или неверны).</string>
+		</dict>
+	</dict>
+	<key>shares.backup.exported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Экспортирован %d ресурс без пароля.</string>
+			<key>few</key>
+			<string>Экспортировано %d ресурса без паролей.</string>
+			<key>many</key>
+			<string>Экспортировано %d ресурсов без паролей.</string>
+			<key>other</key>
+			<string>Экспортировано %d ресурса без паролей.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

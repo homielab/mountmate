@@ -258,5 +258,53 @@
 			<string>%d failed</string>
 		</dict>
 	</dict>
+	<key>shares.backup.imported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Imported %d share.</string>
+			<key>other</key>
+			<string>Imported %d shares.</string>
+		</dict>
+	</dict>
+	<key>shares.backup.skipped</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Skipped %d (already saved or invalid).</string>
+			<key>other</key>
+			<string>Skipped %d (already saved or invalid).</string>
+		</dict>
+	</dict>
+	<key>shares.backup.exported</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Exported %d share without its password.</string>
+			<key>other</key>
+			<string>Exported %d shares without their passwords.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

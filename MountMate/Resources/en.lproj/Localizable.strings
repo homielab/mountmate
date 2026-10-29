@@ -582,3 +582,15 @@
 "Could not eject “%@”: %@" = "Could not eject “%@”: %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "The disk holding “%@” has a protected volume, so it was not ejected.";
 "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point.";
+
+/* Network share export and import */
+"Export Shares…" = "Export Shares…";
+"Import Shares from File…" = "Import Shares from File…";
+"Export or Import Shares" = "Export or Import Shares";
+"Export your saved shares to a file, or import them on another Mac" = "Export your saved shares to a file, or import them on another Mac";
+"Passwords are not exported. They stay in this Mac’s Keychain." = "Passwords are not exported. They stay in this Mac’s Keychain.";
+"Could Not Export Shares" = "Could Not Export Shares";
+"Could Not Import Shares" = "Could Not Import Shares";
+"This file is not a MountMate network share export." = "This file is not a MountMate network share export.";
+"This file was exported by a newer version of MountMate. Update MountMate to import it." = "This file was exported by a newer version of MountMate. Update MountMate to import it.";
+"Passwords are not exported. Add them by editing each share." = "Passwords are not exported. Add them by editing each share.";

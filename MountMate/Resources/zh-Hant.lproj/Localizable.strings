@@ -582,3 +582,15 @@
 "Could not eject “%@”: %@" = "無法推出「%@」：%@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "包含「%@」的磁碟有受保護的磁碟卷，因此未推出。";
 "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "未將「%1$@」掛載到「%2$@」，因為該檔案夾不是空的：掛載後其中的檔案會被隱藏，直到卸載該共享。請選擇一個空的檔案夾作為掛載點。";
+
+/* Network share export and import */
+"Export Shares…" = "匯出共享…";
+"Import Shares from File…" = "從檔案匯入共享…";
+"Export or Import Shares" = "匯出或匯入共享";
+"Export your saved shares to a file, or import them on another Mac" = "將已儲存的共享匯出至檔案，或在另一台 Mac 上匯入";
+"Passwords are not exported. They stay in this Mac’s Keychain." = "密碼不會被匯出，它們仍保存在這台 Mac 的鑰匙圈中。";
+"Could Not Export Shares" = "無法匯出共享";
+"Could Not Import Shares" = "無法匯入共享";
+"This file is not a MountMate network share export." = "此檔案不是 MountMate 網路共享匯出檔案。";
+"This file was exported by a newer version of MountMate. Update MountMate to import it." = "此檔案由較新版本的 MountMate 匯出。請更新 MountMate 後再匯入。";
+"Passwords are not exported. Add them by editing each share." = "密碼不會被匯出。請編輯每個共享以加入密碼。";

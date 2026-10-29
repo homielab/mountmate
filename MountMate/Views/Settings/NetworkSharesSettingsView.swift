@@ -1,6 +1,8 @@
 //  Created by homielab.com
 
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct NetworkSharesSettingsView: View {
   @ObservedObject private var persistence = PersistenceManager.shared
@@ -29,6 +31,18 @@ struct NetworkSharesSettingsView: View {
         .controlSize(.small)
         .disabled(isImporting)
         .help("Import SMB, NFS or AFP shares that are currently mounted in Finder")
+
+        Menu {
+          Button("Export Shares…", action: exportShares)
+            .disabled(persistence.networkShares.isEmpty)
+          Button("Import Shares from File…", action: importSharesFromFile)
+        } label: {
+          Image(systemName: "arrow.up.arrow.down.circle")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .accessibilityLabel(Text("Export or Import Shares"))
+        .help("Export your saved shares to a file, or import them on another Mac")
 
         Button(action: { showingAddSheet = true }) {
           Label("Add Share", systemImage: "plus")
@@ -120,6 +134,53 @@ struct NetworkSharesSettingsView: View {
     importMessage = importResultMessage(added: count, discovered: uniqueShares.count)
     networkManager.refreshMountStatus()
     return !uniqueShares.isEmpty
+  }
+
+  /// Saves every share (without passwords) to a JSON file the user picks.
+  private func exportShares() {
+    let panel = NSSavePanel()
+    panel.allowedContentTypes = [.json]
+    panel.nameFieldStringValue = NetworkShareBackup.defaultFileName
+    panel.message = NSLocalizedString(
+      "Passwords are not exported. They stay in this Mac’s Keychain.",
+      comment: "Network share export panel message")
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    do {
+      try NetworkShareBackup.encode(persistence.networkShares).write(to: url, options: .atomic)
+      importMessage = PluralizedString.format(
+        "shares.backup.exported", persistence.networkShares.count)
+      Log.persistence.info(
+        "Exported \(persistence.networkShares.count, privacy: .public) network shares.")
+    } catch {
+      errorAlert = AppAlert(
+        title: NSLocalizedString("Could Not Export Shares", comment: "Alert title"),
+        message: error.localizedDescription, kind: .basic)
+    }
+  }
+
+  /// Adds the shares of an exported file, skipping saved and invalid ones.
+  private func importSharesFromFile() {
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.json]
+    panel.allowsMultipleSelection = false
+    panel.canChooseDirectories = false
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    do {
+      let plan = try NetworkShareBackup.importPlan(
+        from: Data(contentsOf: url), existing: persistence.networkShares,
+        mountPoint: networkManager.configuredMountPoint(for:))
+      persistence.addNetworkSharesIfNeeded(plan.shares)
+      importMessage = NetworkShareBackup.resultMessage(for: plan)
+      Log.persistence.info(
+        "Imported \(plan.shares.count, privacy: .public) network shares from a file, skipped \(plan.skipped, privacy: .public)."
+      )
+      networkManager.refreshMountStatus()
+    } catch {
+      errorAlert = AppAlert(
+        title: NSLocalizedString("Could Not Import Shares", comment: "Alert title"),
+        message: (error as? NetworkShareBackup.ReadError)?.message ?? error.localizedDescription,
+        kind: .basic)
+    }
   }
 
   private func importResultMessage(added: Int, discovered: Int) -> String {

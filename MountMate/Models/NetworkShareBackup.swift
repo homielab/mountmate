@@ -1,0 +1,228 @@
+//  Created by homielab.com
+
+import Foundation
+
+/// The file format of Settings → Network Shares → Export Shares…, used to
+/// move saved shares to another Mac. It holds what the share sheet holds
+/// except passwords (they stay in the Keychain of the Mac they were typed
+/// on) and share IDs (imported shares get new ones).
+///
+/// ```json
+/// {
+///   "format" : "mountmate.networkShares",
+///   "shares" : [ { "name" : "Media", "protocol" : "smb", "server" : "nas.local", … } ],
+///   "version" : 1
+/// }
+/// ```
+enum NetworkShareBackup {
+  static let format = "mountmate.networkShares"
+  static let currentVersion = 1
+  static let defaultFileName = "MountMate Network Shares.json"
+
+  enum ReadError: Error, Equatable {
+    /// Not JSON, or not a MountMate share export.
+    case notABackup
+    /// Written by a newer MountMate with a format this version cannot read.
+    case newerVersion(Int)
+
+    var message: String {
+      switch self {
+      case .notABackup:
+        return NSLocalizedString(
+          "This file is not a MountMate network share export.",
+          comment: "Network share import error")
+      case .newerVersion:
+        return NSLocalizedString(
+          "This file was exported by a newer version of MountMate. Update MountMate to import it.",
+          comment: "Network share import error")
+      }
+    }
+  }
+
+  /// One share in the file. Every field but the protocol, server and path
+  /// may be missing (a hand-written file), with the share sheet's defaults.
+  struct Entry: Codable, Equatable {
+    var name: String
+    var shareProtocol: ShareProtocol
+    var server: String
+    var sharePath: String
+    var username: String
+    var mountAtLogin: Bool
+    var keepMounted: Bool
+    var customMountPoint: String?
+
+    private enum CodingKeys: String, CodingKey {
+      case name, server, sharePath, username, mountAtLogin, keepMounted, customMountPoint
+      case shareProtocol = "protocol"
+    }
+
+    init(_ share: NetworkShare) {
+      name = share.name
+      shareProtocol = share.shareProtocol
+      server = share.server
+      sharePath = share.sharePath
+      username = share.username
+      mountAtLogin = share.mountAtLogin
+      keepMounted = share.keepMounted
+      customMountPoint = share.customMountPoint
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      // An unknown protocol ("ftp") fails here, so the entry is skipped.
+      shareProtocol = try container.decode(ShareProtocol.self, forKey: .shareProtocol)
+      server = try container.decode(String.self, forKey: .server)
+      sharePath = try container.decode(String.self, forKey: .sharePath)
+      name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+      username = try container.decodeIfPresent(String.self, forKey: .username) ?? ""
+      mountAtLogin = try container.decodeIfPresent(Bool.self, forKey: .mountAtLogin) ?? true
+      keepMounted = try container.decodeIfPresent(Bool.self, forKey: .keepMounted) ?? mountAtLogin
+      customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(name, forKey: .name)
+      try container.encode(shareProtocol, forKey: .shareProtocol)
+      try container.encode(server, forKey: .server)
+      try container.encode(sharePath, forKey: .sharePath)
+      try container.encode(username, forKey: .username)
+      try container.encode(mountAtLogin, forKey: .mountAtLogin)
+      try container.encode(keepMounted, forKey: .keepMounted)
+      try container.encodeIfPresent(customMountPoint, forKey: .customMountPoint)
+    }
+
+    /// A new saved share (new ID) with the fields cleaned like the share
+    /// sheet cleans them, or nil when the server or the path is empty.
+    func makeShare() -> NetworkShare? {
+      let cleanedServer = server.trimmingCharacters(in: .whitespacesAndNewlines)
+      let cleanedPath = NetworkShare.cleanedSharePathInput(sharePath)
+      guard !cleanedServer.isEmpty, !cleanedPath.isEmpty else { return nil }
+      let mountPoint = customMountPoint?.trimmingCharacters(in: .whitespacesAndNewlines)
+      return NetworkShare(
+        name: NetworkShare.resolvedDisplayName(name, sharePath: cleanedPath),
+        server: cleanedServer, sharePath: cleanedPath,
+        username: shareProtocol.supportsUserCredentials
+          ? username.trimmingCharacters(in: .whitespacesAndNewlines) : "",
+        mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
+        customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil)
+    }
+  }
+
+  private struct File: Encodable {
+    let format: String
+    let version: Int
+    let shares: [Entry]
+  }
+
+  /// Reads the header first, so a file of another kind or a newer format is
+  /// reported as such instead of as "every share was invalid".
+  private struct Header: Decodable {
+    let format: String
+    let version: Int
+  }
+
+  private struct EntryList: Decodable {
+    let shares: [LossyEntry]
+  }
+
+  /// An entry that could not be decoded becomes nil instead of failing the
+  /// whole file.
+  private struct LossyEntry: Decodable {
+    let entry: Entry?
+
+    init(from decoder: Decoder) throws {
+      entry = try? Entry(from: decoder)
+    }
+  }
+
+  /// The export file for `shares`: pretty-printed JSON without passwords.
+  static func encode(_ shares: [NetworkShare]) throws -> Data {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+    return try encoder.encode(
+      File(format: format, version: currentVersion, shares: shares.map(Entry.init)))
+  }
+
+  /// The entries of an export file; nil marks one that could not be read
+  /// (missing server, unknown protocol, wrong type).
+  static func decode(_ data: Data) throws -> [Entry?] {
+    let decoder = JSONDecoder()
+    guard let header = try? decoder.decode(Header.self, from: data), header.format == format
+    else { throw ReadError.notABackup }
+    guard header.version <= currentVersion else {
+      throw ReadError.newerVersion(header.version)
+    }
+    guard let list = try? decoder.decode(EntryList.self, from: data) else {
+      throw ReadError.notABackup
+    }
+    return list.shares.map(\.entry)
+  }
+
+  struct ImportPlan: Equatable {
+    /// Shares to save, with new IDs and names that do not clash.
+    var shares: [NetworkShare]
+    /// Entries already saved (same protocol, host and path), also twice in
+    /// the file.
+    var duplicates: Int
+    /// Entries that could not be read or would not pass the share sheet's
+    /// checks (bad name, mount point used by another share).
+    var invalid: Int
+
+    var skipped: Int { duplicates + invalid }
+  }
+
+  /// What importing `data` next to `existing` shares would add.
+  /// - Parameter mountPoint: the folder a share is mounted at, as for
+  ///   `NetworkShareValidation`.
+  static func importPlan(
+    from data: Data, existing: [NetworkShare], mountPoint: (NetworkShare) -> String
+  ) throws -> ImportPlan {
+    var plan = ImportPlan(shares: [], duplicates: 0, invalid: 0)
+    for entry in try decode(data) {
+      guard var share = entry?.makeShare() else {
+        plan.invalid += 1
+        continue
+      }
+      let saved = existing + plan.shares
+      if PersistenceManager.containsNetworkShare(matching: share, in: saved) {
+        plan.duplicates += 1
+        continue
+      }
+      // The default mount folder is ~/mountmate/<name>, so "Public" from two
+      // servers becomes "Public" and "Public (2)" as with Import Mounted.
+      share.name = PersistenceManager.uniqueShareName(share.name, existing: saved.map(\.name))
+      if NetworkShareValidation.error(
+        candidate: share, original: nil, otherShares: saved, mountPoint: mountPoint) != nil
+      {
+        plan.invalid += 1
+        continue
+      }
+      plan.shares.append(share)
+    }
+    return plan
+  }
+
+  /// "Imported 3 shares.", then "Skipped 2 …" when something was skipped and
+  /// a reminder to add passwords when an imported share can have one.
+  static func resultMessage(
+    for plan: ImportPlan, bundle: Bundle = .main, locale: Locale = .current
+  ) -> String {
+    var sentences = [
+      PluralizedString.format(
+        "shares.backup.imported", plan.shares.count, bundle: bundle, locale: locale)
+    ]
+    if plan.skipped > 0 {
+      sentences.append(
+        PluralizedString.format(
+          "shares.backup.skipped", plan.skipped, bundle: bundle, locale: locale))
+    }
+    if plan.shares.contains(where: { $0.shareProtocol.supportsUserCredentials }) {
+      sentences.append(
+        bundle.localizedString(
+          forKey: "Passwords are not exported. Add them by editing each share.", value: nil,
+          table: nil))
+    }
+    return sentences.joined(separator: " ")
+  }
+}

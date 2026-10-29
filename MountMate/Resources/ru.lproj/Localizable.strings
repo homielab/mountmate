@@ -582,3 +582,15 @@
 "Could not eject “%@”: %@" = "Не удалось извлечь «%@»: %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "На диске с «%@» есть защищённый том, поэтому он не извлечён.";
 "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "«%1$@» не смонтирован в «%2$@», так как эта папка не пуста: монтирование скрыло бы её файлы до отключения ресурса. Выберите пустую папку в качестве точки монтирования.";
+
+/* Network share export and import */
+"Export Shares…" = "Экспортировать ресурсы…";
+"Import Shares from File…" = "Импортировать ресурсы из файла…";
+"Export or Import Shares" = "Экспорт или импорт ресурсов";
+"Export your saved shares to a file, or import them on another Mac" = "Экспортируйте сохранённые сетевые ресурсы в файл или импортируйте их на другом Mac";
+"Passwords are not exported. They stay in this Mac’s Keychain." = "Пароли не экспортируются. Они остаются в связке ключей этого Mac.";
+"Could Not Export Shares" = "Не удалось экспортировать ресурсы";
+"Could Not Import Shares" = "Не удалось импортировать ресурсы";
+"This file is not a MountMate network share export." = "Этот файл не является экспортом сетевых ресурсов MountMate.";
+"This file was exported by a newer version of MountMate. Update MountMate to import it." = "Этот файл экспортирован более новой версией MountMate. Обновите MountMate, чтобы импортировать его.";
+"Passwords are not exported. Add them by editing each share." = "Пароли не экспортируются. Добавьте их, отредактировав каждый ресурс.";

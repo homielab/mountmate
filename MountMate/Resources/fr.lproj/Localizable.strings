@@ -582,3 +582,15 @@
 "Could not eject “%@”: %@" = "Impossible d’éjecter « %@ » : %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "Le disque qui contient « %@ » a un volume protégé, il n’a donc pas été éjecté.";
 "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "« %1$@ » n’a pas été monté sur « %2$@ », car ce dossier n’est pas vide : le montage masquerait ses fichiers jusqu’au démontage du partage. Choisissez un dossier vide comme point de montage.";
+
+/* Network share export and import */
+"Export Shares…" = "Exporter les partages…";
+"Import Shares from File…" = "Importer des partages depuis un fichier…";
+"Export or Import Shares" = "Exporter ou importer les partages";
+"Export your saved shares to a file, or import them on another Mac" = "Exportez vos partages enregistrés dans un fichier, ou importez-les sur un autre Mac";
+"Passwords are not exported. They stay in this Mac’s Keychain." = "Les mots de passe ne sont pas exportés. Ils restent dans le trousseau de ce Mac.";
+"Could Not Export Shares" = "Impossible d’exporter les partages";
+"Could Not Import Shares" = "Impossible d’importer les partages";
+"This file is not a MountMate network share export." = "Ce fichier n’est pas un export de partages réseau MountMate.";
+"This file was exported by a newer version of MountMate. Update MountMate to import it." = "Ce fichier a été exporté par une version plus récente de MountMate. Mettez MountMate à jour pour l’importer.";
+"Passwords are not exported. Add them by editing each share." = "Les mots de passe ne sont pas exportés. Ajoutez-les en modifiant chaque partage.";

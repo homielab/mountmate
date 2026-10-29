@@ -411,8 +411,16 @@ class PersistenceManager: ObservableObject {
   /// protocol, same host (ignoring `user@`, `:port` and IPv6 brackets) and
   /// same path (case-insensitive for SMB/AFP, case-sensitive for NFS).
   func containsNetworkShare(matching share: NetworkShare) -> Bool {
+    Self.containsNetworkShare(matching: share, in: networkShares)
+  }
+
+  /// `containsNetworkShare(matching:)` against `shares` instead of the saved
+  /// list (used to plan an import before saving anything).
+  static func containsNetworkShare(matching share: NetworkShare, in shares: [NetworkShare])
+    -> Bool
+  {
     let endpoint = MountedNetworkShare.endpoint(for: share)
-    return networkShares.contains { existing in
+    return shares.contains { existing in
       existing.shareProtocol == share.shareProtocol
         && MountedNetworkShare.endpoint(for: existing) == endpoint
     }

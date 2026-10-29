@@ -582,3 +582,15 @@
 "Could not eject “%@”: %@" = "Không đẩy ra được “%@”: %@";
 "The disk holding “%@” has a protected volume, so it was not ejected." = "Ổ chứa “%@” có phân vùng được bảo vệ nên không được đẩy ra.";
 "“%1$@” was not mounted at “%2$@” because that folder is not empty: mounting there would hide its files until the share is unmounted. Choose an empty folder as the mount point." = "Không gắn “%1$@” tại “%2$@” vì thư mục này không trống: gắn vào đó sẽ che các tệp của nó cho đến khi tháo thư mục chia sẻ. Hãy chọn một thư mục trống làm điểm gắn.";
+
+/* Network share export and import */
+"Export Shares…" = "Xuất thư mục chia sẻ…";
+"Import Shares from File…" = "Nhập thư mục chia sẻ từ tệp…";
+"Export or Import Shares" = "Xuất hoặc nhập thư mục chia sẻ";
+"Export your saved shares to a file, or import them on another Mac" = "Xuất các thư mục chia sẻ đã lưu ra tệp, hoặc nhập chúng trên máy Mac khác";
+"Passwords are not exported. They stay in this Mac’s Keychain." = "Mật khẩu không được xuất. Chúng vẫn nằm trong Chuỗi khoá của máy Mac này.";
+"Could Not Export Shares" = "Không thể xuất thư mục chia sẻ";
+"Could Not Import Shares" = "Không thể nhập thư mục chia sẻ";
+"This file is not a MountMate network share export." = "Tệp này không phải tệp xuất thư mục chia sẻ mạng của MountMate.";
+"This file was exported by a newer version of MountMate. Update MountMate to import it." = "Tệp này được xuất từ phiên bản MountMate mới hơn. Hãy cập nhật MountMate để nhập.";
+"Passwords are not exported. Add them by editing each share." = "Mật khẩu không được xuất. Hãy thêm mật khẩu bằng cách sửa từng thư mục chia sẻ.";
