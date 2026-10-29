@@ -72,7 +72,7 @@ enum NetworkShareBackup {
       // An unknown protocol ("ftp") fails here, so the entry is skipped.
       shareProtocol = try container.decode(ShareProtocol.self, forKey: .shareProtocol)
       server = try container.decode(String.self, forKey: .server)
-      sharePath = try container.decode(String.self, forKey: .sharePath)
+      sharePath = try container.decodeIfPresent(String.self, forKey: .sharePath) ?? ""
       name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
       username = try container.decodeIfPresent(String.self, forKey: .username) ?? ""
       mountAtLogin = try container.decodeIfPresent(Bool.self, forKey: .mountAtLogin) ?? true
@@ -93,17 +93,23 @@ enum NetworkShareBackup {
     }
 
     /// A new saved share (new ID) with the fields cleaned like the share
-    /// sheet cleans them, or nil when the server or the path is empty.
+    /// sheet cleans them (a URL or UNC server is split), or nil when the server or the path is empty.
     func makeShare() -> NetworkShare? {
-      let cleanedServer = server.trimmingCharacters(in: .whitespacesAndNewlines)
-      let cleanedPath = NetworkShare.cleanedSharePathInput(sharePath)
+      // A hand-written file may hold a whole URL or UNC path as the server;
+      // its path and username fill the entry's fields only when those are empty.
+      let parsed = NetworkShare.cleanedServerInput(server)
+      let cleanedServer = parsed.server
+      let ownPath = NetworkShare.cleanedSharePathInput(sharePath)
+      let cleanedPath = ownPath.isEmpty ? parsed.sharePath : ownPath
+      let ownUser = username.trimmingCharacters(in: .whitespacesAndNewlines)
+      let cleanedUser = ownUser.isEmpty ? parsed.username : ownUser
       guard !cleanedServer.isEmpty, !cleanedPath.isEmpty else { return nil }
       let mountPoint = customMountPoint?.trimmingCharacters(in: .whitespacesAndNewlines)
       return NetworkShare(
         name: NetworkShare.resolvedDisplayName(name, sharePath: cleanedPath),
         server: cleanedServer, sharePath: cleanedPath,
         username: shareProtocol.supportsUserCredentials
-          ? username.trimmingCharacters(in: .whitespacesAndNewlines) : "",
+          ? cleanedUser : "",
         mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
         customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil)
     }

@@ -158,6 +158,43 @@ final class NetworkShareBackupTests: XCTestCase {
     XCTAssertNil(share.customMountPoint)
   }
 
+  func testSplitsAURLInTheServerField() throws {
+    let plan = try plan(file(#"{"protocol": "smb", "server": "smb://admin@nas.local/Public"}"#))
+    let share = try XCTUnwrap(plan.shares.first)
+    XCTAssertEqual(share.server, "nas.local")
+    XCTAssertEqual(share.sharePath, "Public")
+    XCTAssertEqual(share.username, "admin")
+    XCTAssertEqual(share.name, "Public")
+  }
+
+  func testSplitsAUNCPathInTheServerField() throws {
+    let plan = try plan(file(#"{"protocol": "smb", "server": "\\\\nas\\Public", "sharePath": ""}"#))
+    let share = try XCTUnwrap(plan.shares.first)
+    XCTAssertEqual(share.server, "nas")
+    XCTAssertEqual(share.sharePath, "Public")
+  }
+
+  func testKeepsThePortAndPrefersTheEntrysOwnPathAndUser() throws {
+    let plan = try plan(
+      file(
+        #"{"protocol": "smb", "server": "bob@nas:8445/Other", "sharePath": "Media", "username": "jane"}"#
+      ))
+    let share = try XCTUnwrap(plan.shares.first)
+    XCTAssertEqual(share.server, "nas:8445")
+    XCTAssertEqual(share.sharePath, "Media")
+    XCTAssertEqual(share.username, "jane")
+  }
+
+  func testSkipsAURLEntryThatMatchesASavedShareAfterCleanup() throws {
+    let saved = NetworkShare(name: "Public", server: "nas.local", sharePath: "Public", username: "")
+    let plan = try plan(
+      file(
+        #"{"protocol": "smb", "server": "smb://admin@NAS.local/Public"}, {"protocol": "smb", "server": "\\\\nas2\\Data"}, {"protocol": "smb", "server": "smb://nas2/Data"}"#
+      ), existing: [saved])
+    XCTAssertEqual(plan.shares.map(\.server), ["nas2"])
+    XCTAssertEqual(plan.duplicates, 2)
+  }
+
   // MARK: - Whole file
 
   func testRejectsAFileThatIsNotAnExport() {

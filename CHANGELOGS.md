@@ -87,6 +87,7 @@ All notable changes to this project will be documented in this file.
 - Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
 
 ### Fixed
+- Importing shares from a hand-written file whose server is a full address (`smb://admin@nas.local/Public`, `\\nas\Public`) now splits it into server, share path and username instead of saving a share that never mounts.
 
 - **Renaming exFAT drives**: exFAT volumes now accept names up to 15 characters (such as "Photos Backup") instead of being cut off at 11; FAT32 stays at 11.
 - **Duplicate keyboard shortcuts**: recording a shortcut that another MountMate action already uses is refused with “Already used by Unmount All Volumes” (or the action’s name) instead of being saved, so no shortcut is left dead and Settings no longer blames another app. Duplicates saved by older versions are shown the same way.
