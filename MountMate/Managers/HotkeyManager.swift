@@ -475,7 +475,8 @@ class HotkeyManager: ObservableObject {
     let succeeded = max(attempted - failed, 0)
     FeedbackHUD.show(
       HotkeyFeedback.message(action: action, succeeded: succeeded, failed: failed),
-      systemImage: HotkeyFeedback.systemImage(succeeded: succeeded, failed: failed))
+      systemImage: HotkeyFeedback.systemImage(succeeded: succeeded, failed: failed),
+      tint: HotkeyFeedback.tint(succeeded: succeeded, failed: failed))
   }
 }
 

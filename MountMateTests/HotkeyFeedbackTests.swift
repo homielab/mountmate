@@ -73,4 +73,11 @@ final class HotkeyFeedbackTests: XCTestCase {
     XCTAssertEqual(
       HotkeyFeedback.systemImage(succeeded: 0, failed: 1), "exclamationmark.triangle.fill")
   }
+
+  func testTintIsGreenOnlyWhenEverythingWorked() {
+    XCTAssertEqual(HotkeyFeedback.tint(succeeded: 2, failed: 0), .success)
+    XCTAssertEqual(HotkeyFeedback.tint(succeeded: 0, failed: 0), .neutral)
+    XCTAssertEqual(HotkeyFeedback.tint(succeeded: 1, failed: 1), .warning)
+    XCTAssertEqual(HotkeyFeedback.tint(succeeded: 0, failed: 1), .warning)
+  }
 }

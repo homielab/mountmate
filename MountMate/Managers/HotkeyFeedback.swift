@@ -42,6 +42,13 @@ enum HotkeyFeedback {
     return succeeded > 0 ? "checkmark.circle.fill" : "info.circle.fill"
   }
 
+  /// Icon colour: orange when something failed, grey when there was
+  /// nothing to do, green only when everything worked.
+  static func tint(succeeded: Int, failed: Int) -> HUDTint {
+    if failed > 0 { return .warning }
+    return succeeded > 0 ? .success : .neutral
+  }
+
   private struct Keys {
     let nothing: String
     let done: String

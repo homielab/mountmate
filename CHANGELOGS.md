@@ -22,7 +22,6 @@ All notable changes to this project will be documented in this file.
 - **Notification actions**: the "Cannot Reconnect" notification now has a "Reconnect Now" button that retries right away, and clicking any MountMate notification opens the MountMate popover.
 - **Reconnect Now**: a share or volume that Keep Alive is waiting to reconnect now shows "Retrying in N seconds" under "Reconnecting…", with a "Reconnect Now" button (also in the right-click menu) that retries right away instead of waiting out the backoff. The countdown only updates while the popover is open.
 - **Reconnecting icon**: while Keep Alive is reconnecting a share or volume, the menu bar icon shows a Wi-Fi badge (VoiceOver says "Reconnecting") and returns to normal once everything is connected.
-
 - **Copy Diagnostics**: Settings → General → Logs has a "Copy Diagnostics" button that puts the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log on the clipboard, ready to paste into a bug report. Passwords, paths, and disk and share names are left out.
 - **Mount Again on Wake**: with "Unmount All Disks on Sleep" on, a new switch (Settings → General → Behavior, on by default) mounts the unmounted disks again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted. If a disk could not be unmounted before sleep in time, a notification (when notifications are on) names it after wake.
 - **Shortcuts**: the Shortcuts app now has three MountMate actions: Mount All Volumes, Unmount All Volumes and Mount Network Share (choose one of your saved shares). Use them in automations, for example mounting a NAS when you arrive home or unmounting everything before bed. A volume or share that cannot be mounted or unmounted is reported as the shortcut's error instead of an alert, and no popover opens.
@@ -30,7 +29,6 @@ All notable changes to this project will be documented in this file.
 - **Notifications** (Settings → General, off by default): MountMate can notify you when Keep Alive cannot reconnect a share or volume and when it is back, when a blocked disk mounted before MountMate started could not be unmounted, and when "Unmount All Disks on Sleep" had not finished before the Mac slept. A mount that stays down gives one notification, not one per retry. With notifications on, the "Unmount When Idle" notice also goes to Notification Center instead of the short on-screen message. macOS asks for permission only when you turn the setting on.
 - **Unmount When Idle**: Right-click a volume on an external drive and choose "Unmount When Idle" to unmount it automatically after 1, 5, 15, 30 or 60 minutes without reads or writes on the drive. The unmount is never forced: a volume that is still in use stays mounted and is tried again later. Volumes kept mounted, internal disks, disk images and network shares are never affected. Manage the list under Settings → Management.
 - **Forget Saved Password**: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
-
 - **Copy Path and Open in Terminal**: The right-click menu of a mounted volume or network share now has "Copy Path" (puts the mount path on the clipboard) and "Open in Terminal" (opens a Terminal window in that folder). They are not shown for volumes that are not mounted.
 - **Quiet update reminders**: An update found by an automatic check no longer opens a window on top of other apps. The menu bar icon gets a small dot (VoiceOver says "Update available") and the popover shows "MountMate X.Y is available" with a "View…" button that opens the update window. "Check for Updates..." still shows the window right away.
 - **Updates**: Settings → About & Updates has an "Automatically check for updates" switch, automatic checks are on from the first launch (no more question at the second launch), and the popover header has a "Check for Updates..." button.
@@ -38,7 +36,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **Website search results and link previews** now describe what MountMate does (network shares, Keep Alive, Homebrew), and the screenshots have descriptive text for screen readers that tells the light and dark versions apart.
-
 - Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).
 - **Faster list after plugging in a disk**: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.
 - Internal: the decision to allow or refuse a disk mount (disk images, mounts MountMate asked for, Block USB Auto-Mount for USB drives and SD cards, the blocked volumes list, Allow Requested Mounts) is now a separate, unit-tested `MountApprovalDecision` covering every combination. No change in behavior.
@@ -86,6 +83,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Keyboard shortcut feedback colours**: the message after a keyboard shortcut now shows an orange icon when something failed ("Ejected 1 disk, 1 failed") and a grey one when there was nothing to do; green is kept for success only.
 - **Volume Almost Full** is shown again when a volume fills up again after you freed space (it drops at least 5 points below the warning level first), not only after it is unmounted and mounted again. A volume hovering around the level still gets one notification.
 - **Network share sizes with an unreachable server**: a share whose server does not answer no longer makes every opening of the menu or Settings ask all your shares for their size again (up to 2 seconds each time); sizes are refreshed at most once a minute, and a share you just mounted still gets its size right away.
 - **Share preview shows the real address**: the "Preview" line in Add/Edit Share now shows exactly what MountMate connects to: IPv6 hosts in brackets, the port, encoded spaces, and for NFS the `server:/export` target (with `-o port=N`) instead of a made-up `nfs://` URL.

@@ -7,18 +7,36 @@ import SwiftUI
 /// seconds, like the system volume HUD. Used after actions that end with a
 /// password prompt, so the user can see the change was made even when
 /// MountMate's menu has already closed. Never takes focus or clicks.
+/// Colour of the HUD icon, so a failure never looks like a success.
+enum HUDTint: Equatable {
+  case success
+  case warning
+  case neutral
+
+  var color: Color {
+    switch self {
+    case .success: return .green
+    case .warning: return .orange
+    case .neutral: return .secondary
+    }
+  }
+}
+
 enum FeedbackHUD {
   private static var panel: NSPanel?
   private static var hideWork: DispatchWorkItem?
   private static var visibility = HUDVisibility()
 
-  static func show(_ message: String, systemImage: String = "checkmark.circle.fill") {
+  static func show(
+    _ message: String, systemImage: String = "checkmark.circle.fill", tint: HUDTint = .success
+  ) {
     guard Thread.isMainThread else {
-      DispatchQueue.main.async { show(message, systemImage: systemImage) }
+      DispatchQueue.main.async { show(message, systemImage: systemImage, tint: tint) }
       return
     }
 
-    let hosting = NSHostingView(rootView: HUDContent(message: message, systemImage: systemImage))
+    let hosting = NSHostingView(
+      rootView: HUDContent(message: message, systemImage: systemImage, tint: tint))
     let size = hosting.fittingSize
     let panel = panel ?? makePanel()
     self.panel = panel
@@ -80,12 +98,13 @@ enum FeedbackHUD {
 private struct HUDContent: View {
   let message: String
   let systemImage: String
+  let tint: HUDTint
 
   var body: some View {
     HStack(spacing: 10) {
       Image(systemName: systemImage)
         .font(.system(size: 18, weight: .semibold))
-        .foregroundStyle(.green)
+        .foregroundStyle(tint.color)
       Text(message)
         .font(.system(size: 13, weight: .medium))
         .fixedSize(horizontal: false, vertical: true)
