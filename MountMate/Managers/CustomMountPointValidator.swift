@@ -4,9 +4,13 @@ import Foundation
 
 /// Checks of the folder a user picks as a volume's custom mount point.
 enum CustomMountPointValidator {
-  /// Trims surrounding whitespace and expands `~`.
+  /// Trims surrounding whitespace, expands `~` and, for an absolute path,
+  /// collapses `//`, `.` and `..` (`/x/..` becomes `/`).
   static func normalizedPath(_ rawPath: String) -> String {
-    (rawPath.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
+    let expanded =
+      (rawPath.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
+    guard expanded.hasPrefix("/") else { return expanded }
+    return URL(fileURLWithPath: expanded).standardizedFileURL.path
   }
 
   /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.

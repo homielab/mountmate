@@ -38,6 +38,20 @@ final class MountPointPathTests: XCTestCase {
     XCTAssertEqual(error(" / "), localized("Custom Mount Point Cannot Be Root"))
   }
 
+  func testRejectsDisguisedRootPaths() {
+    for path in ["//", "/.", "/./", "/x/..", " /a/../ "] {
+      XCTAssertEqual(
+        error(path), localized("Custom Mount Point Cannot Be Root"), "path: \(path)")
+    }
+  }
+
+  func testNormalizesDotSegmentsOfValidPaths() {
+    XCTAssertEqual(
+      CustomMountPointValidator.normalizedPath("/Volumes/Data/../Data"), "/Volumes/Data")
+    XCTAssertEqual(CustomMountPointValidator.normalizedPath("/Volumes//Data/./"), "/Volumes/Data")
+    XCTAssertNil(error("/Volumes/Data/../Data"))
+  }
+
   func testRejectsControlCharacters() {
     XCTAssertEqual(
       error("/Volumes/a\nb"), localized("Custom Mount Point Control Characters"))
