@@ -127,6 +127,16 @@ extension NetworkShare {
       .trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
+  /// The display name to save for `typed`: trimmed of surrounding
+  /// whitespace, or, when nothing is left, the last component of the share
+  /// path (the name is the default mount folder, so it must be a single
+  /// component).
+  static func resolvedDisplayName(_ typed: String, sharePath: String) -> String {
+    let trimmed = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !trimmed.isEmpty { return trimmed }
+    return sharePath.split(separator: "/").last.map(String.init) ?? sharePath
+  }
+
   /// Why `name` cannot be used as a display name, or nil if it can. Without
   /// a custom mount point the name is the mount folder under ~/mountmate, so
   /// it must be a single path component.

@@ -44,11 +44,8 @@ struct EditNetworkShareSheet: View {
     return ShareProtocol.creationCases
   }
 
-  /// The display name, defaulting to the last component of the share path
-  /// (it names the default mount folder, so it must be a single component).
   private var finalName: String {
-    if !name.isEmpty { return name }
-    return cleanedSharePath.split(separator: "/").last.map(String.init) ?? cleanedSharePath
+    NetworkShare.resolvedDisplayName(name, sharePath: cleanedSharePath)
   }
 
   private var isValid: Bool {

@@ -138,6 +138,14 @@ final class NetworkShareCodableTests: XCTestCase {
     XCTAssertNotNil(NetworkShare.displayNameValidationError(".."))
   }
 
+  func testResolvedDisplayNameTrimsAndFallsBackToTheSharePath() {
+    XCTAssertEqual(NetworkShare.resolvedDisplayName(" NAS ", sharePath: "Public"), "NAS")
+    XCTAssertEqual(NetworkShare.resolvedDisplayName("\tMy Share\n", sharePath: "x"), "My Share")
+    XCTAssertEqual(NetworkShare.resolvedDisplayName("   ", sharePath: "Public"), "Public")
+    XCTAssertEqual(NetworkShare.resolvedDisplayName("", sharePath: "export/Data"), "Data")
+    XCTAssertEqual(NetworkShare.resolvedDisplayName("Media", sharePath: "Public"), "Media")
+  }
+
   func testSameEndpointIgnoresCaseSlashesAndScheme() {
     let a = NetworkShare(name: "A", server: "NAS.local", sharePath: "/Media/", username: "")
     let b = NetworkShare(name: "B", server: "nas.local", sharePath: "media", username: "me")
