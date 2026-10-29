@@ -83,6 +83,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Free space on disks with several APFS volumes**: volumes that share one APFS container now show the container's free space and fill level, as Finder does, so "Almost full" warns when the disk is really filling up instead of judging each volume alone.
+
 - **Keyboard shortcut feedback colours**: the message after a keyboard shortcut now shows an orange icon when something failed ("Ejected 1 disk, 1 failed") and a grey one when there was nothing to do; green is kept for success only.
 - **Volume Almost Full** is shown again when a volume fills up again after you freed space (it drops at least 5 points below the warning level first), not only after it is unmounted and mounted again. A volume hovering around the level still gets one notification.
 - **Network share sizes with an unreachable server**: a share whose server does not answer no longer makes every opening of the menu or Settings ask all your shares for their size again (up to 2 seconds each time); sizes are refreshed at most once a minute, and a share you just mounted still gets its size right away.

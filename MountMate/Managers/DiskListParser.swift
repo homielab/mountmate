@@ -304,7 +304,37 @@ struct DiskListParser {
         volumes.append(volume)
       }
     }
-    return APFSContainer(id: containerID, volumes: volumes)
+    let containerSize = apfsVolumesData.compactMap { $0["Size"] as? Int64 }.max() ?? 0
+    return APFSContainer(
+      id: containerID, volumes: Self.apfsContainerUsage(size: containerSize, volumes: volumes))
+  }
+
+  /// APFS volumes share their container's space: diskutil reports each
+  /// volume's `Size` as the container size but `CapacityInUse` per volume.
+  /// With several volumes, free space and usage are those of the whole
+  /// container (as in Finder): free = size − the sum of every volume's use.
+  /// `usedBytes` stays per volume so disk totals do not count it twice.
+  static func apfsContainerUsage(size: Int64, volumes: [Volume]) -> [Volume] {
+    guard size > 0, volumes.count > 1 else { return volumes }
+    let used = volumes.reduce(Int64(0)) { $0 + ($1.usedBytes ?? 0) }
+    let formatter = byteCountFormatter()
+    let free = formatter.string(fromByteCount: max(0, size - used))
+    let usedString = formatter.string(fromByteCount: used)
+    let percentage = min(1, Double(used) / Double(size))
+    return volumes.map { volume in
+      guard volume.usedBytes != nil, volume.storageError == nil else { return volume }
+      var updated = Volume(
+        id: volume.id, deviceIdentifier: volume.deviceIdentifier, diskUUID: volume.diskUUID,
+        name: volume.name, isMounted: volume.isMounted, mountPoint: volume.mountPoint,
+        freeSpace: free, totalSize: volume.totalSize, usedSpace: usedString,
+        usedBytes: volume.usedBytes, fileSystemType: volume.fileSystemType,
+        usagePercentage: percentage, category: volume.category,
+        isProtected: volume.isProtected, snapshots: volume.snapshots,
+        storageError: volume.storageError)
+      updated.isReadOnly = volume.isReadOnly
+      updated.isTimeMachine = volume.isTimeMachine
+      return updated
+    }
   }
 
   private func createVolume(

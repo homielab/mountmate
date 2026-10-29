@@ -141,4 +141,25 @@ final class LowSpaceRulesTests: XCTestCase {
     ]
     XCTAssertEqual(LowSpaceRules.warnings(in: disks, threshold: 0.9).count, 1)
   }
+
+  func testWarnsForEveryVolumeOfAFullContainer() {
+    // 300 + 100 used of a 500-byte container: 80% for both, though "Data"
+    // alone uses 20%.
+    let backup = Volume(
+      id: "1", deviceIdentifier: "disk9s1", diskUUID: nil, name: "Backup",
+      isMounted: true, mountPoint: "/Volumes/Backup", freeSpace: nil, totalSize: nil,
+      usedSpace: nil, usedBytes: 300, fileSystemType: "apfs", usagePercentage: 0.6,
+      category: .user, isProtected: false, snapshots: [])
+    let data = Volume(
+      id: "2", deviceIdentifier: "disk9s2", diskUUID: nil, name: "Data",
+      isMounted: true, mountPoint: "/Volumes/Data", freeSpace: nil, totalSize: nil,
+      usedSpace: nil, usedBytes: 100, fileSystemType: "apfs", usagePercentage: 0.2,
+      category: .user, isProtected: false, snapshots: [])
+    XCTAssertNil(LowSpaceRules.warning(for: data, on: .physical, threshold: 0.8))
+    let shared = DiskListParser.apfsContainerUsage(size: 500, volumes: [backup, data])
+    for volume in shared {
+      XCTAssertEqual(
+        LowSpaceRules.warning(for: volume, on: .physical, threshold: 0.8)?.percentUsed, 80)
+    }
+  }
 }

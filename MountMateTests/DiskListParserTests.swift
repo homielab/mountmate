@@ -293,6 +293,62 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(containerUsed, 300_000_000_000)
   }
 
+  // MARK: - Several volumes in one container
+
+  /// External disk20 with a 500 GB APFS container (disk21) holding "Backup"
+  /// (300 GB used) and "Data" (100 GB used); diskutil gives each volume the
+  /// container size.
+  private func twoVolumeDisks() -> [[String: Any]] {
+    let size: Int64 = 500_000_000_000
+    func volume(_ n: Int, _ name: String, used: Int64) -> [String: Any] {
+      [
+        "DeviceIdentifier": "disk21s\(n)", "VolumeName": name, "Size": size,
+        "CapacityInUse": used, "MountPoint": "/Volumes/\(name)",
+        "VolumeUUID": "2B000000-0000-4000-8000-00000000002\(n)",
+      ]
+    }
+    return [
+      [
+        "DeviceIdentifier": "disk20", "Content": "GUID_partition_scheme", "Size": size + 1,
+        "Partitions": [["DeviceIdentifier": "disk20s2", "Content": "Apple_APFS", "Size": size]],
+      ],
+      [
+        "DeviceIdentifier": "disk21", "Content": "Apple_APFS_Container", "Size": size,
+        "Partitions": [], "APFSPhysicalStores": [["DeviceIdentifier": "disk20s2"]],
+        "APFSVolumes": [
+          volume(1, "Backup", used: 300_000_000_000), volume(2, "Data", used: 100_000_000_000),
+        ],
+      ],
+    ]
+  }
+
+  func testVolumesOfOneContainerShowTheContainerFreeSpace() throws {
+    let result = parser().parse(
+      allDisksAndPartitions: twoVolumeDisks(), rootInfo: [:], unclassifiedDiskIDs: [])
+    let volumes = try XCTUnwrap(result.disks.first?.containers.first?.volumes)
+    XCTAssertEqual(volumes.map(\.name), ["Backup", "Data"])
+    for volume in volumes {
+      XCTAssertEqual(try XCTUnwrap(volume.usagePercentage), 0.8, accuracy: 0.0001)
+      XCTAssertEqual(volume.freeSpace?.hasPrefix("100"), true, volume.freeSpace ?? "nil")
+      XCTAssertNotNil(LowSpaceRules.warning(for: volume, on: .physical, threshold: 0.8))
+    }
+    // Disk totals still count each volume once.
+    XCTAssertEqual(volumes.compactMap(\.usedBytes), [300_000_000_000, 100_000_000_000])
+  }
+
+  func testContainerUsageLeavesSingleVolumesAndErrorsAlone() {
+    let single = [volume(usedBytes: 300)]
+    XCTAssertEqual(DiskListParser.apfsContainerUsage(size: 1_000, volumes: single), single)
+
+    let failed = volume(storageError: "boom")
+    let shared = DiskListParser.apfsContainerUsage(
+      size: 1_000, volumes: [volume(usedBytes: 900), volume(usedBytes: 400), failed])
+    XCTAssertEqual(shared[0].usagePercentage, 1.0)
+    XCTAssertEqual(shared[1].usagePercentage, 1.0)
+    XCTAssertEqual(shared[2], failed)
+    XCTAssertEqual(shared[1].usedBytes, 400)
+  }
+
   // MARK: - Helpers
 
   func testFindAPFSContainerMatchesPhysicalStore() {
