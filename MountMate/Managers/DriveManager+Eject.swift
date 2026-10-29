@@ -87,7 +87,13 @@ extension DriveManager {
     }
   }
 
+  /// Skipped, with a log line only, while another operation runs on `volume`.
   func forceUnmount(volume: Volume) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { self.forceUnmount(volume: volume) }
+      return
+    }
+    guard !rejectsAsBusy(volume) else { return }
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: [volume])
     KeepAliveManager.shared.suppress(volume: volume)
     setBusy(volume.id, true)

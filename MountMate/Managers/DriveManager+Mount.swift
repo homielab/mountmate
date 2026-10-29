@@ -166,26 +166,28 @@ extension DriveManager {
     }
   }
 
-  /// A mount or unmount that arrives while another operation runs on the same
-  /// volume is skipped: a second `diskutil` would race the first and clear its
-  /// spinner early. Reports `.failure` to `completion` (main thread) and
-  /// returns true when skipped. Call on the main thread.
-  private func rejectsAsBusy(
-    _ volume: Volume, ownsBusy: Bool = false, completion: ((Result<Void, Error>) -> Void)?
+  /// A mount, unmount, remount or force unmount that arrives while another
+  /// operation runs on the same volume is skipped: a second `diskutil` would
+  /// race the first and clear its spinner early. Reports `.failure` to
+  /// `completion` (main thread) and returns true when skipped. Call on the
+  /// main thread.
+  func rejectsAsBusy(
+    _ volume: Volume, ownsBusy: Bool = false,
+    completion: ((Result<Void, Error>) -> Void)? = nil
   ) -> Bool {
     guard Self.shouldRejectAsBusy(volumeID: volume.id, busyIDs: busyVolumeIDs, ownsBusy: ownsBusy)
     else { return false }
     Log.drive.info(
-      "Skipped a mount or unmount of \(volume.deviceIdentifier, privacy: .public): another operation is running"
+      "Skipped an operation on \(volume.deviceIdentifier, privacy: .public): another operation is running"
     )
     completion?(.failure(MountFailure.busy()))
     return true
   }
 
-  /// Whether a mount or unmount of `volumeID` is skipped because another
-  /// operation holds its busy flag. `ownsBusy` is true when the caller itself
-  /// set the flag (`remount(volume:)` between its unmount and its mount), so
-  /// its own flag does not count.
+  /// Whether a mount, unmount, remount or force unmount of `volumeID` is
+  /// skipped because another operation holds its busy flag. `ownsBusy` is
+  /// true when the caller itself set the flag (`remount(volume:)` between its
+  /// unmount and its mount), so its own flag does not count.
   static func shouldRejectAsBusy(volumeID: String, busyIDs: Set<String>, ownsBusy: Bool) -> Bool {
     busyIDs.contains(volumeID) && !ownsBusy
   }
@@ -297,7 +299,14 @@ extension DriveManager {
     volume.isReadOnly
   }
 
+  /// Unmounts `volume` and mounts it again (a new mount point takes effect).
+  /// Skipped, with a log line only, while another operation runs on it.
   func remount(volume: Volume) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { self.remount(volume: volume) }
+      return
+    }
+    guard !rejectsAsBusy(volume) else { return }
     // Captured before the unmount, which clears the mount state.
     let readOnly = Self.remountReadOnly(for: volume)
     // Keep-alive must not reconnect the volume in the gap between the
