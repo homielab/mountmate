@@ -71,19 +71,33 @@ enum LowSpaceRules {
   }
 }
 
-/// Remembers which volumes were already announced in their current mount, so
-/// a volume that stays full is announced once, and again after it is
-/// unmounted and mounted. Not thread-safe: main queue only.
+/// Remembers which volumes were already announced, so a volume that stays full
+/// is announced once. A volume is forgotten when it is unmounted or drops to
+/// `rearmMargin` below the threshold, so it is announced again when it fills
+/// up again; the margin keeps a volume hovering around the threshold from
+/// being announced over and over. Not thread-safe: main queue only.
 struct LowSpaceAlertTracker: Sendable {
+  /// How far below the threshold (as a fraction) a volume must drop before it
+  /// can be announced again.
+  static let rearmMargin = 0.05
+
   private var announced: Set<String> = []
 
   /// The warnings of `disks` not announced yet; they count as announced
-  /// afterwards. Volumes that are gone or unmounted are forgotten.
+  /// afterwards. Volumes that are gone, unmounted or used at most
+  /// `threshold - rearmMargin` are forgotten.
   mutating func newWarnings(
     in disks: [PhysicalDisk], threshold: Double?
   ) -> [(volume: Volume, warning: Warning)] {
-    let mounted = Set(disks.flatMap(\.allVolumes).filter(\.isMounted).map(\.id))
-    announced.formIntersection(mounted)
+    let mounted = disks.flatMap(\.allVolumes).filter(\.isMounted)
+    announced.formIntersection(mounted.map(\.id))
+    if let threshold {
+      for volume in mounted {
+        if let used = volume.usagePercentage, used <= threshold - Self.rearmMargin {
+          announced.remove(volume.id)
+        }
+      }
+    }
     return LowSpaceRules.warnings(in: disks, threshold: threshold)
       .filter { announced.insert($0.volume.id).inserted }
   }

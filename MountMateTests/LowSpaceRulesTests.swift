@@ -87,6 +87,47 @@ final class LowSpaceRulesTests: XCTestCase {
     XCTAssertEqual(tracker.newWarnings(in: full, threshold: 0.9).map(\.volume.id), ["1"])
   }
 
+  func testTrackerAnnouncesAgainAfterSpaceWasFreedAndFilledAgain() {
+    var tracker = LowSpaceAlertTracker()
+    XCTAssertEqual(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.95)])], threshold: 0.9).count, 1)
+    XCTAssertTrue(tracker.newWarnings(in: [disk([volume("1", used: 0.7)])], threshold: 0.9).isEmpty)
+    XCTAssertEqual(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.93)])], threshold: 0.9).count, 1)
+  }
+
+  func testTrackerAnnouncesOnceWhileHoveringAroundTheThreshold() {
+    var tracker = LowSpaceAlertTracker()
+    var count = 0
+    for used in [0.905, 0.895, 0.905, 0.86, 0.905, 0.895, 0.905] {
+      count += tracker.newWarnings(in: [disk([volume("1", used: used)])], threshold: 0.9).count
+    }
+    XCTAssertEqual(count, 1)
+  }
+
+  func testTrackerRearmMarginFollowsTheThreshold() {
+    var tracker = LowSpaceAlertTracker()
+    XCTAssertEqual(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.82)])], threshold: 0.8).count, 1)
+    // 76% is above 80 - 5: still remembered.
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.76)])], threshold: 0.8).isEmpty)
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.82)])], threshold: 0.8).isEmpty)
+    // 75% is forgotten, so filling up again warns again.
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.75)])], threshold: 0.8).isEmpty)
+    XCTAssertEqual(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.82)])], threshold: 0.8).count, 1)
+    // At 95% the volume must drop to 90%.
+    XCTAssertEqual(
+      tracker.newWarnings(in: [disk([volume("2", used: 0.97)])], threshold: 0.95).count, 1)
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("2", used: 0.91)])], threshold: 0.95).isEmpty)
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("2", used: 0.96)])], threshold: 0.95).isEmpty)
+  }
+
   func testTrackerStaysQuietWhileTheWarningIsOff() {
     var tracker = LowSpaceAlertTracker()
     let full = [disk([volume("1", used: 0.95)])]
