@@ -81,7 +81,7 @@
 "Press Shortcut…" = "Nhấn phím tắt…";
 "Shortcut for “%@”" = "Phím tắt cho “%@”";
 "Shortcut Already Assigned" = "Phím tắt đã được gán";
-"This shortcut is already assigned to the other action." = "Phím tắt này đã được gán cho thao tác khác.";
+"Already used by %@. Choose a different shortcut." = "Đã dùng cho “%@”. Hãy chọn phím tắt khác.";
 "Language" = "Ngôn ngữ";
 "English" = "Tiếng Anh";
 "Français" = "Tiếng Pháp";

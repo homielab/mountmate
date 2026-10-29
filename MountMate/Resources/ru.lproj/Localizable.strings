@@ -81,7 +81,7 @@
 "Press Shortcut…" = "Нажмите сочетание клавиш…";
 "Shortcut for “%@”" = "Сочетание клавиш для «%@»";
 "Shortcut Already Assigned" = "Сочетание уже назначено";
-"This shortcut is already assigned to the other action." = "Это сочетание уже назначено другому действию.";
+"Already used by %@. Choose a different shortcut." = "Уже используется для «%@». Выберите другое сочетание.";
 "Language" = "Язык";
 "English" = "Английский";
 "Français" = "Французский";

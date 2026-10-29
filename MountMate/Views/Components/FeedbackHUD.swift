@@ -3,10 +3,6 @@
 import AppKit
 import SwiftUI
 
-/// A small confirmation that floats near the top of the screen for a few
-/// seconds, like the system volume HUD. Used after actions that end with a
-/// password prompt, so the user can see the change was made even when
-/// MountMate's menu has already closed. Never takes focus or clicks.
 /// Colour of the HUD icon, so a failure never looks like a success.
 enum HUDTint: Equatable {
   case success
@@ -22,6 +18,10 @@ enum HUDTint: Equatable {
   }
 }
 
+/// A small confirmation that floats near the top of the screen for a few
+/// seconds, like the system volume HUD. Used after actions that end with a
+/// password prompt, so the user can see the change was made even when
+/// MountMate's menu has already closed. Never takes focus or clicks.
 enum FeedbackHUD {
   private static var panel: NSPanel?
   private static var hideWork: DispatchWorkItem?

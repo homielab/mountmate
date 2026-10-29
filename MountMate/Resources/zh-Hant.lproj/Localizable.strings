@@ -81,7 +81,7 @@
 "Press Shortcut…" = "按下快速鍵…";
 "Shortcut for “%@”" = "「%@」的快速鍵";
 "Shortcut Already Assigned" = "快速鍵已指派";
-"This shortcut is already assigned to the other action." = "此快速鍵已指派給其他操作。";
+"Already used by %@. Choose a different shortcut." = "已被「%@」使用。請選擇其他快速鍵。";
 "Language" = "語言";
 "English" = "英語";
 "Français" = "法語";

@@ -81,7 +81,7 @@
 "Press Shortcut…" = "Натисніть комбінацію клавіш…";
 "Shortcut for “%@”" = "Клавіатурне скорочення для «%@»";
 "Shortcut Already Assigned" = "Скорочення вже призначено";
-"This shortcut is already assigned to the other action." = "Це скорочення вже призначено іншій дії.";
+"Already used by %@. Choose a different shortcut." = "Уже використовується для «%@». Виберіть інше скорочення.";
 "Language" = "Мова";
 "English" = "Англійська";
 "Français" = "Французька";

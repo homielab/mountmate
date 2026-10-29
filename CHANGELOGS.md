@@ -83,6 +83,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Duplicate keyboard shortcuts**: recording a shortcut that another MountMate action already uses is refused with “Already used by Unmount All Volumes” (or the action’s name) instead of being saved, so no shortcut is left dead and Settings no longer blames another app. Duplicates saved by older versions are shown the same way.
 - **Free space on disks with several APFS volumes**: volumes that share one APFS container now show the container's free space and fill level, as Finder does, so "Almost full" warns when the disk is really filling up instead of judging each volume alone.
 
 - **Keyboard shortcut feedback colours**: the message after a keyboard shortcut now shows an orange icon when something failed ("Ejected 1 disk, 1 failed") and a grey one when there was nothing to do; green is kept for success only.

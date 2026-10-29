@@ -81,7 +81,7 @@
 "Press Shortcut…" = "Press Shortcut…";
 "Shortcut for “%@”" = "Shortcut for “%@”";
 "Shortcut Already Assigned" = "Shortcut Already Assigned";
-"This shortcut is already assigned to the other action." = "This shortcut is already assigned to the other action.";
+"Already used by %@. Choose a different shortcut." = "Already used by %@. Choose a different shortcut.";
 "Language" = "Language";
 "English" = "English";
 "Français" = "French";

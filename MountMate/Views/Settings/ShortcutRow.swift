@@ -49,6 +49,8 @@ struct ShortcutRow: View {
         if let assigned = hotkeyManager.shortcut(for: action), !assigned.isSafeAsGlobalHotKey {
           // Saved by an older version; not registered (see HotkeyManager).
           shortcutWarning("This shortcut needs ⌘ or ⌃. Click it to record a new one.")
+        } else if let other = hotkeyManager.duplicateShortcuts[action] {
+          shortcutWarning(Self.alreadyUsedMessage(by: other))
         } else if hotkeyManager.unavailableShortcuts.contains(action) {
           // Registration fails when another app already uses the combination.
           shortcutWarning("This shortcut is used by another app. Choose a different one.")
@@ -58,13 +60,29 @@ struct ShortcutRow: View {
   }
 
   private func shortcutWarning(_ message: LocalizedStringKey) -> some View {
+    shortcutWarning(Text(message))
+  }
+
+  private func shortcutWarning(_ message: String) -> some View {
+    shortcutWarning(Text(message))
+  }
+
+  private func shortcutWarning(_ message: Text) -> some View {
     HStack(spacing: 4) {
       Image(systemName: "exclamationmark.triangle.fill")
         .foregroundStyle(.orange)
         .accessibilityHidden(true)
-      Text(message)
+      message
     }
     .font(.caption)
+  }
+
+  static func alreadyUsedMessage(by other: HotkeyAction) -> String {
+    String(
+      format: NSLocalizedString(
+        "Already used by %@. Choose a different shortcut.",
+        comment: "Duplicate keyboard shortcut warning; %@ = the other action's name"),
+      other.localizedName)
   }
 
   private func setRecording(_ recording: Bool, for action: HotkeyAction) {
@@ -77,19 +95,9 @@ struct ShortcutRow: View {
   }
 
   private func updateShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
-    let isTaken = HotkeyAction.allCases.contains {
-      $0 != action && hotkeyManager.shortcut(for: $0) == shortcut
+    if let other = hotkeyManager.setShortcut(shortcut, for: action) {
+      onConflict(Self.alreadyUsedMessage(by: other))
     }
-    guard !isTaken else {
-      onConflict(
-        NSLocalizedString(
-          "This shortcut is already assigned to the other action.",
-          comment: "Duplicate keyboard shortcut warning"))
-      recordingShortcut = nil
-      return
-    }
-
-    hotkeyManager.setShortcut(shortcut, for: action)
     recordingShortcut = nil
   }
 }

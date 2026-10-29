@@ -225,6 +225,9 @@ class HotkeyManager: ObservableObject {
   /// Actions whose shortcut could not be registered while listening,
   /// usually because another app already uses the combination.
   @Published private(set) var unavailableShortcuts: Set<HotkeyAction> = []
+  /// Actions not registered because an earlier action has the same
+  /// shortcut, mapped to that action.
+  @Published private(set) var duplicateShortcuts: [HotkeyAction: HotkeyAction] = [:]
 
   private var hotKeyRefs: [HotkeyAction: EventHotKeyRef] = [:]
   private var eventHandlerRef: EventHandlerRef?
@@ -318,9 +321,26 @@ class HotkeyManager: ObservableObject {
     reregisterIfListening()
   }
 
-  func setShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) {
+  /// Every action's current shortcut.
+  var assignedShortcuts: [HotkeyAction: HotkeyShortcut] {
+    var result: [HotkeyAction: HotkeyShortcut] = [:]
+    for action in HotkeyAction.allCases {
+      result[action] = shortcut(for: action)
+    }
+    return result
+  }
+
+  /// Saves the shortcut, unless another action already uses it: then nothing
+  /// changes and that action is returned.
+  @discardableResult
+  func setShortcut(_ shortcut: HotkeyShortcut, for action: HotkeyAction) -> HotkeyAction? {
     let normalizedShortcut = HotkeyShortcut(
       keyCode: shortcut.keyCode, modifiers: shortcut.modifiers)
+    if let other = HotkeyConflictRules.conflict(
+      for: normalizedShortcut, assignedTo: action, among: assignedShortcuts)
+    {
+      return other
+    }
 
     switch action {
     case .unmountAll:
@@ -338,6 +358,7 @@ class HotkeyManager: ObservableObject {
     }
 
     reregisterIfListening()
+    return nil
   }
 
   private func reregisterIfListening() {
@@ -354,8 +375,12 @@ class HotkeyManager: ObservableObject {
     installEventHandlerIfNeeded()
 
     var failed: Set<HotkeyAction> = []
+    let duplicates = HotkeyConflictRules.duplicates(among: assignedShortcuts)
     for action in HotkeyAction.allCases {
       guard let combination = self.shortcut(for: action) else { continue }
+      // A second registration of the same combination would fail and read
+      // as another app's; Settings names the MountMate action instead.
+      guard duplicates[action] == nil else { continue }
       // Shortcuts saved by older versions may lack ⌘/⌃. Settings asks the
       // user to record a new one; never register them.
       guard combination.isSafeAsGlobalHotKey else {
@@ -384,6 +409,7 @@ class HotkeyManager: ObservableObject {
     }
 
     unavailableShortcuts = failed
+    duplicateShortcuts = duplicates
     isListening = true
     #if DEBUG
       Log.hotkey.info(
@@ -400,6 +426,7 @@ class HotkeyManager: ObservableObject {
     hotKeyRefs.removeAll()
     pressedActions.removeAll()
     unavailableShortcuts = []
+    duplicateShortcuts = [:]
     isListening = false
     #if DEBUG
       Log.hotkey.info("Stopped listening for global hotkeys")
