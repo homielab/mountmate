@@ -170,6 +170,32 @@ final class MountTableTests: XCTestCase {
     XCTAssertEqual(nfs.sharePath, "Shared Folder")
   }
 
+  func testImportedSMBShareKeepsAPort() throws {
+    let share = try imported("//user@nas:8445/share", at: "/Volumes/share", "smbfs")
+    XCTAssertEqual(share.server, "nas:8445")
+    XCTAssertEqual(share.username, "user")
+    XCTAssertEqual(share.sharePath, "share")
+    XCTAssertEqual(NetworkShare.hostAndPort(fromServer: share.server).port, 8445)
+  }
+
+  func testImportedIPv6ShareWithAPortIsBracketed() throws {
+    let share = try imported("//[fd00::2]:8445/share", at: "/Volumes/share", "smbfs")
+    XCTAssertEqual(share.server, "[fd00::2]:8445")
+    let address = NetworkShare.hostAndPort(fromServer: share.server)
+    XCTAssertEqual(address.host, "fd00::2")
+    XCTAssertEqual(address.port, 8445)
+  }
+
+  func testImportedIPv6ShareWithoutAPortStaysBare() throws {
+    let share = try imported("//[fd00::2]/share", at: "/Volumes/share", "smbfs")
+    XCTAssertEqual(share.server, "fd00::2")
+  }
+
+  func testImportedAFPShareKeepsAPort() throws {
+    let share = try imported("//nas.local:5480/Media", at: "/Volumes/Media", "afpfs")
+    XCTAssertEqual(share.server, "nas.local:5480")
+  }
+
   func testImportedShareFallbacksAreLocalized() throws {
     let mounted = try XCTUnwrap(
       MountedNetworkShare(source: "//", mountPoint: "/", fileSystemType: "smbfs"))

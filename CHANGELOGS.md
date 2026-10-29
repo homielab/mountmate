@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Importing a mounted share keeps its port**: an SMB or AFP share connected on another port (`smb://user@nas:8445/share`) is now imported as server `nas:8445` (`[fd00::2]:8445` for an IPv6 address) instead of `nas`, so it mounts again on the same port.
 - **Network share names are trimmed**: spaces around a share's display name are removed when you save it, and a name of only spaces falls back to the share path's last part (like an empty name), so a share can no longer get an invisible mount folder such as `~/mountmate/   `.
 - **Adding shares found on the network no longer skips distinct shares**: an NFS export whose path differs only in case from a saved one (`/export/Data` and `/export/data`), or an SMB and an NFS share on the same server and path, are now added as separate shares instead of being treated as duplicates. SMB and AFP share names still match case-insensitively, and a server written with a port (`nas:445`) matches the same server without one.
 - **Expand and collapse a disk with the keyboard or VoiceOver**: a disk's header row now takes keyboard focus and Return or Space (macOS 14+) shows or hides its volumes; VoiceOver reads it as a button with the value "Expanded" or "Collapsed" and toggles it with its default action. Before, only a mouse click or Expand All worked.

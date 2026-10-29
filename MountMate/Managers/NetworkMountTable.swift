@@ -133,9 +133,19 @@ enum NetworkMountTable {
       && mounted.endpoint?.path == MountedNetworkShare.endpoint(for: share).path
   }
 
+  /// The server field for a host and optional port, in the form
+  /// `NetworkShare.hostAndPort(fromServer:)` reads back: `nas:8445`, and an
+  /// IPv6 host in brackets when a port follows (`[fd00::2]:8445`).
+  static func serverField(host rawHost: String, port: Int?) -> String {
+    var host = rawHost
+    if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }
+    guard let port, !host.isEmpty else { return host }
+    return host.contains(":") ? "[\(host)]:\(port)" : "\(host):\(port)"
+  }
+
   /// The share MountMate offers to import for a mount it did not make:
   /// server, share path and user from the mount source (`server:/export`
-  /// for NFS, `//[user@]server/share` for SMB and AFP), named after the last
+  /// for NFS, `//[user@]server[:port]/share` for SMB and AFP), named after the last
   /// path component. When the source cannot be read, the server is
   /// "Unknown Server" and the share path the mount folder's name (or
   /// "Shared Folder"). `localize` is replaceable so tests are independent of
@@ -169,7 +179,7 @@ enum NetworkMountTable {
         of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
       if let url = URL(string: urlString) {
         username = url.user ?? ""
-        server = url.host ?? ""
+        server = Self.serverField(host: url.host ?? "", port: url.port)
         sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
       }
     }
