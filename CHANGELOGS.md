@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Faster disk list with a hung drive**: when several exFAT or NTFS drives stop answering, plugging or unplugging a disk now waits about 2 seconds in total instead of 2 seconds per drive before the list updates; their space is read at the same time.
 - **Website search results and link previews** now describe what MountMate does (network shares, Keep Alive, Homebrew), and the screenshots have descriptive text for screen readers that tells the light and dark versions apart.
 - Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).
 - **Faster list after plugging in a disk**: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.

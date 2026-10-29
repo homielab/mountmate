@@ -43,8 +43,9 @@ struct DiskListParser {
   var filters = Filters()
   var showInternalDisks = false
   /// Used and free space of a mounted volume whose list entry has no
-  /// `CapacityInUse` (non-APFS volumes).
-  var fileSystemUsage: (String) -> FileSystemUsage.Outcome = { _ in .failed }
+  /// `CapacityInUse` (non-APFS volumes). Called concurrently, once per mount
+  /// point, so one hung disk does not delay the others.
+  var fileSystemUsage: @Sendable (String) -> FileSystemUsage.Outcome = { _ in .failed }
   /// Mount points of the file systems that are mounted read-only.
   var readOnlyMountPoints: Set<String> = []
   /// Second opinion for whole disks without `diskutil info`; disks missing
@@ -87,9 +88,72 @@ struct DiskListParser {
     let fallbackKinds =
       unclassifiedDiskIDs.isEmpty ? [:] : classifyDisksWithoutInfo(unclassifiedDiskIDs)
 
+    // A first pass only collects the mount points that need statfs; they are
+    // then read in parallel, so several hung disks cost one timeout, not one
+    // each.
+    var usage = UsagePass()
+    let firstPass = buildDisks(
+      allDisksAndPartitions: allDisksAndPartitions, rootInfo: rootInfo,
+      unclassifiedDiskIDs: unclassifiedDiskIDs, fallbackKinds: fallbackKinds, usage: &usage)
+    guard !usage.requested.isEmpty else { return firstPass }
+
+    usage.outcomes = Self.readUsageConcurrently(of: usage.requested, read: fileSystemUsage)
+    return buildDisks(
+      allDisksAndPartitions: allDisksAndPartitions, rootInfo: rootInfo,
+      unclassifiedDiskIDs: unclassifiedDiskIDs, fallbackKinds: fallbackKinds, usage: &usage)
+  }
+
+  /// File system usage for one parse: collected first, then looked up.
+  private struct UsagePass {
+    /// nil while collecting the mount points to read.
+    var outcomes: [String: FileSystemUsage.Outcome]?
+    /// Mount points to read, in list order, without duplicates.
+    var requested: [String] = []
+    var timedOut = false
+
+    /// The outcome for `mountPoint`, or nil while collecting.
+    mutating func outcome(for mountPoint: String) -> FileSystemUsage.Outcome? {
+      guard let outcomes else {
+        if !requested.contains(mountPoint) { requested.append(mountPoint) }
+        return nil
+      }
+      let outcome = outcomes[mountPoint] ?? .failed
+      if case .timedOut = outcome { timedOut = true }
+      return outcome
+    }
+  }
+
+  /// Runs `read` for every mount point at once and waits for all of them.
+  /// Each read gets its own pool thread (not `concurrentPerform`, whose width
+  /// is the core count), so the wait is that of the slowest read.
+  static func readUsageConcurrently(
+    of mountPoints: [String], read: @escaping @Sendable (String) -> FileSystemUsage.Outcome
+  ) -> [String: FileSystemUsage.Outcome] {
+    final class Results: @unchecked Sendable {
+      let lock = NSLock()
+      var outcomes: [String: FileSystemUsage.Outcome] = [:]
+    }
+    let results = Results()
+    let group = DispatchGroup()
+    let queue = DispatchQueue.global(
+      qos: DispatchQoS.QoSClass(rawValue: qos_class_self()) ?? .utility)
+    for mountPoint in mountPoints {
+      queue.async(group: group) {
+        let outcome = read(mountPoint)
+        results.lock.withLock { results.outcomes[mountPoint] = outcome }
+      }
+    }
+    group.wait()
+    return results.lock.withLock { results.outcomes }
+  }
+
+  private func buildDisks(
+    allDisksAndPartitions: [[String: Any]], rootInfo: [String: [String: Any]],
+    unclassifiedDiskIDs: Set<String>, fallbackKinds: [String: FallbackDiskKind],
+    usage: inout UsagePass
+  ) -> Result {
     var newDisks: [PhysicalDisk] = []
     var unverifiedDiskIDs = Set<String>()
-    var usageTimedOut = false
     // A container spanning several physical stores (Fusion drive, or a
     // container across disks) is listed once, under the first store's disk.
     var listedContainerIDs = Set<String>()
@@ -128,27 +192,27 @@ struct DiskListParser {
               listedContainerIDs.insert(containerData["DeviceIdentifier"] as? String ?? storeID)
                 .inserted,
               let container = createContainer(
-                from: containerData, usageTimedOut: &usageTimedOut)
+                from: containerData, usage: &usage)
             {
               containers.append(container)
             }
           } else {
             if let volume = createVolume(
-              from: partitionData, snapshotsData: nil, usageTimedOut: &usageTimedOut)
+              from: partitionData, snapshotsData: nil, usage: &usage)
             {
               partitions.append(volume)
             }
           }
         }
       } else if diskData["APFSVolumes"] as? [[String: Any]] != nil {
-        if let container = createContainer(from: diskData, usageTimedOut: &usageTimedOut) {
+        if let container = createContainer(from: diskData, usage: &usage) {
           containers.append(container)
         }
       }
 
       if partitions.isEmpty && containers.isEmpty, DiskTopology.hasWholeDiskVolume(diskData) {
         if let volume = createVolume(
-          from: diskData, snapshotsData: nil, usageTimedOut: &usageTimedOut)
+          from: diskData, snapshotsData: nil, usage: &usage)
         {
           partitions.append(volume)
         }
@@ -191,7 +255,7 @@ struct DiskListParser {
       return ($0.name ?? "") < ($1.name ?? "")
     }
     return Result(
-      disks: sortedDisks, unverifiedDiskIDs: unverifiedDiskIDs, usageTimedOut: usageTimedOut)
+      disks: sortedDisks, unverifiedDiskIDs: unverifiedDiskIDs, usageTimedOut: usage.timedOut)
   }
 
   // MARK: - Disks
@@ -281,7 +345,7 @@ struct DiskListParser {
 
   // MARK: - Containers and volumes
 
-  private func createContainer(from containerData: [String: Any], usageTimedOut: inout Bool)
+  private func createContainer(from containerData: [String: Any], usage: inout UsagePass)
     -> APFSContainer?
   {
     guard let containerID = containerData["DeviceIdentifier"] as? String,
@@ -299,7 +363,7 @@ struct DiskListParser {
       if let volume = createVolume(
         from: apfsVolumeData,
         snapshotsData: apfsVolumeData["MountedSnapshots"] as? [[String: Any]],
-        usageTimedOut: &usageTimedOut)
+        usage: &usage)
       {
         volumes.append(volume)
       }
@@ -338,7 +402,7 @@ struct DiskListParser {
   }
 
   private func createVolume(
-    from volumeData: [String: Any], snapshotsData: [[String: Any]]?, usageTimedOut: inout Bool
+    from volumeData: [String: Any], snapshotsData: [[String: Any]]?, usage: inout UsagePass
   ) -> Volume? {
     guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
 
@@ -401,17 +465,16 @@ struct DiskListParser {
       var calculatedUsedBytes: Int64?
       if let capacityInUse = volumeData["CapacityInUse"] as? Int64 {
         calculatedUsedBytes = capacityInUse
-      } else if isMounted, let mountPoint = mountPoint {
+      } else if isMounted, let mountPoint = mountPoint,
+        let outcome = usage.outcome(for: mountPoint)
+      {
         // Non-APFS volumes: `diskutil list` has no usage, so ask the file
         // system. statfs needs no privacy permission, but it can block on an
         // unresponsive disk, so it is bounded by a timeout.
-        switch fileSystemUsage(mountPoint) {
+        switch outcome {
         case .usage(let total, let free):
           calculatedUsedBytes = total - free
-        case .timedOut:
-          usageTimedOut = true
-          fallthrough
-        case .failed:
+        case .timedOut, .failed:
           Log.drive.error(
             "Could not read file system usage for \(volumeName, privacy: .private) (failed or timed out)."
           )

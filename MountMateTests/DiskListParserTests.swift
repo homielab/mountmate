@@ -214,6 +214,89 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertNil(samsung.usagePercentage)
   }
 
+  /// A USB hub with four mounted exFAT/NTFS volumes, one per disk.
+  private static func fourUsageDisks() -> (disks: [[String: Any]], info: [String: [String: Any]]) {
+    var disks: [[String: Any]] = []
+    var info: [String: [String: Any]] = [:]
+    for index in 0..<4 {
+      let disk = "disk\(10 + index)"
+      disks.append([
+        "DeviceIdentifier": disk, "Size": Int64(1_000), "Content": "FDisk_partition_scheme",
+        "Partitions": [
+          [
+            "DeviceIdentifier": "\(disk)s1",
+            "Content": index.isMultiple(of: 2) ? "Windows_NTFS" : "ExFAT",
+            "VolumeName": "Drive\(index)", "VolumeUUID": "UUID-\(index)", "Size": Int64(1_000),
+            "MountPoint": "/Volumes/Drive\(index)",
+          ]
+        ],
+      ])
+      info[disk] = ["Internal": false, "BusProtocol": "USB", "MediaName": "Drive \(index)"]
+    }
+    return (disks, info)
+  }
+
+  func testUsageOfSeveralVolumesIsReadInParallel() throws {
+    let (disks, info) = Self.fourUsageDisks()
+    final class Reads: @unchecked Sendable {
+      let lock = NSLock()
+      var paths: [String] = []
+    }
+    let reads = Reads()
+    let outcome: @Sendable (String) -> FileSystemUsage.Outcome = { path in
+      if path == "/Volumes/Drive2" { return .timedOut }
+      let index = Int64(path.last?.wholeNumberValue ?? 0)
+      return .usage(total: 1_000, free: 100 * (index + 1))
+    }
+    func parse(sleep: TimeInterval) -> DiskListParser.Result {
+      DiskListParser(
+        fileSystemUsage: { path in
+          reads.lock.withLock { reads.paths.append(path) }
+          Thread.sleep(forTimeInterval: sleep)
+          return outcome(path)
+        }
+      ).parse(allDisksAndPartitions: disks, rootInfo: info, unclassifiedDiskIDs: [])
+    }
+
+    let start = Date()
+    let result = parse(sleep: 0.3)
+    let elapsed = Date().timeIntervalSince(start)
+    XCTAssertLessThan(elapsed, 0.6, "4 reads of 0.3 s each must overlap")
+    XCTAssertEqual(reads.paths.sorted(), (0..<4).map { "/Volumes/Drive\($0)" })
+
+    // Same disks, in the same order, as when every read answers at once.
+    let expected = DiskListParser(fileSystemUsage: outcome)
+      .parse(allDisksAndPartitions: disks, rootInfo: info, unclassifiedDiskIDs: [])
+    XCTAssertEqual(result.disks.map(\.id), ["disk10", "disk11", "disk12", "disk13"])
+    XCTAssertEqual(result.disks, expected.disks)
+    let volumes = result.disks.flatMap(\.partitions)
+    XCTAssertEqual(volumes.map(\.usedBytes), [900, 800, nil, 600])
+    XCTAssertNotNil(volumes[2].storageError)
+    XCTAssertTrue(result.usageTimedOut)
+    XCTAssertTrue(expected.usageTimedOut)
+  }
+
+  func testUsageIsReadOnceAndOnlyForMountedVolumesWithoutCapacity() {
+    final class Reads: @unchecked Sendable {
+      let lock = NSLock()
+      var paths: [String] = []
+    }
+    let reads = Reads()
+    let parser = DiskListParser(
+      showInternalDisks: true,
+      fileSystemUsage: { path in
+        reads.lock.withLock { reads.paths.append(path) }
+        return .usage(total: 100, free: 50)
+      },
+      classifyDisksWithoutInfo: { _ in ["disk7": .external] })
+    let result = parse(parser)
+
+    // APFS volumes have CapacityInUse and disk7 is not mounted: only the
+    // NTFS volume of disk6 needs statfs.
+    XCTAssertEqual(reads.paths, ["/Volumes/Samsung_T5"])
+    XCTAssertFalse(result.usageTimedOut)
+  }
+
   func testUnmountedVolumeHasNoUsage() throws {
     let oneTouch = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk7" })
     let volume = try XCTUnwrap(oneTouch.partitions.first)
