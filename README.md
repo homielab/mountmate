@@ -44,7 +44,7 @@ Or [download the latest .dmg](https://github.com/homielab/mountmate/releases) an
 - Mount, unmount, mount read-only and force eject any external drive from the menu bar with one click.
 - See free space for drives and mounted network shares at a glance.
 - Unmount All, Mount All and Eject All External Disks from the popover or with global keyboard shortcuts.
-- Unmount disks when the Mac sleeps or after they sit idle, and mount them again on wake.
+- Unmount disks when the Mac sleeps, when the screen locks or after they sit idle, and mount them again on wake or unlock.
 - Stop USB disks from auto-mounting at plug-in or login, optionally also at startup (`/etc/fstab`).
 - Mount a volume or network share at a mount point you choose.
 - Unlock encrypted APFS volumes, with the password saved in the Keychain if you want.
@@ -124,6 +124,7 @@ Everything in the list above, in full:
 - **Keep Alive**: Auto-reconnect shares and volumes when they drop, after network changes, on wake, and at login; a share or volume that is waiting shows when the next try is and a "Reconnect Now" button (also in its right-click menu) that retries right away. While a reconnect is pending, the menu bar icon shows a Wi-Fi badge (VoiceOver: "Reconnecting")
 - **Copy Path / Open in Terminal**: right-click a mounted volume or network share to copy its mount path or open a Terminal window in that folder
 - **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount every removable disk before the Mac sleeps. **Mount Again on Wake** (on by default, shown when the sleep unmount is on) mounts those disks again after wake; disks you unmounted yourself, disks that were unplugged and blocked disks stay unmounted. With notifications on, you are told about disks that could not be unmounted before sleep
+- **Unmount All Disks When the Screen Locks** (Settings → General → Behavior, off by default): unmount every removable disk as soon as the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted, nothing is forced and no alert appears. With **Mount Again on Wake** on, the disks are mounted again when you unlock (not at wake while the screen is still locked)
 - **Open in Finder after mounting** (Settings → General → Behavior, off by default): a volume or share you mount from the popover (Mount, Mount Read-Only), with Mount All or with a Shortcuts action opens in a Finder window once it is mounted. Disks mounted when plugged in, at login, by Keep Alive or after wake never open a window, and neither do failed mounts or blocked disks.
 - **Unmount When Idle**: Per volume on an external drive (right-click → Unmount When Idle), unmount it after 1–60 minutes without reads or writes on its disk; never forced, so a volume in use stays mounted and is tried again after another idle period; off while the volume is protected or kept mounted
 - **Almost-full warning** (Settings → General → Behavior; on by default, from 80%, 90% or 95% used): a mounted volume at or above the limit gets an orange "Almost full" badge and ring (hover or VoiceOver: "Almost full: 94% used, 12 GB free"); with Notifications on you also get one notice per volume each time it is mounted. Disk images, system volumes and read-only volumes are skipped, and nothing is unmounted or deleted.

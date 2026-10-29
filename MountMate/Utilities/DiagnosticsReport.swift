@@ -28,6 +28,7 @@ enum DiagnosticsReport {
     ("Keep Alive: remount on network change", "keepAliveRemountOnNetworkChange", true),
     ("Keep Alive: reconnect after sleep", "keepAliveRemountOnWake", true),
     ("Unmount all disks on sleep", "ejectOnSleepEnabled", false),
+    ("Unmount all disks when the screen locks", ScreenLockRules.enabledKey, false),
     ("Mount again on wake", "remountOnWakeEnabled", true),
     ("Block USB auto-mount", "blockUSBAutoMount", false),
     ("Allow other apps to mount blocked disks", "allowRequestedMounts", false),

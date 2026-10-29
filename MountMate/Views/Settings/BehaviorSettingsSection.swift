@@ -9,6 +9,7 @@ struct BehaviorSettingsSection: View {
   @ObservedObject private var notificationManager = NotificationManager.shared
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
+  @AppStorage(ScreenLockRules.enabledKey) private var unmountOnLockEnabled = false
   @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
   @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
   @AppStorage(OpenAfterMountRules.enabledKey) private var openFinderAfterMount = false
@@ -105,12 +106,18 @@ struct BehaviorSettingsSection: View {
       Toggle(isOn: $ejectOnSleepEnabled) {
         Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
       }
-      if ejectOnSleepEnabled {
+      Toggle(isOn: $unmountOnLockEnabled) {
+        Label("Unmount All Disks When the Screen Locks", systemImage: "lock")
+      }
+      .help(
+        "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced."
+      )
+      if ejectOnSleepEnabled || unmountOnLockEnabled {
         Toggle(isOn: $remountOnWakeEnabled) {
           Label("Mount Again on Wake", systemImage: "sunrise")
         }
         .help(
-          "Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted."
+          "Mounts the disks that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted."
         )
       }
       Toggle(isOn: $notificationManager.isEnabled) {

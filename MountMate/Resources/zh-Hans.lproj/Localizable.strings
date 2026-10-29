@@ -70,6 +70,8 @@
 "Adds a system rule (/etc/fstab) for each blocked disk so macOS never mounts it at startup, even before MountMate opens. You can still mount it yourself. Rules are added while the disk is connected." = "为每个已阻止的磁盘添加系统规则（/etc/fstab），使 macOS 在启动时不会挂载它，即使 MountMate 尚未打开。你仍可手动挂载。规则会在磁盘连接时添加。";
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁盘仅在插入或登录时不会自动挂载。备份工具等应用仍可在需要时挂载它们。";
 "Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
+"Unmount All Disks When the Screen Locks" = "锁定屏幕时卸载所有磁盘";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "屏幕锁定时卸载所有可移除磁盘，避免您离开时仍有磁盘处于打开状态。受保护卷宗、由“保持活跃”保持挂载的卷宗以及正在使用的卷宗保持挂载。不会强制卸载。";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "快捷键与语言";
@@ -457,7 +459,7 @@
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "密码已被拒绝 %d 次。请检查大写锁定是否关闭，键盘布局是否与设置密码时一致，或尝试在“磁盘工具”中解锁该宗卷。";
 "Login Item Error" = "无法更改登录时启动：%@";
 "Mount Again on Wake" = "唤醒时重新挂载";
-"Mounts the disks that were unmounted before sleep again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 唤醒时，重新挂载睡眠前已推出的磁盘。您手动推出的磁盘、未连接的磁盘和已阻止的磁盘保持推出状态。";
+"Mounts the disks that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 唤醒或您解锁屏幕时，重新挂载睡眠前或锁定屏幕时已推出的磁盘。您手动推出的磁盘、未连接的磁盘和已阻止的磁盘保持推出状态。";
 "Open in Finder after mounting" = "挂载后在访达中打开";
 "Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "当您从菜单、通过“全部挂载”或快捷指令操作挂载的宗卷或共享就绪时，打开一个访达窗口。自动挂载、由 Keep Alive 或唤醒后挂载的磁盘不会打开窗口。";
 "Disks Were Not Unmounted Before Sleep" = "睡眠前未能推出的磁盘";

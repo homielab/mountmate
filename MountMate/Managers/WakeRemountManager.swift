@@ -3,8 +3,9 @@
 import AppKit
 import Foundation
 
-/// Mounts the volumes that "Unmount All Disks on Sleep" unmounted when the Mac
-/// wakes up. Main thread only.
+/// Mounts the volumes that "Unmount All Disks on Sleep" or "Unmount All Disks
+/// When the Screen Locks" unmounted when the Mac wakes up or the screen
+/// unlocks. Main thread only.
 final class WakeRemountManager {
   /// Runs `work` after the given delay.
   typealias Scheduler = (_ delay: TimeInterval, _ work: @escaping () -> Void) -> Void
@@ -55,6 +56,9 @@ final class WakeRemountManager {
   private let notifyLeftover: ([String]) -> Void
   private var wakeToken: NSObjectProtocol?
   private(set) var isRunning = false
+  /// True while the plan must wait for the screen to unlock: a wake then
+  /// keeps the plan and mounts nothing. Set by the app delegate.
+  var waitsForUnlock: () -> Bool = { false }
   private(set) var generation = 0
 
   init(
@@ -125,12 +129,19 @@ final class WakeRemountManager {
 
   private func clearPlan() { plan = nil }
 
-  /// Called before the unmount on sleep starts. Does nothing (and drops an
-  /// old plan) when the setting is off.
-  func begin(volumes: [Volume]) {
+  /// Called before the unmount on sleep or lock starts. Does nothing (and
+  /// drops an old plan) when the setting is off.
+  /// - Parameter merging: add the volumes to the current plan instead of
+  ///   replacing it (the plan kept from a screen lock).
+  func begin(volumes: [Volume], merging: Bool = false) {
     generation &+= 1
     isRunning = false
-    plan = isEnabled ? WakeRemountPlan(volumes: volumes) : nil
+    guard isEnabled else {
+      plan = nil
+      return
+    }
+    let new = WakeRemountPlan(volumes: volumes)
+    plan = merging ? (plan?.adding(new) ?? new) : new
   }
 
   /// The unmount on sleep finished: volumes that could not be unmounted are
@@ -152,6 +163,20 @@ final class WakeRemountManager {
   // MARK: - Wake
 
   func handleWake() {
+    guard !waitsForUnlock() else {
+      Log.drive.notice("System woke from sleep with the screen locked. Remount waits for unlock.")
+      return
+    }
+    run(reason: "System woke from sleep")
+  }
+
+  /// The screen unlocked: mounts what the lock (and a sleep while locked)
+  /// unmounted.
+  func handleUnlock() {
+    run(reason: "Screen unlocked")
+  }
+
+  private func run(reason: String) {
     guard !isRunning else { return }
     guard let current = plan, !current.isEmpty else {
       clearPlan()
@@ -161,7 +186,7 @@ final class WakeRemountManager {
     generation &+= 1
     let currentGeneration = generation
     Log.drive.notice(
-      "System woke from sleep. Remounting \(current.entries.count, privacy: .public) volume(s) unmounted before sleep."
+      "\(reason, privacy: .public). Remounting \(current.entries.count, privacy: .public) volume(s) unmounted before."
     )
     attempt(index: 0, generation: currentGeneration, announceUnfinished: true)
   }

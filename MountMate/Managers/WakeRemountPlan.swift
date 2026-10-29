@@ -28,6 +28,16 @@ struct WakeRemountPlan: Codable, Equatable, Sendable {
 
   var isEmpty: Bool { entries.isEmpty }
 
+  /// This plan with `other`'s volumes added (each volume once). A sleep
+  /// time-out mark from either plan is kept.
+  func adding(_ other: WakeRemountPlan) -> WakeRemountPlan {
+    var copy = self
+    let known = Set(entries.map(\.volumeUUID))
+    copy.entries += other.entries.filter { !known.contains($0.volumeUUID) }
+    copy.sleepTimedOut = sleepTimedOut || other.sleepTimedOut
+    return copy
+  }
+
   /// The plan without `volumes` (unmounts that failed, or that the user did
   /// themselves).
   func excluding(_ volumes: [Volume]) -> WakeRemountPlan {

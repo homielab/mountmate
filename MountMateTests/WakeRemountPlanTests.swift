@@ -72,4 +72,14 @@ final class WakeRemountPlanTests: XCTestCase {
     manager.begin(volumes: [a])
     XCTAssertNil(manager.plan)
   }
+
+  func testAddingKeepsEachVolumeOnceAndTheSleepTimeOutMark() {
+    let first = WakeRemountPlan(volumes: [volume(uuidA, name: "A")])
+    let second = WakeRemountPlan(volumes: [volume(uuidA, name: "A"), volume(uuidB, name: "B")])
+      .markingSleepTimedOut()
+    let merged = first.adding(second)
+    XCTAssertEqual(merged.entries.map(\.volumeUUID), [uuidA, uuidB])
+    XCTAssertTrue(merged.sleepTimedOut)
+    XCTAssertFalse(first.adding(WakeRemountPlan(volumes: [])).sleepTimedOut)
+  }
 }

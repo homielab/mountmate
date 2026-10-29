@@ -459,7 +459,10 @@ class DriveManager: ObservableObject {
   ///   volumes that could not be unmounted, after the drive list refreshed.
   /// - Parameter unmountResult: Called on the main thread right before
   ///   `completion` with the volumes that could not be unmounted.
+  /// - Parameter volumes: the volumes to unmount; `nil` for every
+  ///   `unmountAllCandidates` volume. Volumes busy by then are skipped.
   func unmountAllDrives(
+    volumes: [Volume]? = nil,
     suppressReconnect: Bool = true, reportFailures: Bool = true,
     completion: (() -> Void)? = nil, finished: (([String]) -> Void)? = nil,
     unmountResult: (([Volume]) -> Void)? = nil
@@ -467,12 +470,14 @@ class DriveManager: ObservableObject {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
         self.unmountAllDrives(
+          volumes: volumes,
           suppressReconnect: suppressReconnect, reportFailures: reportFailures,
           completion: completion, finished: finished, unmountResult: unmountResult)
       }
       return
     }
-    let drivesToUnmount = unmountAllCandidates
+    let drivesToUnmount =
+      volumes.map { $0.filter { !busyVolumeIDs.contains($0.id) } } ?? unmountAllCandidates
 
     guard !drivesToUnmount.isEmpty else {
       completion?()

@@ -236,4 +236,73 @@ final class WakeRemountManagerTests: XCTestCase {
     XCTAssertEqual(manager.plan?.entries.map(\.name), ["A"])
     XCTAssertTrue(manager.isRunning)
   }
+
+  func testLockPlanWaitsThroughWakeAndMountsAtUnlock() {
+    let currentVolumes = [
+      volume(uuidA, name: "A", id: "disk9s1"),
+      volume(uuidB, name: "B", id: "disk9s2"),
+    ]
+    var mountedNames: [String] = []
+    var screenLocked = true
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion(currentVolumes) },
+      isBusy: { _ in false },
+      mount: { volume, completion in
+        mountedNames.append(volume.name)
+        completion(true)
+      })
+    manager.waitsForUnlock = { screenLocked }
+
+    // Lock unmounts A; the Mac then sleeps and the sleep unmount adds B.
+    manager.begin(volumes: [volume(uuidA, name: "A", isMounted: true)], merging: true)
+    manager.begin(volumes: [volume(uuidB, name: "B", isMounted: true)], merging: true)
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["A", "B"])
+
+    // Wake with the screen still locked: nothing is scheduled, the plan stays.
+    manager.handleWake()
+    XCTAssertFalse(manager.isRunning)
+    XCTAssertTrue(scheduler.delays.isEmpty)
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["A", "B"])
+
+    // Unlock mounts both.
+    screenLocked = false
+    manager.handleUnlock()
+    scheduler.fireNext()
+    XCTAssertEqual(mountedNames, ["A", "B"])
+    XCTAssertNil(manager.plan)
+    XCTAssertFalse(manager.isRunning)
+  }
+
+  func testBeginWithoutMergingReplacesThePlan() {
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      isBusy: { _ in false },
+      mount: { _, completion in completion(true) })
+    manager.begin(volumes: [volume(uuidA, name: "A", isMounted: true)], merging: true)
+    manager.begin(volumes: [volume(uuidB, name: "B", isMounted: true)])
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
+  }
+
+  func testUnlockWithMountAgainOffMountsNothing() {
+    var mountCount = 0
+    defaults.set(false, forKey: WakeRemountManager.enabledKey)
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      isBusy: { _ in false },
+      mount: { _, completion in
+        mountCount += 1
+        completion(true)
+      })
+    manager.begin(volumes: [volume(uuidA, name: "A", isMounted: true)], merging: true)
+    manager.handleUnlock()
+    XCTAssertNil(manager.plan)
+    XCTAssertTrue(scheduler.delays.isEmpty)
+    XCTAssertEqual(mountCount, 0)
+  }
 }

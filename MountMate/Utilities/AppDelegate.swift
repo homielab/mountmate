@@ -21,6 +21,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   /// Longest the app delays sleep while unmounting. macOS waits at most 30s
   /// for an answer to kIOMessageSystemWillSleep before sleeping anyway.
   private static let sleepUnmountTimeout: TimeInterval = 20
+  /// Unmounts on sleep still running; the lock unmount does not start then.
+  private var sleepUnmountRuns = 0
+  /// Between com.apple.screenIsLocked and com.apple.screenIsUnlocked.
+  private var isScreenLocked = false
+  private var screenLockTokens: [NSObjectProtocol] = []
 
   // MARK: - Application Lifecycle
 
@@ -28,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     NSApp.setActivationPolicy(.accessory)
     setupErrorObserver()
     setupSleepObserver()
+    setupScreenLockObserver()
     checkAndRequestFullDiskAccessIfNeeded()
     NotificationManager.shared.start()
     // Starts the keep-alive scheduler (reconnect sweeps, network and wake
@@ -51,6 +57,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    for token in screenLockTokens {
+      DistributedNotificationCenter.default().removeObserver(token)
+    }
+    screenLockTokens.removeAll()
     if powerNotifier != 0 {
       IODeregisterForSystemPower(&powerNotifier)
       powerNotifier = 0
@@ -95,16 +105,88 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     IONotificationPortSetDispatchQueue(notifyPort, DispatchQueue.main)
   }
 
+  /// Observes the screen lock for "Unmount All Disks When the Screen Locks".
+  /// The observers stay registered while the setting is off and do nothing.
+  private func setupScreenLockObserver() {
+    let center = DistributedNotificationCenter.default()
+    screenLockTokens = [
+      center.addObserver(
+        forName: ScreenLockRules.lockedNotification, object: nil, queue: .main
+      ) { [weak self] _ in self?.screenDidLock() },
+      center.addObserver(
+        forName: ScreenLockRules.unlockedNotification, object: nil, queue: .main
+      ) { [weak self] _ in self?.screenDidUnlock() },
+    ]
+    WakeRemountManager.shared.waitsForUnlock = { [weak self] in
+      self?.waitsForUnlock ?? false
+    }
+  }
+
+  /// The screen is locked with the setting on: the remount plan waits for
+  /// the unlock and new plans add to it.
+  private var waitsForUnlock: Bool {
+    ScreenLockRules.waitsForUnlock(
+      isEnabled: ScreenLockRules.isEnabled(), isScreenLocked: isScreenLocked)
+  }
+
   // MARK: - Actions
 
   /// Fallback used only when IOKit power registration failed.
   @objc private func systemWillSleep(_ notification: Notification) {
     guard UserDefaults.standard.bool(forKey: "ejectOnSleepEnabled") else { return }
+    startSleepUnmount(completion: nil)
+  }
+
+  /// Unmounts every "Unmount All" candidate before sleep, never forced and
+  /// without alerts, and records them for "Mount Again on Wake".
+  private func startSleepUnmount(completion: (() -> Void)?) {
     Log.app.notice("System will sleep. Ejecting all user volumes.")
-    WakeRemountManager.shared.begin(volumes: DriveManager.shared.unmountAllCandidates)
+    sleepUnmountRuns += 1
+    // The unmount is not a user decision — keep-alive targets reconnect on
+    // wake, so pass suppressReconnect: false.
+    WakeRemountManager.shared.begin(
+      volumes: DriveManager.shared.unmountAllCandidates, merging: waitsForUnlock)
     DriveManager.shared.unmountAllDrives(
       suppressReconnect: false, reportFailures: false,
+      completion: { [weak self] in
+        self?.sleepUnmountRuns -= 1
+        completion?()
+      },
       unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
+  }
+
+  private func screenDidLock() {
+    isScreenLocked = true
+    let drives = DriveManager.shared
+    let volumes = ScreenLockRules.candidates(
+      fromUnmountAll: drives.unmountAllCandidates,
+      isKeepAlive: PersistenceManager.shared.isVolumeKeepAlive)
+    let decision = ScreenLockRules.decision(
+      isEnabled: ScreenLockRules.isEnabled(), candidateCount: volumes.count,
+      isSleepUnmountRunning: sleepUnmountRuns > 0)
+    switch decision {
+    case .off:
+      return
+    case .nothingToUnmount:
+      Log.app.info("Screen locked. No volume to unmount.")
+    case .sleepUnmountRunning:
+      Log.app.info("Screen locked while the sleep unmount runs. Leaving it to the sleep unmount.")
+    case .unmount:
+      Log.app.notice("Screen locked. Unmounting \(volumes.count, privacy: .public) volume(s).")
+      // Not a user decision: the volumes come back at unlock with "Mount
+      // Again on Wake"; no alert while nobody is at the Mac.
+      WakeRemountManager.shared.begin(volumes: volumes, merging: true)
+      drives.unmountAllDrives(
+        volumes: volumes, suppressReconnect: false, reportFailures: false,
+        unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
+    }
+  }
+
+  private func screenDidUnlock() {
+    let wasWaiting = waitsForUnlock
+    isScreenLocked = false
+    guard wasWaiting else { return }
+    WakeRemountManager.shared.handleUnlock()
   }
 
   /// Main thread. Every kIOMessageCanSystemSleep / kIOMessageSystemWillSleep
@@ -129,13 +211,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         },
         allow: { IOAllowPowerChange(rootPort, notificationID) })
       guard isEnabled else { return }
-      Log.app.notice("System will sleep. Ejecting all user volumes.")
-      // The unmount is not a user decision — keep-alive targets reconnect on
-      // wake, so pass suppressReconnect: false.
-      WakeRemountManager.shared.begin(volumes: DriveManager.shared.unmountAllCandidates)
-      DriveManager.shared.unmountAllDrives(
-        suppressReconnect: false, reportFailures: false, completion: gate.complete,
-        unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
+      startSleepUnmount(completion: gate.complete)
 
     default:
       break
