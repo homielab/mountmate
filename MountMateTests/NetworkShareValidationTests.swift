@@ -21,7 +21,7 @@ final class NetworkShareValidationTests: XCTestCase {
         mountPoint: mountUnderVolumes))
   }
 
-  func testRejectsADuplicateEndpointOnlyForNewShares() {
+  func testAllowsAnEditThatKeepsADuplicateEndpoint() {
     let saved = share(name: "Media")
     let candidate = share(name: "Copy")
     XCTAssertNotNil(
@@ -31,6 +31,26 @@ final class NetworkShareValidationTests: XCTestCase {
       NetworkShareValidation.error(
         candidate: candidate, original: candidate, otherShares: [saved],
         mountPoint: mountUnderVolumes))
+  }
+
+  func testRejectsAnEditThatMovesToAnotherSharesEndpoint() {
+    let media = share(name: "Media", path: "Media")
+    let docs = share(name: "Docs", path: "Docs")
+    var edited = docs
+    edited.sharePath = "Media"
+    XCTAssertNotNil(
+      NetworkShareValidation.error(
+        candidate: edited, original: docs, otherShares: [media], mountPoint: mountUnderVolumes))
+  }
+
+  func testAcceptsAnEditThatMovesToAFreeEndpoint() {
+    let media = share(name: "Media", path: "Media")
+    let docs = share(name: "Docs", path: "Docs")
+    var edited = docs
+    edited.sharePath = "Photos"
+    XCTAssertNil(
+      NetworkShareValidation.error(
+        candidate: edited, original: docs, otherShares: [media], mountPoint: mountUnderVolumes))
   }
 
   func testRejectsASharedMountPoint() {

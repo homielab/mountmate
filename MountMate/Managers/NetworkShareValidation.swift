@@ -20,7 +20,10 @@ enum NetworkShareValidation {
       return nameError
     }
 
-    if original == nil,
+    // A share saved twice before this check existed may keep its endpoint;
+    // changing it (or adding a share) must not collide with another one.
+    let endpointChanged = original.map { !candidate.hasSameEndpoint(as: $0) } ?? true
+    if endpointChanged,
       let duplicate = otherShares.first(where: { $0.hasSameEndpoint(as: candidate) })
     {
       return String(

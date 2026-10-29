@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Editing a saved share into a copy of another**: changing the server or share path of a saved network share to one another saved share already uses is now refused with "This share is already saved as …", so two saved shares can no longer mount the same folder (mounting one showed both as mounted, unmounting one unmounted both). Edits that keep the address stay allowed.
 - **Mount Again on Wake after a quick sleep or a failed first attempt**: sleeping and waking the Mac again within 13 seconds (for example closing and reopening the lid, or after a Power Nap dark wake) no longer discards the new wake plan or lets the earlier wake overwrite it, and a volume whose mount fails at the 3-second check stays in the plan and is tried again at 10 seconds.
 - **Pasting `//nas/Public` or `\\nas\Public` into the server address**: an address copied from `mount` output (`//admin@nas:445/Public`) or a Windows UNC path is now split into the server, share path and username like an `smb://` URL, instead of leaving the server empty and Save disabled.
 - **Custom mount point**: a path that means the root folder, such as `//`, `/.` or `/x/..`, is now refused with "Cannot Be Root", and `..` and `.` in a valid path are resolved before it is checked and used.
