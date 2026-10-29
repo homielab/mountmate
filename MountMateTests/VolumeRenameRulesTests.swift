@@ -27,14 +27,19 @@ final class VolumeRenameRulesTests: XCTestCase {
     XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "APFS"), 255)
     XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "Apple_HFS"), 255)
     XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: nil), 255)
-    XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "ExFAT"), 11)
+    XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "ExFAT"), 15)
     XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "MS-DOS FAT32"), 11)
-    XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "Microsoft Basic Data"), 11)
+    XCTAssertEqual(VolumeRenameRules.maxLength(fileSystemType: "Microsoft Basic Data"), 255)
 
-    XCTAssertNil(VolumeRenameRules.problem(with: "ABCDEFGHIJK", fileSystemType: "ExFAT"))
+    XCTAssertNil(VolumeRenameRules.problem(with: "ABCDEFGHIJK", fileSystemType: "MS-DOS FAT32"))
     XCTAssertEqual(
-      VolumeRenameRules.problem(with: "ABCDEFGHIJKL", fileSystemType: "ExFAT"),
+      VolumeRenameRules.problem(with: "ABCDEFGHIJKL", fileSystemType: "MS-DOS FAT32"),
       .tooLong(maxLength: 11))
+    XCTAssertNil(VolumeRenameRules.problem(with: "Photos Backup", fileSystemType: "ExFAT"))
+    XCTAssertNil(VolumeRenameRules.problem(with: "ABCDEFGHIJKLMNO", fileSystemType: "ExFAT"))
+    XCTAssertEqual(
+      VolumeRenameRules.problem(with: "ABCDEFGHIJKLMNOP", fileSystemType: "ExFAT"),
+      .tooLong(maxLength: 15))
     XCTAssertNil(
       VolumeRenameRules.problem(with: String(repeating: "a", count: 255), fileSystemType: "APFS"))
     XCTAssertEqual(

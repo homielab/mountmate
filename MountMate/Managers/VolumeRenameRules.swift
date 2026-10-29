@@ -10,8 +10,10 @@ enum VolumeRenameRules {
 
   /// Longest name most file systems accept (APFS, HFS+).
   static let defaultMaxLength = 255
-  /// FAT and exFAT volume labels hold at most 11 characters.
+  /// FAT12/16/32 volume labels hold at most 11 characters.
   static let fatMaxLength = 11
+  /// exFAT volume labels hold at most 15 characters.
+  static let exFATMaxLength = 15
 
   enum NameProblem: Equatable, Sendable {
     case empty
@@ -27,10 +29,10 @@ enum VolumeRenameRules {
   /// Most characters the file system of the volume allows in its name.
   /// `fileSystemType` is the parser's partition content or file system name.
   static func maxLength(fileSystemType: String?) -> Int {
+    // "Microsoft Basic Data" can be NTFS or exFAT, so diskutil decides.
     let type = (fileSystemType ?? "").lowercased()
-    let isFAT =
-      type.contains("fat") || type.contains("ms-dos") || type.contains("msdos")
-      || type.contains("microsoft basic data")
+    if type.contains("exfat") { return exFATMaxLength }
+    let isFAT = type.contains("fat") || type.contains("ms-dos") || type.contains("msdos")
     return isFAT ? fatMaxLength : defaultMaxLength
   }
 
