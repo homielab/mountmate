@@ -67,7 +67,9 @@ NOTES_BODY="$(awk -v ver="$VERSION" '
   found && (/^## / || /^---/) { exit }
   found { print }
 ' "$CHANGELOG" | sed -e '/./,$!d')"   # drop leading blank lines
-if [[ -z "${NOTES_BODY//[[:space:]]/}" ]]; then
+# grep, not ${NOTES_BODY//[[:space:]]/}: bash 3.2 (macOS runners) takes hours
+# on a long changelog section.
+if ! grep -q '[^[:space:]]' <<< "$NOTES_BODY"; then
   echo "❌ No \"## ${VERSION}\" or \"## Unreleased\" section in ${CHANGELOG}. Add the release notes first." >&2
   exit 1
 fi
