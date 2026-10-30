@@ -171,6 +171,9 @@ final class IdleUnmountTests: XCTestCase {
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume()])], busy: [volumeUUID]), [])
     XCTAssertEqual(
       candidates([disk(.physical, volumes: [volume()])], unverified: ["disk4"]), [])
+    var backup = volume()
+    backup.isTimeMachine = true
+    XCTAssertEqual(candidates([disk(.physical, volumes: [backup])]), [])
     var off = setting
     off.minutes = 0
     XCTAssertEqual(candidates([disk(.physical, volumes: [volume()])], settings: [off]), [])

@@ -382,6 +382,11 @@ class DriveManager: ObservableObject {
     BulkVolumeActions.unmountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs)
   }
 
+  /// The volumes the sleep and screen-lock unmounts would take right now.
+  var automaticUnmountCandidates: [Volume] {
+    BulkVolumeActions.automaticUnmountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs)
+  }
+
   /// The volumes "Mount All" would mount right now (blocked disks skipped).
   var mountAllCandidates: [Volume] {
     BulkVolumeActions.mountCandidates(in: bulkActionDisks, busyVolumeIDs: busyVolumeIDs) {

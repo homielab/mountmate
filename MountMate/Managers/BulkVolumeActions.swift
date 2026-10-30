@@ -31,6 +31,20 @@ enum BulkVolumeActions {
       }
   }
 
+  /// The volumes the automatic unmounts (on sleep, when the screen locks)
+  /// take away: the "Unmount All" candidates on physical disks only, without
+  /// Time Machine volumes. A disk image may be an installer in use and a
+  /// Time Machine disk must stay for the next backup; the user can still
+  /// unmount both with "Unmount All".
+  static func automaticUnmountCandidates(
+    in disks: [PhysicalDisk], busyVolumeIDs: Set<String> = []
+  ) -> [Volume] {
+    unmountCandidates(
+      in: disks.filter { $0.type == .physical }, busyVolumeIDs: busyVolumeIDs
+    )
+    .filter { !$0.isTimeMachine }
+  }
+
   /// The volumes "Mount All" mounts. `.user` leaves out EFI partitions
   /// (category `.system`), which diskutil cannot mount. Volumes with an
   /// operation in flight (`busyVolumeIDs`) are skipped like in `unmountCandidates`.

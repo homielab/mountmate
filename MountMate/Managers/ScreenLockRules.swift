@@ -28,13 +28,14 @@ enum ScreenLockRules {
     defaults.bool(forKey: enabledKey)
   }
 
-  /// The volumes the lock unmount takes away: the "Unmount All" candidates
-  /// (mounted, ordinary, not protected, not busy) without the volumes the
-  /// user keeps mounted with Keep Alive.
+  /// The volumes the lock unmount takes away: the automatic unmount
+  /// candidates (mounted, ordinary, not protected, not busy, on a physical
+  /// disk, not Time Machine) without the volumes the user keeps mounted with
+  /// Keep Alive.
   static func candidates(
-    fromUnmountAll unmountAllCandidates: [Volume], isKeepAlive: (Volume) -> Bool
+    fromAutomatic automaticCandidates: [Volume], isKeepAlive: (Volume) -> Bool
   ) -> [Volume] {
-    unmountAllCandidates.filter { !isKeepAlive($0) }
+    automaticCandidates.filter { !isKeepAlive($0) }
   }
 
   static func decision(

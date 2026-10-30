@@ -63,7 +63,7 @@ struct ManagementSettingsView: View {
           items: persistence.idleUnmountVolumes,
           emptyStateText: "No Volumes Unmounted When Idle",
           footer:
-            "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later."
+            "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted."
         ) { info in
           ManagedEntryRow(
             name: info.name,

@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed.";
 "Unmount All Disks on Sleep" = "Unmount All Disks on Sleep";
 "Unmount All Disks When the Screen Locks" = "Unmount All Disks When the Screen Locks";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced.";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted.";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted.";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "Shortcuts & Language";
@@ -382,7 +383,7 @@
 "Off" = "Off";
 "After %d min Without Use" = "After %d min Without Use";
 "No Volumes Unmounted When Idle" = "No Volumes Unmounted When Idle";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later.";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted.";
 "Failed to mount “%@” because it is currently in use by “%@”." = "Failed to mount “%@” because it is currently in use by “%@”.";
 "Failed to mount “%@” because it is currently in use by another application." = "Failed to mount “%@” because it is currently in use by another application.";
 "An unknown error occurred while trying to mount “%@”." = "An unknown error occurred while trying to mount “%@”.";

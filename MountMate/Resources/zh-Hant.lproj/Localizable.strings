@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁碟僅在插入或登入時不會自動掛載。備份工具等 App 仍可在需要時掛載它們。";
 "Unmount All Disks on Sleep" = "進入睡眠模式時卸載所有磁碟";
 "Unmount All Disks When the Screen Locks" = "鎖定螢幕時卸載所有磁碟";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "螢幕鎖定時卸載所有可移除磁碟，避免您離開時仍有磁碟處於開啟狀態。受保護的磁碟卷、由「保持作用中」維持掛載的磁碟卷以及正在使用的磁碟卷會維持掛載。不會強制卸載。";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "螢幕鎖定時卸載所有可移除磁碟，避免您離開時仍有磁碟處於開啟狀態。受保護的磁碟卷、由「保持作用中」維持掛載的磁碟卷以及正在使用的磁碟卷會維持掛載。不會強制卸載。 Time Machine 磁碟和磁碟映像檔會維持掛載。";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Mac 睡眠前卸載所有外接磁碟。受保護的磁碟卷和正在使用的磁碟卷會維持掛載。不會強制卸載。 Time Machine 磁碟和磁碟映像檔會維持掛載。";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "快速鍵與語言";
@@ -382,7 +383,7 @@
 "Off" = "關閉";
 "After %d min Without Use" = "%d 分鐘未使用後";
 "No Volumes Unmounted When Idle" = "沒有閒置時卸載的磁碟卷";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "在外接磁碟上的磁碟卷按右鍵並選擇「閒置時卸載」，即可在數分鐘沒有讀寫後將其卸載。仍在使用的磁碟卷會保持掛載，稍後再試。";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "在外接磁碟上的磁碟卷按右鍵並選擇「閒置時卸載」，即可在數分鐘沒有讀寫後將其卸載。仍在使用的磁碟卷會保持掛載，稍後再試。 Time Machine 磁碟會維持掛載。";
 "Failed to mount “%@” because it is currently in use by “%@”." = "無法掛載「%@」，因為它目前正被「%@」使用。";
 "Failed to mount “%@” because it is currently in use by another application." = "無法掛載「%@」，因為它目前正被其他應用程式使用。";
 "An unknown error occurred while trying to mount “%@”." = "嘗試掛載「%@」時發生未知錯誤。";

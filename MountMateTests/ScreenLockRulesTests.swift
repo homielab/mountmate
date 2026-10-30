@@ -43,7 +43,7 @@ final class ScreenLockRulesTests: XCTestCase {
   func testCandidatesLeaveKeepAliveVolumesMounted() {
     let volumes = [volume("A"), volume("Kept"), volume("B")]
     let candidates = ScreenLockRules.candidates(
-      fromUnmountAll: volumes, isKeepAlive: { $0.name == "Kept" })
+      fromAutomatic: volumes, isKeepAlive: { $0.name == "Kept" })
     XCTAssertEqual(candidates.map(\.name), ["A", "B"])
   }
 

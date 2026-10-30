@@ -107,11 +107,14 @@ struct BehaviorSettingsSection: View {
       Toggle(isOn: $ejectOnSleepEnabled) {
         Label("Unmount All Disks on Sleep", systemImage: "moon.zzz")
       }
+      .help(
+        "Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted."
+      )
       Toggle(isOn: $unmountOnLockEnabled) {
         Label("Unmount All Disks When the Screen Locks", systemImage: "lock")
       }
       .help(
-        "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced."
+        "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted."
       )
       if ejectOnSleepEnabled || unmountOnLockEnabled {
         Toggle(isOn: $remountOnWakeEnabled) {

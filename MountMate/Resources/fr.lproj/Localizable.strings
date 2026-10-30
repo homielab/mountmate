@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Les disques bloqués ne sont empêchés de se monter automatiquement qu'au branchement ou à l'ouverture de session. Les apps comme les outils de sauvegarde peuvent toujours les monter si nécessaire.";
 "Unmount All Disks on Sleep" = "Démonter tous les disques à la mise en veille";
 "Unmount All Disks When the Screen Locks" = "Démonter tous les disques au verrouillage de l’écran";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "Démonte tous les disques amovibles lorsque l’écran se verrouille, pour qu’aucun disque ne reste ouvert en votre absence. Les volumes protégés, les volumes gardés montés par le Maintien actif et les volumes en cours d’utilisation restent montés. Rien n’est forcé.";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Démonte tous les disques amovibles lorsque l’écran se verrouille, pour qu’aucun disque ne reste ouvert en votre absence. Les volumes protégés, les volumes gardés montés par le Maintien actif et les volumes en cours d’utilisation restent montés. Rien n’est forcé. Les disques Time Machine et les images disque restent montés.";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Démonte tous les disques externes avant la suspension du Mac. Les volumes protégés et les volumes utilisés restent montés. Rien n’est forcé. Les disques Time Machine et les images disque restent montés.";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "Raccourcis & Langue";
@@ -382,7 +383,7 @@
 "Off" = "Désactivé";
 "After %d min Without Use" = "Après %d min sans utilisation";
 "No Volumes Unmounted When Idle" = "Aucun volume démonté après inactivité";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Cliquez avec le bouton droit sur un volume d’un disque externe et choisissez « Démonter après inactivité » pour le démonter après quelques minutes sans lecture ni écriture. Un volume encore utilisé reste monté et sera réessayé plus tard.";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "Cliquez avec le bouton droit sur un volume d’un disque externe et choisissez « Démonter après inactivité » pour le démonter après quelques minutes sans lecture ni écriture. Un volume encore utilisé reste monté et sera réessayé plus tard. Les disques Time Machine restent montés.";
 "Failed to mount “%@” because it is currently in use by “%@”." = "Impossible de monter « %@ » car il est actuellement utilisé par « %@ ».";
 "Failed to mount “%@” because it is currently in use by another application." = "Impossible de monter « %@ » car il est actuellement utilisé par une autre application.";
 "An unknown error occurred while trying to mount “%@”." = "Une erreur inconnue s'est produite lors de la tentative de monter « %@ ».";

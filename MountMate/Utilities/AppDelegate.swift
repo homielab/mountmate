@@ -137,17 +137,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     startSleepUnmount(completion: nil)
   }
 
-  /// Unmounts every "Unmount All" candidate before sleep, never forced and
+  /// Unmounts every automatic candidate (no disk images, no Time Machine) before sleep, never forced and
   /// without alerts, and records them for "Mount Again on Wake".
   private func startSleepUnmount(completion: (() -> Void)?) {
     Log.app.notice("System will sleep. Ejecting all user volumes.")
     sleepUnmountRuns += 1
     // The unmount is not a user decision — keep-alive targets reconnect on
     // wake, so pass suppressReconnect: false.
-    WakeRemountManager.shared.begin(
-      volumes: DriveManager.shared.unmountAllCandidates, merging: waitsForUnlock)
+    let volumes = DriveManager.shared.automaticUnmountCandidates
+    WakeRemountManager.shared.begin(volumes: volumes, merging: waitsForUnlock)
     DriveManager.shared.unmountAllDrives(
-      suppressReconnect: false, reportFailures: false,
+      volumes: volumes, suppressReconnect: false, reportFailures: false,
       completion: { [weak self] in
         self?.sleepUnmountRuns -= 1
         completion?()
@@ -159,7 +159,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     isScreenLocked = true
     let drives = DriveManager.shared
     let volumes = ScreenLockRules.candidates(
-      fromUnmountAll: drives.unmountAllCandidates,
+      fromAutomatic: drives.automaticUnmountCandidates,
       isKeepAlive: PersistenceManager.shared.isVolumeKeepAlive)
     let decision = ScreenLockRules.decision(
       isEnabled: ScreenLockRules.isEnabled(), candidateCount: volumes.count,

@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Заблокированные диски не подключаются автоматически только при подсоединении или входе в систему. Приложения, например программы резервного копирования, по-прежнему могут подключать их при необходимости.";
 "Unmount All Disks on Sleep" = "Отмонтировать все диски во время сна";
 "Unmount All Disks When the Screen Locks" = "Отмонтировать все диски при блокировке экрана";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "Отмонтирует все съёмные диски, когда экран блокируется, чтобы ни один диск не оставался открытым в ваше отсутствие. Защищённые тома, тома, которые Автоподключение держит смонтированными, и используемые тома остаются смонтированными. Ничего не отмонтируется принудительно.";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Отмонтирует все съёмные диски, когда экран блокируется, чтобы ни один диск не оставался открытым в ваше отсутствие. Защищённые тома, тома, которые Автоподключение держит смонтированными, и используемые тома остаются смонтированными. Ничего не отмонтируется принудительно. Диски Time Machine и образы дисков остаются смонтированными.";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Отмонтирует все внешние диски перед сном Mac. Защищённые тома и используемые тома остаются смонтированными. Ничего не принудительно. Диски Time Machine и образы дисков остаются смонтированными.";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "Сочетания и язык";
@@ -382,7 +383,7 @@
 "Off" = "Выкл.";
 "After %d min Without Use" = "Через %d мин без использования";
 "No Volumes Unmounted When Idle" = "Нет томов, отключаемых при простое";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Нажмите правой кнопкой на том внешнего диска и выберите «Отключать при простое», чтобы отключать его после нескольких минут без чтения и записи. Том, который ещё используется, остаётся подключённым, и попытка повторяется позже.";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "Нажмите правой кнопкой на том внешнего диска и выберите «Отключать при простое», чтобы отключать его после нескольких минут без чтения и записи. Том, который ещё используется, остаётся подключённым, и попытка повторяется позже. Диски Time Machine остаются смонтированными.";
 "Failed to mount “%@” because it is currently in use by “%@”." = "Не удалось смонтировать «%@», потому что он используется приложением «%@».";
 "Failed to mount “%@” because it is currently in use by another application." = "Не удалось смонтировать «%@», потому что он используется другим приложением.";
 "An unknown error occurred while trying to mount “%@”." = "Произошла неизвестная ошибка при попытке смонтировать «%@».";

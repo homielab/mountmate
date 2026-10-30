@@ -144,7 +144,8 @@ final class IdleUnmountManager {
 
   /// Volumes that may be unmounted for being idle, with their limits.
   /// Protected volumes are skipped; their saved setting applies again once
-  /// they are unprotected.
+  /// they are unprotected. Time Machine volumes are never unmounted, so the
+  /// next backup finds its disk.
   static func candidates(
     disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>, settings: [IdleUnmountVolume],
     keepAliveIDs: Set<String>, busyVolumeIDs: Set<String>
@@ -156,6 +157,7 @@ final class IdleUnmountManager {
     for disk in disks where disk.type == .physical && !unverifiedDiskIDs.contains(disk.id) {
       for volume in disk.allVolumes {
         guard volume.isMounted, volume.category == .user, !volume.isProtected,
+          !volume.isTimeMachine,
           let mountPoint = volume.mountPoint, mountPoint != "/",
           !mountPoint.hasPrefix("/System/"),
           let compositeId = volume.compositeId, let minutes = minutesByID[compositeId],

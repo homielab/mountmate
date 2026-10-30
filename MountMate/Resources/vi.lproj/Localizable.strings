@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Ổ đĩa bị chặn chỉ không tự động gắn khi cắm vào hoặc khi đăng nhập. Các ứng dụng như công cụ sao lưu vẫn có thể gắn chúng khi cần.";
 "Unmount All Disks on Sleep" = "Tháo tất cả ổ đĩa khi ngủ";
 "Unmount All Disks When the Screen Locks" = "Tháo tất cả ổ đĩa khi khoá màn hình";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "Tháo mọi ổ rời khi màn hình khoá, để không ổ nào còn mở khi bạn vắng mặt. Phân vùng được bảo vệ, phân vùng được Tự động kết nối lại giữ mount và phân vùng đang dùng vẫn được mount. Không tháo cưỡng bức.";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Tháo mọi ổ rời khi màn hình khoá, để không ổ nào còn mở khi bạn vắng mặt. Phân vùng được bảo vệ, phân vùng được Tự động kết nối lại giữ mount và phân vùng đang dùng vẫn được mount. Không tháo cưỡng bức. Ổ Time Machine và ảnh đĩa vẫn được gắn kết.";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Tháo mọi ổ ngoài trước khi Mac ngủ. Phân vùng được bảo vệ và phân vùng đang dùng vẫn được gắn kết. Không ép buộc. Ổ Time Machine và ảnh đĩa vẫn được gắn kết.";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "Phím tắt & Ngôn ngữ";
@@ -382,7 +383,7 @@
 "Off" = "Tắt";
 "After %d min Without Use" = "Sau %d phút không dùng";
 "No Volumes Unmounted When Idle" = "Không có phân vùng tự ngắt khi không dùng";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Nhấp chuột phải vào một phân vùng trên ổ ngoài và chọn “Tự ngắt khi không dùng” để ngắt gắn kết nó sau vài phút không đọc hay ghi. Phân vùng còn đang được dùng sẽ vẫn gắn kết và được thử lại sau.";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "Nhấp chuột phải vào một phân vùng trên ổ ngoài và chọn “Tự ngắt khi không dùng” để ngắt gắn kết nó sau vài phút không đọc hay ghi. Phân vùng còn đang được dùng sẽ vẫn gắn kết và được thử lại sau. Ổ Time Machine vẫn được gắn kết.";
 "Failed to mount “%@” because it is currently in use by “%@”." = "Không thể gắn “%@” vì đang được sử dụng bởi “%@”.";
 "Failed to mount “%@” because it is currently in use by another application." = "Không thể gắn “%@” vì đang được sử dụng bởi một ứng dụng khác.";
 "An unknown error occurred while trying to mount “%@”." = "Đã xảy ra lỗi không xác định khi cố gắng gắn “%@”.";

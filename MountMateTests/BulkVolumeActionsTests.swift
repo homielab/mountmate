@@ -50,6 +50,21 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertEqual(BulkVolumeActions.unmountCandidates(in: disks).map(\.id), ["a", "e"])
   }
 
+  func testAutomaticUnmountSparesDiskImagesAndTimeMachine() {
+    var backup = volume("tm")
+    backup.isTimeMachine = true
+    let disks = [
+      disk("disk2", volumes: [volume("a"), backup]),
+      disk("disk4", type: .diskImage, volumes: [volume("dmg")]),
+    ]
+    XCTAssertEqual(
+      BulkVolumeActions.unmountCandidates(in: disks).map(\.id), ["a", "tm", "dmg"])
+    XCTAssertEqual(
+      BulkVolumeActions.automaticUnmountCandidates(in: disks).map(\.id), ["a"])
+    XCTAssertEqual(
+      BulkVolumeActions.automaticUnmountCandidates(in: disks, busyVolumeIDs: ["a"]), [])
+  }
+
   func testMountCandidatesSkipMountedSystemAndBlockedVolumes() {
     let disks = [
       disk(

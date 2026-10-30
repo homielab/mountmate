@@ -71,7 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "Заблоковані диски не підключаються автоматично лише під час під'єднання або входу в систему. Програми, наприклад засоби резервного копіювання, як і раніше можуть підключати їх за потреби.";
 "Unmount All Disks on Sleep" = "Відмонтувати всі диски під час сну";
 "Unmount All Disks When the Screen Locks" = "Відмонтувати всі диски під час блокування екрана";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced." = "Відмонтовує всі знімні диски, коли екран блокується, щоб жоден диск не залишався відкритим за вашої відсутності. Захищені томи, томи, які Автопідключення тримає змонтованими, і томи, що використовуються, залишаються змонтованими. Нічого не відмонтовується примусово.";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Відмонтовує всі знімні диски, коли екран блокується, щоб жоден диск не залишався відкритим за вашої відсутності. Захищені томи, томи, які Автопідключення тримає змонтованими, і томи, що використовуються, залишаються змонтованими. Нічого не відмонтовується примусово. Диски Time Machine та образи дисків залишаються змонтованими.";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Відмонтовує всі зовнішні диски перед переходом Mac у сон. Захищені томи та томи, що використовуються, залишаються змонтованими. Нічого не примусово. Диски Time Machine та образи дисків залишаються змонтованими.";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "Скорочення та мова";
@@ -382,7 +383,7 @@
 "Off" = "Вимк.";
 "After %d min Without Use" = "Через %d хв без використання";
 "No Volumes Unmounted When Idle" = "Немає томів, що відключаються під час простою";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later." = "Клацніть правою кнопкою на томі зовнішнього диска й виберіть «Відключати під час простою», щоб відключати його після кількох хвилин без читання й запису. Том, який ще використовується, лишається підключеним, і спроба повторюється пізніше.";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "Клацніть правою кнопкою на томі зовнішнього диска й виберіть «Відключати під час простою», щоб відключати його після кількох хвилин без читання й запису. Том, який ще використовується, лишається підключеним, і спроба повторюється пізніше. Диски Time Machine залишаються змонтованими.";
 "Failed to mount “%@” because it is currently in use by “%@”." = "Не вдалося змонтувати «%@», оскільки його використовує «%@».";
 "Failed to mount “%@” because it is currently in use by another application." = "Не вдалося змонтувати «%@», оскільки його використовує інший застосунок.";
 "An unknown error occurred while trying to mount “%@”." = "Сталася невідома помилка під час спроби змонтувати «%@».";
