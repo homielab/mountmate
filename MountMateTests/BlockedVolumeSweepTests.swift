@@ -17,6 +17,20 @@ final class BlockedVolumeSweepTests: XCTestCase {
     return String(data: data, encoding: .utf8)!
   }
 
+  /// A `diskutil list -plist` payload with the blocked volume as the only
+  /// partition entry (plus `extra` volumes), on the blocked disk "D1".
+  private func listXML(_ entry: [String: Any], extra: [[String: Any]] = []) -> String {
+    var volume = entry
+    volume["VolumeUUID"] = volume["VolumeUUID"] ?? normalizedUUID
+    volume["DiskUUID"] = volume["DiskUUID"] ?? "D1"
+    return plistXML([
+      "AllDisksAndPartitions": [
+        ["DeviceIdentifier": "disk1", "Partitions": [volume]],
+        ["DeviceIdentifier": "disk9", "APFSVolumes": extra],
+      ]
+    ])
+  }
+
   private func ok(_ stdout: String = "", _ stderr: String = "") -> ProcessResult {
     ProcessResult(stdout: stdout, stderr: stderr, exitCode: 0, timedOut: false)
   }
@@ -42,7 +56,7 @@ final class BlockedVolumeSweepTests: XCTestCase {
       infos: [info],
       run: { executable, arguments in
         recorder.commands.append((executable, arguments))
-        if arguments.first == "info" {
+        if arguments.first == "list" {
           return ok(infoOutput())
         }
         defer { unmountCalls += 1 }
@@ -103,7 +117,7 @@ final class BlockedVolumeSweepTests: XCTestCase {
     runSweep(
       &recorder,
       infoOutput: {
-        self.plistXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
+        self.listXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
       },
       unmountResults: [self.ok()])
 
@@ -118,11 +132,11 @@ final class BlockedVolumeSweepTests: XCTestCase {
     runSweep(
       &recorder,
       infoOutput: {
-        self.plistXML(["DeviceIdentifier": "disk1s2", "MountPoint": "Not Mounted"])
+        self.listXML(["DeviceIdentifier": "disk1s2", "MountPoint": "Not Mounted"])
       },
       unmountResults: [])
 
-    XCTAssertEqual(recorder.commands.count, 1, "only the info command runs")
+    XCTAssertEqual(recorder.commands.count, 1, "only the list command runs")
     XCTAssertTrue(recorder.notified.isEmpty)
   }
 
@@ -131,7 +145,7 @@ final class BlockedVolumeSweepTests: XCTestCase {
     runSweep(
       &recorder,
       infoOutput: {
-        self.plistXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
+        self.listXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
       },
       unmountResults: [
         self.failed("Resource busy"), self.failed("Resource busy"),
@@ -151,13 +165,88 @@ final class BlockedVolumeSweepTests: XCTestCase {
     runSweep(
       &recorder,
       infoOutput: {
-        self.plistXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
+        self.listXML(["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"])
       },
       unmountResults: [self.failed("Resource busy"), self.ok()])
 
     XCTAssertEqual(recorder.commands.count, 3)
     XCTAssertEqual(recorder.sleeps, [3.0])
     XCTAssertTrue(recorder.notified.isEmpty)
+  }
+
+  // MARK: targetDevice
+
+  private func entry(
+    _ device: String, uuid: String? = nil, disk: String? = "D1",
+    mountPoint: String = "/Volumes/Backup"
+  ) -> [String: Any] {
+    var entry: [String: Any] = [
+      "DeviceIdentifier": device, "VolumeUUID": uuid ?? normalizedUUID, "MountPoint": mountPoint,
+    ]
+    if let disk { entry["DiskUUID"] = disk }
+    return entry
+  }
+
+  private func list(_ partitions: [[String: Any]], apfs: [[String: Any]] = []) -> [String: Any] {
+    [
+      "AllDisksAndPartitions": [
+        ["DeviceIdentifier": "disk1", "Partitions": partitions],
+        ["DeviceIdentifier": "disk5", "APFSVolumes": apfs],
+      ]
+    ]
+  }
+
+  func testTargetDeviceUsesTheOnlyMatchingVolume() {
+    let plist = list([
+      entry("disk1s2"), entry("disk1s3", uuid: "AAAAAAAA-1234-1234-1234-123456789ABC"),
+    ])
+    XCTAssertEqual(BlockedVolumeSweep.targetDevice(in: plist, for: info), "disk1s2")
+  }
+
+  func testTargetDeviceFindsAPFSVolumesAndIgnoresCase() {
+    let plist = list([], apfs: [entry("disk5s1", uuid: normalizedUUID.lowercased(), disk: "d1")])
+    XCTAssertEqual(BlockedVolumeSweep.targetDevice(in: plist, for: info), "disk5s1")
+  }
+
+  func testTwoVolumesSharingTheUUIDAreNeverUnmounted() {
+    let plist = list([entry("disk1s2")], apfs: [entry("disk5s1", disk: "D2")])
+    XCTAssertNil(BlockedVolumeSweep.targetDevice(in: plist, for: info))
+  }
+
+  func testVolumeOnAnotherDiskIsNotUnmounted() {
+    let plist = list([entry("disk1s2", disk: "D2")])
+    XCTAssertNil(BlockedVolumeSweep.targetDevice(in: plist, for: info))
+  }
+
+  func testNoneMatchesAVolumeWithoutDiskUUID() {
+    let none = ManagedVolumeInfo(volumeUUID: normalizedUUID, diskUUID: "NONE", name: "Backup")
+    XCTAssertEqual(
+      BlockedVolumeSweep.targetDevice(in: list([entry("disk1s2", disk: nil)]), for: none),
+      "disk1s2")
+    XCTAssertNil(
+      BlockedVolumeSweep.targetDevice(in: list([entry("disk1s2", disk: "D1")]), for: none))
+    XCTAssertNil(
+      BlockedVolumeSweep.targetDevice(in: list([entry("disk1s2", disk: nil)]), for: info))
+  }
+
+  func testTargetDeviceSkipsUnmountedAndMissingVolumes() {
+    XCTAssertNil(
+      BlockedVolumeSweep.targetDevice(
+        in: list([entry("disk1s2", mountPoint: "Not Mounted")]), for: info))
+    XCTAssertNil(BlockedVolumeSweep.targetDevice(in: list([]), for: info))
+  }
+
+  func testSweepLeavesClonedVolumesMounted() {
+    var recorder = Recorder()
+    runSweep(
+      &recorder,
+      infoOutput: {
+        self.listXML(
+          ["DeviceIdentifier": "disk1s2", "MountPoint": "/Volumes/Backup"],
+          extra: [self.entry("disk5s1", disk: "D2")])
+      },
+      unmountResults: [])
+    XCTAssertEqual(recorder.commands.count, 1, "no unmount for a shared UUID")
   }
 
   func testBrokenInfoOrUnknownUUIDSkipEverything() {

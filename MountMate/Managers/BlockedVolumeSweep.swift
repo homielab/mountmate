@@ -36,6 +36,40 @@ enum BlockedVolumeSweep {
     return device
   }
 
+  /// Every partition and APFS volume entry of a `diskutil list -plist`
+  /// payload.
+  static func volumeEntries(in plist: [String: Any]) -> [[String: Any]] {
+    let disks = plist["AllDisksAndPartitions"] as? [[String: Any]] ?? []
+    return disks.flatMap { disk -> [[String: Any]] in
+      (disk["Partitions"] as? [[String: Any]] ?? [])
+        + (disk["APFSVolumes"] as? [[String: Any]] ?? [])
+    }
+  }
+
+  /// The mounted device to unmount for a blocked volume, from one
+  /// `diskutil list -plist` payload. Nil when no volume has its UUID, when
+  /// two or more do (a cloned drive: the bare UUID cannot tell which one was
+  /// blocked), when the one match lies on another disk (DiskUUID differs;
+  /// "NONE" matches a volume without one) or when it is not mounted.
+  static func targetDevice(in plist: [String: Any], for info: ManagedVolumeInfo) -> String? {
+    guard let volumeUUID = PersistenceManager.normalizedSystemVolumeUUID(info.volumeUUID)
+    else { return nil }
+    let matches = volumeEntries(in: plist).filter {
+      ($0["VolumeUUID"] as? String)?.caseInsensitiveCompare(volumeUUID) == .orderedSame
+    }
+    guard matches.count == 1, let entry = matches.first else {
+      if matches.count > 1 {
+        Log.mounter.notice(
+          "Skipped blocked volume “\(info.name, privacy: .private)”: \(matches.count, privacy: .public) volumes share its UUID."
+        )
+      }
+      return nil
+    }
+    let diskUUID = (entry["DiskUUID"] as? String) ?? "NONE"
+    guard diskUUID.caseInsensitiveCompare(info.diskUUID) == .orderedSame else { return nil }
+    return mountedDevice(in: entry)
+  }
+
   /// True when diskutil says the volume was (or is) not mounted: nothing left
   /// to do for it.
   static func isAlreadyUnmounted(_ result: ProcessResult) -> Bool {
@@ -52,8 +86,8 @@ enum BlockedVolumeSweep {
     return attempt < maxAttempts ? .retryAfterSleep : .gaveUp
   }
 
-  /// Runs the sweep: for every blocked volume, read its current state with
-  /// `diskutil info -plist` and unmount the device up to `maxAttempts` times,
+  /// Runs the sweep: read `diskutil list -plist` once, then for every blocked
+  /// volume that `targetDevice` finds mounted, unmount the device up to `maxAttempts` times,
   /// sleeping `retryDelay` between attempts. `notify` runs once for a volume
   /// that stayed mounted after the last attempt.
   static func run(
@@ -62,15 +96,14 @@ enum BlockedVolumeSweep {
     sleep: (TimeInterval) -> Void,
     notify: (String, String) -> Void
   ) {
-    for info in infos {
-      guard let volumeUUID = PersistenceManager.normalizedSystemVolumeUUID(info.volumeUUID)
-      else { continue }
+    let listResult = executable("/usr/sbin/diskutil", ["list", "-plist"])
+    guard listResult.succeeded,
+      let plist = PlistDecoding.decode(listResult.stdout, context: "diskutil list")
+    else { return }
 
-      let infoResult = executable(
-        "/usr/sbin/diskutil", ["info", "-plist", volumeUUID])
-      guard infoResult.succeeded,
-        let plist = PlistDecoding.decode(infoResult.stdout, context: "diskutil info"),
-        let device = mountedDevice(in: plist)
+    for info in infos {
+      guard let volumeUUID = PersistenceManager.normalizedSystemVolumeUUID(info.volumeUUID),
+        let device = targetDevice(in: plist, for: info)
       else { continue }
 
       for attempt in 1...maxAttempts {

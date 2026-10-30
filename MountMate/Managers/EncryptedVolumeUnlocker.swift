@@ -163,7 +163,7 @@ final class EncryptedVolumeUnlocker {
         NotificationCenter.default.post(name: .willManuallyMount, object: nil, userInfo: userInfo)
       }
       let result = self.host.runDiskUtil(
-        arguments: ["apfs", "unlockVolume", volume.id, "-stdinpassphrase"],
+        arguments: ["apfs", "unlockVolume", volume.deviceIdentifier, "-stdinpassphrase"],
         input: Data(saved.utf8))
       if approvesMount {
         NotificationCenter.default.post(
@@ -204,7 +204,7 @@ final class EncryptedVolumeUnlocker {
     forgetSavedPassword: Bool = false
   ) {
     let result = host.runDiskUtil(
-      arguments: ["apfs", "unlockVolume", volume.id, "-stdinpassphrase"],
+      arguments: ["apfs", "unlockVolume", volume.deviceIdentifier, "-stdinpassphrase"],
       input: Data(passphrase.utf8))
     let saveStatus = Self.rememberPassphraseIfUnlocked(
       passphrase, for: volume, unlocked: result.succeeded, remember: rememberPassphrase,

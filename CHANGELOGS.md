@@ -91,6 +91,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Blocked drives with a cloned twin**: the check at launch no longer unmounts a drive that only shares its volume UUID with a blocked one (a clone); when two connected volumes share the UUID it leaves both alone. Unlocking an encrypted APFS volume that shares its UUID with another now targets the right device, so the correct password works.
 - **Shortcut keys on extended keyboards**: shortcuts using F13–F20, Help or keypad keys now show as "⌘F13" or "⌃Keypad 1" in Settings (and VoiceOver reads them right) instead of "Key 105" or a stray symbol.
 - **Reduce Motion**: the small message after a keyboard shortcut now appears and disappears without fading when Reduce Motion is on.
 - **Volumes with the same UUID** (two SD cards flashed from one image, a cloned drive): the volume name explains on hover and in VoiceOver that another volume has the same UUID, Copy Diagnostics counts such volumes, and blocking one card no longer stops the other card from mounting automatically.

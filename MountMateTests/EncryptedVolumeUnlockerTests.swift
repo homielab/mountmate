@@ -90,12 +90,13 @@ final class EncryptedVolumeUnlockerTests: XCTestCase {
     isProtected: false, snapshots: [], storageError: nil)
 
   private func silentUnlock(
-    _ unlocker: EncryptedVolumeUnlocker, hasSavedPassword: Bool = true
+    _ unlocker: EncryptedVolumeUnlocker, hasSavedPassword: Bool = true, volume: Volume? = nil
   ) -> Bool {
     let done = expectation(description: "silent unlock")
     var unlocked = false
     unlocker.unlockSilently(
-      volume, afterMount: lockedMount, hasSavedPassword: hasSavedPassword, approvesMount: false
+      volume ?? self.volume, afterMount: lockedMount, hasSavedPassword: hasSavedPassword,
+      approvesMount: false
     ) {
       unlocked = $0
       done.fulfill()
@@ -126,6 +127,23 @@ final class EncryptedVolumeUnlockerTests: XCTestCase {
     XCTAssertTrue(host.alerts.isEmpty)
   }
 
+  func testUnlockTargetsTheDeviceOfASameUUIDVolume() {
+    let host = FakeUnlockHost(
+      result: ProcessResult(stdout: "Unlocked", stderr: "", exitCode: 0, timedOut: false))
+    let cloneID = "12345678-1234-1234-1234-123456789ABC#disk6s1"
+    let unlocker = EncryptedVolumeUnlocker(
+      host: host, store: FakeUnlockStore(passwords: [cloneID: "secret"]))
+    let clone = Volume(
+      id: cloneID, deviceIdentifier: "disk6s1", diskUUID: nil, name: "Vault",
+      isMounted: false, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+
+    XCTAssertTrue(silentUnlock(unlocker, volume: clone))
+    XCTAssertEqual(
+      host.unlockArguments, [["apfs", "unlockVolume", "disk6s1", "-stdinpassphrase"]])
+  }
+
   func testSilentUnlockWithoutSavedPasswordRunsNothing() {
     let host = FakeUnlockHost(result: failure(stderr: ""))
     let unlocker = EncryptedVolumeUnlocker(host: host, store: FakeUnlockStore(passwords: [:]))
@@ -149,6 +167,8 @@ private final class FakeUnlockHost: EncryptedVolumeUnlockerHost, @unchecked Send
   private let lock = NSLock()
   private let result: ProcessResult
   private var calls = 0
+  private var unlockArgs: [[String]] = []
+  var unlockArguments: [[String]] { lock.withLock { unlockArgs } }
   var alerts: [AppAlert] = []
 
   init(result: ProcessResult) { self.result = result }
@@ -156,7 +176,12 @@ private final class FakeUnlockHost: EncryptedVolumeUnlockerHost, @unchecked Send
   var unlockCalls: Int { lock.withLock { calls } }
 
   func runDiskUtil(arguments: [String], input: Data) -> ProcessResult {
-    if arguments.starts(with: ["apfs", "unlockVolume"]) { lock.withLock { calls += 1 } }
+    if arguments.starts(with: ["apfs", "unlockVolume"]) {
+      lock.withLock {
+        calls += 1
+        unlockArgs.append(arguments)
+      }
+    }
     return result
   }
   func setBusy(_ volumeID: String, _ busy: Bool) {}
