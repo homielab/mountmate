@@ -247,7 +247,7 @@
 "Retry Interval" = "Intervalle de nouvelle tentative";
 "Remount on Network Change" = "Remonter au changement de réseau";
 "Reconnect After Sleep" = "Reconnecter après la veille";
-"Keep Alive Footer" = "Le maintien actif remonte automatiquement les partages réseau marqués « Maintenir monté » et les volumes marqués « Maintenir monté » lorsqu'ils se déconnectent, après un changement de réseau, au réveil et à l'ouverture de session.";
+"Keep Alive Footer" = "Le maintien actif remonte automatiquement les partages réseau marqués « Maintenir monté » et les volumes marqués « Maintenir monté » lorsqu'ils se déconnectent, après un changement de réseau, au réveil et à l'ouverture de session. Un partage encore monté qui ne répond plus (par exemple après le redémarrage du NAS) est démonté puis remonté. En mode Économie d'énergie, la vérification est deux fois moins fréquente.";
 "Keep Mounted" = "Maintenir monté";
 "Reconnecting…" = "Reconnexion…";
 "Reconnect Now" = "Reconnecter maintenant";

@@ -995,7 +995,9 @@
             <h3>Keep Alive</h3>
             <p>
               Mark a share or volume as Keep Mounted and MountMate reconnects it
-              when it drops, after a network change, on wake and at login.
+              when it drops, after a network change, on wake and at login. A
+              share that stops responding after the NAS restarts is mounted
+              again instead of hanging Finder.
             </p>
           </div>
           <div class="card">
@@ -1269,9 +1271,11 @@
               retries at the interval you choose in Settings (10 seconds to 5
               minutes), and also right after a network change, after the Mac
               wakes and at login. With Notifications on you get one message
-              when a mount stays down and one when it is back. Checking a
-              share only reads the Mac's own mount table, so a NAS that is
-              not in use can still go to sleep.
+              when a mount stays down and one when it is back. A mounted
+              share is asked for its free space at each check; one that does
+              not answer within 10 seconds (the NAS restarted, Wi-Fi or VPN
+              changed) is unmounted and mounted again. In Low Power Mode the
+              checks run half as often.
             </p>
           </details>
           <details>

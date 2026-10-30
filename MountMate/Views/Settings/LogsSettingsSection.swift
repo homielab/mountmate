@@ -56,12 +56,13 @@ struct LogsSettingsSection: View {
     ).count
     let savedShares = PersistenceManager.shared.networkShares
     let shareManager = NetworkMountManager.shared
-    let shares = DiagnosticsReport.shareSummary(
+    var shares = DiagnosticsReport.shareSummary(
       of: savedShares, mountedIDs: shareManager.mountedShareIDs,
       usage: shareManager.usageByShareID,
       threshold: LowSpaceRules.threshold() ?? Double(LowSpaceRules.defaultPercent) / 100,
       passwordRejectedIDs: KeepAliveManager.shared.passwordRejectedShareIDs,
       readOnlyIDs: shareManager.readOnlyShareIDs)
+    shares.staleDetected = KeepAliveManager.shared.staleMountsDetected
     let mountPoints = DiagnosticsReport.customMountPoints(of: savedShares)
     Task {
       let copied = await DiagnosticsReport.copyToPasteboard(

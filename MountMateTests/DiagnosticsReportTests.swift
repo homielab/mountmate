@@ -148,7 +148,7 @@ final class DiagnosticsReportTests: XCTestCase {
     let full = NetworkShare(
       name: "Media", server: "nas.local", sharePath: "media", username: "", mountAtLogin: false)
     let tb: Int64 = 1_000_000_000_000
-    let summary = DiagnosticsReport.shareSummary(
+    var summary = DiagnosticsReport.shareSummary(
       of: [mounted, idle, full], mountedIDs: [mounted.id, full.id],
       usage: [
         mounted.id: ShareUsage(totalBytes: tb, freeBytes: tb / 2),
@@ -168,6 +168,7 @@ final class DiagnosticsReportTests: XCTestCase {
       threshold: 0.9, readOnlyIDs: [full.id])
     XCTAssertEqual(readOnly.almostFull, 0, "a read-only share is never almost full")
     XCTAssertEqual(summary.passwordRejected, 1, "deleted shares are not counted")
+    summary.staleDetected = 3
 
     let report = DiagnosticsReport.format(
       appVersion: "1", build: "1", macOS: "x", flags: [], shares: summary, lines: [],
@@ -179,6 +180,7 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertTrue(report.contains("  Mount at login: 1\n"))
     XCTAssertTrue(report.contains("  Almost full: 1\n"))
     XCTAssertTrue(report.contains("  Password rejected: 1\n"))
+    XCTAssertTrue(report.contains("  Stale mounts detected: 3\n"))
     for secret in ["Family", "Backup", "Media", "nas.local", "10.0.0.5", "photos", "alice"] {
       XCTAssertFalse(report.contains(secret), secret)
     }
@@ -189,5 +191,6 @@ final class DiagnosticsReportTests: XCTestCase {
       appVersion: "1", build: "1", macOS: "x", flags: [], lines: [], generatedAt: now,
       timeZone: utc)
     XCTAssertTrue(report.contains("Network shares (saved): 0\n"))
+    XCTAssertTrue(report.contains("  Stale mounts detected: 0\n"))
   }
 }

@@ -48,4 +48,46 @@ final class FileSystemUsageTests: XCTestCase {
     XCTAssertTrue(FileSystemUsage.beginRead(of: path))
     FileSystemUsage.endRead(of: path)
   }
+
+  // MARK: - Probe
+
+  func testProbeOfTheRootResponds() {
+    XCTAssertEqual(FileSystemUsage.probe(atPath: "/", timeout: 2), .responding)
+  }
+
+  func testProbeReportsTheErrno() {
+    XCTAssertEqual(
+      FileSystemUsage.probe(atPath: "/nonexistent-\(UUID().uuidString)", timeout: 2),
+      .failed(errno: ENOENT))
+    XCTAssertEqual(
+      FileSystemUsage.probe(atPath: "/fake-stale", timeout: 2, statfsCall: { _ in ESTALE }),
+      .failed(errno: ESTALE))
+  }
+
+  func testHungProbeTimesOutAndTheNextOneDoesNotPileUp() {
+    let path = "/fake-hung-\(UUID().uuidString)"
+    let gate = DispatchSemaphore(value: 0)
+    // Releases the blocked thread, also when an assertion fails.
+    addTeardownBlock { gate.signal() }
+    let hang: @Sendable (String) -> Int32 = { _ in
+      gate.wait()
+      return 0
+    }
+
+    let started = Date()
+    XCTAssertEqual(
+      FileSystemUsage.probe(atPath: path, timeout: 0.2, statfsCall: hang), .timedOut)
+    // The first probe is still blocked: the second one returns at once.
+    XCTAssertEqual(
+      FileSystemUsage.probe(atPath: path, timeout: 5, statfsCall: hang), .timedOut)
+    XCTAssertLessThan(Date().timeIntervalSince(started), 1)
+  }
+
+  func testCapacityReadInFlightDoesNotMakeAProbeTimeOut() {
+    let path = "/nonexistent-shared-\(UUID().uuidString)"
+    XCTAssertTrue(FileSystemUsage.beginRead(of: path))
+    defer { FileSystemUsage.endRead(of: path) }
+    XCTAssertEqual(
+      FileSystemUsage.probe(atPath: path, timeout: 2, statfsCall: { _ in 0 }), .responding)
+  }
 }

@@ -247,7 +247,7 @@
 "Retry Interval" = "重试间隔";
 "Remount on Network Change" = "更换网络时重新挂载";
 "Reconnect After Sleep" = "唤醒后重新连接";
-"Keep Alive Footer" = "当标记为“保持挂载”的网络共享或宗卷断开时、网络切换后、系统唤醒时以及登录时，自动重新挂载它们。";
+"Keep Alive Footer" = "当标记为“保持挂载”的网络共享或宗卷断开时、网络切换后、系统唤醒时以及登录时，自动重新挂载它们。仍处于挂载状态但不再响应的网络共享（例如 NAS 重启后）会被卸载并重新挂载。在低电量模式下，检查频率减半。";
 "Keep Mounted" = "保持挂载";
 "Reconnecting…" = "正在重新连接…";
 "Reconnect Now" = "立即重新连接";

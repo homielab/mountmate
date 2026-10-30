@@ -28,6 +28,9 @@ enum DiagnosticsReport {
     var almostFull = 0
     /// Shares not reconnected because the server rejected their password.
     var passwordRejected = 0
+    /// Times Keep Alive found a mounted share not responding and reconnected
+    /// it this session.
+    var staleDetected = 0
 
     var saved: Int { savedByProtocol.values.reduce(0, +) }
   }
@@ -184,6 +187,7 @@ enum DiagnosticsReport {
       "  Mount at login: \(shares.mountAtLogin)",
       "  Almost full: \(shares.almostFull)",
       "  Password rejected: \(shares.passwordRejected)",
+      "  Stale mounts detected: \(shares.staleDetected)",
     ]
     out += [
       "",

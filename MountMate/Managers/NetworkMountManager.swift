@@ -294,9 +294,13 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
 
   /// Unmounts and immediately mounts a share again so the connection is
   /// re-established over the current network path. Used after network
-  /// interface changes when the stale mount still exists. `completion`
+  /// interface changes when the stale mount still exists, and by Keep Alive
+  /// for a mount that stopped answering (`isStale`: `umount -f`, since a
+  /// dead server never lets a normal unmount finish). `completion`
   /// receives whether the share ended up mounted.
-  func forceRemount(share: NetworkShare, completion: ((Bool) -> Void)? = nil) {
+  func forceRemount(
+    share: NetworkShare, isStale: Bool = false, completion: ((Bool) -> Void)? = nil
+  ) {
     let lastKnownMountPoint = mountPointsByShareID[share.id]
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard let self else { return }
@@ -310,7 +314,8 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
           DispatchQueue.main.async { completion?(true) }
           return
         }
-        let umountResult = runProcess(executable: "/sbin/umount", arguments: [mountPoint])
+        let umountResult = runProcess(
+          executable: "/sbin/umount", arguments: (isStale ? ["-f"] : []) + [mountPoint])
         if !umountResult.succeeded {
           Log.network.notice(
             "Unmount before remounting \(share.name, privacy: .private) failed (\(umountResult.timedOut ? "timed out" : "exit \(umountResult.exitCode ?? -1)", privacy: .public)): \(umountResult.stderr, privacy: .private)"
@@ -318,9 +323,10 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
           let stillMounted =
             self.currentMountTable().map { !self.mounts(of: share, in: $0).isEmpty } ?? true
           if !Self.shouldRemount(afterUnmountSucceeded: false, stillMounted: stillMounted) {
-            // Busy share: it is still mounted, so there is nothing to
-            // reconnect and a second mount would only fail.
-            DispatchQueue.main.async { completion?(true) }
+            // Still mounted, so a second mount would only fail: fine for a
+            // busy share, still broken for a stale one.
+            let result = StaleMountRules.remountResultWhenStillMounted(isStale: isStale)
+            DispatchQueue.main.async { completion?(result) }
             return
           }
         }

@@ -67,11 +67,24 @@ extension KeepAliveManager {
     guard !shares.isEmpty else { return }
 
     // The mounted-set snapshot was just refreshed by the sweep prologue.
-    let mountedIDs = NetworkMountManager.shared.mountedShareIDs
+    let shareManager = NetworkMountManager.shared
+    let mountedIDs = shareManager.mountedShareIDs
 
     for share in shares {
       if mountedIDs.contains(share.id) {
-        recordResult(shareID: share.id, name: share.name, success: true)
+        // In the mount table is not enough: a NAS that restarted leaves a
+        // dead mount behind that hangs Finder. Check that it still answers.
+        if let mountPoint = StaleMountRules.probeTarget(
+          mountPoint: shareManager.mountPointsByShareID[share.id],
+          configuredMountPoint: shareManager.configuredMountPoint(for: share),
+          isSuppressed: isSuppressed(shareID: share.id),
+          isCredentialRejected: isCredentialRejected(shareID: share.id))
+        {
+          group.enter()
+          verifyMountedShare(share, mountPoint: mountPoint) { group.leave() }
+        } else {
+          recordResult(shareID: share.id, name: share.name, success: true)
+        }
         continue
       }
       guard !isSuppressed(shareID: share.id) else { continue }
@@ -93,6 +106,55 @@ extension KeepAliveManager {
           )
         }
         group.leave()
+      }
+    }
+  }
+
+  /// Probes a mounted share off the main thread (`probe`, at most
+  /// `StaleMountRules.probeTimeout`); a share that answers counts as
+  /// connected, a stale one is force-unmounted and mounted again with
+  /// `remount` (when its backoff allows), counted as an attempt so repeated
+  /// failures announce "Cannot Reconnect". `completion` runs on the main
+  /// thread once all is done. Internal (not private) for unit tests.
+  func verifyMountedShare(
+    _ share: NetworkShare, mountPoint: String,
+    probe: @escaping @Sendable (String) -> FileSystemUsage.ProbeOutcome = {
+      FileSystemUsage.probe(atPath: $0, timeout: StaleMountRules.probeTimeout)
+    },
+    remount: @escaping (NetworkShare, @escaping (Bool) -> Void) -> Void = { share, done in
+      NetworkMountManager.shared.forceRemount(share: share, isStale: true, completion: done)
+    },
+    completion: @escaping () -> Void
+  ) {
+    DispatchQueue.global(qos: .utility).async { [weak self] in
+      let outcome = probe(mountPoint)
+      DispatchQueue.main.async {
+        guard let self else { return completion() }
+        guard StaleMountRules.isStale(outcome) else {
+          self.recordResult(shareID: share.id, name: share.name, success: true)
+          return completion()
+        }
+        // Keep Alive turned off or the user unmounted the share meanwhile,
+        // or a stale remount failed recently: leave it to a later sweep.
+        guard self.isEnabled, !self.isSuppressed(shareID: share.id),
+          self.isDueForRetry(shareID: share.id)
+        else { return completion() }
+
+        self.staleMountsDetected += 1
+        Log.keepAlive.notice(
+          "Network share \(share.name, privacy: .private) is mounted but not responding (\(String(describing: outcome), privacy: .public)). Unmounting and mounting it again."
+        )
+        self.recordAttempt(shareID: share.id)
+        self.markReconnecting(shareID: share.id)
+        remount(share) { [weak self] success in
+          self?.recordResult(shareID: share.id, name: share.name, success: success)
+          if success {
+            Log.keepAlive.notice("Reconnected stale share \(share.name, privacy: .private).")
+          } else {
+            Log.keepAlive.error("Could not reconnect stale share \(share.name, privacy: .private).")
+          }
+          completion()
+        }
       }
     }
   }

@@ -11,8 +11,10 @@ import Foundation
 /// - **Local/external volumes** marked "Keep Mounted" (USB, Thunderbolt, …)
 ///
 /// Triggers:
-/// - A periodic sweep at the configured interval (with exponential backoff
-///   per target while the target is down)
+/// - A periodic sweep at the configured interval, doubled in Low Power Mode
+///   (with exponential backoff per target while the target is down). A
+///   mounted share is probed (`StaleMountRules`): one that stopped answering
+///   is force-unmounted and mounted again
 /// - Network path changes (`NWPathMonitor`): on interface switch, mounts are
 ///   remounted through the new primary interface; on network recovery, a
 ///   reconnect sweep starts immediately. With Keep Alive off, the network
@@ -98,6 +100,10 @@ class KeepAliveManager: ObservableObject {
 
   var maxRetryInterval: Double { retryInterval * 8 }
 
+  /// Mounted shares found not responding and reconnected this session
+  /// (Copy Diagnostics). Main thread only.
+  var staleMountsDetected = 0
+
   // MARK: - Retry State
 
   private var shareRetries = RetryBook<UUID>()
@@ -123,6 +129,8 @@ class KeepAliveManager: ObservableObject {
   let sweepAction: (() -> Void)?
   /// Replaces the login mount retry while Keep Alive is off (tests).
   let loginMountRetryAction: (() -> Void)?
+  /// Whether the Mac is in Low Power Mode (tests pass a fake).
+  let isLowPowerMode: () -> Bool
   private var cancellables = Set<AnyCancellable>()
   /// Main thread only.
   var isSweeping = false
@@ -146,17 +154,19 @@ class KeepAliveManager: ObservableObject {
   var currentInterface: InterfaceSnapshot?
 
   /// Tests inject a fake `networkMonitor`, an `interfaceChangeAction`, a
-  /// `sweepAction` and a `loginMountRetryAction`.
+  /// `sweepAction`, a `loginMountRetryAction` and `isLowPowerMode`.
   init(
     networkMonitor: NetworkChangeMonitoring = NetworkChangeMonitor(),
     interfaceChangeAction: (() -> Void)? = nil,
     sweepAction: (() -> Void)? = nil,
-    loginMountRetryAction: (() -> Void)? = nil
+    loginMountRetryAction: (() -> Void)? = nil,
+    isLowPowerMode: @escaping () -> Bool = { ProcessInfo.processInfo.isLowPowerModeEnabled }
   ) {
     self.networkMonitor = networkMonitor
     self.interfaceChangeAction = interfaceChangeAction
     self.sweepAction = sweepAction
     self.loginMountRetryAction = loginMountRetryAction
+    self.isLowPowerMode = isLowPowerMode
 
     let defaults = UserDefaults.standard
     isEnabled =
@@ -177,6 +187,11 @@ class KeepAliveManager: ObservableObject {
     networkMonitor.onChange = { [weak self] path in self?.handleNetworkChange(path) }
     networkMonitor.start()
     setupWakeObserver()
+    // Low Power Mode on or off: sweep at the matching pace.
+    NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in self?.startSweepTimer() }
+      .store(in: &cancellables)
 
     // Delay the login sweep so the network stack and disk list are ready.
     DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
@@ -444,15 +459,26 @@ class KeepAliveManager: ObservableObject {
 
   // MARK: - Scheduling
 
+  /// Seconds between periodic sweeps: the configured interval, doubled in
+  /// Low Power Mode.
+  var sweepTimerInterval: TimeInterval {
+    StaleMountRules.sweepInterval(retryInterval: retryInterval, isLowPowerMode: isLowPowerMode())
+  }
+
+  /// The running periodic sweep timer. For tests.
+  var sweepTimerIntervalInUse: TimeInterval? { sweepTimer?.timeInterval }
+
   private func startSweepTimer() {
     sweepTimer?.invalidate()
-    // Timer cadence is the configured interval; per-target backoff decides
-    // whether an individual target is actually retried on a given sweep.
-    let timer = Timer(timeInterval: retryInterval, repeats: true) { [weak self] _ in
+    // Timer cadence is the configured interval (doubled in Low Power Mode);
+    // per-target backoff decides whether an individual target is actually
+    // retried on a given sweep.
+    let interval = sweepTimerInterval
+    let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
       self?.sweepNow()
     }
     // Let macOS coalesce this with other wake-ups; exact timing doesn't matter.
-    timer.tolerance = retryInterval * 0.1
+    timer.tolerance = interval * 0.1
     RunLoop.main.add(timer, forMode: .common)
     sweepTimer = timer
   }

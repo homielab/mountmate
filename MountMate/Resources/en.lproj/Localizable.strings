@@ -251,7 +251,7 @@
 "Retry Interval" = "Retry Interval";
 "Remount on Network Change" = "Remount on Network Change";
 "Reconnect After Sleep" = "Reconnect After Sleep";
-"Keep Alive Footer" = "Keep Alive automatically remounts network shares marked \"Keep Mounted\" and volumes marked \"Keep Mounted\" when they drop, after network changes, on wake, and at login.";
+"Keep Alive Footer" = "Keep Alive automatically remounts network shares marked \"Keep Mounted\" and volumes marked \"Keep Mounted\" when they drop, after network changes, on wake, and at login. A share that is still mounted but stops responding (for example after the NAS restarts) is unmounted and mounted again. In Low Power Mode, Keep Alive checks half as often.";
 "Keep Mounted" = "Keep Mounted";
 "Reconnecting…" = "Reconnecting…";
 "Reconnect Now" = "Reconnect Now";
