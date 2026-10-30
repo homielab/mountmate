@@ -79,6 +79,9 @@ final class LoginMountRetrier {
   private let mount: Mount
   private let schedule: Schedule?
   private let retryWhenDue: (() -> Void)?
+  private let onGiveUp: ((NetworkShare, String?) -> Void)?
+  /// Shares already reported as given up, so each is reported once.
+  private var gaveUpIDs = Set<UUID>()
   /// Cancels the pending retry timer; nil when none is scheduled.
   private var cancelTimer: (() -> Void)?
 
@@ -90,14 +93,17 @@ final class LoginMountRetrier {
   private(set) var retries: [UUID: Int] = [:]
 
   /// `schedule` nil: no timer, only network retries. `retryWhenDue` runs
-  /// when the timer fires (default: `retry()`).
+  /// when the timer fires (default: `retry()`). `onGiveUp` runs once per
+  /// share when its last try fails (with the sanitized error), unless the
+  /// share was mounted or unmounted by the user meanwhile.
   init(
     shares: @escaping () -> [NetworkShare],
     isMounted: @escaping (NetworkShare) -> Bool,
     isSuppressed: @escaping (UUID) -> Bool,
     mount: @escaping Mount,
     schedule: Schedule? = nil,
-    retryWhenDue: (() -> Void)? = nil
+    retryWhenDue: (() -> Void)? = nil,
+    onGiveUp: ((NetworkShare, String?) -> Void)? = nil
   ) {
     self.shares = shares
     self.isMounted = isMounted
@@ -105,6 +111,7 @@ final class LoginMountRetrier {
     self.mount = mount
     self.schedule = schedule
     self.retryWhenDue = retryWhenDue
+    self.onGiveUp = onGiveUp
   }
 
   /// Whether a retry timer is waiting to fire.
@@ -158,6 +165,11 @@ final class LoginMountRetrier {
         Log.network.error(
           "Failed to auto-mount \(share.name, privacy: .private)\(label, privacy: .public): \(error ?? "Unknown error", privacy: .private). Giving up until the next launch."
         )
+        if !self.isMounted(share), !self.isSuppressed(share.id),
+          self.gaveUpIDs.insert(share.id).inserted
+        {
+          self.onGiveUp?(share, error)
+        }
       }
       self.updateTimer()
     }

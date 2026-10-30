@@ -596,3 +596,8 @@
 "This file is not a MountMate network share export." = "Ce fichier n’est pas un export de partages réseau MountMate.";
 "This file was exported by a newer version of MountMate. Update MountMate to import it." = "Ce fichier a été exporté par une version plus récente de MountMate. Mettez MountMate à jour pour l’importer.";
 "Passwords are not exported. Add them by editing each share." = "Les mots de passe ne sont pas exportés. Ajoutez-les en modifiant chaque partage.";
+
+/* Login mount given up */
+"Could Not Mount at Login" = "Échec du montage à l’ouverture de session";
+"MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate n’a pas pu monter « %1$@ » après plusieurs tentatives : %2$@";
+"Unknown error" = "Erreur inconnue";

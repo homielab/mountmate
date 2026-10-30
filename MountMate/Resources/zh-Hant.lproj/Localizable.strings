@@ -596,3 +596,8 @@
 "This file is not a MountMate network share export." = "此檔案不是 MountMate 網路共享匯出檔案。";
 "This file was exported by a newer version of MountMate. Update MountMate to import it." = "此檔案由較新版本的 MountMate 匯出。請更新 MountMate 後再匯入。";
 "Passwords are not exported. Add them by editing each share." = "密碼不會被匯出。請編輯每個共享以加入密碼。";
+
+/* Login mount given up */
+"Could Not Mount at Login" = "登入時無法裝載";
+"MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate 多次嘗試後仍無法裝載「%1$@」：%2$@";
+"Unknown error" = "未知錯誤";

@@ -103,6 +103,8 @@ final class LoginMountRulesTests: XCTestCase {
     private var timer: (() -> Void)?
     var hasTimer: Bool { timer != nil }
     var usesTimer = false
+    /// Shares reported as given up, with their error.
+    private(set) var gaveUp: [(UUID, String?)] = []
     lazy var retrier = LoginMountRetrier(
       shares: { [unowned self] in self.shares },
       isMounted: { [unowned self] in self.mounted.contains($0.id) },
@@ -121,7 +123,8 @@ final class LoginMountRulesTests: XCTestCase {
           self.scheduledDelays.append(delay)
           self.timer = block
           return { [unowned self] in self.timer = nil }
-        } : nil)
+        } : nil,
+      onGiveUp: { [unowned self] share, error in self.gaveUp.append((share.id, error)) })
 
     /// Fires the pending timer, as the main queue would after its delay.
     func fireTimer() {
@@ -217,6 +220,46 @@ final class LoginMountRulesTests: XCTestCase {
     XCTAssertFalse(harness.hasTimer)
     XCTAssertFalse(harness.retrier.isTimerScheduled)
     XCTAssertFalse(harness.retrier.hasPendingShares)
+  }
+
+  // MARK: - Give up
+
+  func testLastFailedTryReportsTheShareOnceWithItsError() {
+    let harness = timedHarness()
+    harness.retrier.mountAtLaunch()
+    for _ in 0..<(LoginMountRules.maxRetries - 1) {
+      harness.fireTimer()
+    }
+    XCTAssertTrue(harness.gaveUp.isEmpty, "retries left: nothing reported")
+    harness.fireTimer()
+    XCTAssertEqual(harness.gaveUp.map(\.0), [nas.id])
+    XCTAssertEqual(harness.gaveUp.first?.1, "offline")
+    harness.retrier.retry()
+    harness.retrier.mountAtLaunch()
+    XCTAssertEqual(harness.gaveUp.count, 1)
+  }
+
+  func testShareThatMountsLaterIsNotReported() {
+    let harness = Harness(shares: [nas])
+    harness.results = [false, false, true]
+    harness.retrier.mountAtLaunch()
+    for _ in 0..<(LoginMountRules.maxRetries + 2) {
+      harness.retrier.retry()
+    }
+    XCTAssertTrue(harness.gaveUp.isEmpty)
+  }
+
+  func testShareUnmountedByTheUserDuringTheLastTryIsNotReported() {
+    let harness = Harness(shares: [nas])
+    harness.retrier.mountAtLaunch()
+    for _ in 0..<(LoginMountRules.maxRetries - 1) {
+      harness.retrier.retry()
+    }
+    harness.answerLater = true
+    harness.retrier.retry()
+    harness.suppressed.insert(nas.id)
+    harness.answerWaiting(false)
+    XCTAssertTrue(harness.gaveUp.isEmpty)
   }
 
   func testTimerStopsOnceTheShareMounts() {

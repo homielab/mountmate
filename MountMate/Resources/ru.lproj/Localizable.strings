@@ -596,3 +596,8 @@
 "This file is not a MountMate network share export." = "Этот файл не является экспортом сетевых ресурсов MountMate.";
 "This file was exported by a newer version of MountMate. Update MountMate to import it." = "Этот файл экспортирован более новой версией MountMate. Обновите MountMate, чтобы импортировать его.";
 "Passwords are not exported. Add them by editing each share." = "Пароли не экспортируются. Добавьте их, отредактировав каждый ресурс.";
+
+/* Login mount given up */
+"Could Not Mount at Login" = "Не удалось подключить при входе";
+"MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate не удалось подключить «%1$@» после нескольких попыток: %2$@";
+"Unknown error" = "Неизвестная ошибка";

@@ -364,6 +364,25 @@ final class NotificationManagerTests: XCTestCase {
       center.added.last?.content.categoryIdentifier, NotificationAction.keepAliveFailedCategory)
   }
 
+  func testLoginMountGiveUpIsAnnouncedOnceWithNameAndError() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let manager = makeManager()
+    let id = UUID()
+    manager.loginMountFailed(shareID: id, name: "NAS", error: "Wrong password")
+    manager.loginMountFailed(shareID: id, name: "NAS", error: "Wrong password")
+    XCTAssertEqual(center.added.map(\.identifier), ["loginMount.\(id.uuidString)"])
+    XCTAssertEqual(center.added.first?.content.title, "Could Not Mount at Login")
+    XCTAssertEqual(
+      center.added.first?.content.body,
+      "MountMate couldn't mount “NAS” after several tries: Wrong password")
+  }
+
+  func testLoginMountGiveUpIsSilentWhenNotificationsAreOff() {
+    let manager = makeManager()
+    manager.loginMountFailed(shareID: UUID(), name: "NAS", error: nil)
+    XCTAssertTrue(center.added.isEmpty)
+  }
+
   func testOtherNotificationsUseTheDefaultCategory() {
     defaults.set(true, forKey: NotificationManager.enabledKey)
     let manager = makeManager()

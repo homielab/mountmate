@@ -596,3 +596,8 @@
 "This file is not a MountMate network share export." = "Tệp này không phải tệp xuất thư mục chia sẻ mạng của MountMate.";
 "This file was exported by a newer version of MountMate. Update MountMate to import it." = "Tệp này được xuất từ phiên bản MountMate mới hơn. Hãy cập nhật MountMate để nhập.";
 "Passwords are not exported. Add them by editing each share." = "Mật khẩu không được xuất. Hãy thêm mật khẩu bằng cách sửa từng thư mục chia sẻ.";
+
+/* Login mount given up */
+"Could Not Mount at Login" = "Không thể gắn khi đăng nhập";
+"MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate không gắn được “%1$@” sau nhiều lần thử: %2$@";
+"Unknown error" = "Lỗi không xác định";

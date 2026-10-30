@@ -181,6 +181,8 @@ final class NotificationManager: NSObject, ObservableObject {
   private var lowSpaceTracker = LowSpaceAlertTracker()
   private var shareLowSpaceTracker = LowSpaceAlertTracker()
   private var removalTracker = UnexpectedRemovalTracker()
+  /// Login shares already announced as failed this session.
+  private var loginMountFailures = Set<UUID>()
   private var cancellables = Set<AnyCancellable>()
 
   private let center: NotificationCentering
@@ -316,6 +318,21 @@ final class NotificationManager: NSObject, ObservableObject {
 
   func keepAliveReset() {
     keepAliveThrottle.reset()
+  }
+
+  /// A "Mount at login" share failed its last try (Keep Alive off): says
+  /// which share and why, at most once per share per session.
+  func loginMountFailed(shareID: UUID, name: String, error: String?) {
+    guard isEnabled, loginMountFailures.insert(shareID).inserted else { return }
+    let reason = error ?? NSLocalizedString("Unknown error", comment: "Fallback error message")
+    post(
+      id: "loginMount.\(shareID.uuidString)",
+      title: NSLocalizedString("Could Not Mount at Login", comment: "Notification title"),
+      body: String(
+        format: NSLocalizedString(
+          "MountMate couldn't mount “%1$@” after several tries: %2$@",
+          comment: "Notification: login share given up; share name, error"),
+        name, reason))
   }
 
   /// A blocked volume mounted before MountMate started could not be

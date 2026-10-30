@@ -261,6 +261,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       // Keep Alive on: its reconnect sweep already retries login shares.
       guard !KeepAliveManager.shared.isEnabled else { return }
       self?.retryLoginMounts()
+    },
+    onGiveUp: { share, error in
+      NotificationManager.shared.loginMountFailed(shareID: share.id, name: share.name, error: error)
     })
 
   /// Main thread only.
