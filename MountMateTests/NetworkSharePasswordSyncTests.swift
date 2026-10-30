@@ -10,6 +10,8 @@ private final class FakePasswordStore: PasswordStore {
   var deleted: [String] = []
   var saveStatus: OSStatus = errSecSuccess
   var deleteStatus: OSStatus = errSecSuccess
+  var relabeled: [(account: String, name: String)] = []
+  var relabelStatus: OSStatus = errSecSuccess
 
   func save(password: String, for account: String, name: String, kind: KeychainItemKind)
     -> OSStatus
@@ -22,15 +24,20 @@ private final class FakePasswordStore: PasswordStore {
     deleted.append(account)
     return deleteStatus
   }
+
+  func updateLabel(for account: String, name: String, kind: KeychainItemKind) -> OSStatus {
+    relabeled.append((account, name))
+    return relabelStatus
+  }
 }
 
 final class NetworkSharePasswordSyncTests: XCTestCase {
   private func share(
     id: UUID = UUID(), name: String = "Media", server: String = "nas.local",
-    proto: ShareProtocol = .smb
+    username: String = "me", proto: ShareProtocol = .smb
   ) -> NetworkShare {
     NetworkShare(
-      id: id, name: name, server: server, sharePath: "media", username: "me",
+      id: id, name: name, server: server, sharePath: "media", username: username,
       mountAtLogin: true, keepMounted: true, shareProtocol: proto, customMountPoint: nil)
   }
 
@@ -83,6 +90,59 @@ final class NetworkSharePasswordSyncTests: XCTestCase {
         share: renamed, original: original, password: "pw", loadedPassword: "pw"))
     XCTAssertTrue(store.saved.isEmpty)
     XCTAssertTrue(store.deleted.isEmpty)
+    XCTAssertEqual(store.relabeled.map(\.account), [original.id.uuidString])
+    XCTAssertEqual(store.relabeled.map(\.name), ["Renamed"])
+  }
+
+  func testUnchangedNameAndPasswordDoNotRelabel() {
+    let store = FakePasswordStore()
+    let existing = share()
+    let moved = share(id: existing.id, server: "other.local")
+    XCTAssertNil(
+      NetworkSharePasswordSync(store: store).sync(
+        share: moved, original: existing, password: "pw", loadedPassword: "pw"))
+    XCTAssertTrue(store.relabeled.isEmpty)
+  }
+
+  func testRelabelFailureDoesNotBlockSaving() {
+    let store = FakePasswordStore()
+    store.relabelStatus = errSecInteractionNotAllowed
+    let original = share()
+    XCTAssertNil(
+      NetworkSharePasswordSync(store: store).sync(
+        share: share(id: original.id, name: "Renamed"), original: original, password: "pw",
+        loadedPassword: "pw"))
+  }
+
+  func testRenamedShareWithNewPasswordIsSavedUnderTheNewName() {
+    let store = FakePasswordStore()
+    let original = share()
+    XCTAssertNil(
+      NetworkSharePasswordSync(store: store).sync(
+        share: share(id: original.id, name: "Renamed"), original: original, password: "new",
+        loadedPassword: "old"))
+    XCTAssertEqual(store.saved.map(\.name), ["Renamed"])
+    XCTAssertTrue(store.relabeled.isEmpty)
+  }
+
+  func testPasswordWithoutUsernameIsNotSaved() {
+    let store = FakePasswordStore()
+    XCTAssertNil(
+      NetworkSharePasswordSync(store: store).sync(
+        share: share(username: ""), original: nil, password: "secret", loadedPassword: nil))
+    XCTAssertTrue(store.saved.isEmpty)
+    XCTAssertTrue(store.deleted.isEmpty)
+  }
+
+  func testClearingTheUsernameDeletesTheUnusedPassword() {
+    let store = FakePasswordStore()
+    let original = share()
+    let guest = share(id: original.id, username: "")
+    XCTAssertNil(
+      NetworkSharePasswordSync(store: store).sync(
+        share: guest, original: original, password: "pw", loadedPassword: "pw"))
+    XCTAssertTrue(store.saved.isEmpty)
+    XCTAssertEqual(store.deleted, [original.id.uuidString])
   }
 
   func testClearingTheFieldDeletesTheSavedPassword() {

@@ -113,6 +113,8 @@ extension NetworkShare {
   /// `nas:445` → (`nas`, 445), `[fe80::1]:445` → (`fe80::1`, 445). A bare
   /// IPv6 address (`fe80::1`, several colons) has no port, and a `user@`
   /// prefix left by an older version is dropped. The host has no brackets.
+  /// An IPv6 zone pasted URL-encoded (`fe80::1%25en0`) comes back as
+  /// `fe80::1%en0`; the connection URL encodes it again.
   static func hostAndPort(fromServer raw: String) -> (host: String, port: Int?) {
     var address = Substring(raw.trimmingCharacters(in: .whitespacesAndNewlines))
     if let at = address.lastIndex(of: "@") {
@@ -122,14 +124,108 @@ extension NetworkShare {
       let host = address[address.index(after: address.startIndex)..<close]
       let rest = address[address.index(after: close)...]
       let port = rest.hasPrefix(":") ? Int(rest.dropFirst()) : nil
-      return (String(host), port)
+      return (decodedZone(String(host)), port)
     }
-    if address.filter({ $0 == ":" }).count == 1, let colon = address.firstIndex(of: ":"),
+    let colons = address.filter { $0 == ":" }.count
+    if colons == 1, let colon = address.firstIndex(of: ":"),
       let port = Int(address[address.index(after: colon)...])
     {
       return (String(address[..<colon]), port)
     }
-    return (String(address), nil)
+    return (colons > 1 ? decodedZone(String(address)) : String(address), nil)
+  }
+
+  /// `fe80::1%25en0` (a zone as written in a URL, RFC 6874) → `fe80::1%en0`.
+  private static func decodedZone(_ ipv6: String) -> String {
+    guard let range = ipv6.range(of: "%25") else { return ipv6 }
+    return ipv6.replacingCharacters(in: range, with: "%")
+  }
+
+  /// What is wrong with a server address, see `serverValidationError`.
+  enum ServerAddressProblem: Equatable, Sendable {
+    /// Not a host name, IPv4 address or IPv6 address (spaces, `/`, `?`…).
+    case invalidHost
+    /// A `:port` that is not a number from 1 to 65535.
+    case invalidPort
+  }
+
+  /// Checks a server field: a host name or IPv4 address, optionally with
+  /// `:port`; a bare IPv6 address, or one in brackets with `[…]:port`. An
+  /// IPv6 link-local zone (`fe80::1%en0`, or URL-encoded `%25en0`) is kept.
+  /// A `user@` prefix left by an older version is ignored.
+  static func serverAddressProblem(_ raw: String) -> ServerAddressProblem? {
+    var address = Substring(raw.trimmingCharacters(in: .whitespacesAndNewlines))
+    if let at = address.lastIndex(of: "@") {
+      address = address[address.index(after: at)...]
+    }
+    let portText: Substring?
+    if address.hasPrefix("[") {
+      guard let close = address.firstIndex(of: "]"),
+        isIPv6Address(address[address.index(after: address.startIndex)..<close])
+      else { return .invalidHost }
+      let rest = address[address.index(after: close)...]
+      guard rest.isEmpty || rest.hasPrefix(":") else { return .invalidHost }
+      portText = rest.isEmpty ? nil : rest.dropFirst()
+    } else {
+      let colons = address.filter { $0 == ":" }.count
+      if colons > 1 {
+        return isIPv6Address(address) ? nil : .invalidHost
+      }
+      let colon = address.firstIndex(of: ":")
+      guard isHostName(colon.map { address[..<$0] } ?? address) else { return .invalidHost }
+      portText = colon.map { address[address.index(after: $0)...] }
+    }
+    if let portText {
+      guard !portText.isEmpty, portText.allSatisfy({ $0.isASCII && $0.isNumber }),
+        let port = Int(portText), (1...65_535).contains(port)
+      else { return .invalidPort }
+    }
+    return nil
+  }
+
+  /// The user-facing reason a server field cannot be saved, or nil.
+  static func serverValidationError(_ raw: String) -> String? {
+    switch serverAddressProblem(raw) {
+    case nil:
+      return nil
+    case .invalidHost:
+      return NSLocalizedString(
+        "The server address is not valid. Enter a host name or IP address, optionally followed by “:port”.",
+        comment: "Network share validation error")
+    case .invalidPort:
+      return NSLocalizedString(
+        "The server port must be a number from 1 to 65535.",
+        comment: "Network share validation error")
+    }
+  }
+
+  /// Letters, digits, "-", "_" and "." (host names, IPv4 addresses and
+  /// internationalized names); no spaces or URL punctuation.
+  private static func isHostName(_ host: Substring) -> Bool {
+    guard host.contains(where: { $0.isLetter || $0.isNumber }) else { return false }
+    return host.unicodeScalars.allSatisfy { scalar in
+      if scalar.isASCII {
+        return CharacterSet.alphanumerics.contains(scalar) || "-_.".unicodeScalars.contains(scalar)
+      }
+      return CharacterSet.alphanumerics.contains(scalar)
+    }
+  }
+
+  /// An IPv6 address, with an optional zone (`%en0` or URL-encoded `%25en0`).
+  private static func isIPv6Address(_ text: Substring) -> Bool {
+    let parts = decodedZone(String(text)).split(
+      separator: "%", maxSplits: 1, omittingEmptySubsequences: false)
+    if parts.count == 2 {
+      let zone = parts[1]
+      guard !zone.isEmpty,
+        zone.unicodeScalars.allSatisfy({
+          $0.isASCII
+            && (CharacterSet.alphanumerics.contains($0) || "-_.".unicodeScalars.contains($0))
+        })
+      else { return false }
+    }
+    var address = in6_addr()
+    return inet_pton(AF_INET6, String(parts[0]), &address) == 1
   }
 
   /// Cleans up a share path typed or pasted by the user: trims whitespace and
@@ -166,7 +262,8 @@ extension NetworkShare {
     return nil
   }
 
-  /// Whether both shares connect to the same protocol, server and share path.
+  /// Whether both shares connect to the same protocol, server, port (the
+  /// protocol's default port = none) and share path.
   func hasSameEndpoint(as other: NetworkShare) -> Bool {
     shareProtocol == other.shareProtocol
       && MountedNetworkShare.endpoint(for: self) == MountedNetworkShare.endpoint(for: other)

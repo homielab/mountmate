@@ -36,6 +36,15 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     }
   }
 
+  /// The port a server listens on when its address names none.
+  var defaultPort: Int {
+    switch self {
+    case .smb: return 445
+    case .nfs: return 2049
+    case .afp: return 548
+    }
+  }
+
   /// Whether the protocol uses a username and password (passed to NetFS).
   var supportsUserCredentials: Bool {
     switch self {

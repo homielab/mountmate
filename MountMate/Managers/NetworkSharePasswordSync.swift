@@ -26,9 +26,20 @@ struct NetworkSharePasswordSync {
       return deletePassword(account: account)
     }
 
+    // Without a username the mount passes no credentials (the Mac's own
+    // login, then guest), so a password would be saved but never used.
+    if share.username.isEmpty {
+      guard loadedPassword != nil else { return nil }
+      return deletePassword(account: account)
+    }
+
     if !password.isEmpty {
-      // Unchanged: skip the write (and any Keychain prompt it could cause).
-      guard password != loadedPassword else { return nil }
+      // Unchanged: skip the write (and any Keychain prompt it could cause),
+      // but keep the Keychain Access label in step with a new name.
+      guard password != loadedPassword else {
+        relabelIfRenamed(share: share, original: original, account: account)
+        return nil
+      }
       let status = store.save(
         password: password, for: account, name: share.name, kind: .networkShare)
       guard status == errSecSuccess else {
@@ -46,6 +57,17 @@ struct NetworkSharePasswordSync {
     // not mean the user cleared it.
     guard loadedPassword != nil else { return nil }
     return deletePassword(account: account)
+  }
+
+  /// The label is cosmetic: a failure is logged, never shown.
+  private func relabelIfRenamed(share: NetworkShare, original: NetworkShare?, account: String) {
+    guard let original, original.name != share.name else { return }
+    let status = store.updateLabel(for: account, name: share.name, kind: .networkShare)
+    if status != errSecSuccess {
+      Log.persistence.error(
+        "Could not relabel the Keychain item of a renamed share (status \(status, privacy: .public))."
+      )
+    }
   }
 
   private func deletePassword(account: String) -> String? {

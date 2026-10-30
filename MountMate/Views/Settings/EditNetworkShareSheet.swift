@@ -160,6 +160,18 @@ struct EditNetworkShareSheet: View {
             HStack {
               Image(systemName: "key").frame(width: 20)
               SecureField("Password", text: $password)
+                .disabled(cleanedUsername.isEmpty)
+            }
+
+            // A mount without a username passes no credentials, so a
+            // password would be ignored (and is not saved).
+            if cleanedUsername.isEmpty {
+              Text(
+                "Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
             }
           } else {
             Text("NFS mounts use host-based access; no credentials are required.")

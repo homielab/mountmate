@@ -447,4 +447,22 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertEqual(url.absoluteString, "afp://[fe80::1]:445/P")
     XCTAssertEqual(url.port, 445)
   }
+
+  /// A link-local zone is kept: written `%25en0` in the URL (RFC 6874), which
+  /// CFURL (and so NetFS) reads back as `fe80::1%en0`. Typed `%en0` or pasted
+  /// `%25en0`, the result is the same; NFS gets the plain zone.
+  func testIPv6ZoneIsEncodedOnceInTheURL() throws {
+    for server in ["fe80::1%en0", "[fe80::1%en0]", "[fe80::1%25en0]", "fe80::1%25en0"] {
+      let share = NetworkShare(name: "P", server: server, sharePath: "P", username: "")
+      let url = try XCTUnwrap(NetworkMountPlan.connectionURL(for: share), server)
+      XCTAssertEqual(url.absoluteString, "smb://[fe80::1%25en0]/P", server)
+      XCTAssertEqual(CFURLCopyHostName(url as CFURL) as String?, "fe80::1%en0", server)
+    }
+    let nfs = NetworkShare(
+      name: "P", server: "[fe80::1%25en0]:2050", sharePath: "export", username: "",
+      shareProtocol: .nfs)
+    XCTAssertEqual(
+      NetworkMountPlan.nfsArguments(share: nfs, mountPoint: "/m"),
+      ["-o", "resvport,port=2050", "[fe80::1%en0]:/export", "/m"])
+  }
 }

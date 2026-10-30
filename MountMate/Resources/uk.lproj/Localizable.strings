@@ -342,6 +342,9 @@
 "The share will be unmounted and removed from MountMate, along with its saved password." = "Ресурс буде відмонтовано та видалено з MountMate разом зі збереженим паролем.";
 "The share “%@” was not found on the server “%@”." = "Ресурс «%@» не знайдено на сервері «%@».";
 "This share is already saved as “%@”." = "Цей ресурс уже збережено як «%@».";
+"The server address is not valid. Enter a host name or IP address, optionally followed by “:port”." = "Неправильна адреса сервера. Введіть ім’я хоста або IP-адресу, за потреби з «:порт».";
+"The server port must be a number from 1 to 65535." = "Порт сервера має бути числом від 1 до 65535.";
+"Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest." = "Введіть ім’я користувача, щоб використати пароль. Без нього MountMate підключається зі збереженим на цьому Mac обліковим записом або як гість.";
 "Unmounting “%@” timed out." = "Час очікування відмонтування «%@» вичерпано.";
 "diskutil exited with code %d." = "diskutil завершився з кодом %d.";
 "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Неможливо підключити «%@» у «%@», оскільки там уже підключено інший ресурс (%@).";

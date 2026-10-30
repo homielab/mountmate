@@ -342,6 +342,9 @@
 "The share will be unmounted and removed from MountMate, along with its saved password." = "Le partage sera démonté et retiré de MountMate, ainsi que son mot de passe enregistré.";
 "The share “%@” was not found on the server “%@”." = "Le partage « %@ » est introuvable sur le serveur « %@ ».";
 "This share is already saved as “%@”." = "Ce partage est déjà enregistré sous « %@ ».";
+"The server address is not valid. Enter a host name or IP address, optionally followed by “:port”." = "L’adresse du serveur n’est pas valide. Saisissez un nom d’hôte ou une adresse IP, éventuellement suivi de « :port ».";
+"The server port must be a number from 1 to 65535." = "Le port du serveur doit être un nombre de 1 à 65535.";
+"Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest." = "Saisissez un nom d’utilisateur pour utiliser un mot de passe. Sans nom d’utilisateur, MountMate se connecte avec l’identifiant enregistré sur ce Mac ou en tant qu’invité.";
 "Unmounting “%@” timed out." = "Le démontage de « %@ » a expiré.";
 "diskutil exited with code %d." = "diskutil s’est terminé avec le code %d.";
 "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Impossible de monter « %@ » sur « %@ », car un autre partage (%@) y est déjà monté.";

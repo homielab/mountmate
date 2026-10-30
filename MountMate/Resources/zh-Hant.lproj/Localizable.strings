@@ -342,6 +342,9 @@
 "The share will be unmounted and removed from MountMate, along with its saved password." = "此共享將被卸載，並與其已儲存的密碼一起從 MountMate 中移除。";
 "The share “%@” was not found on the server “%@”." = "在伺服器「%2$@」上找不到共享「%1$@」。";
 "This share is already saved as “%@”." = "此共享已儲存為「%@」。";
+"The server address is not valid. Enter a host name or IP address, optionally followed by “:port”." = "伺服器位址無效。請輸入主機名稱或 IP 位址，可在後面加上「:連接埠」。";
+"The server port must be a number from 1 to 65535." = "伺服器連接埠必須是 1 到 65535 之間的數字。";
+"Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest." = "輸入使用者名稱才能使用密碼。未填寫使用者名稱時，MountMate 會使用這台 Mac 上儲存的登入資訊或以訪客身分連線。";
 "Unmounting “%@” timed out." = "卸載「%@」逾時。";
 "diskutil exited with code %d." = "diskutil 已結束，代碼為 %d。";
 "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "無法將「%@」掛載到「%@」，因為另一個共享（%@）已掛載在那裡。";

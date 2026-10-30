@@ -529,4 +529,32 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertEqual(ipv6Paste.server, "[fe80::1]:445")
     XCTAssertEqual(ipv6Paste.sharePath, "Public")
   }
+
+  /// smbfs keeps a non-default port in the mount source
+  /// (`//user@nas:4450/data`), so SMB mounts are told apart by port. NFS
+  /// sources (`nas:/data`) record no port: an NFS mount matches a share of
+  /// that host and export whatever port the share uses.
+  func testMountMatchingComparesThePort() throws {
+    let standard = NetworkShare(name: "data", server: "nas", sharePath: "data", username: "")
+    let container = NetworkShare(
+      name: "data2", server: "nas:4450", sharePath: "data", username: "")
+
+    func smb(_ host: String) throws -> MountedNetworkShare {
+      try XCTUnwrap(
+        MountedNetworkShare(
+          source: "//user@\(host)/data", mountPoint: "/Volumes/data", fileSystemType: "smbfs"))
+    }
+    XCTAssertTrue(try smb("nas:445").matches(standard))
+    XCTAssertFalse(try smb("nas:445").matches(container))
+    XCTAssertTrue(try smb("nas:4450").matches(container))
+    XCTAssertFalse(try smb("nas:4450").matches(standard))
+    XCTAssertFalse(try smb("nas").matches(container))
+
+    let nfsShare = NetworkShare(
+      name: "data", server: "nas:2050", sharePath: "data", username: "", shareProtocol: .nfs)
+    let nfsMount = try XCTUnwrap(
+      MountedNetworkShare(source: "nas:/data", mountPoint: "/Volumes/data", fileSystemType: "nfs"))
+    XCTAssertTrue(nfsMount.matches(nfsShare))
+    XCTAssertEqual(nfsMount.endpoint?.port, nil)
+  }
 }

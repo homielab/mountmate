@@ -28,6 +28,10 @@ private final class RecordingPasswordStore: PasswordStore {
     deleted.append(account)
     return errSecSuccess
   }
+
+  func updateLabel(for account: String, name: String, kind: KeychainItemKind) -> OSStatus {
+    errSecSuccess
+  }
 }
 
 final class KeychainPasswordTests: XCTestCase {

@@ -21,6 +21,14 @@ enum NetworkShareValidation {
       return nameError
     }
 
+    // Checked only when the server changes, so a share saved before this
+    // check existed can still be edited.
+    if candidate.server != original?.server,
+      let serverError = NetworkShare.serverValidationError(candidate.server)
+    {
+      return serverError
+    }
+
     // A share saved twice before this check existed may keep its endpoint;
     // changing it (or adding a share) must not collide with another one.
     let endpointChanged = original.map { !candidate.hasSameEndpoint(as: $0) } ?? true

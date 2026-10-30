@@ -24,6 +24,9 @@ protocol PasswordStore {
     -> OSStatus
   @discardableResult
   func delete(account: String) -> OSStatus
+  /// Relabels the saved item (after a rename) without touching its password.
+  @discardableResult
+  func updateLabel(for account: String, name: String, kind: KeychainItemKind) -> OSStatus
 }
 
 final class KeychainManager: PasswordStore, Sendable {
@@ -87,6 +90,18 @@ final class KeychainManager: PasswordStore, Sendable {
 
     let addQuery = query.merging(attributes) { _, new in new }
     return SecItemAdd(addQuery as CFDictionary, nil)
+  }
+
+  /// Writes the label and description for `name` and `kind` to the saved
+  /// item of `account`, leaving its password as it is.
+  ///
+  /// - Returns: `errSecSuccess`, `errSecItemNotFound` when nothing was saved,
+  ///   or another Keychain error.
+  @discardableResult
+  func updateLabel(for account: String, name: String, kind: KeychainItemKind) -> OSStatus {
+    SecItemUpdate(
+      Self.baseQuery(account: account) as CFDictionary,
+      Self.displayAttributes(name: name, kind: kind) as CFDictionary)
   }
 
   /// Reads the password for `account`.

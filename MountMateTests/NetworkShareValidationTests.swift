@@ -126,4 +126,64 @@ final class NetworkShareValidationTests: XCTestCase {
       rootError)
     XCTAssertNil(CustomMountPointValidator.pathRuleError("/Volumes/Data"))
   }
+
+  // MARK: - Server address and port
+
+  func testSharesOnDifferentPortsOfOneHostAreDifferentShares() {
+    let standard = share(name: "Data", server: "nas:445", path: "data")
+    let container = share(name: "Data 2", server: "nas:4450", path: "data")
+    XCTAssertFalse(standard.hasSameEndpoint(as: container))
+    XCTAssertNil(
+      NetworkShareValidation.error(
+        candidate: container, original: nil, otherShares: [standard],
+        mountPoint: mountUnderVolumes))
+    // The default port written out or left off is the same server.
+    XCTAssertTrue(share(name: "A", server: "nas", path: "data").hasSameEndpoint(as: standard))
+    XCTAssertNotNil(
+      NetworkShareValidation.error(
+        candidate: share(name: "Copy", server: "nas", path: "data"), original: nil,
+        otherShares: [standard], mountPoint: mountUnderVolumes))
+  }
+
+  func testRejectsInvalidServerAddresses() {
+    let hostError = NetworkShare.serverValidationError("my nas")
+    let portError = NetworkShare.serverValidationError("nas:99999")
+    XCTAssertNotNil(hostError)
+    XCTAssertNotNil(portError)
+    XCTAssertNotEqual(hostError, portError)
+
+    for server in ["nas:abc", "nas:99999", "nas:0", "nas:", "nas:+445", "[fe80::1]:x"] {
+      XCTAssertEqual(NetworkShare.serverAddressProblem(server), .invalidPort, server)
+    }
+    for server in [
+      "my nas", "nas/share", "nas?x", "nas#1", ":445", "[nas]", "[fe80::1", "[fe80::1]x",
+      "fe80::zz", "fe80::1%", "fe80::1%en 0", "...",
+    ] {
+      XCTAssertEqual(NetworkShare.serverAddressProblem(server), .invalidHost, server)
+    }
+    XCTAssertEqual(
+      NetworkShareValidation.error(
+        candidate: share(name: "Media", server: "nas:abc"), original: nil, otherShares: [],
+        mountPoint: mountUnderVolumes),
+      portError)
+  }
+
+  func testAcceptsValidServerAddresses() {
+    for server in [
+      "nas", "nas.local", "NAS-01.example.com", "my_nas", "192.168.1.10", "192.168.1.10:445",
+      "nas:65535", "nas:1", "fe80::1", "[fe80::1]", "[fe80::1]:445", "fe80::1%en0",
+      "[fe80::1%25en0]:445", "admin@nas:445", "bücher.example",
+    ] {
+      XCTAssertNil(NetworkShare.serverAddressProblem(server), server)
+    }
+  }
+
+  func testInvalidServerSavedBeforeTheCheckCanStillBeEdited() {
+    let old = share(name: "Media", server: "nas:abc")
+    var renamed = old
+    renamed.name = "Renamed"
+    XCTAssertNil(
+      NetworkShareValidation.error(
+        candidate: renamed, original: old, otherShares: [], mountPoint: mountUnderVolumes))
+  }
 }

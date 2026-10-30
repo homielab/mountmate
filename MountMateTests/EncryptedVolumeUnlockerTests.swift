@@ -175,4 +175,7 @@ private final class FakeUnlockStore: UnlockPasswordStore, @unchecked Sendable {
     -> OSStatus
   { errSecSuccess }
   func delete(account: String) -> OSStatus { errSecSuccess }
+  func updateLabel(for account: String, name: String, kind: KeychainItemKind) -> OSStatus {
+    errSecSuccess
+  }
 }

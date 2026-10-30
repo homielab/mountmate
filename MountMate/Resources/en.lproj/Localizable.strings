@@ -341,6 +341,9 @@
 "The share will be unmounted and removed from MountMate, along with its saved password." = "The share will be unmounted and removed from MountMate, along with its saved password.";
 "The share “%@” was not found on the server “%@”." = "The share “%@” was not found on the server “%@”.";
 "This share is already saved as “%@”." = "This share is already saved as “%@”.";
+"The server address is not valid. Enter a host name or IP address, optionally followed by “:port”." = "The server address is not valid. Enter a host name or IP address, optionally followed by “:port”.";
+"The server port must be a number from 1 to 65535." = "The server port must be a number from 1 to 65535.";
+"Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest." = "Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest.";
 "Unmounting “%@” timed out." = "Unmounting “%@” timed out.";
 "diskutil exited with code %d." = "diskutil exited with code %d.";
 "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there.";

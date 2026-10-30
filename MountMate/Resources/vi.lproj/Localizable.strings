@@ -342,6 +342,9 @@
 "The share will be unmounted and removed from MountMate, along with its saved password." = "Thư mục chia sẻ sẽ được tháo và xóa khỏi MountMate cùng với mật khẩu đã lưu.";
 "The share “%@” was not found on the server “%@”." = "Không tìm thấy thư mục chia sẻ “%@” trên máy chủ “%@”.";
 "This share is already saved as “%@”." = "Thư mục chia sẻ này đã được lưu với tên “%@”.";
+"The server address is not valid. Enter a host name or IP address, optionally followed by “:port”." = "Địa chỉ máy chủ không hợp lệ. Nhập tên máy chủ hoặc địa chỉ IP, có thể kèm “:cổng”.";
+"The server port must be a number from 1 to 65535." = "Cổng máy chủ phải là số từ 1 đến 65535.";
+"Enter a username to use a password. Without one, MountMate connects with this Mac’s saved login or as a guest." = "Nhập tên người dùng để dùng mật khẩu. Nếu không có, MountMate kết nối bằng thông tin đăng nhập đã lưu trên máy Mac này hoặc dưới dạng khách.";
 "Unmounting “%@” timed out." = "Tháo “%@” đã hết thời gian chờ.";
 "diskutil exited with code %d." = "diskutil đã thoát với mã %d.";
 "“%@” cannot be mounted at “%@” because another share (%@) is already mounted there." = "Không thể gắn “%@” tại “%@” vì một thư mục chia sẻ khác (%@) đã được gắn ở đó.";

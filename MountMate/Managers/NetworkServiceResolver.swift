@@ -151,12 +151,6 @@ enum NetworkServiceResolver {
   /// port (445 SMB, 2049 NFS) and for a missing one (0).
   static func nonDefaultPort(_ port: Int, for shareProtocol: ShareProtocol) -> Int? {
     guard port > 0, port <= 65_535 else { return nil }
-    let defaultPort: Int
-    switch shareProtocol {
-    case .smb: defaultPort = 445
-    case .nfs: defaultPort = 2049
-    case .afp: defaultPort = 548
-    }
-    return port == defaultPort ? nil : port
+    return port == shareProtocol.defaultPort ? nil : port
   }
 }

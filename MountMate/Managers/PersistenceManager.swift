@@ -436,8 +436,9 @@ class PersistenceManager: ObservableObject {
   }
 
   /// Whether a saved share already points at the same endpoint: same
-  /// protocol, same host (ignoring `user@`, `:port` and IPv6 brackets) and
-  /// same path (case-insensitive for SMB/AFP, case-sensitive for NFS).
+  /// protocol, same host (ignoring `user@` and IPv6 brackets), same port
+  /// (the protocol's default port = no port) and same path
+  /// (case-insensitive for SMB/AFP, case-sensitive for NFS).
   func containsNetworkShare(matching share: NetworkShare) -> Bool {
     Self.containsNetworkShare(matching: share, in: networkShares)
   }
