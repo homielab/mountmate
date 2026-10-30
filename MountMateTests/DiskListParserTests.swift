@@ -493,6 +493,50 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(shared[1].usedBytes, 400)
   }
 
+  func testIgnoredVolumeStillCountsTowardContainerFreeSpace() throws {
+    let all = parser().parse(
+      allDisksAndPartitions: twoVolumeDisks(), rootInfo: [:], unclassifiedDiskIDs: [])
+    let dataID = try XCTUnwrap(all.disks.first?.containers.first?.volumes.last?.ignoreIdentifier)
+
+    let result = parser(filters: .init(ignoredIDs: [dataID])).parse(
+      allDisksAndPartitions: twoVolumeDisks(), rootInfo: [:], unclassifiedDiskIDs: [])
+    let volumes = try XCTUnwrap(result.disks.first?.containers.first?.volumes)
+    XCTAssertEqual(volumes.map(\.name), ["Backup"])
+    let backup = try XCTUnwrap(volumes.first)
+    // 400 GB of 500 GB used by both volumes, as diskutil reports.
+    XCTAssertEqual(try XCTUnwrap(backup.usagePercentage), 0.8, accuracy: 0.0001)
+    XCTAssertEqual(backup.freeSpace?.hasPrefix("100"), true, backup.freeSpace ?? "nil")
+    XCTAssertEqual(backup.usedBytes, 300_000_000_000)
+  }
+
+  // MARK: - Built-in card reader
+
+  /// `diskutil info` of an SD card in a MacBook's slot: the reader is built
+  /// in, so `Internal` is true.
+  private let sdCardInfo: [String: Any] = [
+    "Internal": true, "RemovableMedia": true, "Removable": true, "Ejectable": true,
+    "BusProtocol": "Secure Digital", "MediaName": "SDXC Reader", "VirtualOrPhysical": "Physical",
+  ]
+
+  func testCardInBuiltInReaderIsExternal() throws {
+    XCTAssertFalse(DiskListParser.isInternalDisk(sdCardInfo))
+    XCTAssertFalse(DiskListParser.isInternalDisk(["Internal": true, "BusProtocol": "SD"]))
+    XCTAssertFalse(DiskListParser.isInternalDisk(["Internal": true, "Ejectable": true]))
+    XCTAssertTrue(
+      DiskListParser.isInternalDisk([
+        "Internal": true, "RemovableMedia": false, "Ejectable": false,
+        "BusProtocol": "Apple Fabric",
+      ]))
+    XCTAssertFalse(DiskListParser.isInternalDisk(["Internal": false]))
+
+    let result = parser().parse(
+      allDisksAndPartitions: twoVolumeDisks(), rootInfo: ["disk20": sdCardInfo],
+      unclassifiedDiskIDs: [])
+    let card = try XCTUnwrap(result.disks.first)
+    XCTAssertEqual(card.type, .physical)
+    XCTAssertTrue(card.isRemovable)
+  }
+
   // MARK: - Helpers
 
   func testFindAPFSContainerMatchesPhysicalStore() {

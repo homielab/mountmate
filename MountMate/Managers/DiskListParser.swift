@@ -176,7 +176,7 @@ struct DiskListParser {
         unclassifiedDiskIDs.contains(physicalIdentifier)
         ? fallbackKinds[physicalIdentifier] ?? .unknown : nil
       if let infoPlist {
-        isInternal = (infoPlist["Internal"] as? Bool) ?? false
+        isInternal = Self.isInternalDisk(infoPlist)
       } else {
         // Only hide a disk positively known to be internal. A disk nothing
         // could classify is listed (as unverified, never removable) rather
@@ -332,6 +332,18 @@ struct DiskListParser {
     return (totalSizeStr, freeSpaceStr, usedSpaceStr, usagePercentage, nil)
   }
 
+  /// Whether a whole disk counts as internal. A built-in card reader (the SD
+  /// slot of a MacBook) reports `Internal: true`, but the card in it is
+  /// removable media like a USB drive, so it is listed and ejected as one.
+  static func isInternalDisk(_ info: [String: Any]) -> Bool {
+    guard (info["Internal"] as? Bool) ?? false else { return false }
+    if (info["RemovableMedia"] as? Bool) == true || (info["Ejectable"] as? Bool) == true {
+      return false
+    }
+    let bus = (info["BusProtocol"] as? String ?? "").lowercased()
+    return bus != "secure digital" && bus != "sd"
+  }
+
   /// Connection label and disk type from a whole disk's `diskutil info`.
   static func connectionInfo(from infoPlist: [String: Any]?, isInternal: Bool) -> (
     type: String, diskType: PhysicalDiskType
@@ -391,6 +403,9 @@ struct DiskListParser {
     }
 
     var volumes: [Volume] = []
+    // Ignored volumes are not listed but still take the container's space.
+    var hiddenUsedBytes: Int64 = 0
+    var hiddenCount = 0
     for apfsVolumeData in apfsVolumesData {
       guard
         let deviceIdentifier = apfsVolumeData["DeviceIdentifier"] as? String,
@@ -402,11 +417,17 @@ struct DiskListParser {
         isAPFSVolume: true, usage: &usage)
       {
         volumes.append(volume)
+      } else {
+        hiddenUsedBytes += apfsVolumeData["CapacityInUse"] as? Int64 ?? 0
+        hiddenCount += 1
       }
     }
     let containerSize = apfsVolumesData.compactMap { $0["Size"] as? Int64 }.max() ?? 0
     return APFSContainer(
-      id: containerID, volumes: Self.apfsContainerUsage(size: containerSize, volumes: volumes))
+      id: containerID,
+      volumes: Self.apfsContainerUsage(
+        size: containerSize, volumes: volumes, hiddenUsedBytes: hiddenUsedBytes,
+        hiddenCount: hiddenCount))
   }
 
   /// APFS volumes share their container's space: diskutil reports each
@@ -414,9 +435,12 @@ struct DiskListParser {
   /// With several volumes, free space and usage are those of the whole
   /// container (as in Finder): free = size − the sum of every volume's use.
   /// `usedBytes` stays per volume so disk totals do not count it twice.
-  static func apfsContainerUsage(size: Int64, volumes: [Volume]) -> [Volume] {
-    guard size > 0, volumes.count > 1 else { return volumes }
-    let used = volumes.reduce(Int64(0)) { $0 + ($1.usedBytes ?? 0) }
+  /// `hiddenUsedBytes`/`hiddenCount` are the volumes left out (ignored).
+  static func apfsContainerUsage(
+    size: Int64, volumes: [Volume], hiddenUsedBytes: Int64 = 0, hiddenCount: Int = 0
+  ) -> [Volume] {
+    guard size > 0, volumes.count + hiddenCount > 1 else { return volumes }
+    let used = volumes.reduce(hiddenUsedBytes) { $0 + ($1.usedBytes ?? 0) }
     let formatter = byteCountFormatter()
     let free = formatter.string(fromByteCount: max(0, size - used))
     let usedString = formatter.string(fromByteCount: used)
