@@ -237,8 +237,9 @@ extension DriveManager {
           // detach the image so it no longer lingers in the list (#72). The
           // disk's eject spinner takes over from the volume's.
           self.setBusy(volume.id, false)
-          self.eject(disk: image)
-          completion?(.success(()))
+          Self.detach(
+            image, allowsErrorAlerts: allowsErrorAlerts, completion: completion,
+            using: { self.eject(disk: $0, allowsErrorAlerts: $1, completion: $2) })
         } else {
           self.refreshDrives(qos: .userInitiated) {
             self.setBusy(volume.id, false)
@@ -247,6 +248,16 @@ extension DriveManager {
         }
       }
     }
+  }
+
+  /// Detaches the disk image whose last volume was just unmounted and calls
+  /// `completion` only once the detach has finished, with its real result.
+  static func detach(
+    _ image: PhysicalDisk, allowsErrorAlerts: Bool,
+    completion: ((Result<Void, Error>) -> Void)?,
+    using eject: (PhysicalDisk, Bool, @escaping (Result<Void, Error>) -> Void) -> Void
+  ) {
+    eject(image, allowsErrorAlerts) { completion?($0) }
   }
 
   /// Unmounts a volume that "Unmount When Idle" found unused. Never forced

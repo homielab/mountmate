@@ -254,7 +254,7 @@ struct DiskListParser {
       }
     }
 
-    let sortedDisks = newDisks.sorted {
+    let sortedDisks = Self.disambiguatingDuplicateUUIDs(newDisks).sorted {
       let order: (PhysicalDiskType) -> Int = { type in
         type == .internalDisk ? 0 : (type == .physical ? 1 : 2)
       }
@@ -266,6 +266,35 @@ struct DiskListParser {
   }
 
   // MARK: - Disks
+
+  /// Volumes that share one VolumeUUID (SD cards flashed from the same image,
+  /// clones) would share one row state, busy flag and saved setting. Each gets
+  /// the id "<uuid>#<deviceIdentifier>", which has no `compositeId`, so none
+  /// of them reads or saves per-volume settings. Unique UUIDs keep their id.
+  static func disambiguatingDuplicateUUIDs(_ disks: [PhysicalDisk]) -> [PhysicalDisk] {
+    var counts: [String: Int] = [:]
+    for volume in disks.flatMap(\.allVolumes) where volume.stableVolumeUUID != nil {
+      counts[volume.id, default: 0] += 1
+    }
+    guard counts.values.contains(where: { $0 > 1 }) else { return disks }
+    func fixed(_ volume: Volume) -> Volume {
+      guard counts[volume.id, default: 0] > 1, volume.stableVolumeUUID != nil else { return volume }
+      var copy = volume
+      copy.id = "\(volume.id)#\(volume.deviceIdentifier)"
+      copy.isDuplicateUUID = true
+      copy.isProtected = false
+      copy.isLowSpaceMuted = false
+      return copy
+    }
+    return disks.map { disk in
+      var copy = disk
+      copy.partitions = disk.partitions.map(fixed)
+      copy.containers = disk.containers.map {
+        APFSContainer(id: $0.id, volumes: $0.volumes.map(fixed))
+      }
+      return copy
+    }
+  }
 
   /// The synthesized APFS container backed by `storeID`. A container can span
   /// several physical stores (e.g. a Fusion drive), so any of them matches.

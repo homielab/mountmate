@@ -81,7 +81,10 @@ struct APFSSnapshot: Identifiable, Hashable, Sendable {
 }
 
 struct Volume: Identifiable, Hashable, Sendable {
-  let id: String  // UUID
+  /// The volume UUID, or the BSD identifier without one. Another volume in the
+  /// same listing with the same UUID (cards flashed from one image, clones)
+  /// makes it "<uuid>#<deviceIdentifier>"; see `isDuplicateUUID`.
+  var id: String
   let deviceIdentifier: String
   let diskUUID: String?
   let name: String
@@ -110,6 +113,10 @@ struct Volume: Identifiable, Hashable, Sendable {
 
   /// The user turned off the low-space warning for this volume.
   var isLowSpaceMuted: Bool = false
+
+  /// Another listed volume has the same VolumeUUID. Such volumes have no
+  /// `compositeId`, so no per-volume setting is saved or applied for them.
+  var isDuplicateUUID: Bool = false
 
   /// The kernel's file system type of a mounted volume ("apfs", "ufsd_NTFS"…;
   /// `MountEntry.fileSystemType`), nil while unmounted. `fileSystemType` is

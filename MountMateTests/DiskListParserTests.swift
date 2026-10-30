@@ -558,4 +558,84 @@ final class DiskListParserTests: XCTestCase {
       usedSpace: nil, usedBytes: usedBytes, fileSystemType: "apfs", usagePercentage: nil,
       category: .user, isProtected: false, snapshots: [], storageError: storageError)
   }
+
+  // MARK: - Duplicate VolumeUUID
+
+  private func volume(_ id: String, device: String, protected: Bool = false) -> Volume {
+    var v = Volume(
+      id: id, deviceIdentifier: device, diskUUID: "AAAAAAAA-0000-4000-8000-000000000001",
+      name: "bootfs", isMounted: true, mountPoint: nil, freeSpace: nil, totalSize: nil,
+      usedSpace: nil, usedBytes: nil, fileSystemType: nil, usagePercentage: nil,
+      category: .user, isProtected: protected, snapshots: [], storageError: nil)
+    v.isLowSpaceMuted = protected
+    return v
+  }
+
+  private func disk(_ id: String, _ volumes: [Volume]) -> PhysicalDisk {
+    PhysicalDisk(
+      id: id, diskUUID: nil, connectionType: "USB", name: id, totalSize: nil, freeSpace: nil,
+      usedSpace: nil, usagePercentage: nil, type: .physical, isRAIDSet: false,
+      partitions: volumes, containers: [], storageError: nil)
+  }
+
+  func testDuplicateVolumeUUIDsGetDistinctIdsAndNoCompositeId() throws {
+    let uuid = "11111111-2222-4333-8444-555555555555"
+    let other = "99999999-2222-4333-8444-555555555555"
+    let result = DiskListParser.disambiguatingDuplicateUUIDs([
+      disk("disk4", [volume(uuid, device: "disk4s1", protected: true)]),
+      disk("disk5", [volume(uuid, device: "disk5s1"), volume(other, device: "disk5s2")]),
+    ])
+    let all = result.flatMap(\.allVolumes)
+    XCTAssertEqual(all.map(\.id), ["\(uuid)#disk4s1", "\(uuid)#disk5s1", other])
+    XCTAssertEqual(Set(all.map(\.id)).count, 3)
+    XCTAssertNil(all[0].compositeId)
+    XCTAssertNil(all[1].compositeId)
+    XCTAssertTrue(all[0].isDuplicateUUID)
+    XCTAssertFalse(all[0].isProtected)
+    XCTAssertFalse(all[0].isLowSpaceMuted)
+    XCTAssertNotNil(all[2].compositeId)
+    XCTAssertFalse(all[2].isDuplicateUUID)
+  }
+
+  func testUniqueVolumeUUIDKeepsItsId() {
+    let uuid = "11111111-2222-4333-8444-555555555555"
+    let input = [disk("disk4", [volume(uuid, device: "disk4s1")])]
+    let result = DiskListParser.disambiguatingDuplicateUUIDs(input)
+    XCTAssertEqual(result, input)
+    XCTAssertNotNil(result[0].partitions[0].compositeId)
+  }
+
+  func testDeviceIdentifierIdsAreNotTreatedAsDuplicates() {
+    let input = [disk("disk4", [volume("disk4s1", device: "disk4s1")])]
+    XCTAssertEqual(DiskListParser.disambiguatingDuplicateUUIDs(input), input)
+  }
+
+  // MARK: - Detaching a disk image after its last volume unmounts
+
+  func testDetachCompletesOnlyAfterTheEjectFinishes() {
+    var finishEject: ((Result<Void, Error>) -> Void)?
+    var results: [Result<Void, Error>] = []
+    var alerts: Bool?
+    DriveManager.detach(
+      disk("disk9", []), allowsErrorAlerts: false, completion: { results.append($0) },
+      using: { _, allowsAlerts, done in
+        alerts = allowsAlerts
+        finishEject = done
+      })
+    XCTAssertTrue(results.isEmpty)
+    XCTAssertEqual(alerts, false)
+    finishEject?(.success(()))
+    XCTAssertEqual(results.count, 1)
+    if case .failure = results[0] { XCTFail("expected success") }
+  }
+
+  func testDetachFailureIsReported() {
+    struct Boom: Error {}
+    var result: Result<Void, Error>?
+    DriveManager.detach(
+      disk("disk9", []), allowsErrorAlerts: false, completion: { result = $0 },
+      using: { _, _, done in done(.failure(Boom())) })
+    guard case .failure(let error)? = result else { return XCTFail("expected failure") }
+    XCTAssertTrue(error is Boom)
+  }
 }

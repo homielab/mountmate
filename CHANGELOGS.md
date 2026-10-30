@@ -91,6 +91,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Disks with the same volume UUID**: two SD cards flashed from one image (Raspberry Pi, Ventoy) or a clone no longer share one row, busy spinner or low-space state. Their Protect, Ignore and Keep Alive settings are not saved for them, so one card never inherits the other's. Disks with a unique UUID keep their settings.
+- **Unmount Volume in Shortcuts on a disk image**: the action now waits until the image is detached, reports a failed detach as an error and shows no alert.
 - **No more endless "Almost full" warnings on small partitions**: volumes under 1 GB (Ventoy's VTOYEFI, a Raspberry Pi bootfs) are full by design and no longer get the orange ring or a notification. Right-click any volume and choose "Don't Warn About Free Space on This Volume" to silence it; the same menu turns it back on.
 - **Menu fits small screens**: with many drives and shares the list now scrolls inside the menu instead of running off a 13-inch screen.
 
