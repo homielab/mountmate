@@ -144,6 +144,17 @@ struct NetworkShareMainRow: View {
                 .background(Color.secondary.opacity(0.12))
                 .clipShape(.rect(cornerRadius: 3))
               }
+
+              if share.readOnly {
+                Text("Read-only")
+                  .font(.caption2).fontWeight(.semibold)
+                  .foregroundStyle(.orange)
+                  .padding(.horizontal, 6)
+                  .padding(.vertical, 2)
+                  .background(Color.orange.opacity(0.15))
+                  .clipShape(.rect(cornerRadius: 4))
+                  .help("Mounts read-only: files on the share cannot be changed or deleted")
+              }
             }
 
             if let warning = lowSpace {

@@ -441,6 +441,8 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security.";
 "Mount Read-Only" = "Mount Read-Only";
 "Read-only" = "Read-only";
+"Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts.";
+"Mounts read-only: files on the share cannot be changed or deleted" = "Mounts read-only: files on the share cannot be changed or deleted";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mounts every external volume that is not mounted yet.";

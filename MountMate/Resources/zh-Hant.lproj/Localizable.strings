@@ -441,6 +441,8 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "完整磁碟存取權限可讓 MountMate 看到所有類型的磁碟並讀取儲存空間詳情。請在「系統設定 > 隱私與安全性」中為 MountMate 開啟。";
 "Mount Read-Only" = "以唯讀方式裝載";
 "Read-only" = "唯讀";
+"Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "可以打開和複製共享上的檔案，但無法修改或刪除。下次裝載該共享時生效。";
+"Mounts read-only: files on the share cannot be changed or deleted" = "以唯讀方式裝載：無法修改或刪除共享上的檔案";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "掛載所有尚未掛載的外接磁碟卷。";

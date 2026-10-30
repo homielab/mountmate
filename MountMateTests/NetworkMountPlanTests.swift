@@ -268,6 +268,22 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertEqual(flags(for: .nfs), MNT_NOSUID | MNT_NODEV)
   }
 
+  func testMountOptionsAddReadOnlyOnlyForAReadOnlyShare() {
+    func flags(_ proto: ShareProtocol, readOnly: Bool) -> Int32 {
+      let share = NetworkShare(
+        name: "s", server: "nas", sharePath: "backup", username: "", shareProtocol: proto,
+        readOnly: readOnly)
+      let options = NetworkMountPlan.netFSMountOptions(for: share)
+      return (options[kNetFSMountFlagsKey as String] as? NSNumber)?.int32Value ?? 0
+    }
+    for proto in [ShareProtocol.smb, .afp] {
+      XCTAssertEqual(flags(proto, readOnly: true) & MNT_RDONLY, MNT_RDONLY, "\(proto)")
+      XCTAssertEqual(flags(proto, readOnly: false) & MNT_RDONLY, 0, "\(proto)")
+      // Read-only adds the flag and keeps the others.
+      XCTAssertEqual(flags(proto, readOnly: true), flags(proto, readOnly: false) | MNT_RDONLY)
+    }
+  }
+
   // MARK: NFS arguments
 
   func testNFSArgumentsUseTheCanonicalExportForm() {
@@ -296,6 +312,21 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertEqual(arguments("nas:2049"), ["-o", "resvport,port=2049", "nas:/export", "/mp"])
     XCTAssertEqual(
       arguments("192.168.1.5:2049"), ["-o", "resvport,port=2049", "192.168.1.5:/export", "/mp"])
+  }
+
+  func testNFSArgumentsMountReadOnlyOnlyForAReadOnlyShare() {
+    func arguments(_ server: String, readOnly: Bool) -> [String] {
+      let share = NetworkShare(
+        name: "s", server: server, sharePath: "export", username: "", shareProtocol: .nfs,
+        readOnly: readOnly)
+      return NetworkMountPlan.nfsArguments(share: share, mountPoint: "/mp")
+    }
+    XCTAssertEqual(
+      arguments("nas", readOnly: true), ["-o", "resvport,rdonly", "nas:/export", "/mp"])
+    XCTAssertEqual(
+      arguments("nas:2049", readOnly: true),
+      ["-o", "resvport,port=2049,rdonly", "nas:/export", "/mp"])
+    XCTAssertEqual(arguments("nas", readOnly: false), ["-o", "resvport", "nas:/export", "/mp"])
   }
 
   // MARK: Keychain failure

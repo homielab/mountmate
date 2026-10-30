@@ -441,6 +441,8 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Полный доступ к дискам позволяет MountMate видеть все типы дисков и читать данные о хранилище. Включите его для MountMate в Системных настройках > Конфиденциальность и безопасность.";
 "Mount Read-Only" = "Подключить только для чтения";
 "Read-only" = "Только чтение";
+"Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Файлы на ресурсе можно открывать и копировать, но нельзя изменять или удалять. Применяется при следующем подключении ресурса.";
+"Mounts read-only: files on the share cannot be changed or deleted" = "Подключается только для чтения: файлы на ресурсе нельзя изменить или удалить";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Монтирует все внешние тома, которые ещё не смонтированы.";

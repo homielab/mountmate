@@ -29,7 +29,7 @@ final class NetworkShareBackupTests: XCTestCase {
     NetworkShare(
       name: "Exports", server: "[fd00::2]", sharePath: "volume1/Exports", username: "",
       mountAtLogin: true, keepMounted: false, shareProtocol: .nfs,
-      customMountPoint: "/Volumes/Exports"),
+      customMountPoint: "/Volumes/Exports", readOnly: true),
     NetworkShare(
       name: "Old", server: "mac.local", sharePath: "Old", username: "admin", shareProtocol: .afp),
   ]
@@ -39,6 +39,7 @@ final class NetworkShareBackupTests: XCTestCase {
     [
       share.name, share.server, share.sharePath, share.username, "\(share.mountAtLogin)",
       "\(share.keepMounted)", share.shareProtocol.rawValue, share.customMountPoint ?? "-",
+      "\(share.readOnly)",
     ]
   }
 
@@ -66,7 +67,7 @@ final class NetworkShareBackupTests: XCTestCase {
     XCTAssertEqual(entries.count, 3)
     let allowed: Set<String> = [
       "name", "protocol", "server", "sharePath", "username", "mountAtLogin", "keepMounted",
-      "customMountPoint",
+      "customMountPoint", "readOnly",
     ]
     for entry in entries {
       XCTAssertTrue(Set(entry.keys).isSubset(of: allowed), "\(entry.keys)")
@@ -156,6 +157,8 @@ final class NetworkShareBackupTests: XCTestCase {
     XCTAssertTrue(share.mountAtLogin)
     XCTAssertTrue(share.keepMounted)
     XCTAssertNil(share.customMountPoint)
+    // Files from versions without read-only shares mount writable.
+    XCTAssertFalse(share.readOnly)
   }
 
   func testSplitsAURLInTheServerField() throws {

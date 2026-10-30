@@ -9,7 +9,7 @@ final class NetworkShareCodableTests: XCTestCase {
     let share = NetworkShare(
       name: "Media", server: "nas.local", sharePath: "media", username: "me",
       mountAtLogin: true, keepMounted: false, shareProtocol: .nfs,
-      customMountPoint: "~/mnt/media")
+      customMountPoint: "~/mnt/media", readOnly: true)
 
     let data = try JSONEncoder().encode([share])
     let decoded = try JSONDecoder().decode([NetworkShare].self, from: data)
@@ -18,6 +18,7 @@ final class NetworkShareCodableTests: XCTestCase {
     XCTAssertEqual(decoded[0].shareProtocol, .nfs)
     XCTAssertFalse(decoded[0].keepMounted)
     XCTAssertEqual(decoded[0].customMountPoint, "~/mnt/media")
+    XCTAssertTrue(decoded[0].readOnly)
   }
 
   func testDecodingLegacyShareWithoutNewFieldsFallsBack() throws {
@@ -44,6 +45,7 @@ final class NetworkShareCodableTests: XCTestCase {
     // Shares that mounted at login were the historical auto-mount set, so
     // keep-alive follows mountAtLogin for legacy entries.
     XCTAssertTrue(decoded[0].keepMounted)
+    XCTAssertFalse(decoded[0].readOnly)
 
     let guest = LegacyShare(
       id: UUID(), name: "Public", server: "server.local", sharePath: "public",
@@ -51,6 +53,17 @@ final class NetworkShareCodableTests: XCTestCase {
     let guestData = try JSONEncoder().encode([guest])
     let guestDecoded = try JSONDecoder().decode([NetworkShare].self, from: guestData)
     XCTAssertFalse(guestDecoded[0].keepMounted)
+  }
+
+  func testDecodingAShareSavedBeforeReadOnlyMountsItWritable() throws {
+    let json = #"""
+      [{"id": "6F9A1C2E-3B4D-4E5F-8A9B-0C1D2E3F4A5B", "name": "Backup", "server": "nas",
+        "sharePath": "backup", "username": "", "mountAtLogin": true, "keepMounted": true,
+        "shareProtocol": "smb"}]
+      """#
+    let decoded = try JSONDecoder().decode([NetworkShare].self, from: Data(json.utf8))
+    XCTAssertEqual(decoded.count, 1)
+    XCTAssertFalse(decoded[0].readOnly)
   }
 
   func testNFSExportPathRoundTripsThroughURL() throws {

@@ -50,9 +50,11 @@ enum NetworkShareBackup {
     var mountAtLogin: Bool
     var keepMounted: Bool
     var customMountPoint: String?
+    var readOnly: Bool
 
     private enum CodingKeys: String, CodingKey {
-      case name, server, sharePath, username, mountAtLogin, keepMounted, customMountPoint
+      case name, server, sharePath, username, mountAtLogin, keepMounted, customMountPoint,
+        readOnly
       case shareProtocol = "protocol"
     }
 
@@ -65,6 +67,7 @@ enum NetworkShareBackup {
       mountAtLogin = share.mountAtLogin
       keepMounted = share.keepMounted
       customMountPoint = share.customMountPoint
+      readOnly = share.readOnly
     }
 
     init(from decoder: Decoder) throws {
@@ -78,6 +81,8 @@ enum NetworkShareBackup {
       mountAtLogin = try container.decodeIfPresent(Bool.self, forKey: .mountAtLogin) ?? true
       keepMounted = try container.decodeIfPresent(Bool.self, forKey: .keepMounted) ?? mountAtLogin
       customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
+      // Missing in files from MountMate versions without read-only shares.
+      readOnly = try container.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -90,6 +95,7 @@ enum NetworkShareBackup {
       try container.encode(mountAtLogin, forKey: .mountAtLogin)
       try container.encode(keepMounted, forKey: .keepMounted)
       try container.encodeIfPresent(customMountPoint, forKey: .customMountPoint)
+      try container.encode(readOnly, forKey: .readOnly)
     }
 
     /// A new saved share (new ID) with the fields cleaned like the share
@@ -111,7 +117,7 @@ enum NetworkShareBackup {
         username: shareProtocol.supportsUserCredentials
           ? cleanedUser : "",
         mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
-        customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil)
+        customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil, readOnly: readOnly)
     }
   }
 

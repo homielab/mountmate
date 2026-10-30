@@ -14,11 +14,14 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
   var keepMounted: Bool
   var shareProtocol: ShareProtocol
   var customMountPoint: String?
+  /// Mount the share read-only (MNT_RDONLY / NFS `rdonly`), so nothing on
+  /// it can be changed or deleted from this Mac, e.g. a backup share.
+  var readOnly: Bool
 
   init(
     id: UUID = UUID(), name: String, server: String, sharePath: String, username: String,
     mountAtLogin: Bool = true, keepMounted: Bool = true, shareProtocol: ShareProtocol = .smb,
-    customMountPoint: String? = nil
+    customMountPoint: String? = nil, readOnly: Bool = false
   ) {
     self.id = id
     self.name = name
@@ -29,16 +32,17 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
     self.keepMounted = keepMounted
     self.shareProtocol = shareProtocol
     self.customMountPoint = customMountPoint
+    self.readOnly = readOnly
   }
 
   private enum CodingKeys: String, CodingKey {
     case id, name, server, sharePath, username, mountAtLogin, keepMounted, shareProtocol,
-      customMountPoint
+      customMountPoint, readOnly
   }
 
   /// Keeps shares saved before 5.18 decodable: missing flags fall back to the
-  /// historical behavior (login shares were the only auto-mounted ones, and
-  /// every share was SMB).
+  /// historical behavior (login shares were the only auto-mounted ones,
+  /// every share was SMB, and every share mounted writable).
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     id = try container.decode(UUID.self, forKey: .id)
@@ -52,6 +56,7 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
       try container.decodeIfPresent(ShareProtocol.self, forKey: .shareProtocol)
       ?? .smb
     customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
+    readOnly = try container.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
   }
 }
 

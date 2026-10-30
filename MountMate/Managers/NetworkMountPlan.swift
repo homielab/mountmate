@@ -313,6 +313,7 @@ enum NetworkMountPlan {
   /// in front of `:/export`, an IPv6 one in brackets (`[fd00::2]:/export`, as
   /// mount_nfs parses it), and the port becomes the `port=N` option
   /// (`man mount_nfs`: "Connect to an NFS server at the given port number").
+  /// A read-only share adds `rdonly` (`man mount`).
   static func nfsArguments(share: NetworkShare, mountPoint: String) -> [String] {
     let exportPath =
       "/"
@@ -323,6 +324,9 @@ enum NetworkMountPlan {
     var options = ["resvport"]
     if let port = address.port {
       options.append("port=\(port)")
+    }
+    if share.readOnly {
+      options.append("rdonly")
     }
     return ["-o", options.joined(separator: ","), "\(host):\(exportPath)", mountPoint]
   }
@@ -410,7 +414,8 @@ enum NetworkMountPlan {
   /// of a NetFS-created subfolder, allow share paths that name a folder
   /// inside the share ("share/sub"), and the same flags the previous
   /// `mount_smbfs -o noowners,nosuid` mounts had (MNT_UNKNOWNPERMISSIONS is
-  /// MNT_IGNORE_OWNERSHIP, "noowners").
+  /// MNT_IGNORE_OWNERSHIP, "noowners"), plus MNT_RDONLY for a read-only
+  /// share.
   static func netFSMountOptions(for share: NetworkShare) -> NSMutableDictionary {
     let mountOptions = NSMutableDictionary()
     mountOptions[kNetFSMountAtMountDirKey as String] = true
@@ -418,6 +423,9 @@ enum NetworkMountPlan {
     var flags = MNT_NOSUID | MNT_NODEV
     if share.shareProtocol == .smb {
       flags |= MNT_UNKNOWNPERMISSIONS
+    }
+    if share.readOnly {
+      flags |= MNT_RDONLY
     }
     mountOptions[kNetFSMountFlagsKey as String] = NSNumber(value: flags)
     return mountOptions

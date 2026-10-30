@@ -14,6 +14,7 @@ struct EditNetworkShareSheet: View {
   @State private var password = ""
   @State private var mountAtLogin = true
   @State private var keepMounted = true
+  @State private var readOnly = false
   @State private var shareProtocol: ShareProtocol = .smb
   @State private var customMountPoint = ""
   /// The password read from the Keychain when editing, or nil when none was
@@ -177,6 +178,18 @@ struct EditNetworkShareSheet: View {
             Label("Keep Mounted", systemImage: "arrow.triangle.2.circlepath")
           }
 
+          VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: $readOnly) {
+              Label("Mount Read-Only", systemImage: "lock.circle")
+            }
+            Text(
+              "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts."
+            )
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+          }
+
           VStack(alignment: .leading, spacing: 6) {
             Text("Custom Mount Point")
               .font(.caption)
@@ -277,6 +290,7 @@ struct EditNetworkShareSheet: View {
     username = share.username
     mountAtLogin = share.mountAtLogin
     keepMounted = share.keepMounted
+    readOnly = share.readOnly
     shareProtocol = share.shareProtocol
     customMountPoint = share.customMountPoint ?? ""
 
@@ -302,7 +316,8 @@ struct EditNetworkShareSheet: View {
       mountAtLogin: mountAtLogin,
       keepMounted: keepMounted,
       shareProtocol: shareProtocol,
-      customMountPoint: trimmedMountPoint.isEmpty ? nil : trimmedMountPoint
+      customMountPoint: trimmedMountPoint.isEmpty ? nil : trimmedMountPoint,
+      readOnly: readOnly
     )
   }
 

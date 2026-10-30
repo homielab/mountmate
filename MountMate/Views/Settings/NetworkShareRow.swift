@@ -60,6 +60,18 @@ struct NetworkShareRow: View {
               .help("Reconnects automatically when the share drops")
           }
 
+          if share.readOnly {
+            Label("Read-only", systemImage: "lock.fill")
+              .font(.caption2)
+              .bold()
+              .foregroundStyle(.orange)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.orange.opacity(0.12))
+              .clipShape(.rect(cornerRadius: 4))
+              .help("Mounts read-only: files on the share cannot be changed or deleted")
+          }
+
           if share.shareProtocol.isDeprecated {
             Label(
               NSLocalizedString("Deprecated", comment: "Badge for deprecated share protocol"),

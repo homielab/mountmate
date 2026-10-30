@@ -107,7 +107,7 @@ Everything in the list above, in full:
 - View all connected **external drives**
 - See which ones are **mounted**
 - **Mount/unmount** any drive with a click
-- **Mount Read-Only**: right-click an unmounted volume to mount it read-only (protect a backup drive, inspect a damaged or NTFS drive); the row shows a "Read-only" badge
+- **Mount Read-Only**: right-click an unmounted volume to mount it read-only (protect a backup drive, inspect a damaged or NTFS drive); the row shows a "Read-only" badge. A network share gets the same protection with the "Mount Read-Only" switch in its share settings (Settings → Network Shares → Edit); it applies from the next mount, also at login and when Keep Alive reconnects
 - **Verify Volume**: right-click a mounted external volume to verify its file system data structures with diskutil in the background (never repairs); shows a "Verifying…" status and alert results with Disk Utility repair suggestions if issues are found
 - **Rename Volume…**: right-click a mounted, writable external volume to give it a new name (`diskutil rename`); the name is checked first (no `/` or `:`, at most 11 characters on FAT/exFAT), and file systems macOS cannot rename (such as NTFS) get a clear error
 - Check **free space** for drives and for mounted network shares (used / total)

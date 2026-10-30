@@ -441,6 +441,8 @@
 "Full Disk Access lets MountMate see every disk type and read storage details. Turn it on for MountMate in System Settings > Privacy & Security." = "Truy cập Toàn bộ Đĩa cho phép MountMate thấy mọi loại ổ đĩa và đọc thông tin lưu trữ. Bật cho MountMate trong Cài đặt Hệ thống > Quyền riêng tư & Bảo mật.";
 "Mount Read-Only" = "Mount chỉ đọc";
 "Read-only" = "Chỉ đọc";
+"Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Có thể mở và sao chép file trên ổ mạng nhưng không thể sửa hay xoá. Áp dụng từ lần mount tiếp theo.";
+"Mounts read-only: files on the share cannot be changed or deleted" = "Mount chỉ đọc: không thể sửa hay xoá file trên ổ mạng";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mount mọi phân vùng ngoài chưa được mount.";
