@@ -137,6 +137,19 @@ final class BulkVolumeActionsTests: XCTestCase {
     XCTAssertEqual(candidates.map(\.id), ["disk4"])
   }
 
+  func testSingleEjectRefusesADiskWithAProtectedOrBusyVolume() {
+    let localize: IntentMessages.Localize = { $0 }
+    let protected = disk("disk2", volumes: [volume("a"), volume("b", isProtected: true)])
+    XCTAssertEqual(
+      BulkVolumeActions.singleEjectRefusal(for: protected, busyVolumeIDs: [], localize: localize),
+      "The disk holding “Vol b” has a protected volume, so it was not ejected.")
+    let busy = disk("disk3", volumes: [volume("c"), volume("d")])
+    XCTAssertEqual(
+      BulkVolumeActions.singleEjectRefusal(for: busy, busyVolumeIDs: ["d"], localize: localize),
+      "“Vol d” is still being mounted, unmounted or unlocked. Try again when it is done.")
+    XCTAssertNil(BulkVolumeActions.singleEjectRefusal(for: busy, busyVolumeIDs: []))
+  }
+
   func testEjectStartsOnlyWhenTheSameDiskIsNotEjectingAlready() {
     let target = disk("disk2", volumes: [volume("a")])
     XCTAssertTrue(BulkVolumeActions.canStartEject(of: target, ejectingDiskIDs: []))

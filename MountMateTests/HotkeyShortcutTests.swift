@@ -22,6 +22,29 @@ final class HotkeyShortcutTests: XCTestCase {
     super.tearDown()
   }
 
+  // MARK: - Unsafe saved shortcuts
+
+  func testUnsafeSavedShortcutIsSkippedReportedOnceAndKept() {
+    defaults.set(Int(kVK_ANSI_E), forKey: "hotkeyEjectKeyCode")
+    defaults.set(Int(NSEvent.ModifierFlags.option.rawValue), forKey: "hotkeyEjectModifiers")
+    let manager = HotkeyManager(defaults: defaults)
+    var reported: [HotkeyAction] = []
+    manager.onUnsafeShortcutSkipped = { action, _ in reported.append(action) }
+    manager.startListening()
+    manager.stopListening()
+    manager.startListening()
+    manager.stopListening()
+    XCTAssertEqual(reported, [.ejectAll])
+    XCTAssertEqual(
+      manager.shortcut(for: .ejectAll),
+      HotkeyShortcut(keyCode: UInt16(kVK_ANSI_E), modifiers: .option))
+    XCTAssertEqual(
+      HotkeyManager.unsafeShortcutMessage(
+        HotkeyShortcut(keyCode: UInt16(kVK_ANSI_E), modifiers: .option), localize: { $0 }),
+      "Shortcut ⌥E is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts."
+    )
+  }
+
   // MARK: - Model
 
   func testModifiersAreReducedToTheFourAllowedFlags() {

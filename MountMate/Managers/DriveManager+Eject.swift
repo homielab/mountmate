@@ -11,6 +11,15 @@ extension DriveManager {
     disk: PhysicalDisk, allowsErrorAlerts: Bool = true,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    if let refusal = BulkVolumeActions.singleEjectRefusal(for: disk, busyVolumeIDs: busyVolumeIDs) {
+      if allowsErrorAlerts {
+        userActionError = AppAlert(
+          title: NSLocalizedString("Eject Failed", comment: "Alert title"),
+          message: refusal, kind: .basic)
+      }
+      completion?(.failure(DiskOperationError(message: refusal)))
+      return
+    }
     guard startEjectIfIdle(disk) else {
       completion?(.failure(DiskOperationError.ejectInProgress()))
       return

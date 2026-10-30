@@ -628,3 +628,7 @@
 "Remove Rule" = "Supprimer la règle";
 "Custom mount rule removed." = "Règle de montage personnalisé supprimée.";
 "Share Not Added Mount Point In Use" = "« %1$@ » non ajouté : %2$@";
+
+"“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "« %@ » est encore en cours de montage, de démontage ou de déverrouillage. Réessayez une fois terminé.";
+"A volume on this disk is protected. Turn off Protect to eject it." = "Un volume de ce disque est protégé. Désactivez Protéger pour l’éjecter.";
+"Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "Le raccourci %@ est désactivé : il lui faut ⌘ ou ⌃. Enregistrez-en un nouveau dans Réglages → Général → Raccourcis clavier.";

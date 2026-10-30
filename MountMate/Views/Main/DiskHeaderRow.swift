@@ -15,6 +15,9 @@ struct DiskHeaderRow: View {
     disk.type != .internalDisk || manager.unverifiedDiskIDs.contains(disk.id)
   }
 
+  /// Ejecting would unmount a protected volume too (same rule as Eject All).
+  private var hasProtectedVolume: Bool { disk.allVolumes.contains(where: \.isProtected) }
+
   var body: some View {
     HStack(spacing: 0) {
       // Toggle Chevron & Icon
@@ -97,7 +100,7 @@ struct DiskHeaderRow: View {
         }
         if canEject {
           Button("Eject") { manager.eject(disk: disk) }
-            .disabled(manager.isEjecting(disk.id))
+            .disabled(manager.isEjecting(disk.id) || hasProtectedVolume)
         }
       }
 
@@ -111,13 +114,19 @@ struct DiskHeaderRow: View {
         }
         .buttonStyle(.bordered)
         .tint(.purple)
-        .disabled(isEjecting)
+        .disabled(isEjecting || hasProtectedVolume)
         .overlay {
           if isEjecting {
             ProgressView().controlSize(.small)
           }
         }
-        .help("Eject")
+        .help(
+          hasProtectedVolume
+            ? NSLocalizedString(
+              "A volume on this disk is protected. Turn off Protect to eject it.",
+              comment: "Tooltip")
+            : NSLocalizedString("Eject", comment: "Tooltip")
+        )
         .accessibilityLabel(
           Text(AccessibilityLabels.action(.eject, name: disk.name ?? disk.id))
         )

@@ -628,3 +628,7 @@
 "Remove Rule" = "Видалити правило";
 "Custom mount rule removed." = "Правило монтування видалено.";
 "Share Not Added Mount Point In Use" = "«%1$@» не додано: %2$@";
+
+"“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "«%@» ще підключається, відключається або розблоковується. Повторіть, коли це завершиться.";
+"A volume on this disk is protected. Turn off Protect to eject it." = "Том на цьому диску захищений. Вимкніть захист, щоб вийняти диск.";
+"Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "Скорочення %@ вимкнено: потрібна клавіша ⌘ або ⌃. Запишіть нове в Параметри → Загальні → Клавіатурні скорочення.";

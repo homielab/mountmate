@@ -271,4 +271,20 @@ enum BulkVolumeActions {
     }
     return AppAlert(title: title, message: message, kind: kind)
   }
+
+  /// Why a single disk eject must not run, or nil: the same rules as Eject
+  /// All — a protected volume keeps the whole disk, and so does a volume
+  /// with an operation in flight.
+  static func singleEjectRefusal(
+    for disk: PhysicalDisk, busyVolumeIDs: Set<String>,
+    localize: @escaping IntentMessages.Localize = IntentMessages.defaultLocalize
+  ) -> String? {
+    if let protected = disk.allVolumes.first(where: \.isProtected) {
+      return IntentMessages.ejectDiskProtected(name: protected.name, localize: localize)
+    }
+    if let busy = disk.allVolumes.first(where: { busyVolumeIDs.contains($0.id) }) {
+      return IntentMessages.ejectDiskBusy(name: busy.name, localize: localize)
+    }
+    return nil
+  }
 }

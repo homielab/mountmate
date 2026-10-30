@@ -124,6 +124,13 @@ enum IntentMessages {
       name)
   }
 
+  static func ejectDiskBusy(name: String, localize: Localize = defaultLocalize) -> String {
+    String(
+      format: localize(
+        "“%@” is still being mounted, unmounted or unlocked. Try again when it is done."),
+      name)
+  }
+
   static func shareNotFound(localize: Localize = defaultLocalize) -> String {
     localize("That network share is no longer saved in MountMate.")
   }

@@ -258,6 +258,13 @@ class HotkeyManager: ObservableObject {
   private var pressedActions: Set<HotkeyAction> = []
   private var cancellables = Set<AnyCancellable>()
   private let defaults: UserDefaults
+  /// Called once per session for each saved shortcut that is not registered
+  /// because it lacks ⌘ or ⌃, so the user learns why the key does nothing.
+  var onUnsafeShortcutSkipped: (HotkeyAction, HotkeyShortcut) -> Void = { _, shortcut in
+    FeedbackHUD.show(
+      HotkeyManager.unsafeShortcutMessage(shortcut), systemImage: "keyboard", tint: .warning)
+  }
+  private var reportedUnsafeShortcuts: Set<String> = []
 
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
@@ -409,6 +416,11 @@ class HotkeyManager: ObservableObject {
       guard combination.isSafeAsGlobalHotKey else {
         Log.hotkey.error(
           "Not registering \(combination.displayString, privacy: .public); it needs ⌘ or ⌃.")
+        if reportedUnsafeShortcuts.insert(
+          "\(combination.keyCode)-\(combination.modifiers.rawValue)"
+        ).inserted {
+          onUnsafeShortcutSkipped(action, combination)
+        }
         continue
       }
       var ref: EventHotKeyRef?
@@ -546,6 +558,16 @@ class HotkeyManager: ObservableObject {
         NetworkMountManager.reportUnmountAllFailures(failures, offerForce: true)
       }
     }
+  }
+
+  static func unsafeShortcutMessage(
+    _ shortcut: HotkeyShortcut,
+    localize: (String) -> String = { NSLocalizedString($0, comment: "") }
+  ) -> String {
+    String(
+      format: localize(
+        "Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts."
+      ), shortcut.displayString)
   }
 
   /// The menu is usually closed when a shortcut runs, so say what happened.

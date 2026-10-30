@@ -628,3 +628,7 @@
 "Remove Rule" = "移除规则";
 "Custom mount rule removed." = "已移除自定义挂载规则。";
 "Share Not Added Mount Point In Use" = "未添加“%1$@”：%2$@";
+
+"“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "“%@”仍在装载、卸载或解锁。请完成后重试。";
+"A volume on this disk is protected. Turn off Protect to eject it." = "此磁盘上有受保护的卷宗。关闭保护后才能推出。";
+"Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "快捷键 %@ 已停用：需要 ⌘ 或 ⌃。请在设置 → 通用 → 键盘快捷键中录制新的快捷键。";

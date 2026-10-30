@@ -628,3 +628,7 @@
 "Remove Rule" = "Удалить правило";
 "Custom mount rule removed." = "Правило монтирования удалено.";
 "Share Not Added Mount Point In Use" = "«%1$@» не добавлен: %2$@";
+
+"“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "«%@» ещё подключается, отключается или разблокируется. Повторите, когда это завершится.";
+"A volume on this disk is protected. Turn off Protect to eject it." = "Том на этом диске защищён. Отключите защиту, чтобы извлечь диск.";
+"Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "Сочетание %@ отключено: нужна клавиша ⌘ или ⌃. Запишите новое в Настройки → Основные → Сочетания клавиш.";
