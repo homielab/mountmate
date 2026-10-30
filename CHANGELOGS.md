@@ -91,7 +91,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- **Free space with an ignored volume**: a volume sharing its APFS container with an ignored volume now shows the container's real free space (the ignored volume's data counted), so the Almost-full warning comes on time.
+- **Free space with an ignored volume**: a volume sharing its APFS container with an ignored volume now shows the container's real free space (the ignored volume's data counted), and so does the disk row, so the Almost-full warning comes on time.
 - **SD card in a MacBook's card slot**: a card in the built-in reader is now treated as an external disk (diskutil calls the reader internal): it is shown by default and included in Eject All, unmount on sleep and Shortcuts.
 - **Custom mount points**: cancelling the administrator password prompt (or a failed save) no longer leaves the empty folder MountMate just created behind; folders that existed before or that have files in them are never touched. A rule you wrote by hand in `/etc/fstab` with a lowercase UUID now counts as one for that volume, so MountMate refuses to add a second rule for it instead of writing two.
 - **Custom mount rules MountMate lost track of**: rules MountMate wrote to `/etc/fstab` but no longer has in its settings (after a settings reset or moving to a new Mac) still move the volume; they now appear in Settings → Management → Custom Mount Points marked "Not tracked by MountMate" with a Remove button. Nothing is changed until you click it.

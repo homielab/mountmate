@@ -1,3 +1,4 @@
+import DiskArbitration
 import XCTest
 
 @testable import MountMate
@@ -507,18 +508,27 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertEqual(try XCTUnwrap(backup.usagePercentage), 0.8, accuracy: 0.0001)
     XCTAssertEqual(backup.freeSpace?.hasPrefix("100"), true, backup.freeSpace ?? "nil")
     XCTAssertEqual(backup.usedBytes, 300_000_000_000)
+    // The disk total counts the ignored volume too.
+    let disk = try XCTUnwrap(result.disks.first)
+    XCTAssertEqual(try XCTUnwrap(disk.usagePercentage), 0.8, accuracy: 0.0001)
+    XCTAssertEqual(disk.freeSpace, all.disks.first?.freeSpace)
+    XCTAssertEqual(disk.usedSpace, all.disks.first?.usedSpace)
   }
 
   // MARK: - Built-in card reader
 
-  /// `diskutil info` of an SD card in a MacBook's slot: the reader is built
-  /// in, so `Internal` is true.
-  private let sdCardInfo: [String: Any] = [
-    "Internal": true, "RemovableMedia": true, "Removable": true, "Ejectable": true,
-    "BusProtocol": "Secure Digital", "MediaName": "SDXC Reader", "VirtualOrPhysical": "Physical",
-  ]
+  /// `diskutil info` of an SD card in a MacBook's slot (synthetic): the
+  /// reader is built in, so `Internal` is true.
+  private func sdCardInfo() throws -> [String: Any] {
+    let url = try XCTUnwrap(
+      Bundle(for: Self.self).url(forResource: "diskutilInfoSDCard", withExtension: "plist"))
+    return try XCTUnwrap(
+      try PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil)
+        as? [String: Any])
+  }
 
   func testCardInBuiltInReaderIsExternal() throws {
+    let sdCardInfo = try sdCardInfo()
     XCTAssertFalse(DiskListParser.isInternalDisk(sdCardInfo))
     XCTAssertFalse(DiskListParser.isInternalDisk(["Internal": true, "BusProtocol": "SD"]))
     XCTAssertFalse(DiskListParser.isInternalDisk(["Internal": true, "Ejectable": true]))
@@ -535,6 +545,28 @@ final class DiskListParserTests: XCTestCase {
     let card = try XCTUnwrap(result.disks.first)
     XCTAssertEqual(card.type, .physical)
     XCTAssertTrue(card.isRemovable)
+    XCTAssertEqual(card.connectionType, "Secure Digital")
+  }
+
+  func testDiskArbitrationFallbackTreatsCardReaderMediaAsExternal() throws {
+    let card: [String: Any] = [
+      kDADiskDescriptionDeviceInternalKey as String: true,
+      kDADiskDescriptionMediaRemovableKey as String: true,
+      kDADiskDescriptionMediaEjectableKey as String: true,
+      kDADiskDescriptionDeviceProtocolKey as String: "Secure Digital",
+    ]
+    let cardInfo = try XCTUnwrap(DiskListParser.diskutilStyleInfo(fromDiskArbitration: card))
+    XCTAssertFalse(DiskListParser.isInternalDisk(cardInfo))
+
+    let ssd: [String: Any] = [
+      kDADiskDescriptionDeviceInternalKey as String: true,
+      kDADiskDescriptionMediaRemovableKey as String: false,
+      kDADiskDescriptionMediaEjectableKey as String: false,
+      kDADiskDescriptionDeviceProtocolKey as String: "Apple Fabric",
+    ]
+    let ssdInfo = try XCTUnwrap(DiskListParser.diskutilStyleInfo(fromDiskArbitration: ssd))
+    XCTAssertTrue(DiskListParser.isInternalDisk(ssdInfo))
+    XCTAssertNil(DiskListParser.diskutilStyleInfo(fromDiskArbitration: [:]))
   }
 
   // MARK: - Helpers

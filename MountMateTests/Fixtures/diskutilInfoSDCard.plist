@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BusProtocol</key>
+	<string>Secure Digital</string>
+	<key>Content</key>
+	<string>FDisk_partition_scheme</string>
+	<key>DeviceIdentifier</key>
+	<string>disk20</string>
+	<key>DeviceNode</key>
+	<string>/dev/disk20</string>
+	<key>Ejectable</key>
+	<true/>
+	<key>IORegistryEntryName</key>
+	<string>SDXC Reader Media</string>
+	<key>Internal</key>
+	<true/>
+	<key>MediaName</key>
+	<string>SDXC Reader</string>
+	<key>Removable</key>
+	<true/>
+	<key>RemovableMedia</key>
+	<true/>
+	<key>RemovableMediaOrExternalDevice</key>
+	<true/>
+	<key>SMARTStatus</key>
+	<string>Not Supported</string>
+	<key>Size</key>
+	<integer>500000000001</integer>
+	<key>SolidState</key>
+	<true/>
+	<key>VirtualOrPhysical</key>
+	<string>Physical</string>
+	<key>WholeDisk</key>
+	<true/>
+	<key>Writable</key>
+	<true/>
+</dict>
+</plist>

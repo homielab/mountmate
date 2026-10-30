@@ -199,6 +199,9 @@ struct Volume: Identifiable, Hashable, Sendable {
 struct APFSContainer: Identifiable, Hashable, Sendable {
   let id: String  // deviceIdentifier
   var volumes: [Volume]
+  /// Space used by volumes of this container that are not listed (ignored or
+  /// hidden), so disk totals still match diskutil.
+  var hiddenUsedBytes: Int64 = 0
 }
 
 /// The drive's own health verdict, from `diskutil info`'s `SMARTStatus`.

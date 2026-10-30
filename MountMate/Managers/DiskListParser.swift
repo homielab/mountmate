@@ -237,7 +237,9 @@ struct DiskListParser {
         let totalBytes = diskData["Size"] as? Int64 ?? 0
 
         let allVolumesForStats = partitions + containers.flatMap { $0.volumes }
-        let stats = Self.parentDiskStats(totalBytes: totalBytes, volumes: allVolumesForStats)
+        let stats = Self.parentDiskStats(
+          totalBytes: totalBytes, volumes: allVolumesForStats,
+          hiddenUsedBytes: containers.reduce(0) { $0 + $1.hiddenUsedBytes })
 
         let physicalDisk = PhysicalDisk(
           id: physicalIdentifier, diskUUID: infoPlist?["DiskUUID"] as? String,
@@ -290,7 +292,9 @@ struct DiskListParser {
       var copy = disk
       copy.partitions = disk.partitions.map(fixed)
       copy.containers = disk.containers.map {
-        APFSContainer(id: $0.id, volumes: $0.volumes.map(fixed))
+        var container = $0
+        container.volumes = $0.volumes.map(fixed)
+        return container
       }
       return copy
     }
@@ -309,18 +313,19 @@ struct DiskListParser {
     }
   }
 
-  /// Size, free and used space of a whole disk from the volumes listed on it.
+  /// Size, free and used space of a whole disk from the volumes listed on it
+  /// plus `hiddenUsedBytes` of APFS volumes left out of the list.
   /// Any volume whose usage could not be read makes the whole disk show that
   /// error instead of numbers that leave it out.
-  static func parentDiskStats(totalBytes: Int64, volumes: [Volume]) -> (
-    total: String?, free: String?, used: String?, percentage: Double?, error: String?
-  ) {
+  static func parentDiskStats(totalBytes: Int64, volumes: [Volume], hiddenUsedBytes: Int64 = 0)
+    -> (total: String?, free: String?, used: String?, percentage: Double?, error: String?)
+  {
     if let errorMessage = volumes.compactMap(\.storageError).first {
       return (nil, nil, nil, nil, errorMessage)
     }
     guard totalBytes > 0 else { return (nil, nil, nil, nil, nil) }
 
-    let usedBytes = volumes.reduce(0) { $0 + ($1.usedBytes ?? 0) }
+    let usedBytes = volumes.reduce(hiddenUsedBytes) { $0 + ($1.usedBytes ?? 0) }
 
     let formatter = byteCountFormatter()
     let totalSizeStr = formatter.string(fromByteCount: totalBytes)
@@ -427,7 +432,8 @@ struct DiskListParser {
       id: containerID,
       volumes: Self.apfsContainerUsage(
         size: containerSize, volumes: volumes, hiddenUsedBytes: hiddenUsedBytes,
-        hiddenCount: hiddenCount))
+        hiddenCount: hiddenCount),
+      hiddenUsedBytes: hiddenUsedBytes)
   }
 
   /// APFS volumes share their container's space: diskutil reports each
@@ -659,9 +665,20 @@ extension DiskListParser {
     if (description[kDADiskDescriptionDeviceModelKey as String] as? String) == "Disk Image" {
       return .diskImage
     }
+    guard let info = diskutilStyleInfo(fromDiskArbitration: description) else { return .unknown }
+    return isInternalDisk(info) ? .internalDisk : .external
+  }
+
+  /// A Disk Arbitration description in the `diskutil info` keys that
+  /// `isInternalDisk` reads. Nil when it does not say whether it is internal.
+  static func diskutilStyleInfo(fromDiskArbitration description: [String: Any]) -> [String: Any]? {
     guard let isInternal = description[kDADiskDescriptionDeviceInternalKey as String] as? Bool
-    else { return .unknown }
-    return isInternal ? .internalDisk : .external
+    else { return nil }
+    var info: [String: Any] = ["Internal": isInternal]
+    info["RemovableMedia"] = description[kDADiskDescriptionMediaRemovableKey as String] as? Bool
+    info["Ejectable"] = description[kDADiskDescriptionMediaEjectableKey as String] as? Bool
+    info["BusProtocol"] = description[kDADiskDescriptionDeviceProtocolKey as String] as? String
+    return info
   }
 
   /// BSD names of the whole disks macOS reports as external
