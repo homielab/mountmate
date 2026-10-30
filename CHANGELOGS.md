@@ -88,6 +88,7 @@ All notable changes to this project will be documented in this file.
 - Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
 
 ### Fixed
+- The address under each share in Settings → Network Shares is now the one MountMate really connects to, the same as the Preview in the share sheet: NFS shares show `nas:/volume1/media`, IPv6 servers get brackets (`smb://[fd00::2]/share`) and spaces in paths are encoded. Hover it to see the full address.
 - Importing shares from a hand-written file whose server is a full address (`smb://admin@nas.local/Public`, `\\nas\Public`) now splits it into server, share path and username instead of saving a share that never mounts.
 
 - **Renaming exFAT drives**: exFAT volumes now accept names up to 15 characters (such as "Photos Backup") instead of being cut off at 11; FAT32 stays at 11.

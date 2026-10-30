@@ -248,6 +248,17 @@ enum NetworkMountPlan {
       ?? "\(share.shareProtocol.urlScheme)://\(share.server)/\(share.sharePath)"
   }
 
+  /// The address a saved share shows in the Settings list: the same as
+  /// `connectionPreview`, but SMB/AFP shares show their saved username in the
+  /// URL user part (never a password). NFS has no username.
+  static func listAddress(for share: NetworkShare) -> String {
+    guard share.shareProtocol != .nfs, !share.username.isEmpty,
+      netFSUserPlacement(for: share).urlUser == nil,
+      let url = connectionURL(for: share, user: share.username)
+    else { return connectionPreview(for: share) }
+    return url.absoluteString
+  }
+
   /// Where the SMB/AFP username goes: (URL user component, `user` argument).
   ///
   /// Domain logins ("DOMAIN;user", or "DOMAIN\user" in Windows notation) go

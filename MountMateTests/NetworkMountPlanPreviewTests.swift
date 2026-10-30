@@ -52,4 +52,27 @@ final class NetworkMountPlanPreviewTests: XCTestCase {
     XCTAssertEqual(preview("", ""), "smb://server/share")
     XCTAssertEqual(preview("", "", .nfs), "server:/share")
   }
+
+  private func listAddress(
+    _ server: String, _ path: String, _ proto: ShareProtocol = .smb, user: String = ""
+  ) -> String {
+    NetworkMountPlan.listAddress(
+      for: NetworkShare(
+        name: "x", server: server, sharePath: path, username: user, shareProtocol: proto))
+  }
+
+  func testListAddressMatchesRealAddress() {
+    XCTAssertEqual(listAddress("nas", "volume1/media", .nfs), "nas:/volume1/media")
+    XCTAssertEqual(listAddress("fd00::2", "share"), "smb://[fd00::2]/share")
+    XCTAssertEqual(listAddress("nas", "My Files"), "smb://nas/My%20Files")
+    XCTAssertEqual(listAddress("nas", "Public", .afp), "afp://nas/Public")
+  }
+
+  func testListAddressShowsSavedUserWithoutPassword() {
+    XCTAssertEqual(listAddress("nas", "Public", user: "bob"), "smb://bob@nas/Public")
+    XCTAssertEqual(listAddress("nas", "Public", .afp, user: "bob"), "afp://bob@nas/Public")
+    XCTAssertEqual(listAddress("nas", "Public", user: "CORP\\bob"), "smb://CORP;bob@nas/Public")
+    XCTAssertEqual(listAddress("nas", "volume1", .nfs, user: "bob"), "nas:/volume1")
+    XCTAssertEqual(listAddress("admin:pw@nas", "Public"), "smb://nas/Public")
+  }
 }

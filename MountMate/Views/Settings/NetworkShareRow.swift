@@ -83,13 +83,14 @@ struct NetworkShareRow: View {
           }
         }
 
-        Text(
-          "\(share.shareProtocol.urlScheme)://\(share.username.isEmpty ? "" : "\(share.username)@")\(share.server)/\(share.sharePath)"
-        )
-        .font(.system(.caption, design: .monospaced))
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
-        .truncationMode(.middle)
+        let address = NetworkMountPlan.listAddress(for: share)
+        Text(address)
+          .font(.system(.caption, design: .monospaced))
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+          .truncationMode(.middle)
+          .help(address)
+          .accessibilityLabel(address)
       }
 
       Spacer()
