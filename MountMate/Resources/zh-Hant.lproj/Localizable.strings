@@ -642,3 +642,31 @@
 
 /* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
 "Same UUID as another volume. Use the disk or device name to tell them apart." = "與另一個卷宗的 UUID 相同。請依磁碟或裝置名稱區分它們。";
+
+
+/* Shortcut label: Space bar */
+"Space" = "空白鍵";
+
+/* Shortcut label: Escape key */
+"Esc" = "Esc";
+
+/* Shortcut label: Help key */
+"Help" = "說明";
+
+/* Shortcut label: keypad Clear key */
+"Keypad Clear" = "數字鍵盤 清除";
+
+/* Shortcut label: keypad Enter key */
+"Keypad Enter" = "數字鍵盤 Enter";
+
+/* Shortcut label: a keypad key, e.g. Keypad 5 */
+"Keypad %@" = "數字鍵盤 %@";
+
+/* Shortcut label for an unnamed key code */
+"Key %d" = "按鍵 %d";
+
+/* HUD: the recorded shortcut is a system shortcut such as ⌘C or ⌘Q */
+"%@ is reserved by macOS. Choose another shortcut." = "%@ 已由 macOS 保留，請選擇其他快速鍵。";
+
+/* Alert message: Keychain locked or access denied when reading the saved APFS password */
+"MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”" = "MountMate 無法從鑰匙圈讀取已儲存的密碼（錯誤 %d）。請輸入密碼以解鎖「%@」";

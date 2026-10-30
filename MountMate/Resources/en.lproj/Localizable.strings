@@ -642,3 +642,31 @@
 
 /* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
 "Same UUID as another volume. Use the disk or device name to tell them apart." = "Same UUID as another volume. Use the disk or device name to tell them apart.";
+
+
+/* Shortcut label: Space bar */
+"Space" = "Space";
+
+/* Shortcut label: Escape key */
+"Esc" = "Esc";
+
+/* Shortcut label: Help key */
+"Help" = "Help";
+
+/* Shortcut label: keypad Clear key */
+"Keypad Clear" = "Keypad Clear";
+
+/* Shortcut label: keypad Enter key */
+"Keypad Enter" = "Keypad Enter";
+
+/* Shortcut label: a keypad key, e.g. Keypad 5 */
+"Keypad %@" = "Keypad %@";
+
+/* Shortcut label for an unnamed key code */
+"Key %d" = "Key %d";
+
+/* HUD: the recorded shortcut is a system shortcut such as ⌘C or ⌘Q */
+"%@ is reserved by macOS. Choose another shortcut." = "%@ is reserved by macOS. Choose another shortcut.";
+
+/* Alert message: Keychain locked or access denied when reading the saved APFS password */
+"MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”" = "MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”";

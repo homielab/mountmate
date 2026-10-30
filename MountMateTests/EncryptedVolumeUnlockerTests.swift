@@ -152,6 +152,29 @@ final class EncryptedVolumeUnlockerTests: XCTestCase {
     XCTAssertEqual(host.unlockCalls, 0)
   }
 
+  func testLockedKeychainPromptsOnceWithTheErrorInsteadOfUnlocking() {
+    let host = FakeUnlockHost(result: failure(stderr: ""))
+    let unlocker = EncryptedVolumeUnlocker(
+      host: host,
+      store: FakeUnlockStore(
+        passwords: ["disk5s1": "secret"], readFailure: errSecInteractionNotAllowed))
+
+    XCTAssertTrue(unlocker.unlockWithSavedPassword(volume))
+    XCTAssertEqual(host.unlockCalls, 0)
+    XCTAssertEqual(host.alerts.count, 1)
+    XCTAssertTrue(host.alerts[0].message.contains(String(errSecInteractionNotAllowed)))
+    XCTAssertTrue(host.savedPasswordChanges.isEmpty)
+  }
+
+  func testPasswordDeletedOutsideTheAppClearsTheSavedBadge() {
+    let host = FakeUnlockHost(result: failure(stderr: ""))
+    let unlocker = EncryptedVolumeUnlocker(host: host, store: FakeUnlockStore(passwords: [:]))
+
+    XCTAssertFalse(unlocker.unlockWithSavedPassword(volume))
+    XCTAssertEqual(host.savedPasswordChanges, [.forgotten("disk5s1")])
+    XCTAssertEqual(host.unlockCalls, 0)
+  }
+
   func testSilentUnlockTimeoutIsTriedAgainNextTime() {
     let host = FakeUnlockHost(result: failure(stderr: "", timedOut: true))
     let unlocker = EncryptedVolumeUnlocker(
@@ -188,13 +211,21 @@ private final class FakeUnlockHost: EncryptedVolumeUnlockerHost, @unchecked Send
   func refreshDrives(qos: DispatchQoS.QoSClass, then completion: (() -> Void)?) { completion?() }
   func showAlert(_ alert: AppAlert) { alerts.append(alert) }
   func reportUnlockFailure(_ result: ProcessResult, for volume: Volume) {}
-  func updateSavedPasswordIDs(_ change: SavedPasswordChange) {}
+  var savedPasswordChanges: [SavedPasswordChange] = []
+  func updateSavedPasswordIDs(_ change: SavedPasswordChange) { savedPasswordChanges.append(change) }
 }
 
 private final class FakeUnlockStore: UnlockPasswordStore, @unchecked Sendable {
   private let passwords: [String: String]
-  init(passwords: [String: String]) { self.passwords = passwords }
-  func load(account: String) -> String? { passwords[account] }
+  private let readFailure: OSStatus?
+  init(passwords: [String: String], readFailure: OSStatus? = nil) {
+    self.passwords = passwords
+    self.readFailure = readFailure
+  }
+  func read(account: String) -> KeychainManager.ReadResult {
+    if let readFailure { return .failed(readFailure) }
+    return passwords[account].map { .found($0) } ?? .notFound
+  }
   func savedAccounts() -> Set<String> { Set(passwords.keys) }
   func save(password: String, for account: String, name: String, kind: KeychainItemKind)
     -> OSStatus

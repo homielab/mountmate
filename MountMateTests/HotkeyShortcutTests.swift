@@ -95,6 +95,36 @@ final class HotkeyShortcutTests: XCTestCase {
     XCTAssertTrue(HotkeyShortcut.defaultMount.isSafeAsGlobalHotKey)
   }
 
+  func testSystemCombinationsAreReserved() {
+    let reserved: [(Int, NSEvent.ModifierFlags)] = [
+      (kVK_ANSI_C, .command), (kVK_ANSI_V, .command), (kVK_ANSI_Q, .command),
+      (kVK_ANSI_W, .command), (kVK_Tab, .command), (kVK_Space, .command),
+      (kVK_ANSI_Comma, .command), (kVK_ANSI_4, [.command, .shift]), (kVK_Space, .control),
+      (kVK_Escape, [.command, .option]),
+    ]
+    for (key, modifiers) in reserved {
+      XCTAssertTrue(
+        HotkeyShortcut(keyCode: UInt16(key), modifiers: modifiers).isReservedBySystem,
+        "\(key) \(modifiers)")
+    }
+  }
+
+  func testOtherCombinationsAreNotReserved() {
+    XCTAssertFalse(
+      HotkeyShortcut(keyCode: UInt16(kVK_ANSI_C), modifiers: [.command, .option])
+        .isReservedBySystem)
+    XCTAssertFalse(
+      HotkeyShortcut(keyCode: UInt16(kVK_ANSI_Q), modifiers: .control).isReservedBySystem)
+    XCTAssertFalse(HotkeyShortcut.defaultUnmount.isReservedBySystem)
+    XCTAssertFalse(HotkeyShortcut.defaultMount.isReservedBySystem)
+  }
+
+  func testWordKeyLabelsAreLocalizedAndKeypadKeepsItsSymbol() {
+    XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(kVK_Escape)), "Esc")
+    XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(kVK_ANSI_Keypad5)), "Keypad 5")
+    XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(kVK_ANSI_KeypadEnter)), "Keypad Enter")
+  }
+
   func testDisplayStringOrdersModifiersAndUsesSpecialKeys() {
     XCTAssertEqual(
       HotkeyShortcut(keyCode: UInt16(kVK_Space), modifiers: [.shift, .control, .option, .command])

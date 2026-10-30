@@ -642,3 +642,31 @@
 
 /* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
 "Same UUID as another volume. Use the disk or device name to tell them apart." = "Cùng UUID với một volume khác. Dùng tên đĩa hoặc thiết bị để phân biệt.";
+
+
+/* Shortcut label: Space bar */
+"Space" = "Space";
+
+/* Shortcut label: Escape key */
+"Esc" = "Esc";
+
+/* Shortcut label: Help key */
+"Help" = "Help";
+
+/* Shortcut label: keypad Clear key */
+"Keypad Clear" = "Xoá (bàn phím số)";
+
+/* Shortcut label: keypad Enter key */
+"Keypad Enter" = "Enter (bàn phím số)";
+
+/* Shortcut label: a keypad key, e.g. Keypad 5 */
+"Keypad %@" = "%@ (bàn phím số)";
+
+/* Shortcut label for an unnamed key code */
+"Key %d" = "Phím %d";
+
+/* HUD: the recorded shortcut is a system shortcut such as ⌘C or ⌘Q */
+"%@ is reserved by macOS. Choose another shortcut." = "%@ đã được macOS dùng. Hãy chọn phím tắt khác.";
+
+/* Alert message: Keychain locked or access denied when reading the saved APFS password */
+"MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”" = "MountMate không đọc được mật khẩu đã lưu trong Keychain (lỗi %d). Nhập mật khẩu để mở khoá “%@”";

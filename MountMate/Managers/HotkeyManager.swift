@@ -45,27 +45,50 @@ struct HotkeyShortcut: Equatable, Sendable {
     for keyCode: UInt16, layout: KeyboardLayoutProviding = SystemKeyboardLayout.shared
   ) -> String {
     if let special = specialKeyLabels[Int(keyCode)] { return special }
+    if let named = localizedKeyLabel(for: Int(keyCode)) { return named }
     if let character = layout.character(for: keyCode) { return character.uppercased() }
-    return usKeyLabels[Int(keyCode)] ?? "Key \(keyCode)"
+    if let us = usKeyLabels[Int(keyCode)] { return us }
+    return String(
+      format: NSLocalizedString("Key %d", comment: "Shortcut label for an unnamed key code"),
+      Int(keyCode))
   }
 
+  /// Keys whose name is a word, translated to the app language.
+  private static func localizedKeyLabel(for keyCode: Int) -> String? {
+    switch keyCode {
+    case kVK_Space: return NSLocalizedString("Space", comment: "Shortcut label: Space bar")
+    case kVK_Escape: return NSLocalizedString("Esc", comment: "Shortcut label: Escape key")
+    case kVK_Help: return NSLocalizedString("Help", comment: "Shortcut label: Help key")
+    case kVK_ANSI_KeypadClear:
+      return NSLocalizedString("Keypad Clear", comment: "Shortcut label: keypad Clear key")
+    case kVK_ANSI_KeypadEnter:
+      return NSLocalizedString("Keypad Enter", comment: "Shortcut label: keypad Enter key")
+    default:
+      guard let symbol = keypadSymbols[keyCode] else { return nil }
+      return String(
+        format: NSLocalizedString(
+          "Keypad %@", comment: "Shortcut label: a keypad key, e.g. Keypad 5"), symbol)
+    }
+  }
+
+  private static let keypadSymbols: [Int: String] = [
+    kVK_ANSI_Keypad0: "0", kVK_ANSI_Keypad1: "1", kVK_ANSI_Keypad2: "2",
+    kVK_ANSI_Keypad3: "3", kVK_ANSI_Keypad4: "4", kVK_ANSI_Keypad5: "5",
+    kVK_ANSI_Keypad6: "6", kVK_ANSI_Keypad7: "7", kVK_ANSI_Keypad8: "8",
+    kVK_ANSI_Keypad9: "9", kVK_ANSI_KeypadDecimal: ".", kVK_ANSI_KeypadMultiply: "*",
+    kVK_ANSI_KeypadPlus: "+", kVK_ANSI_KeypadDivide: "/", kVK_ANSI_KeypadMinus: "-",
+    kVK_ANSI_KeypadEquals: "=",
+  ]
+
   private static let specialKeyLabels: [Int: String] = [
-    kVK_Return: "↩", kVK_Tab: "⇥", kVK_Space: "Space", kVK_Delete: "⌫",
-    kVK_ForwardDelete: "⌦", kVK_Escape: "Esc", kVK_LeftArrow: "←", kVK_RightArrow: "→",
+    kVK_Return: "↩", kVK_Tab: "⇥", kVK_Delete: "⌫",
+    kVK_ForwardDelete: "⌦", kVK_LeftArrow: "←", kVK_RightArrow: "→",
     kVK_DownArrow: "↓", kVK_UpArrow: "↑", kVK_Home: "↖", kVK_End: "↘",
     kVK_PageUp: "⇞", kVK_PageDown: "⇟",
     kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3", kVK_F4: "F4", kVK_F5: "F5", kVK_F6: "F6",
     kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9", kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
     kVK_F13: "F13", kVK_F14: "F14", kVK_F15: "F15", kVK_F16: "F16", kVK_F17: "F17",
-    kVK_F18: "F18", kVK_F19: "F19", kVK_F20: "F20", kVK_Help: "Help",
-    kVK_ANSI_Keypad0: "Keypad 0", kVK_ANSI_Keypad1: "Keypad 1", kVK_ANSI_Keypad2: "Keypad 2",
-    kVK_ANSI_Keypad3: "Keypad 3", kVK_ANSI_Keypad4: "Keypad 4", kVK_ANSI_Keypad5: "Keypad 5",
-    kVK_ANSI_Keypad6: "Keypad 6", kVK_ANSI_Keypad7: "Keypad 7", kVK_ANSI_Keypad8: "Keypad 8",
-    kVK_ANSI_Keypad9: "Keypad 9", kVK_ANSI_KeypadDecimal: "Keypad .",
-    kVK_ANSI_KeypadMultiply: "Keypad *", kVK_ANSI_KeypadPlus: "Keypad +",
-    kVK_ANSI_KeypadClear: "Keypad Clear", kVK_ANSI_KeypadDivide: "Keypad /",
-    kVK_ANSI_KeypadEnter: "Keypad Enter", kVK_ANSI_KeypadMinus: "Keypad -",
-    kVK_ANSI_KeypadEquals: "Keypad =",
+    kVK_F18: "F18", kVK_F19: "F19", kVK_F20: "F20",
   ]
 
   /// US layout labels, used when the current layout cannot be read.
@@ -223,6 +246,31 @@ extension HotkeyShortcut {
     !modifiers.isDisjoint(with: [.command, .control])
   }
 
+  /// A combination macOS or every app relies on (copy, paste, quit, app
+  /// switcher, screenshots, Spotlight, Force Quit…). A global hot key would
+  /// take it away from every app, so the recorder refuses it.
+  var isReservedBySystem: Bool {
+    Self.reservedCombinations.contains { $0.keyCode == Int(keyCode) && $0.modifiers == modifiers }
+  }
+
+  private static let reservedCombinations: [(keyCode: Int, modifiers: NSEvent.ModifierFlags)] = {
+    let commandKeys: [Int] = [
+      kVK_ANSI_C, kVK_ANSI_V, kVK_ANSI_X, kVK_ANSI_Z, kVK_ANSI_A, kVK_ANSI_Q, kVK_ANSI_W,
+      kVK_ANSI_H, kVK_ANSI_M, kVK_Tab, kVK_Space, kVK_ANSI_Comma, kVK_ANSI_Grave,
+    ]
+    let command: NSEvent.ModifierFlags = [.command]
+    let commandShift: NSEvent.ModifierFlags = [.command, .shift]
+    var list: [(keyCode: Int, modifiers: NSEvent.ModifierFlags)] = commandKeys.map {
+      (keyCode: $0, modifiers: command)
+    }
+    for key in [kVK_ANSI_Z, kVK_Tab, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5] {
+      list.append((keyCode: key, modifiers: commandShift))
+    }
+    list.append((keyCode: kVK_Space, modifiers: [.control]))
+    list.append((keyCode: kVK_Escape, modifiers: [.command, .option]))
+    return list
+  }()
+
   /// The modifiers in Carbon's format, for `RegisterEventHotKey`.
   var carbonModifiers: UInt32 {
     var flags: UInt32 = 0
@@ -270,6 +318,15 @@ class HotkeyManager: ObservableObject {
   private let defaults: UserDefaults
   /// Called once per session for each saved shortcut that is not registered
   /// because it lacks ⌘ or ⌃, so the user learns why the key does nothing.
+  /// Shown when the recorder refuses a combination macOS reserves.
+  static func reservedShortcutMessage(_ shortcut: HotkeyShortcut) -> String {
+    String(
+      format: NSLocalizedString(
+        "%@ is reserved by macOS. Choose another shortcut.",
+        comment: "HUD: the recorded shortcut is a system shortcut such as ⌘C or ⌘Q"),
+      shortcut.displayString)
+  }
+
   var onUnsafeShortcutSkipped: (HotkeyAction, HotkeyShortcut) -> Void = { _, shortcut in
     FeedbackHUD.show(
       HotkeyManager.unsafeShortcutMessage(shortcut), systemImage: "keyboard", tint: .warning)

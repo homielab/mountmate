@@ -91,6 +91,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Encrypted volumes and a locked Keychain**: when the Keychain is locked or denies access to a saved APFS password, the password prompt now says so (with the Keychain error) instead of asking again with no reason, and a password deleted in Keychain Access no longer shows as saved.
+- **Keyboard shortcut recorder**: system combinations (⌘C, ⌘V, ⌘Q, ⌘W, ⌘Tab, ⌘Space, ⌘⇧4, ⌃Space, ⌘⌥Esc…) are refused with a "reserved by macOS" message, and pressing ⌘Q or ⌘W while recording no longer quits MountMate or closes Settings.
+- **Key names in shortcuts** (Space, Esc, Help, keypad keys) are now translated.
+
 - **Free space with an ignored volume**: a volume sharing its APFS container with an ignored volume now shows the container's real free space (the ignored volume's data counted), and so does the disk row, so the Almost-full warning comes on time.
 - **SD card in a MacBook's card slot**: a card in the built-in reader is now treated as an external disk (diskutil calls the reader internal): it is shown by default and included in Eject All, unmount on sleep and Shortcuts.
 - **Custom mount points**: cancelling the administrator password prompt (or a failed save) no longer leaves the empty folder MountMate just created behind; folders that existed before or that have files in them are never touched. A rule you wrote by hand in `/etc/fstab` with a lowercase UUID now counts as one for that volume, so MountMate refuses to add a second rule for it instead of writing two.

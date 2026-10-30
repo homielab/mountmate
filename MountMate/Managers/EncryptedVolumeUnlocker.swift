@@ -4,7 +4,7 @@ import Foundation
 
 /// The Keychain operations the unlock flow needs.
 protocol UnlockPasswordStore: PasswordStore {
-  func load(account: String) -> String?
+  func read(account: String) -> KeychainManager.ReadResult
   func savedAccounts() -> Set<String>
 }
 
@@ -115,10 +115,21 @@ final class EncryptedVolumeUnlocker {
   }
 
   /// Tries the keychain password for a locked volume without prompting.
-  /// Returns false when there is no saved password.
+  /// Returns false when nothing was tried: no saved password (the saved
+  /// badge is cleared if it was deleted outside MountMate), or the Keychain
+  /// could not be read, in which case the password prompt says why.
   func unlockWithSavedPassword(_ volume: Volume) -> Bool {
-    guard let saved = store.load(account: volume.id), !saved.isEmpty else {
+    let saved: String
+    switch store.read(account: volume.id) {
+    case .found(let password) where !password.isEmpty:
+      saved = password
+    case .found, .notFound:
+      host.updateSavedPasswordIDs(.forgotten(volume.id))
       return false
+    case .failed(let status):
+      Log.drive.error("Could not read the saved password from the Keychain (\(status))")
+      presentUnlockPrompt(for: volume, passwordFailed: false, keychainError: status)
+      return true
     }
     KeepAliveManager.shared.resume(volume: volume)
     NotificationCenter.default.post(
@@ -154,8 +165,16 @@ final class EncryptedVolumeUnlocker {
       return
     }
     DispatchQueue.global(qos: .userInitiated).async {
-      guard let saved = self.store.load(account: volume.id), !saved.isEmpty else {
-        DispatchQueue.main.async { completion(false) }
+      let read = self.store.read(account: volume.id)
+      guard case .found(let saved) = read, !saved.isEmpty else {
+        DispatchQueue.main.async {
+          if case .failed(let status) = read {
+            Log.drive.error("Could not read the saved password from the Keychain (\(status))")
+          } else {
+            self.host.updateSavedPasswordIDs(.forgotten(volume.id))
+          }
+          completion(false)
+        }
         return
       }
       let userInfo = ["deviceIdentifier": volume.id]
@@ -328,18 +347,33 @@ final class EncryptedVolumeUnlocker {
   }
 
   /// Asks for the password of a locked APFS volume and unlocks it.
-  func presentUnlockPrompt(for volume: Volume, passwordFailed: Bool) {
+  ///
+  /// - Parameter keychainError: the saved password could not be read (locked
+  ///   Keychain, access denied); the message says so instead of asking again
+  ///   without a reason.
+  func presentUnlockPrompt(
+    for volume: Volume, passwordFailed: Bool, keychainError: OSStatus? = nil
+  ) {
     let title = String(
       format: NSLocalizedString("“%@” is locked", comment: "Alert title"), volume.name)
     let message =
-      passwordFailed
-      ? String(
-        format: NSLocalizedString(
-          "That password didn’t work. Enter the password to unlock “%@”",
-          comment: "Alert message after a wrong or outdated saved password"), volume.name)
-      : String(
-        format: NSLocalizedString(
-          "Enter the password to unlock “%@”", comment: "Alert message"), volume.name)
+      keychainError.map { status in
+        String(
+          format: NSLocalizedString(
+            "MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”",
+            comment:
+              "Alert message: Keychain locked or access denied when reading the saved APFS password"
+          ),
+          status, volume.name)
+      }
+      ?? (passwordFailed
+        ? String(
+          format: NSLocalizedString(
+            "That password didn’t work. Enter the password to unlock “%@”",
+            comment: "Alert message after a wrong or outdated saved password"), volume.name)
+        : String(
+          format: NSLocalizedString(
+            "Enter the password to unlock “%@”", comment: "Alert message"), volume.name))
     if !passwordFailed { typedFailures[volume.id] = nil }
     let offersForget = rejectedSavedPasswords.contains(volume.id)
     let handler = { (passphrase: String, saveInKeychain: Bool, forgetSaved: Bool) in
@@ -377,7 +411,7 @@ extension DriveManager: EncryptedVolumeUnlockerHost {
     switch change {
     case .saved(let id): volumeIDsWithSavedPassword.insert(id)
     case .forgotten(let id): volumeIDsWithSavedPassword.remove(id)
-    case .loaded(let ids): volumeIDsWithSavedPassword.formUnion(ids)
+    case .loaded(let ids): volumeIDsWithSavedPassword = ids
     }
   }
 }

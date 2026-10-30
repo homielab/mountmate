@@ -113,9 +113,25 @@ final class ShortcutRecorderButton: NSButton {
       NSSound.beep()
       return
     }
+    guard !shortcut.isReservedBySystem else {
+      NSSound.beep()
+      FeedbackHUD.show(
+        HotkeyManager.reservedShortcutMessage(shortcut), systemImage: "keyboard", tint: .warning)
+      return
+    }
 
     onShortcut?(shortcut)
     onRecordingChanged?(false)
+  }
+
+  /// While recording, ⌘-combinations come here before keyDown; handle them
+  /// so ⌘Q or ⌘W are recorded (or refused) instead of quitting or closing.
+  override func performKeyEquivalent(with event: NSEvent) -> Bool {
+    guard isRecording, window?.firstResponder === self else {
+      return super.performKeyEquivalent(with: event)
+    }
+    keyDown(with: event)
+    return true
   }
 
   override func resignFirstResponder() -> Bool {
