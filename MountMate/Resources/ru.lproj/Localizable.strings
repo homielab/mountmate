@@ -627,3 +627,4 @@
 "File System: %@" = "Файловая система: %@";
 "Remove Rule" = "Удалить правило";
 "Custom mount rule removed." = "Правило монтирования удалено.";
+"Share Not Added Mount Point In Use" = "«%1$@» не добавлен: %2$@";

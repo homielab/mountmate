@@ -120,9 +120,8 @@ struct NetworkSharesSettingsView: View {
     isImporting = true
     importMessage = nil
     networkManager.discoverManuallyMountedShares { shares in
-      let count = persistence.addNetworkSharesIfNeeded(shares)
+      addMountedShares(shares)
       isImporting = false
-      importMessage = importResultMessage(added: count, discovered: shares.count)
       networkManager.refreshMountStatus()
     }
   }
@@ -130,8 +129,7 @@ struct NetworkSharesSettingsView: View {
   private func importDroppedURLs(_ urls: [URL]) -> Bool {
     let shares = urls.compactMap { networkManager.manuallyMountedShare(containing: $0) }
     let uniqueShares = Array(Set(shares))
-    let count = persistence.addNetworkSharesIfNeeded(uniqueShares)
-    importMessage = importResultMessage(added: count, discovered: uniqueShares.count)
+    addMountedShares(uniqueShares)
     networkManager.refreshMountStatus()
     return !uniqueShares.isEmpty
   }
@@ -168,7 +166,7 @@ struct NetworkSharesSettingsView: View {
     do {
       let plan = try NetworkShareBackup.importPlan(
         from: Data(contentsOf: url), existing: persistence.networkShares,
-        mountPoint: networkManager.configuredMountPoint(for:))
+        mountPoint: networkManager.configuredMountPoint(for:), volumeClaims: volumeClaims)
       persistence.addNetworkSharesIfNeeded(plan.shares)
       importMessage = NetworkShareBackup.resultMessage(for: plan)
       Log.persistence.info(
@@ -183,16 +181,19 @@ struct NetworkSharesSettingsView: View {
     }
   }
 
-  private func importResultMessage(added: Int, discovered: Int) -> String {
-    if added > 0 {
-      return PluralizedString.format("shares.imported", added)
-    }
-    if discovered > 0 {
-      return NSLocalizedString(
-        "Those mounted shares are already in MountMate.", comment: "Mounted share import result")
-    }
-    return NSLocalizedString(
-      "No mounted SMB, NFS or AFP shares were found.", comment: "Mounted share import result")
+  /// The saved volume custom mount points, which a new share must not reuse.
+  private var volumeClaims: [MountPointClaims.Claim] {
+    MountPointClaims.volumeClaims(persistence.customMountPoints)
+  }
+
+  /// Saves mounted shares (Import Mounted, a drop) that pass the share
+  /// sheet's checks and says what was added or left out.
+  private func addMountedShares(_ shares: [NetworkShare]) {
+    let plan = NetworkShareBackup.importPlan(
+      candidates: shares, existing: persistence.networkShares,
+      mountPoint: networkManager.configuredMountPoint(for:), volumeClaims: volumeClaims)
+    persistence.addNetworkSharesIfNeeded(plan.shares)
+    importMessage = NetworkShareBackup.mountedImportMessage(for: plan, discovered: shares.count)
   }
 
   private var emptyStateView: some View {

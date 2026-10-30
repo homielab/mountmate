@@ -627,3 +627,4 @@
 "File System: %@" = "File System: %@";
 "Remove Rule" = "Remove Rule";
 "Custom mount rule removed." = "Custom mount rule removed.";
+"Share Not Added Mount Point In Use" = "“%1$@” not added: %2$@";

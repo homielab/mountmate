@@ -627,3 +627,4 @@
 "File System: %@" = "Hệ thống tệp: %@";
 "Remove Rule" = "Gỡ quy tắc";
 "Custom mount rule removed." = "Đã gỡ quy tắc gắn tùy chỉnh.";
+"Share Not Added Mount Point In Use" = "“%1$@” chưa được thêm: %2$@";

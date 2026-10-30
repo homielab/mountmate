@@ -627,3 +627,4 @@
 "File System: %@" = "Système de fichiers : %@";
 "Remove Rule" = "Supprimer la règle";
 "Custom mount rule removed." = "Règle de montage personnalisé supprimée.";
+"Share Not Added Mount Point In Use" = "« %1$@ » non ajouté : %2$@";

@@ -627,3 +627,4 @@
 "File System: %@" = "檔案系統：%@";
 "Remove Rule" = "移除規則";
 "Custom mount rule removed." = "已移除自訂掛載規則。";
+"Share Not Added Mount Point In Use" = "未加入「%1$@」：%2$@";

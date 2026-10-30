@@ -144,7 +144,9 @@ final class NetworkShareBackupTests: XCTestCase {
       ),
       existing: [saved])
     XCTAssertTrue(plan.shares.isEmpty)
-    XCTAssertEqual(plan.invalid, 1)
+    XCTAssertEqual(plan.invalid, 0)
+    XCTAssertEqual(plan.skipped, 1)
+    XCTAssertTrue(plan.mountPointConflicts[0].contains("Docs"))
   }
 
   func testFillsDefaultsForMissingFields() throws {
@@ -255,5 +257,94 @@ final class NetworkShareBackupTests: XCTestCase {
       NetworkShareBackup.resultMessage(
         for: .init(shares: [], duplicates: 4, invalid: 0), bundle: bundle, locale: locale),
       "Imported 0 shares. Skipped 4 (already saved or invalid).")
+  }
+
+  // MARK: - Mount points claimed by volumes and shares
+
+  private let mediaVolume = MountPointClaims.volumeClaims([
+    VolumeCustomMountPoint(
+      volumeUUID: "U1", backingDiskIdentifier: "disk4", name: "Media Disk",
+      mountPoint: "/Users/test/mountmate/Media")
+  ])
+
+  func testFileShareOnAVolumeMountPointIsSkippedWithTheVolumeName() throws {
+    let data = try NetworkShareBackup.encode([
+      NetworkShare(name: "Media", server: "nas", sharePath: "Media", username: ""),
+      NetworkShare(name: "Docs", server: "nas", sharePath: "Docs", username: ""),
+    ])
+    let plan = try NetworkShareBackup.importPlan(
+      from: data, existing: [], mountPoint: mountUnderHome, volumeClaims: mediaVolume)
+
+    XCTAssertEqual(plan.shares.map(\.name), ["Docs"])
+    XCTAssertEqual(plan.invalid, 0)
+    XCTAssertEqual(plan.skipped, 1)
+    XCTAssertEqual(plan.mountPointConflicts.count, 1)
+    XCTAssertTrue(plan.mountPointConflicts[0].contains("Media Disk"))
+    XCTAssertTrue(NetworkShareBackup.resultMessage(for: plan).contains("Media Disk"))
+  }
+
+  func testFileShareWithoutClashImportsNormallyWithVolumeClaims() throws {
+    let data = try NetworkShareBackup.encode([
+      NetworkShare(name: "Docs", server: "nas", sharePath: "Docs", username: "")
+    ])
+    let plan = try NetworkShareBackup.importPlan(
+      from: data, existing: [], mountPoint: mountUnderHome, volumeClaims: mediaVolume)
+    XCTAssertEqual(plan.shares.map(\.name), ["Docs"])
+    XCTAssertEqual(plan.skipped, 0)
+  }
+
+  func testMountedShareOnAVolumeMountPointIsSkipped() throws {
+    let mounted = NetworkShare(
+      name: "Movies", server: "nas", sharePath: "Movies", username: "",
+      customMountPoint: "/Users/test/mountmate/media/")
+    let plan = NetworkShareBackup.importPlan(
+      candidates: [mounted], existing: [], mountPoint: mountUnderHome, volumeClaims: mediaVolume)
+
+    XCTAssertTrue(plan.shares.isEmpty)
+    XCTAssertEqual(plan.mountPointConflicts.count, 1)
+    let message = NetworkShareBackup.mountedImportMessage(for: plan, discovered: 1)
+    XCTAssertTrue(message.contains("Movies"))
+    XCTAssertTrue(message.contains("Media Disk"))
+  }
+
+  func testMountedShareOnAnotherSharesMountPointIsSkipped() throws {
+    let saved = NetworkShare(
+      name: "Backup", server: "nas", sharePath: "Backup", username: "",
+      customMountPoint: "/Volumes/NAS")
+    let dropped = NetworkShare(
+      name: "Photos", server: "other", sharePath: "Photos", username: "",
+      customMountPoint: "/Volumes/NAS")
+    let plan = NetworkShareBackup.importPlan(
+      candidates: [dropped], existing: [saved], mountPoint: mountUnderHome)
+
+    XCTAssertTrue(plan.shares.isEmpty)
+    XCTAssertEqual(plan.mountPointConflicts.count, 1)
+    XCTAssertTrue(plan.mountPointConflicts[0].contains("Backup"))
+  }
+
+  func testMountedImportMessage() throws {
+    let bundle = try englishBundle()
+    let locale = Locale(identifier: "en")
+    let share = NetworkShare(name: "A", server: "nas", sharePath: "A", username: "")
+    XCTAssertEqual(
+      NetworkShareBackup.mountedImportMessage(
+        for: .init(shares: [], duplicates: 0, invalid: 0), discovered: 0, bundle: bundle,
+        locale: locale),
+      "No mounted SMB, NFS or AFP shares were found.")
+    XCTAssertEqual(
+      NetworkShareBackup.mountedImportMessage(
+        for: .init(shares: [], duplicates: 2, invalid: 0), discovered: 2, bundle: bundle,
+        locale: locale),
+      "Those mounted shares are already in MountMate.")
+    XCTAssertEqual(
+      NetworkShareBackup.mountedImportMessage(
+        for: .init(shares: [], duplicates: 0, invalid: 0, mountPointConflicts: ["X."]),
+        discovered: 1, bundle: bundle, locale: locale),
+      "X.")
+    XCTAssertTrue(
+      NetworkShareBackup.mountedImportMessage(
+        for: .init(shares: [share], duplicates: 0, invalid: 0, mountPointConflicts: ["X."]),
+        discovered: 2, bundle: bundle, locale: locale
+      ).hasSuffix(" X."))
   }
 }

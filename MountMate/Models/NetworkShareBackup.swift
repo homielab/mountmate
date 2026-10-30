@@ -178,21 +178,38 @@ enum NetworkShareBackup {
     /// the file.
     var duplicates: Int
     /// Entries that could not be read or would not pass the share sheet's
-    /// checks (bad name, mount point used by another share).
+    /// checks (bad name, invalid mount point).
     var invalid: Int
+    /// One line per share left out because its mount folder is already used
+    /// by a saved volume custom mount point or another share.
+    var mountPointConflicts: [String] = []
 
-    var skipped: Int { duplicates + invalid }
+    var skipped: Int { duplicates + invalid + mountPointConflicts.count }
   }
 
   /// What importing `data` next to `existing` shares would add.
-  /// - Parameter mountPoint: the folder a share is mounted at, as for
-  ///   `NetworkShareValidation`.
+  /// - Parameters:
+  ///   - mountPoint: the folder a share is mounted at, as for
+  ///     `NetworkShareValidation`.
+  ///   - volumeClaims: the saved volume custom mount points.
   static func importPlan(
-    from data: Data, existing: [NetworkShare], mountPoint: (NetworkShare) -> String
+    from data: Data, existing: [NetworkShare], mountPoint: (NetworkShare) -> String,
+    volumeClaims: [MountPointClaims.Claim] = []
   ) throws -> ImportPlan {
+    importPlan(
+      candidates: try decode(data).map { $0?.makeShare() }, existing: existing,
+      mountPoint: mountPoint, volumeClaims: volumeClaims)
+  }
+
+  /// What adding `candidates` (from a file, Import Mounted or a drop) next to
+  /// `existing` shares would add; nil marks an entry that could not be read.
+  static func importPlan(
+    candidates: [NetworkShare?], existing: [NetworkShare], mountPoint: (NetworkShare) -> String,
+    volumeClaims: [MountPointClaims.Claim] = []
+  ) -> ImportPlan {
     var plan = ImportPlan(shares: [], duplicates: 0, invalid: 0)
-    for entry in try decode(data) {
-      guard var share = entry?.makeShare() else {
+    for candidate in candidates {
+      guard var share = candidate else {
         plan.invalid += 1
         continue
       }
@@ -204,15 +221,52 @@ enum NetworkShareBackup {
       // The default mount folder is ~/mountmate/<name>, so "Public" from two
       // servers becomes "Public" and "Public (2)" as with Import Mounted.
       share.name = PersistenceManager.uniqueShareName(share.name, existing: saved.map(\.name))
-      if NetworkShareValidation.error(
-        candidate: share, original: nil, otherShares: saved, mountPoint: mountPoint) != nil
-      {
-        plan.invalid += 1
+      guard
+        NetworkShareValidation.error(
+          candidate: share, original: nil, otherShares: saved, mountPoint: mountPoint,
+          volumeClaims: volumeClaims) != nil
+      else {
+        plan.shares.append(share)
         continue
       }
-      plan.shares.append(share)
+      // A folder claimed by a volume rule or another share would make the
+      // later mount fail with "not empty": say whose it is.
+      let claims = volumeClaims + MountPointClaims.shareClaims(saved, mountPoint: mountPoint)
+      if let claim = MountPointClaims.claim(on: mountPoint(share), in: claims, excludingKey: nil) {
+        plan.mountPointConflicts.append(
+          String(
+            format: NSLocalizedString(
+              "Share Not Added Mount Point In Use",
+              comment: "Share import result: share name, then why its mount point is taken"),
+            share.name, MountPointClaims.message(for: claim)))
+      } else {
+        plan.invalid += 1
+      }
     }
     return plan
+  }
+
+  /// The message after Import Mounted or a drop of `discovered` mounted
+  /// shares: how many were added, or why none were, then each share left out
+  /// because its mount point is in use.
+  static func mountedImportMessage(
+    for plan: ImportPlan, discovered: Int, bundle: Bundle = .main, locale: Locale = .current
+  ) -> String {
+    var sentences: [String] = []
+    if !plan.shares.isEmpty {
+      sentences.append(
+        PluralizedString.format(
+          "shares.imported", plan.shares.count, bundle: bundle, locale: locale))
+    } else if discovered > plan.mountPointConflicts.count {
+      sentences.append(
+        bundle.localizedString(
+          forKey: "Those mounted shares are already in MountMate.", value: nil, table: nil))
+    } else if discovered == 0 {
+      sentences.append(
+        bundle.localizedString(
+          forKey: "No mounted SMB, NFS or AFP shares were found.", value: nil, table: nil))
+    }
+    return (sentences + plan.mountPointConflicts).joined(separator: " ")
   }
 
   /// "Imported 3 shares.", then "Skipped 2 …" when something was skipped and
@@ -228,6 +282,7 @@ enum NetworkShareBackup {
       sentences.append(
         PluralizedString.format(
           "shares.backup.skipped", plan.skipped, bundle: bundle, locale: locale))
+      sentences += plan.mountPointConflicts
     }
     if plan.shares.contains(where: { $0.shareProtocol.supportsUserCredentials }) {
       sentences.append(
