@@ -15,6 +15,25 @@ struct ManagementSettingsView: View {
     let id: String
   }
 
+  /// A row of the Custom Mount Points list: a saved entry, or a rule found
+  /// in /etc/fstab that no saved entry describes.
+  private enum CustomMountPointItem: Identifiable, Equatable {
+    case saved(VolumeCustomMountPoint)
+    case untracked(FstabRules.CustomMountRule)
+
+    var id: String {
+      switch self {
+      case .saved(let info): return "saved:\(info.id)"
+      case .untracked(let rule): return "fstab:\(rule.id)"
+      }
+    }
+  }
+
+  private var customMountPointItems: [CustomMountPointItem] {
+    persistence.customMountPoints.map(CustomMountPointItem.saved)
+      + persistence.untrackedCustomMountRules.map(CustomMountPointItem.untracked)
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
@@ -96,28 +115,37 @@ struct ManagementSettingsView: View {
             rules: persistence.unsupportedCustomMountRules,
             savedEntries: persistence.customMountPoints,
             removingIDs: removingCustomMountPointIDs,
-            onRemove: removeUnsupportedRule)
+            onRemove: removeRule)
         }
 
         ManagementSectionView(
           title: "Custom Mount Points",
           iconName: "folder.badge.gearshape",
-          items: persistence.customMountPoints,
+          items: customMountPointItems,
           emptyStateText: "No Custom Mount Points",
           footer:
             "Right-click a volume and choose “Custom Mount Point…” to mount it in a folder of your choice. Removing an entry also removes its system mount rule (/etc/fstab) and may ask for your admin password."
-        ) { info in
-          ManagedEntryRow(
-            name: info.name,
-            iconName: "folder.badge.gearshape",
-            details: [
-              info.mountPoint,
-              String(
-                format: NSLocalizedString("Vol: %@", comment: "Saved volume's volume UUID"),
-                info.volumeUUID),
-            ],
-            isRemoving: removingCustomMountPointIDs.contains(info.id),
-            onDelete: { removeCustomMountPoint(info) })
+        ) { item in
+          switch item {
+          case .saved(let info):
+            ManagedEntryRow(
+              name: info.name,
+              iconName: "folder.badge.gearshape",
+              details: [info.mountPoint, volumeDetail(info.volumeUUID)],
+              isRemoving: removingCustomMountPointIDs.contains(info.id),
+              onDelete: { removeCustomMountPoint(info) })
+          case .untracked(let rule):
+            ManagedEntryRow(
+              name: connectedVolumeName(uuid: rule.volumeUUID),
+              iconName: "folder.badge.questionmark",
+              details: [rule.mountPoint, volumeDetail(rule.volumeUUID)],
+              note: NSLocalizedString(
+                "Not Tracked by MountMate",
+                comment:
+                  "A custom mount point rule in /etc/fstab that MountMate has no saved entry for"),
+              isRemoving: removingCustomMountPointIDs.contains(rule.id),
+              onDelete: { removeRule(rule) })
+          }
         }
 
         Spacer()
@@ -143,21 +171,35 @@ struct ManagementSettingsView: View {
       ?? NSLocalizedString("Volume Not Connected", comment: "Name shown for a disconnected volume")
   }
 
-  /// Like `removeCustomMountPoint`, for a rule of a file system that may
-  /// no longer get one. The volume is remounted at its default location.
-  private func removeUnsupportedRule(_ rule: FstabRules.CustomMountRule) {
+  private func volumeDetail(_ volumeUUID: String) -> String {
+    String(
+      format: NSLocalizedString("Vol: %@", comment: "Saved volume's volume UUID"), volumeUUID)
+  }
+
+  /// The connected volume's name; an untracked rule stores none.
+  private func connectedVolumeName(uuid: String) -> String {
+    connectedVolume(uuid: uuid)?.name
+      ?? NSLocalizedString("Volume Not Connected", comment: "Name shown for a disconnected volume")
+  }
+
+  private func connectedVolume(uuid: String) -> Volume? {
+    (driveManager.physicalDisks ?? []).flatMap(\.allVolumes)
+      .first { $0.id.caseInsensitiveCompare(uuid) == .orderedSame }
+  }
+
+  /// Like `removeCustomMountPoint`, for a rule found in /etc/fstab without
+  /// a saved entry or of a file system that may no longer get one. The
+  /// volume is remounted at its default location.
+  private func removeRule(_ rule: FstabRules.CustomMountRule) {
     guard !removingCustomMountPointIDs.contains(rule.id) else { return }
     removingCustomMountPointIDs.insert(rule.id)
-    persistence.removeUnsupportedCustomMountRule(rule) { result in
+    persistence.removeCustomMountRule(rule) { result in
       removingCustomMountPointIDs.remove(rule.id)
       switch result {
       case .success:
         FeedbackHUD.show(
           NSLocalizedString("Custom mount rule removed.", comment: "Unsafe fstab rule removed"))
-        if let volume = (DriveManager.shared.physicalDisks ?? []).flatMap(\.allVolumes)
-          .first(where: { $0.id.caseInsensitiveCompare(rule.volumeUUID) == .orderedSame }),
-          volume.isMounted
-        {
+        if let volume = connectedVolume(uuid: rule.volumeUUID), volume.isMounted {
           DriveManager.shared.remount(volume: volume)
         }
       case .cancelled:

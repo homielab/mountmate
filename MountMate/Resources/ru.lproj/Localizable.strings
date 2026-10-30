@@ -629,6 +629,7 @@
 "Unsafe Custom Mount Rules Explanation" = "Старая версия MountMate добавила эти правила пользовательских точек монтирования в /etc/fstab. Для дисков NTFS и дисков других драйверов (Paragon, Tuxera, macFUSE) они могут включить экспериментальную запись NTFS от Apple или отобрать диск у вашего драйвера, что может повредить файлы. Удалите их; MountMate запросит пароль администратора.";
 "File System: %@" = "Файловая система: %@";
 "Remove Rule" = "Удалить правило";
+"Not Tracked by MountMate" = "Не отслеживается MountMate: это правило /etc/fstab всё ещё действует. Удалите его, чтобы том подключался в стандартное место.";
 "Custom mount rule removed." = "Правило монтирования удалено.";
 "Share Not Added Mount Point In Use" = "«%1$@» не добавлен: %2$@";
 

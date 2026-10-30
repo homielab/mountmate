@@ -91,6 +91,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Custom mount points**: cancelling the administrator password prompt (or a failed save) no longer leaves the empty folder MountMate just created behind; folders that existed before or that have files in them are never touched. A rule you wrote by hand in `/etc/fstab` with a lowercase UUID now counts as one for that volume, so MountMate refuses to add a second rule for it instead of writing two.
+- **Custom mount rules MountMate lost track of**: rules MountMate wrote to `/etc/fstab` but no longer has in its settings (after a settings reset or moving to a new Mac) still move the volume; they now appear in Settings → Management → Custom Mount Points marked "Not tracked by MountMate" with a Remove button. Nothing is changed until you click it.
 - **Blocked drives with a cloned twin**: the check at launch no longer unmounts a drive that only shares its volume UUID with a blocked one (a clone); when two connected volumes share the UUID it leaves both alone. Unlocking an encrypted APFS volume that shares its UUID with another now targets the right device, so the correct password works.
 - **Shortcut keys on extended keyboards**: shortcuts using F13–F20, Help or keypad keys now show as "⌘F13" or "⌃Keypad 1" in Settings (and VoiceOver reads them right) instead of "Key 105" or a stray symbol.
 - **Reduce Motion**: the small message after a keyboard shortcut now appears and disappears without fading when Reduce Motion is on.

@@ -111,8 +111,7 @@ extension PersistenceManager {
 
         MainQueue.perform {
           self.saveCustomMountPoint(mountPoint, for: volume)
-          self.unsupportedCustomMountRules = FstabRules.unsupportedCustomMountRules(
-            in: updatedContents)
+          self.fstabCustomMountRules = FstabRules.customMountRules(in: updatedContents)
           completion(.success)
         }
       } catch {
@@ -146,11 +145,11 @@ extension PersistenceManager {
       completion: completion)
   }
 
-  /// Removes a custom mount point rule an older version wrote for a file
-  /// system that may no longer get one (see `unsupportedCustomMountRules`),
-  /// and its saved entry. Runs like `applyCustomMountPoint`. Call on the main
+  /// Removes a custom mount point rule found in /etc/fstab (one of
+  /// `unsupportedCustomMountRules` or `untrackedCustomMountRules`) and its
+  /// saved entry, if any. Runs like `applyCustomMountPoint`. Call on the main
   /// thread; `completion` is called on the main thread.
-  func removeUnsupportedCustomMountRule(
+  func removeCustomMountRule(
     _ rule: FstabRules.CustomMountRule,
     completion: @escaping (CustomMountPointUpdateResult) -> Void
   ) {
@@ -169,7 +168,7 @@ extension PersistenceManager {
   ) {
     startupBlock.enqueueFstabJob {
       do {
-        var unsupportedRules: [FstabRules.CustomMountRule]?
+        var rulesAfterUpdate: [FstabRules.CustomMountRule]?
         if let volumeUUID {
           let snapshot = try self.fstabAccess.loadSnapshot()
           let currentContents = snapshot.contents
@@ -179,13 +178,13 @@ extension PersistenceManager {
           if updatedContents != currentContents {
             try await self.fstabAccess.install(updatedContents, expectedCurrent: snapshot.raw)
           }
-          unsupportedRules = FstabRules.unsupportedCustomMountRules(in: updatedContents)
+          rulesAfterUpdate = FstabRules.customMountRules(in: updatedContents)
         }
 
         MainQueue.perform {
           self.customMountPoints.removeAll { $0.id == entryID }
           self.saveCustomMountPoints()
-          if let unsupportedRules { self.unsupportedCustomMountRules = unsupportedRules }
+          if let rulesAfterUpdate { self.fstabCustomMountRules = rulesAfterUpdate }
           completion(.success)
         }
       } catch {

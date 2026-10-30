@@ -227,13 +227,23 @@ struct InlineCustomMountPointEditor: View {
     }
   }
 
+  /// Creates the folder, then saves. The folder (and any parent created
+  /// with it) is removed again if the save is cancelled or fails.
   private func createPendingDirectoryAndSave() {
-    guard let path = editorState.pendingSavePath else { return }
+    // A save of this volume started from its other (pinned) row would make
+    // commitPendingSave do nothing, leaving the new folder behind.
+    guard let path = editorState.pendingSavePath, !isSaving else { return }
+    let folders = CreatedMountPointFolders.missing(for: path) {
+      FileManager.default.fileExists(atPath: $0)
+    }
 
     do {
       try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
+      editorState.recordCreatedFolders(folders, for: volume.id)
       commitPendingSave()
     } catch {
+      // Parents may have been created before the failure.
+      CreatedMountPointFolders.removeInBackground(folders)
       editorState.inlineError = String(
         format: NSLocalizedString(
           "Custom Mount Point Create Error",
@@ -265,6 +275,8 @@ struct InlineCustomMountPointEditor: View {
     let driveManager = DriveManager.shared
     editorState.savingVolumeIDs.remove(volume.id)
     let isStillOpen = editorState.expandedRowID == rowID
+    CreatedMountPointFolders.removeInBackground(
+      editorState.foldersToRemove(afterSaveOf: volume.id, result: result))
 
     switch result {
     case .success:
@@ -280,8 +292,9 @@ struct InlineCustomMountPointEditor: View {
         editorState.collapse()
       }
     case .cancelled:
-      // The user dismissed the password prompt: nothing changed, and the
-      // editor stays open with their input.
+      // The user dismissed the password prompt: nothing changed (a folder
+      // the editor created is removed above), and the editor stays open
+      // with their input.
       break
     case .failure(let message):
       if isStillOpen {

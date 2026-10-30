@@ -629,6 +629,7 @@
 "Unsafe Custom Mount Rules Explanation" = "Một phiên bản MountMate cũ đã thêm các quy tắc điểm gắn tùy chỉnh này vào /etc/fstab. Với ổ NTFS và ổ dùng driver khác (Paragon, Tuxera, macFUSE), chúng có thể bật chế độ ghi NTFS thử nghiệm của Apple hoặc giành ổ khỏi driver của bạn, có thể làm hỏng tệp. Hãy gỡ chúng; MountMate sẽ hỏi mật khẩu quản trị.";
 "File System: %@" = "Hệ thống tệp: %@";
 "Remove Rule" = "Gỡ quy tắc";
+"Not Tracked by MountMate" = "MountMate không theo dõi: quy tắc /etc/fstab này vẫn có hiệu lực. Gỡ để phân vùng được gắn lại ở vị trí mặc định.";
 "Custom mount rule removed." = "Đã gỡ quy tắc gắn tùy chỉnh.";
 "Share Not Added Mount Point In Use" = "“%1$@” chưa được thêm: %2$@";
 

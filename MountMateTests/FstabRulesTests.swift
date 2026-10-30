@@ -277,6 +277,23 @@ final class FstabRulesTests: XCTestCase {
     XCTAssertTrue(FstabRules.unsupportedFileSystemMessage(name: "NTFS").contains("NTFS"))
   }
 
+  func testIsConflictingFstabEntryIgnoresUUIDCase() {
+    let lower = uuid.lowercased()
+    XCTAssertTrue(FstabRules.isConflictingFstabEntry("UUID=\(lower) /mnt hfs rw", volumeUUID: uuid))
+    XCTAssertTrue(
+      FstabRules.isConflictingFstabEntry("\tUUID=\(lower)\t/mnt\thfs\trw", volumeUUID: uuid))
+    XCTAssertTrue(FstabRules.isConflictingFstabEntry("UUID=\(uuid) /mnt hfs rw", volumeUUID: lower))
+    XCTAssertFalse(
+      FstabRules.isConflictingFstabEntry("#UUID=\(lower) /mnt hfs rw", volumeUUID: uuid))
+    XCTAssertFalse(
+      FstabRules.isConflictingFstabEntry("UUID=\(lower)0 /mnt hfs rw", volumeUUID: uuid))
+  }
+
+  func testHandWrittenLowercaseRuleBlocksASecondRule() {
+    let contents = "UUID=\(uuid.lowercased())\t/Volumes/Mine\thfs\trw\n"
+    XCTAssertEqual(errorCode { _ = try customEntry("/Volumes/Backup", contents: contents) }, 1)
+  }
+
   // MARK: - Custom mount rules already in /etc/fstab
 
   func testCustomMountRulesAreParsedWithTheirFields() {
@@ -315,5 +332,40 @@ final class FstabRulesTests: XCTestCase {
       XCTAssertEqual(
         FstabRules.fstabUnescapedField(FstabRules.fstabEscapedField(value)), value)
     }
+  }
+
+  func testRulesWithoutASavedEntryAreUntracked() {
+    let contents = """
+      # MountMate custom mount: A
+      UUID=\(uuid) /Volumes/A apfs rw
+      # MountMate custom mount: B
+      UUID=\(otherUUID) /Volumes/B ntfs rw
+      # MountMate custom mount: C
+      UUID=\(otherUUID) /Volumes/C exfat rw
+      UUID=\(uuid) /Volumes/Hand apfs rw
+      """
+    let rules = FstabRules.customMountRules(in: contents)
+    XCTAssertEqual(
+      FstabRules.untrackedCustomMountRules(rules, savedEntries: []).map(\.identifier), ["A", "C"],
+      "unsupported rules are listed elsewhere; hand-written lines are not MountMate's")
+
+    let savedByID = VolumeCustomMountPoint(
+      volumeUUID: "1A2B3C4D-0000-0000-0000-000000000000", backingDiskIdentifier: "X",
+      name: "A", mountPoint: "/Volumes/A")
+    XCTAssertEqual(
+      FstabRules.untrackedCustomMountRules(
+        [
+          FstabRules.CustomMountRule(
+            identifier: savedByID.id, volumeUUID: uuid, mountPoint: "/Volumes/A",
+            fileSystemType: "apfs")
+        ],
+        savedEntries: [savedByID]), [])
+
+    let savedByUUID = VolumeCustomMountPoint(
+      volumeUUID: otherUUID.lowercased(), backingDiskIdentifier: "disk4s1", name: "C",
+      mountPoint: "/Volumes/C")
+    XCTAssertEqual(
+      FstabRules.untrackedCustomMountRules(rules, savedEntries: [savedByUUID]).map(\.identifier),
+      ["A"], "an entry saved under another disk identifier still tracks its volume's rule")
   }
 }

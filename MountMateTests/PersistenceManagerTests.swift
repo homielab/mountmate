@@ -193,7 +193,7 @@ final class PersistenceManagerTests: XCTestCase {
 
     let done = expectation(description: "rule removed")
     var result: PersistenceManager.CustomMountPointUpdateResult?
-    manager.removeUnsupportedCustomMountRule(manager.unsupportedCustomMountRules[0]) {
+    manager.removeCustomMountRule(manager.unsupportedCustomMountRules[0]) {
       result = $0
       done.fulfill()
     }
@@ -203,5 +203,31 @@ final class PersistenceManagerTests: XCTestCase {
     XCTAssertEqual(
       access.installed, ["UUID=0E2B5C1A-3D4F-4A5B-8C6D-7E8F9A0B1C2D none hfs rw,noauto\n"])
     XCTAssertEqual(manager.unsupportedCustomMountRules, [])
+  }
+
+  func testRuleWithoutASavedEntryIsListedAsUntrackedAndRemovedOnlyWhenAsked() {
+    let access = RecordingFstabAccess()
+    access.contents = """
+      # MountMate custom mount: DISK-\(volumeUUID)
+      UUID=\(volumeUUID) /Users/me/Data apfs rw
+      """
+    let manager = PersistenceManager(defaults: defaults, fstabAccess: access)
+
+    XCTAssertEqual(manager.customMountPoints, [], "the settings were reset")
+    XCTAssertEqual(manager.unsupportedCustomMountRules, [])
+    XCTAssertEqual(manager.untrackedCustomMountRules.map(\.mountPoint), ["/Users/me/Data"])
+    XCTAssertEqual(access.installed, [], "nothing is written at launch")
+
+    let done = expectation(description: "rule removed")
+    var result: PersistenceManager.CustomMountPointUpdateResult?
+    manager.removeCustomMountRule(manager.untrackedCustomMountRules[0]) {
+      result = $0
+      done.fulfill()
+    }
+    wait(for: [done], timeout: 5)
+
+    XCTAssertEqual(result, .success)
+    XCTAssertEqual(access.installed, [""])
+    XCTAssertEqual(manager.untrackedCustomMountRules, [])
   }
 }

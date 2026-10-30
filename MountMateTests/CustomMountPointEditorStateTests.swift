@@ -65,4 +65,33 @@ final class CustomMountPointEditorStateTests: XCTestCase {
     editor.collapse()
     XCTAssertEqual(editor.savingVolumeIDs, ["vol-1"])
   }
+
+  // MARK: - Created folders
+
+  func testCreatedFoldersAreRemovedOnlyWhenTheSaveDidNotSucceed() {
+    let editor = CustomMountPointEditorState()
+    editor.recordCreatedFolders(["/Users/me/mountmate/A", "/Users/me/mountmate"], for: "vol-1")
+    XCTAssertEqual(
+      editor.foldersToRemove(afterSaveOf: "vol-1", result: .cancelled),
+      ["/Users/me/mountmate/A", "/Users/me/mountmate"])
+    XCTAssertEqual(
+      editor.foldersToRemove(afterSaveOf: "vol-1", result: .cancelled), [], "forgotten once taken")
+
+    editor.recordCreatedFolders(["/Users/me/mountmate/B"], for: "vol-1")
+    XCTAssertEqual(editor.foldersToRemove(afterSaveOf: "vol-1", result: .failure("x")).count, 1)
+
+    editor.recordCreatedFolders(["/Users/me/mountmate/C"], for: "vol-1")
+    XCTAssertEqual(editor.foldersToRemove(afterSaveOf: "vol-1", result: .success), [])
+    XCTAssertEqual(editor.createdFolders, [:])
+  }
+
+  func testCreatedFoldersSurviveSyncAndCollapseAndStayPerVolume() {
+    let editor = busyEditor()
+    editor.recordCreatedFolders(["/Users/me/mountmate/A"], for: "vol-1")
+    editor.sync(from: nil)
+    editor.collapse()
+    XCTAssertEqual(editor.foldersToRemove(afterSaveOf: "vol-2", result: .cancelled), [])
+    XCTAssertEqual(
+      editor.foldersToRemove(afterSaveOf: "vol-1", result: .cancelled), ["/Users/me/mountmate/A"])
+  }
 }

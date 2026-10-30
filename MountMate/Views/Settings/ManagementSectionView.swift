@@ -80,6 +80,8 @@ struct ManagedEntryRow: View {
   let name: String
   var iconName = "internaldrive"
   let details: [String]
+  /// A short remark under the details, e.g. that MountMate does not track it.
+  var note: String? = nil
   var isRemoving = false
   let onDelete: () -> Void
 
@@ -103,6 +105,13 @@ struct ManagedEntryRow: View {
               .lineLimit(1)
               .truncationMode(.middle)
           }
+        }
+
+        if let note {
+          Text(note)
+            .font(.caption)
+            .foregroundStyle(.orange)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
 

@@ -205,8 +205,29 @@ enum FstabRules {
   /// that may no longer get one (NTFS, third-party drivers). They are never
   /// changed automatically: the user removes them from Settings.
   static func unsupportedCustomMountRules(in contents: String) -> [CustomMountRule] {
-    customMountRules(in: contents).filter {
-      !customMountPointFileSystemTypes.contains($0.fileSystemType.lowercased())
+    unsupportedCustomMountRules(customMountRules(in: contents))
+  }
+
+  /// The rules of `rules` whose file system may no longer get one.
+  static func unsupportedCustomMountRules(_ rules: [CustomMountRule]) -> [CustomMountRule] {
+    rules.filter { !customMountPointFileSystemTypes.contains($0.fileSystemType.lowercased()) }
+  }
+
+  /// Rules of an allowed file system that no saved custom mount point
+  /// describes (neither by identifier nor by volume UUID), e.g. after the
+  /// app's settings were reset or moved to another Mac. macOS still applies
+  /// them, so Settings lists them with a Remove button. They are never
+  /// changed automatically. Unsupported rules are left to
+  /// `unsupportedCustomMountRules`, so no rule is listed twice.
+  static func untrackedCustomMountRules(
+    _ rules: [CustomMountRule], savedEntries: [VolumeCustomMountPoint]
+  ) -> [CustomMountRule] {
+    let savedIDs = Set(savedEntries.map(\.id))
+    let savedUUIDs = Set(savedEntries.map { $0.volumeUUID.uppercased() })
+    return rules.filter {
+      customMountPointFileSystemTypes.contains($0.fileSystemType.lowercased())
+        && !savedIDs.contains($0.identifier)
+        && !savedUUIDs.contains($0.volumeUUID.uppercased())
     }
   }
 
@@ -249,15 +270,14 @@ enum FstabRules {
     "\(mountMateFstabPrefix) \(identifier)"
   }
 
-  /// True when `line` is an active rule for exactly `volumeUUID` (not a
-  /// comment, and not a longer UUID that merely starts with it).
+  /// True when `line` is an active rule for exactly `volumeUUID`: not a
+  /// comment, not a longer UUID that merely starts with it, and with a field
+  /// after the UUID. UUIDs compare case-insensitively, like everywhere else
+  /// in this file, so a hand-written lowercase rule counts too.
   static func isConflictingFstabEntry(_ line: String, volumeUUID: String) -> Bool {
     let trimmed = line.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return false }
-    let uuidPrefix = "UUID=\(volumeUUID)"
-    guard trimmed.hasPrefix(uuidPrefix), trimmed.count > uuidPrefix.count else { return false }
-    let separatorIndex = trimmed.index(trimmed.startIndex, offsetBy: uuidPrefix.count)
-    return trimmed[separatorIndex].isWhitespace
+    guard !trimmed.hasPrefix("#"), entryAddressesUUID(trimmed, volumeUUID) else { return false }
+    return trimmed.split(whereSeparator: \.isWhitespace).count > 1
   }
 
   /// fstab(5) octal escapes for the characters that would otherwise split a

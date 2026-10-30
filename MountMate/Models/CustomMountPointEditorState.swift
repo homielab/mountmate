@@ -21,7 +21,27 @@ final class CustomMountPointEditorState: ObservableObject {
   /// of one volume cannot start a second update. It can finish after the
   /// editor was closed, so this is not reset by `sync` or `collapse`.
   @Published var savingVolumeIDs: Set<String> = []
+  /// Folders the editor created for a save that is still running, by
+  /// `Volume.id`, deepest first (`CreatedMountPointFolders.missing`). Like
+  /// `savingVolumeIDs`, not reset by `sync` or `collapse`.
+  private(set) var createdFolders: [String: [String]] = [:]
   weak var hostWindow: NSWindow?
+
+  /// Remembers the folders created for the volume's save that starts now.
+  func recordCreatedFolders(_ folders: [String], for volumeID: String) {
+    guard !folders.isEmpty else { return }
+    createdFolders[volumeID] = folders + (createdFolders[volumeID] ?? [])
+  }
+
+  /// The folders to remove once the volume's save finished with `result`:
+  /// the ones the editor created, unless the rule was saved. Either way
+  /// they are forgotten.
+  func foldersToRemove(
+    afterSaveOf volumeID: String, result: PersistenceManager.CustomMountPointUpdateResult
+  ) -> [String] {
+    let folders = createdFolders.removeValue(forKey: volumeID) ?? []
+    return result == .success ? [] : folders
+  }
 
   func sync(from persistedPath: String?) {
     mountPointPath = persistedPath ?? ""

@@ -629,6 +629,7 @@
 "Unsafe Custom Mount Rules Explanation" = "舊版 MountMate 在 /etc/fstab 中加入了這些自訂掛載點規則。對於 NTFS 磁碟和使用其他驅動程式（Paragon、Tuxera、macFUSE）的磁碟，它們可能開啟 Apple 實驗性的 NTFS 寫入，或讓磁碟不再由你的驅動程式掛載，進而損壞檔案。請移除它們；MountMate 會要求輸入管理員密碼。";
 "File System: %@" = "檔案系統：%@";
 "Remove Rule" = "移除規則";
+"Not Tracked by MountMate" = "MountMate 未追蹤：此 /etc/fstab 規則仍然生效。移除後，磁碟卷將掛載到預設位置。";
 "Custom mount rule removed." = "已移除自訂掛載規則。";
 "Share Not Added Mount Point In Use" = "未加入「%1$@」：%2$@";
 

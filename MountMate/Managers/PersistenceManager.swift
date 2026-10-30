@@ -93,12 +93,26 @@ class PersistenceManager: ObservableObject {
   /// and publishing would redraw every observer of this manager.
   private(set) var fstabBlockedVolumeUUIDs: Set<String> = []
 
+  /// MountMate's custom mount point rules in /etc/fstab. Read at launch and
+  /// after each custom mount point update. Main thread only.
+  @Published var fstabCustomMountRules: [FstabRules.CustomMountRule]
+
   /// Custom mount point rules in /etc/fstab for a file system that may no
   /// longer get one (NTFS, third-party drivers), written by an older
-  /// version. Read at launch and after each custom mount point update;
-  /// Settings shows them with a Remove Rule button. Never removed without
-  /// the user, because removing asks for the administrator password.
-  @Published var unsupportedCustomMountRules: [FstabRules.CustomMountRule]
+  /// version. Settings shows them with a Remove Rule button. Never removed
+  /// without the user, because removing asks for the administrator password.
+  var unsupportedCustomMountRules: [FstabRules.CustomMountRule] {
+    FstabRules.unsupportedCustomMountRules(fstabCustomMountRules)
+  }
+
+  /// Custom mount point rules in /etc/fstab that no saved entry describes
+  /// (settings reset or moved to another Mac): macOS still applies them.
+  /// Settings lists them with the saved entries, marked as not tracked, with
+  /// a Remove button. Never removed without the user, as above.
+  var untrackedCustomMountRules: [FstabRules.CustomMountRule] {
+    FstabRules.untrackedCustomMountRules(
+      fstabCustomMountRules, savedEntries: customMountPoints)
+  }
 
   /// Keeps /etc/fstab in step with `blockedVolumes` (see the type's notes).
   /// Its queue also serializes custom mount point updates.
@@ -138,7 +152,7 @@ class PersistenceManager: ObservableObject {
     let fstabContents = fstabAccess.readContents()
     self.fstabBlockedVolumeUUIDs = FstabRules.managedFstabVolumeUUIDs(
       kinds: [FstabRules.mountMateBlockPrefix], in: fstabContents)
-    self.unsupportedCustomMountRules = FstabRules.unsupportedCustomMountRules(in: fstabContents)
+    self.fstabCustomMountRules = FstabRules.customMountRules(in: fstabContents)
     // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
     // do not run in init, so this only takes effect with the next pin change.
     self.pinnedVolumeIDs = (defaults.stringArray(forKey: Self.pinnedVolumeIDsKey) ?? []).filter {
