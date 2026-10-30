@@ -342,6 +342,26 @@
 			<string>Імпортовано %d ресурсу.</string>
 		</dict>
 	</dict>
+	<key>shares.backup.mountPointReset</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d ресурс підключається до теки за замовчуванням: його теки немає на цьому Mac.</string>
+			<key>few</key>
+			<string>%d ресурси підключаються до теки за замовчуванням: їхніх тек немає на цьому Mac.</string>
+			<key>many</key>
+			<string>%d ресурсів підключаються до теки за замовчуванням: їхніх тек немає на цьому Mac.</string>
+			<key>other</key>
+			<string>%d ресурсу підключаються до теки за замовчуванням: їхніх тек немає на цьому Mac.</string>
+		</dict>
+	</dict>
 	<key>shares.backup.skipped</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

@@ -173,6 +173,14 @@ final class VolumeIntentPlannerTests: XCTestCase {
       .run(second))
   }
 
+  func testEjectPlanOfAnUnpluggedUUIDLeavesTheSameNamedDiskAlone() {
+    let other = disk("disk5", volumes: [untitled(uuidB, device: "disk5s1")])
+    guard
+      case .failure = VolumeIntentPlanner.ejectPlan(
+        .init(name: "Untitled", volumeUUID: uuidA), in: [other], unverifiedDiskIDs: [])
+    else { return XCTFail("ejected a disk with another UUID") }
+  }
+
   func testNameOnlyReferenceOfAnOlderShortcutStillMatchesAUniqueName() {
     let volumes = [untitled(uuidA, device: "disk4s1"), volume("Photos")]
     let saved = VolumeIntentPlanner.Reference(identifier: "untitled")
@@ -189,11 +197,15 @@ final class VolumeIntentPlannerTests: XCTestCase {
       VolumeIntentPlanner.match(.init(name: "Untitled", volumeUUID: uuidA), in: noUUID), .ambiguous)
   }
 
-  func testUnknownUUIDFallsBackToTheName() {
-    let erased = untitled(uuidB, device: "disk4s1")
+  func testUnknownUUIDIsNotFoundEvenWithTheSameName() {
+    let other = untitled(uuidB, device: "disk4s1")
     XCTAssertEqual(
-      VolumeIntentPlanner.match(.init(name: "untitled", volumeUUID: uuidA), in: [erased]),
-      .found(erased))
+      VolumeIntentPlanner.match(.init(name: "untitled", volumeUUID: uuidA), in: [other]),
+      .notFound)
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "Untitled", volumeUUID: nil), in: [other]),
+      .found(other))
+    let erased = other
     XCTAssertEqual(
       VolumeIntentPlanner.match(.init(name: "Ghost", volumeUUID: uuidA), in: [erased]), .notFound)
   }

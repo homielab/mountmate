@@ -342,6 +342,26 @@
 			<string>Импортировано %d ресурса.</string>
 		</dict>
 	</dict>
+	<key>shares.backup.mountPointReset</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d ресурс подключается в папку по умолчанию: его папки нет на этом Mac.</string>
+			<key>few</key>
+			<string>%d ресурса подключаются в папку по умолчанию: их папок нет на этом Mac.</string>
+			<key>many</key>
+			<string>%d ресурсов подключаются в папку по умолчанию: их папок нет на этом Mac.</string>
+			<key>other</key>
+			<string>%d ресурса подключаются в папку по умолчанию: их папок нет на этом Mac.</string>
+		</dict>
+	</dict>
 	<key>shares.backup.skipped</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

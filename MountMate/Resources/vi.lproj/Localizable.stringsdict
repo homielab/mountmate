@@ -240,6 +240,20 @@
 			<string>Đã nhập %d thư mục chia sẻ.</string>
 		</dict>
 	</dict>
+	<key>shares.backup.mountPointReset</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d mục chia sẻ dùng thư mục gắn mặc định vì thư mục tùy chỉnh không có trên máy Mac này.</string>
+		</dict>
+	</dict>
 	<key>shares.backup.skipped</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

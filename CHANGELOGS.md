@@ -91,6 +91,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Shortcuts no longer act on the wrong drive**: a Mount, Unmount or Eject Volume action that picked a drive which is not plugged in now fails with "not connected" instead of acting on another drive with the same name (such as "Untitled"). Shortcuts that hold only a name match by name as before.
+- **Browse Network with local-network access denied** now says the permission is missing instead of "no servers found".
+- **Import Shares from another Mac**: custom mount points in your home folder are exported as `~/…` (no user name in the file) and imported for the current user; a mount point under another user's home or in a missing folder is reset to the default, and the import message counts those shares.
+
 - **Rename Volume** checks the name against the mounted file system, so a FAT32 or exFAT drive on a GPT disk now gets the 11 (FAT, letters without accents only) or 15 (exFAT) character limit as you type instead of a misleading diskutil error.
 - **Verify Volume** only says "Problems were found" when diskutil reports damage. NTFS, a busy or unplugged volume now get "Could Not Verify Volume" with the reason (diskutil's raw output is in Copy Diagnostics). A running check can be stopped with "Cancel Verify" in the context menu, and quitting MountMate stops it too.
 - **Safer /etc/fstab edits**: an fstab with Windows line endings (CRLF) is read line by line again instead of gaining blank lines and being rewritten in full, and MountMate keeps the previous file as `/etc/fstab.mountmate.bak` before every change (also shown in Copy Diagnostics).

@@ -31,7 +31,7 @@ cask "mountmate" do
   url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
   name "MountMate"
   desc "Menubar app to easily manage external drives"
-  homepage "https://mountmate.homielab.com"
+  homepage "https://homielab.com/en/page/mountmate"
 
   livecheck do
     url "https://mountmate.homielab.com/appcast.xml"
@@ -43,12 +43,7 @@ cask "mountmate" do
 
   app "MountMate.app"
 
-  zap trash: [
-    "~/Library/Caches/com.homielab.mountmate",
-    "~/Library/HTTPStorages/com.homielab.mountmate",
-    "~/Library/Preferences/com.homielab.mountmate.plist",
-    "~/Library/Saved Application State/com.homielab.mountmate.savedState",
-  ]
+  zap trash: "~/Library/Preferences/com.homielab.mountmate.plist"
 end
 EOF
 

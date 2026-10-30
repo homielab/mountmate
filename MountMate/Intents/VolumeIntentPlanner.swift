@@ -71,15 +71,19 @@ enum VolumeIntentPlanner {
       .flatMap(\.allVolumes).filter { $0.category == .user }
   }
 
-  /// Finds the volume with this UUID; when none has it (another drive, or
-  /// the volume was erased) or there is no UUID, falls back to the name.
+  /// Finds the volume with this UUID; a reference without a UUID matches by
+  /// name. A UUID no volume has is not found (the drive is not connected),
+  /// even when another volume has the same name, so an automated shortcut
+  /// never acts on another "Untitled" drive. Volumes without any UUID (some
+  /// file systems) still match by name.
   static func match(_ reference: Reference, in volumes: [Volume]) -> Match {
-    if let uuid = reference.volumeUUID,
-      let volume = volumes.first(where: {
+    if let uuid = reference.volumeUUID {
+      if let volume = volumes.first(where: {
         $0.stableVolumeUUID?.caseInsensitiveCompare(uuid) == .orderedSame
-      })
-    {
-      return .found(volume)
+      }) {
+        return .found(volume)
+      }
+      return match(name: reference.name, in: volumes.filter { $0.stableVolumeUUID == nil })
     }
     return match(name: reference.name, in: volumes)
   }

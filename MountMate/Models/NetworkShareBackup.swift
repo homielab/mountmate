@@ -58,7 +58,7 @@ enum NetworkShareBackup {
       case shareProtocol = "protocol"
     }
 
-    init(_ share: NetworkShare) {
+    init(_ share: NetworkShare, homeDirectory: String = NSHomeDirectory()) {
       name = share.name
       shareProtocol = share.shareProtocol
       server = share.server
@@ -66,7 +66,9 @@ enum NetworkShareBackup {
       username = share.username
       mountAtLogin = share.mountAtLogin
       keepMounted = share.keepMounted
-      customMountPoint = share.customMountPoint
+      customMountPoint = share.customMountPoint.map {
+        NetworkShareBackup.portableMountPoint($0, homeDirectory: homeDirectory)
+      }
       readOnly = share.readOnly
     }
 
@@ -100,7 +102,13 @@ enum NetworkShareBackup {
 
     /// A new saved share (new ID) with the fields cleaned like the share
     /// sheet cleans them (a URL or UNC server is split), or nil when the server or the path is empty.
-    func makeShare() -> NetworkShare? {
+    /// A custom mount point that cannot work on this Mac (another user's
+    /// home, a missing parent folder) is dropped, so the share uses the
+    /// default folder.
+    func makeShare(
+      homeDirectory: String = NSHomeDirectory(),
+      folderExists: (String) -> Bool = NetworkShareBackup.folderExists
+    ) -> NetworkShare? {
       // A hand-written file may hold a whole URL or UNC path as the server;
       // its path and username fill the entry's fields only when those are empty.
       let parsed = NetworkShare.cleanedServerInput(server)
@@ -110,7 +118,10 @@ enum NetworkShareBackup {
       let ownUser = username.trimmingCharacters(in: .whitespacesAndNewlines)
       let cleanedUser = ownUser.isEmpty ? parsed.username : ownUser
       guard !cleanedServer.isEmpty, !cleanedPath.isEmpty else { return nil }
-      let mountPoint = customMountPoint?.trimmingCharacters(in: .whitespacesAndNewlines)
+      let mountPoint = customMountPoint.flatMap {
+        NetworkShareBackup.localMountPoint(
+          $0, homeDirectory: homeDirectory, folderExists: folderExists)
+      }
       return NetworkShare(
         name: NetworkShare.resolvedDisplayName(name, sharePath: cleanedPath),
         server: cleanedServer, sharePath: cleanedPath,
@@ -119,6 +130,43 @@ enum NetworkShareBackup {
         mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
         customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil, readOnly: readOnly)
     }
+  }
+
+  /// A mount point under the home folder as `~/…`, so the file does not
+  /// carry this Mac's user name and works for another user.
+  static func portableMountPoint(_ path: String, homeDirectory: String) -> String {
+    let home = homeDirectory.hasSuffix("/") ? String(homeDirectory.dropLast()) : homeDirectory
+    guard !home.isEmpty else { return path }
+    if path == home { return "~" }
+    if path.hasPrefix(home + "/") { return "~" + path.dropFirst(home.count) }
+    return path
+  }
+
+  /// The mount point to use on this Mac for one from a file: `~` expands to
+  /// this user's home; nil (use the default folder) when it is empty, under
+  /// another user's home or its parent folder does not exist.
+  static func localMountPoint(
+    _ path: String, homeDirectory: String, folderExists: (String) -> Bool
+  ) -> String? {
+    var trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+    let home = homeDirectory.hasSuffix("/") ? String(homeDirectory.dropLast()) : homeDirectory
+    if trimmed == "~" || trimmed.hasPrefix("~/") {
+      trimmed = home + trimmed.dropFirst()
+    }
+    guard trimmed.hasPrefix("/") else { return nil }
+    if trimmed.hasPrefix("/Users/"), trimmed != home, !trimmed.hasPrefix(home + "/") {
+      return nil
+    }
+    let parent = (trimmed as NSString).deletingLastPathComponent
+    guard folderExists(parent) else { return nil }
+    return trimmed
+  }
+
+  static func folderExists(_ path: String) -> Bool {
+    var isDirectory: ObjCBool = false
+    return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+      && isDirectory.boolValue
   }
 
   private struct File: Encodable {
@@ -149,11 +197,15 @@ enum NetworkShareBackup {
   }
 
   /// The export file for `shares`: pretty-printed JSON without passwords.
-  static func encode(_ shares: [NetworkShare]) throws -> Data {
+  static func encode(
+    _ shares: [NetworkShare], homeDirectory: String = NSHomeDirectory()
+  ) throws -> Data {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
     return try encoder.encode(
-      File(format: format, version: currentVersion, shares: shares.map(Entry.init)))
+      File(
+        format: format, version: currentVersion,
+        shares: shares.map { Entry($0, homeDirectory: homeDirectory) }))
   }
 
   /// The entries of an export file; nil marks one that could not be read
@@ -183,6 +235,9 @@ enum NetworkShareBackup {
     /// One line per share left out because its mount folder is already used
     /// by a saved volume custom mount point or another share.
     var mountPointConflicts: [String] = []
+    /// Imported shares whose custom mount point could not work on this Mac
+    /// (another user's home, a missing folder) and now use the default one.
+    var resetMountPoints = 0
 
     var skipped: Int { duplicates + invalid + mountPointConflicts.count }
   }
@@ -194,11 +249,26 @@ enum NetworkShareBackup {
   ///   - volumeClaims: the saved volume custom mount points.
   static func importPlan(
     from data: Data, existing: [NetworkShare], mountPoint: (NetworkShare) -> String,
-    volumeClaims: [MountPointClaims.Claim] = []
+    volumeClaims: [MountPointClaims.Claim] = [], homeDirectory: String = NSHomeDirectory(),
+    folderExists: (String) -> Bool = NetworkShareBackup.folderExists
   ) throws -> ImportPlan {
-    importPlan(
-      candidates: try decode(data).map { $0?.makeShare() }, existing: existing,
-      mountPoint: mountPoint, volumeClaims: volumeClaims)
+    let entries = try decode(data)
+    let candidates = entries.map {
+      $0?.makeShare(homeDirectory: homeDirectory, folderExists: folderExists)
+    }
+    var plan = importPlan(
+      candidates: candidates, existing: existing, mountPoint: mountPoint,
+      volumeClaims: volumeClaims)
+    let reset = Set(
+      zip(entries, candidates).compactMap { entry, share -> UUID? in
+        guard let share, share.customMountPoint == nil,
+          entry?.customMountPoint?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            == false
+        else { return nil }
+        return share.id
+      })
+    plan.resetMountPoints = plan.shares.filter { reset.contains($0.id) }.count
+    return plan
   }
 
   /// What adding `candidates` (from a file, Import Mounted or a drop) next to
@@ -283,6 +353,11 @@ enum NetworkShareBackup {
         PluralizedString.format(
           "shares.backup.skipped", plan.skipped, bundle: bundle, locale: locale))
       sentences += plan.mountPointConflicts
+    }
+    if plan.resetMountPoints > 0 {
+      sentences.append(
+        PluralizedString.format(
+          "shares.backup.mountPointReset", plan.resetMountPoints, bundle: bundle, locale: locale))
     }
     if plan.shares.contains(where: { $0.shareProtocol.supportsUserCredentials }) {
       sentences.append(

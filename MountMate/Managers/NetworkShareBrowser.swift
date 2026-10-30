@@ -155,7 +155,7 @@ final class NetworkShareBrowser: ObservableObject {
       }
     }
     browser.stateUpdateHandler = { [weak self] state in
-      if case .failed = state {
+      if Self.isFailure(state) {
         DispatchQueue.main.async {
           guard let self, self.isActive, self.session == current else { return }
           self.failed = true
@@ -165,5 +165,25 @@ final class NetworkShareBrowser: ObservableObject {
     }
     browser.start(queue: queue)
     return browser
+  }
+
+  /// Whether a browser state means no servers can be listed. Denied local
+  /// network access arrives as `.waiting` with a DNS policy error, not
+  /// `.failed`, so it is a failure too; other waiting states may recover.
+  static func isFailure(_ state: NWBrowser.State) -> Bool {
+    switch state {
+    case .failed:
+      return true
+    case .waiting(let error):
+      return isPermissionDenied(error)
+    default:
+      return false
+    }
+  }
+
+  static func isPermissionDenied(_ error: NWError) -> Bool {
+    guard case .dns(let code) = error else { return false }
+    return code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied)
+      || code == DNSServiceErrorType(kDNSServiceErr_NoAuth)
   }
 }

@@ -274,6 +274,22 @@
 			<string>Imported %d shares.</string>
 		</dict>
 	</dict>
+	<key>shares.backup.mountPointReset</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d share uses the default mount folder: its custom one does not exist on this Mac.</string>
+			<key>other</key>
+			<string>%d shares use the default mount folder: their custom ones do not exist on this Mac.</string>
+		</dict>
+	</dict>
 	<key>shares.backup.skipped</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

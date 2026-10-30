@@ -274,6 +274,22 @@
 			<string>%d partages importés.</string>
 		</dict>
 	</dict>
+	<key>shares.backup.mountPointReset</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d partage utilise le dossier de montage par défaut : le sien n’existe pas sur ce Mac.</string>
+			<key>other</key>
+			<string>%d partages utilisent le dossier de montage par défaut : les leurs n’existent pas sur ce Mac.</string>
+		</dict>
+	</dict>
 	<key>shares.backup.skipped</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

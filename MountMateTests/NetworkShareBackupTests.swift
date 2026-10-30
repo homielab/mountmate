@@ -347,4 +347,37 @@ final class NetworkShareBackupTests: XCTestCase {
         discovered: 2, bundle: bundle, locale: locale
       ).hasSuffix(" X."))
   }
+
+  // MARK: - Mount points from another Mac
+
+  func testExportWritesMountPointsUnderHomeWithTilde() throws {
+    let share = NetworkShare(
+      name: "Media", server: "nas.local", sharePath: "Media", username: "",
+      shareProtocol: .smb, customMountPoint: "/Users/alice/NAS/Media")
+    let data = try NetworkShareBackup.encode([share], homeDirectory: "/Users/alice")
+    let text = try XCTUnwrap(String(data: data, encoding: .utf8))
+    XCTAssertTrue(text.contains("\"~/NAS/Media\""), text)
+    XCTAssertFalse(text.contains("alice"))
+  }
+
+  func testImportExpandsTildeAndResetsAnotherUsersFolder() throws {
+    let json = file(
+      """
+      {"protocol": "smb", "server": "a.local", "sharePath": "A", "customMountPoint": "~/NAS/A"},
+      {"protocol": "smb", "server": "b.local", "sharePath": "B", "customMountPoint": "/Users/alice/NAS/B"},
+      {"protocol": "smb", "server": "c.local", "sharePath": "C", "customMountPoint": "/Volumes/Missing/C"},
+      {"protocol": "smb", "server": "d.local", "sharePath": "D", "customMountPoint": "/Volumes/D"}
+      """)
+    let plan = try NetworkShareBackup.importPlan(
+      from: Data(json.utf8), existing: [], mountPoint: mountUnderHome,
+      homeDirectory: "/Users/test",
+      folderExists: { ["/Users/test/NAS", "/Volumes"].contains($0) })
+    XCTAssertEqual(
+      plan.shares.map { $0.customMountPoint ?? "-" }, ["/Users/test/NAS/A", "-", "-", "/Volumes/D"])
+    XCTAssertEqual(plan.resetMountPoints, 2)
+    XCTAssertEqual(plan.skipped, 0)
+    let message = NetworkShareBackup.resultMessage(
+      for: plan, bundle: try englishBundle(), locale: Locale(identifier: "en"))
+    XCTAssertTrue(message.contains("2 shares use the default mount folder"), message)
+  }
 }

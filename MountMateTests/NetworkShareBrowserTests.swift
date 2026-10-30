@@ -1,5 +1,6 @@
 //  Created by homielab.com
 
+import Network
 import XCTest
 
 @testable import MountMate
@@ -138,5 +139,15 @@ final class NetworkShareBrowserTests: XCTestCase {
       }
     }
     wait(for: [checked], timeout: 3)
+  }
+
+  func testDeniedLocalNetworkWhileWaitingIsAFailure() {
+    let denied = NWError.dns(DNSServiceErrorType(kDNSServiceErr_PolicyDenied))
+    XCTAssertTrue(NetworkShareBrowser.isFailure(.waiting(denied)))
+    XCTAssertTrue(
+      NetworkShareBrowser.isFailure(.waiting(.dns(DNSServiceErrorType(kDNSServiceErr_NoAuth)))))
+    XCTAssertTrue(NetworkShareBrowser.isFailure(.failed(denied)))
+    XCTAssertFalse(NetworkShareBrowser.isFailure(.waiting(.posix(.ENETDOWN))))
+    XCTAssertFalse(NetworkShareBrowser.isFailure(.ready))
   }
 }
