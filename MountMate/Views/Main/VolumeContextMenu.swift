@@ -51,18 +51,26 @@ struct VolumeContextMenu: View {
         }
       }
       if rules.showsVerifyVolume {
-        Button {
-          manager.verifyVolume(volume)
-        } label: {
-          Label(
-            rules.isVerifying
-              ? NSLocalizedString(
-                "Verifying…", comment: "Volume context menu: verification in progress")
-              : NSLocalizedString(
+        if rules.isVerifying {
+          Button {
+            manager.cancelVerifyVolume(volume)
+          } label: {
+            Label(
+              NSLocalizedString(
+                "Cancel Verify", comment: "Volume context menu: stop the running verification"),
+              systemImage: "xmark.circle")
+          }
+        } else {
+          Button {
+            manager.verifyVolume(volume)
+          } label: {
+            Label(
+              NSLocalizedString(
                 "Verify Volume", comment: "Volume context menu: verify volume action"),
-            systemImage: "checkmark.shield")
+              systemImage: "checkmark.shield")
+          }
+          .disabled(rules.disablesVolumeOperations)
         }
-        .disabled(rules.isVerifying || rules.disablesVolumeOperations)
       }
       if rules.showsRename {
         Button {

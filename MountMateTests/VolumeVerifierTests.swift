@@ -25,7 +25,7 @@ final class VolumeVerifierTests: XCTestCase {
 
   func testRunsDiskutilVerifyOffTheMainThreadAndCompletesOnMain() {
     let calls = Calls()
-    let verifier = VolumeVerifier(timeout: 10) { executable, arguments, _ in
+    let verifier = VolumeVerifier(timeout: 10) { executable, arguments, _, _ in
       calls.record(executable, arguments)
       return Self.okResult
     }
@@ -48,7 +48,7 @@ final class VolumeVerifierTests: XCTestCase {
 
   func testPassesTheTimeoutToTheRunner() {
     let seen = expectation(description: "runner")
-    let verifier = VolumeVerifier(timeout: 42) { _, _, timeout in
+    let verifier = VolumeVerifier(timeout: 42) { _, _, timeout, _ in
       XCTAssertEqual(timeout, 42)
       seen.fulfill()
       return Self.okResult
@@ -61,7 +61,7 @@ final class VolumeVerifierTests: XCTestCase {
     let calls = Calls()
     let gate = DispatchSemaphore(value: 0)
     let firstStarted = expectation(description: "first started")
-    let verifier = VolumeVerifier(timeout: 10) { executable, arguments, _ in
+    let verifier = VolumeVerifier(timeout: 10) { executable, arguments, _, _ in
       calls.record(executable, arguments)
       if calls.all.count == 1 {
         firstStarted.fulfill()
@@ -93,5 +93,47 @@ final class VolumeVerifierTests: XCTestCase {
       verifier.verify(volumeID: "v1", deviceIdentifier: "disk9s2") { _ in againDone.fulfill() })
     wait(for: [againDone], timeout: 5)
     XCTAssertEqual(calls.all.count, 3)
+  }
+
+  /// A runner that starts a real long `sleep`, so cancel has a process to stop.
+  private static func sleepingVerifier() -> VolumeVerifier {
+    VolumeVerifier(timeout: 30) { _, _, timeout, onLaunch in
+      runProcess(
+        executable: "/bin/sleep", arguments: ["30"], timeout: timeout, onLaunch: onLaunch)
+    }
+  }
+
+  func testCancelStopsTheProcessAndCompletesWithNil() {
+    let verifier = Self.sleepingVerifier()
+    let done = expectation(description: "completion")
+    let begin = Date()
+    verifier.verify(volumeID: "v1", deviceIdentifier: "disk9s2") { result in
+      XCTAssertNil(result)
+      done.fulfill()
+    }
+    // Wait until the process is running, then cancel.
+    Thread.sleep(forTimeInterval: 0.3)
+    XCTAssertTrue(verifier.cancel("v1"))
+    wait(for: [done], timeout: 5)
+    XCTAssertLessThan(Date().timeIntervalSince(begin), 10)
+    XCTAssertFalse(verifier.isVerifying("v1"))
+    XCTAssertFalse(verifier.cancel("v1"))
+  }
+
+  func testCancelAllStopsEveryRun() {
+    let verifier = Self.sleepingVerifier()
+    let first = expectation(description: "first")
+    let second = expectation(description: "second")
+    verifier.verify(volumeID: "v1", deviceIdentifier: "disk9s2") { result in
+      XCTAssertNil(result)
+      first.fulfill()
+    }
+    verifier.verify(volumeID: "v2", deviceIdentifier: "disk8s1") { result in
+      XCTAssertNil(result)
+      second.fulfill()
+    }
+    Thread.sleep(forTimeInterval: 0.3)
+    verifier.cancelAll()
+    wait(for: [first, second], timeout: 5)
   }
 }

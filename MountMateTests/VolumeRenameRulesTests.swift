@@ -87,4 +87,41 @@ final class VolumeRenameRulesTests: XCTestCase {
     XCTAssertTrue(failure.message.hasSuffix("Error: -69886: Unable to rename"))
     XCTAssertFalse(failure.message.hasPrefix("Failed to rename"))
   }
+
+  private func volume(fileSystemType: String?, mounted: String?) -> Volume {
+    var volume = Volume(
+      id: "v", deviceIdentifier: "disk9s2", diskUUID: nil, name: "USB",
+      isMounted: mounted != nil, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: fileSystemType, usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+    volume.mountedFileSystemType = mounted
+    return volume
+  }
+
+  func testMountedTypeWinsOverVaguePartitionContent() {
+    let fat = volume(fileSystemType: "Microsoft Basic Data", mounted: "msdos")
+    let exfat = volume(fileSystemType: "Microsoft Basic Data", mounted: "exfat")
+    let ntfs = volume(fileSystemType: "Microsoft Basic Data", mounted: "ntfs")
+    let unmounted = volume(fileSystemType: "Microsoft Basic Data", mounted: nil)
+    func limit(_ v: Volume) -> Int {
+      VolumeRenameRules.maxLength(fileSystemType: VolumeRenameRules.effectiveFileSystemType(of: v))
+    }
+    XCTAssertEqual(limit(fat), 11)
+    XCTAssertEqual(limit(exfat), 15)
+    XCTAssertEqual(limit(ntfs), 255)
+    XCTAssertEqual(limit(unmounted), 255)
+    XCTAssertEqual(
+      VolumeRenameRules.problem(
+        with: "ABCDEFGHIJKL", fileSystemType: VolumeRenameRules.effectiveFileSystemType(of: fat)),
+      .tooLong(maxLength: 11))
+  }
+
+  func testNonASCIINamesAreRejectedOnFATOnly() {
+    XCTAssertEqual(VolumeRenameRules.problem(with: "Ảnh", fileSystemType: "msdos"), .nonASCII)
+    XCTAssertEqual(
+      VolumeRenameRules.problem(with: "Café", fileSystemType: "MS-DOS FAT32"), .nonASCII)
+    XCTAssertNil(VolumeRenameRules.problem(with: "Ảnh", fileSystemType: "exfat"))
+    XCTAssertNil(VolumeRenameRules.problem(with: "Ảnh", fileSystemType: "APFS"))
+    XCTAssertFalse(VolumeRenameRules.message(for: .nonASCII).isEmpty)
+  }
 }

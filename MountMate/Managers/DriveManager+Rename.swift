@@ -7,7 +7,7 @@ extension DriveManager {
 
   /// Asks for a new name for `volume` and renames it. Call on the main thread.
   func promptRenameVolume(_ volume: Volume) {
-    let fileSystemType = volume.fileSystemType
+    let fileSystemType = VolumeRenameRules.effectiveFileSystemType(of: volume)
     userActionError = AppAlert(
       title: NSLocalizedString("Rename Volume", comment: "Alert title"),
       message: String(
@@ -29,7 +29,9 @@ extension DriveManager {
   /// busy meanwhile and refreshes the list afterwards. Invalid or unchanged
   /// names do nothing. Call on the main thread.
   func renameVolume(_ volume: Volume, to name: String) {
-    guard VolumeRenameRules.problem(with: name, fileSystemType: volume.fileSystemType) == nil,
+    guard
+      VolumeRenameRules.problem(
+        with: name, fileSystemType: VolumeRenameRules.effectiveFileSystemType(of: volume)) == nil,
       VolumeRenameRules.isChange(name, from: volume.name), !isBusy(volume.id)
     else { return }
     let arguments = VolumeRenameRules.arguments(

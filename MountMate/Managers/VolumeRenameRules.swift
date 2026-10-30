@@ -19,6 +19,21 @@ enum VolumeRenameRules {
     case empty
     case forbiddenCharacter
     case tooLong(maxLength: Int)
+    /// FAT volume labels hold ASCII only.
+    case nonASCII
+  }
+
+  /// The type to check names against: the kernel's type once mounted, since
+  /// the partition content ("Microsoft Basic Data") can be FAT, exFAT or NTFS.
+  static func effectiveFileSystemType(of volume: Volume) -> String? {
+    volume.mountedFileSystemType ?? volume.fileSystemType
+  }
+
+  /// True for FAT12/16/32 ("msdos" when mounted, "MS-DOS FAT32"… otherwise).
+  static func isFAT(fileSystemType: String?) -> Bool {
+    let type = (fileSystemType ?? "").lowercased()
+    if type.contains("exfat") { return false }
+    return type.contains("fat") || type.contains("ms-dos") || type.contains("msdos")
   }
 
   /// The name as it will be passed to diskutil: surrounding spaces removed.
@@ -27,13 +42,12 @@ enum VolumeRenameRules {
   }
 
   /// Most characters the file system of the volume allows in its name.
-  /// `fileSystemType` is the parser's partition content or file system name.
+  /// `fileSystemType` comes from `effectiveFileSystemType(of:)`. An unmounted
+  /// "Microsoft Basic Data" volume stays at 255 and diskutil decides.
   static func maxLength(fileSystemType: String?) -> Int {
-    // "Microsoft Basic Data" can be NTFS or exFAT, so diskutil decides.
     let type = (fileSystemType ?? "").lowercased()
     if type.contains("exfat") { return exFATMaxLength }
-    let isFAT = type.contains("fat") || type.contains("ms-dos") || type.contains("msdos")
-    return isFAT ? fatMaxLength : defaultMaxLength
+    return isFAT(fileSystemType: fileSystemType) ? fatMaxLength : defaultMaxLength
   }
 
   /// What is wrong with `name`, or nil when it can be used.
@@ -46,6 +60,9 @@ enum VolumeRenameRules {
       })
     {
       return .forbiddenCharacter
+    }
+    if isFAT(fileSystemType: fileSystemType) && !name.unicodeScalars.allSatisfy(\.isASCII) {
+      return .nonASCII
     }
     let limit = maxLength(fileSystemType: fileSystemType)
     if name.utf16.count > limit { return .tooLong(maxLength: limit) }
@@ -68,6 +85,11 @@ enum VolumeRenameRules {
           "Use at most %d characters.",
           comment: "Rename Volume: the new name is too long; maximum number of characters"),
         maxLength)
+    case .nonASCII:
+      return NSLocalizedString(
+        "FAT volume names can only use English letters, digits and basic symbols.",
+        comment:
+          "Rename Volume: the new name has accents or other non-ASCII characters on a FAT volume")
     }
   }
 

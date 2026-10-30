@@ -691,3 +691,13 @@
 
 /* Alert message: Open in Terminal failed; %@ is the folder path */
 "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it." = "MountMate không mở được cửa sổ Terminal tại “%@”. Hãy kiểm tra Terminal đã được cài và MountMate được phép điều khiển nó.";
+
+"FAT volume names can only use English letters, digits and basic symbols." = "Tên ổ FAT chỉ được dùng chữ cái tiếng Anh, chữ số và ký hiệu cơ bản.";
+"Cancel Verify" = "Huỷ kiểm tra";
+"The volume is in use by another app. Close it and try again." = "Ổ đang được ứng dụng khác dùng. Hãy đóng ứng dụng đó rồi thử lại.";
+"macOS cannot check this file system (for example NTFS)." = "macOS không kiểm tra được hệ thống tệp này (ví dụ NTFS).";
+"The volume is no longer mounted." = "Ổ không còn được gắn.";
+"macOS did not allow the check." = "macOS không cho phép kiểm tra.";
+"diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil dừng trước khi kiểm tra xong. Chi tiết có trong Sao chép chẩn đoán.";
+"Could Not Verify Volume" = "Không thể kiểm tra ổ";
+"“%@” was not checked. %@" = "“%@” chưa được kiểm tra. %@";

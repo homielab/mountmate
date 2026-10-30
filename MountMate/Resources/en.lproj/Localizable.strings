@@ -691,3 +691,13 @@
 
 /* Alert message: Open in Terminal failed; %@ is the folder path */
 "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it." = "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it.";
+
+"FAT volume names can only use English letters, digits and basic symbols." = "FAT volume names can only use English letters, digits and basic symbols.";
+"Cancel Verify" = "Cancel Verify";
+"The volume is in use by another app. Close it and try again." = "The volume is in use by another app. Close it and try again.";
+"macOS cannot check this file system (for example NTFS)." = "macOS cannot check this file system (for example NTFS).";
+"The volume is no longer mounted." = "The volume is no longer mounted.";
+"macOS did not allow the check." = "macOS did not allow the check.";
+"diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil stopped before the check finished. Details are in Copy Diagnostics.";
+"Could Not Verify Volume" = "Could Not Verify Volume";
+"“%@” was not checked. %@" = "“%@” was not checked. %@";

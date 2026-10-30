@@ -21,8 +21,53 @@ enum VolumeVerificationRules {
     let succeeded: Bool
   }
 
+  /// Why diskutil exited non-zero.
+  enum FailureKind: Equatable, Sendable {
+    /// The check ran and found damage: First Aid can help.
+    case problemsFound
+    case busy
+    case unsupported
+    case notMounted
+    case permission
+    /// Anything else: the check did not run to the end, so nothing is known.
+    case unknown
+  }
+
+  /// Sorts a failed run. Only output that says the file system is damaged
+  /// counts as problems; NTFS, busy or vanished volumes were never checked.
+  static func failureKind(for result: ProcessResult, fileSystemType: String? = nil)
+    -> FailureKind
+  {
+    let text = (result.stderr + "\n" + result.stdout).lowercased()
+    let type = (fileSystemType ?? "").lowercased()
+    if type.contains("ntfs")
+      || ["not supported", "unsupported", "does not support", "unrecognized file system"]
+        .contains(where: text.contains)
+    {
+      return .unsupported
+    }
+    if DiskUtilErrorClassifier.isBusyFailure(stderr: text) { return .busy }
+    if ["not mounted", "could not find disk", "unable to find disk", "no such file"]
+      .contains(where: text.contains)
+    {
+      return .notMounted
+    }
+    if ["permission denied", "not permitted", "not privileged"].contains(where: text.contains) {
+      return .permission
+    }
+    if [
+      "corrupt", "needs to be repaired", "-69845", "invalid", "incorrect", "exit code is 8",
+    ].contains(where: text.contains) {
+      return .problemsFound
+    }
+    return .unknown
+  }
+
   /// Turns the process result into an alert title and informative message.
-  static func outcome(for result: ProcessResult, volumeName: String) -> Outcome {
+  /// diskutil's raw output is logged for Copy Diagnostics, not shown here.
+  static func outcome(
+    for result: ProcessResult, volumeName: String, fileSystemType: String? = nil
+  ) -> Outcome {
     if result.succeeded {
       return Outcome(
         title: NSLocalizedString(
@@ -53,15 +98,52 @@ enum VolumeVerificationRules {
       )
     }
 
-    var message = String(
-      format: NSLocalizedString(
-        "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume.",
-        comment: "Alert message: volume verification found errors"),
-      volumeName)
-    if let detail = failureDetail(result) {
-      message += "\n\n" + detail
+    let kind = failureKind(for: result, fileSystemType: fileSystemType)
+    if kind == .problemsFound {
+      return Outcome(
+        title: title,
+        message: String(
+          format: NSLocalizedString(
+            "Problems were found on “%@”. Use First Aid in Disk Utility to repair this volume.",
+            comment: "Alert message: volume verification found errors"),
+          volumeName),
+        succeeded: false)
     }
-    return Outcome(title: title, message: message, succeeded: false)
+
+    let reason: String
+    switch kind {
+    case .busy:
+      reason = NSLocalizedString(
+        "The volume is in use by another app. Close it and try again.",
+        comment: "Could not verify reason: volume busy")
+    case .unsupported:
+      reason = NSLocalizedString(
+        "macOS cannot check this file system (for example NTFS).",
+        comment: "Could not verify reason: file system not supported")
+    case .notMounted:
+      reason = NSLocalizedString(
+        "The volume is no longer mounted.",
+        comment: "Could not verify reason: volume unmounted or unplugged")
+    case .permission:
+      reason = NSLocalizedString(
+        "macOS did not allow the check.",
+        comment: "Could not verify reason: permission denied")
+    case .problemsFound, .unknown:
+      reason = NSLocalizedString(
+        "diskutil stopped before the check finished. Details are in Copy Diagnostics.",
+        comment: "Could not verify reason: unknown failure")
+    }
+    return Outcome(
+      title: NSLocalizedString(
+        "Could Not Verify Volume",
+        comment: "Alert title: verification did not run to the end; nothing is known about damage"
+      ),
+      message: String(
+        format: NSLocalizedString(
+          "“%@” was not checked. %@",
+          comment: "Alert message: volume not verified; 1 = volume name, 2 = reason"),
+        volumeName, reason),
+      succeeded: false)
   }
 
   /// diskutil's own last line about the failure (stderr first, else stdout),

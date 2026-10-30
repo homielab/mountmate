@@ -29,7 +29,8 @@ func runProcess(
   executable: String,
   arguments: [String],
   input: Data? = nil,
-  timeout: TimeInterval = 15.0
+  timeout: TimeInterval = 15.0,
+  onLaunch: ((Process) -> Void)? = nil
 ) -> ProcessResult {
   let task = Process()
   let fileManager = FileManager.default
@@ -83,6 +84,8 @@ func runProcess(
       stdout: "", stderr: "Failed to launch \(executable): \(error)", exitCode: nil, timedOut: false
     )
   }
+  // Lets a caller keep the process to terminate it early (Cancel, quit).
+  onLaunch?(task)
 
   let currentQoS = DispatchQoS.QoSClass(rawValue: qos_class_self()) ?? .userInitiated
   let qosClass: DispatchQoS.QoSClass = (currentQoS == .unspecified) ? .userInitiated : currentQoS

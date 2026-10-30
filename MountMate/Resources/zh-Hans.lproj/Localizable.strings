@@ -691,3 +691,13 @@
 
 /* Alert message: Open in Terminal failed; %@ is the folder path */
 "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it." = "MountMate 无法在“%@”打开终端窗口。请检查终端是否已安装，以及 MountMate 是否有权控制它。";
+
+"FAT volume names can only use English letters, digits and basic symbols." = "FAT 宗卷名称只能使用英文字母、数字和基本符号。";
+"Cancel Verify" = "取消验证";
+"The volume is in use by another app. Close it and try again." = "该宗卷正被其他应用使用。请关闭该应用后重试。";
+"macOS cannot check this file system (for example NTFS)." = "macOS 无法检查此文件系统（例如 NTFS）。";
+"The volume is no longer mounted." = "该宗卷已不再装载。";
+"macOS did not allow the check." = "macOS 不允许进行检查。";
+"diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil 在检查完成前停止。详细信息见“复制诊断信息”。";
+"Could Not Verify Volume" = "无法验证宗卷";
+"“%@” was not checked. %@" = "“%@”未被检查。%@";

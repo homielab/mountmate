@@ -57,6 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    DriveManager.shared.volumeVerifier.cancelAll()
     for token in screenLockTokens {
       DistributedNotificationCenter.default().removeObserver(token)
     }

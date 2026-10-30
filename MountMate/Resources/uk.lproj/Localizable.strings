@@ -691,3 +691,13 @@
 
 /* Alert message: Open in Terminal failed; %@ is the folder path */
 "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it." = "MountMate не вдалося відкрити вікно Терміналу в «%@». Перевірте, що Термінал встановлено і MountMate дозволено ним керувати.";
+
+"FAT volume names can only use English letters, digits and basic symbols." = "Назва тому FAT може містити лише латинські літери, цифри та прості символи.";
+"Cancel Verify" = "Скасувати перевірку";
+"The volume is in use by another app. Close it and try again." = "Том використовується іншою програмою. Закрийте її та спробуйте ще раз.";
+"macOS cannot check this file system (for example NTFS)." = "macOS не може перевірити цю файлову систему (наприклад, NTFS).";
+"The volume is no longer mounted." = "Том більше не підключено.";
+"macOS did not allow the check." = "macOS не дозволила перевірку.";
+"diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil зупинився до завершення перевірки. Подробиці — у «Скопіювати діагностику».";
+"Could Not Verify Volume" = "Не вдалося перевірити том";
+"“%@” was not checked. %@" = "«%@» не перевірено. %@";

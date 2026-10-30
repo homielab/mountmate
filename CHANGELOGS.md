@@ -91,6 +91,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Rename Volume** checks the name against the mounted file system, so a FAT32 or exFAT drive on a GPT disk now gets the 11 (FAT, letters without accents only) or 15 (exFAT) character limit as you type instead of a misleading diskutil error.
+- **Verify Volume** only says "Problems were found" when diskutil reports damage. NTFS, a busy or unplugged volume now get "Could Not Verify Volume" with the reason (diskutil's raw output is in Copy Diagnostics). A running check can be stopped with "Cancel Verify" in the context menu, and quitting MountMate stops it too.
 - **Safer /etc/fstab edits**: an fstab with Windows line endings (CRLF) is read line by line again instead of gaining blank lines and being rewritten in full, and MountMate keeps the previous file as `/etc/fstab.mountmate.bak` before every change (also shown in Copy Diagnostics).
 - **Time Machine backups**: Unmount, Eject, Unmount All and Eject All External Disks ask first ("Unmount Anyway" or "Skip") when Time Machine is backing up to one of the volumes.
 - **Open in Terminal** shows an alert when Terminal cannot be opened instead of doing nothing.

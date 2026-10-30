@@ -79,7 +79,7 @@ final class VolumeVerificationRulesTests: XCTestCase {
     XCTAssertTrue(outcome.message.contains("Disk Utility"))
   }
 
-  func testFailedVerificationAppendsDiskutilsLastErrorLine() {
+  func testVerifyFailedCodeCountsAsProblemsAndHidesRawLine() {
     let result = ProcessResult(
       stdout: "Checking file system\nChecking catalog file.",
       stderr: "Error: -69845: File system verify or repair failed\n",
@@ -88,8 +88,41 @@ final class VolumeVerificationRulesTests: XCTestCase {
     )
     let outcome = VolumeVerificationRules.outcome(for: result, volumeName: "Data")
 
-    XCTAssertTrue(
-      outcome.message.hasSuffix("\n\nError: -69845: File system verify or repair failed"))
+    XCTAssertTrue(outcome.message.contains("Problems were found"))
+    XCTAssertFalse(outcome.message.contains("-69845"))
+  }
+
+  func testNTFSIsNotReportedAsDamaged() {
+    let result = ProcessResult(
+      stdout: "", stderr: "Error: -69845: File system verify or repair failed",
+      exitCode: 1, timedOut: false)
+    let outcome = VolumeVerificationRules.outcome(
+      for: result, volumeName: "Win", fileSystemType: "ntfs")
+
+    XCTAssertEqual(
+      VolumeVerificationRules.failureKind(for: result, fileSystemType: "ntfs"), .unsupported)
+    XCTAssertTrue(outcome.message.contains("was not checked"))
+    XCTAssertFalse(outcome.message.contains("Problems were found"))
+    XCTAssertFalse(outcome.message.contains("First Aid"))
+  }
+
+  func testBusyUnmountedPermissionAndUnknownAreNeutral() {
+    func kind(_ stderr: String) -> VolumeVerificationRules.FailureKind {
+      VolumeVerificationRules.failureKind(
+        for: ProcessResult(stdout: "", stderr: stderr, exitCode: 1, timedOut: false))
+    }
+    XCTAssertEqual(kind("Error: -69877: Couldn't open device (Resource busy)"), .busy)
+    XCTAssertEqual(kind("Could not find disk: disk9s2"), .notMounted)
+    XCTAssertEqual(kind("Operation not permitted"), .permission)
+    XCTAssertEqual(kind("Something odd"), .unknown)
+    XCTAssertEqual(kind("Unrecognized file system"), .unsupported)
+
+    let outcome = VolumeVerificationRules.outcome(
+      for: ProcessResult(
+        stdout: "", stderr: "Error: -69877: Couldn't open device (Resource busy)", exitCode: 1,
+        timedOut: false), volumeName: "USB")
+    XCTAssertTrue(outcome.message.contains("in use"))
+    XCTAssertFalse(outcome.message.contains("Problems were found"))
   }
 
   func testFailureDetailFallsBackToStdoutAndIsNilWhenSilent() {
