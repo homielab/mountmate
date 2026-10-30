@@ -163,6 +163,85 @@ final class LowSpaceRulesTests: XCTestCase {
     }
   }
 
+  // MARK: - Background poll
+
+  private let lastRead = Date(timeIntervalSince1970: 1_000_000)
+
+  private func decision(
+    notifications: Bool = true, threshold: Double? = 0.9, disks: [PhysicalDisk]? = nil,
+    minutesLater: Double
+  ) -> LowSpaceRules.PollDecision {
+    LowSpaceRules.pollDecision(
+      notificationsEnabled: notifications, threshold: threshold,
+      disks: disks ?? [disk([volume("1", used: 0.82)])], lastRead: lastRead,
+      now: lastRead.addingTimeInterval(minutesLater * 60))
+  }
+
+  func testPollWaitsFifteenMinutesAfterTheLastRead() {
+    let due = lastRead.addingTimeInterval(15 * 60)
+    XCTAssertEqual(decision(minutesLater: 0), .wait(until: due))
+    XCTAssertEqual(decision(minutesLater: 14.9), .wait(until: due))
+    XCTAssertEqual(decision(minutesLater: 15), .pollNow)
+    XCTAssertEqual(decision(minutesLater: 90), .pollNow)
+  }
+
+  func testNoPollWhenNotificationsOrTheWarningAreOff() {
+    XCTAssertEqual(decision(notifications: false, minutesLater: 20), .off)
+    XCTAssertEqual(decision(threshold: nil, minutesLater: 20), .off)
+  }
+
+  func testNoPollWithoutAMountedWritableExternalVolume() {
+    XCTAssertEqual(decision(disks: [], minutesLater: 20), .off)
+    let notCandidates = [
+      disk([volume("1", used: 0.5)], type: .internalDisk),
+      disk([volume("2", used: 0.5)], type: .diskImage),
+      disk([
+        volume("3", used: 0.5, mounted: false), volume("4", used: 0.5, readOnly: true),
+        volume("5", used: 0.5, category: .system),
+      ]),
+    ]
+    XCTAssertTrue(LowSpaceRules.pollCandidates(in: notCandidates).isEmpty)
+    XCTAssertEqual(decision(disks: notCandidates, minutesLater: 20), .off)
+    // A volume whose last read failed is still read again.
+    let failed = [disk([volume("6", used: nil, error: "x")])]
+    XCTAssertEqual(LowSpaceRules.pollCandidates(in: failed).map(\.id), ["6"])
+  }
+
+  func testPolledUsageReplacesOnlyTheReadExternalVolumes() {
+    var container = disk([])
+    container.containers = [APFSContainer(id: "disk10", volumes: [volume("2", used: 0.5)])]
+    let disks = [
+      disk([volume("1", used: 0.82), volume("3", used: 0.4, error: "x")]), container,
+      disk([volume("4", used: 0.3)], type: .internalDisk),
+    ]
+    let polled = LowSpaceRules.applyingPolledUsage(
+      [
+        "/Volumes/1": .usage(total: 1000, free: 40), "/Volumes/2": .usage(total: 1000, free: 50),
+        "/Volumes/3": .timedOut, "/Volumes/4": .usage(total: 1000, free: 0),
+      ], to: disks)
+    let usage = Dictionary(
+      uniqueKeysWithValues: polled.flatMap(\.allVolumes).map { ($0.id, $0.usagePercentage) })
+    XCTAssertEqual(usage["1"] ?? nil, 0.96)
+    XCTAssertEqual(usage["2"] ?? nil, 0.95)
+    XCTAssertEqual(usage["3"] ?? nil, 0.4)
+    XCTAssertEqual(usage["4"] ?? nil, 0.3)
+    XCTAssertEqual(polled[0].partitions[1].storageError, "x")
+    XCTAssertEqual(polled[0].partitions[0].freeSpace, ShareUsage.formatted(40))
+  }
+
+  func testOvernightFillUpIsAnnouncedOnceByThePoll() {
+    var tracker = LowSpaceAlertTracker()
+    let at82 = [disk([volume("1", used: 0.82)])]
+    XCTAssertTrue(tracker.newWarnings(in: at82, threshold: 0.9).isEmpty)
+    // The poll finds 96% later; then each later poll and refresh stay quiet.
+    let at96 = LowSpaceRules.applyingPolledUsage(
+      ["/Volumes/1": .usage(total: 1000, free: 40)], to: at82)
+    XCTAssertEqual(tracker.newWarnings(in: at96, threshold: 0.9).map(\.volume.id), ["1"])
+    XCTAssertTrue(tracker.newWarnings(in: at96, threshold: 0.9).isEmpty)
+    XCTAssertTrue(
+      tracker.newWarnings(in: [disk([volume("1", used: 0.95)])], threshold: 0.9).isEmpty)
+  }
+
   // MARK: - Network shares
 
   private static let tebibyte: Int64 = 1 << 40

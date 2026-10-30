@@ -397,6 +397,15 @@ final class NotificationManager: NSObject, ObservableObject {
     announceLowSpace(in: disks, threshold: threshold)
   }
 
+  /// The free space of mounted external volumes was read again by the
+  /// background poll (see `LowSpaceRules.pollDecision`). Announces the
+  /// volumes that became almost full, once, sharing `disksRefreshed`'s
+  /// memory, so a volume is never announced twice.
+  func lowSpacePolled(_ disks: [PhysicalDisk]) {
+    guard isEnabled, let threshold = LowSpaceRules.threshold(defaults: defaults) else { return }
+    announceLowSpace(in: disks, threshold: threshold)
+  }
+
   private func announceLowSpace(in disks: [PhysicalDisk], threshold: Double) {
     for (volume, warning) in lowSpaceTracker.newWarnings(in: disks, threshold: threshold) {
       post(

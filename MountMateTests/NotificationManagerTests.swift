@@ -187,6 +187,28 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertEqual(center.added.count, 2)
   }
 
+  func testPolledFillUpIsAnnouncedOnceAndNotAgainByTheNextRefresh() {
+    let manager = makeManager()
+    var card = cardWithBackup()
+    let polled = LowSpaceRules.applyingPolledUsage(
+      ["/Volumes/Backup": .usage(total: 1000, free: 40)], to: [card])
+    // Off: nothing is announced or remembered.
+    manager.lowSpacePolled(polled)
+    XCTAssertTrue(center.added.isEmpty)
+    manager.isEnabled = true
+    manager.lowSpacePolled(polled)
+    manager.lowSpacePolled(polled)
+    XCTAssertEqual(center.added.map(\.identifier), ["lowSpace.v1"])
+    // The popover's refresh sees the same full volume: no second notice.
+    card.partitions = polled[0].partitions
+    manager.disksRefreshed([card])
+    XCTAssertEqual(center.added.count, 1)
+    defaults.set(false, forKey: LowSpaceRules.enabledKey)
+    manager.disksRefreshed([cardWithBackup()])
+    manager.lowSpacePolled(LowSpaceRules.applyingPolledUsage([:], to: [cardWithBackup()]))
+    XCTAssertEqual(center.added.count, 1)
+  }
+
   func testAlmostFullNetworkShareIsAnnouncedOncePerMountWhenTheWarningIsOn() {
     let manager = makeManager()
     let nas = UUID()

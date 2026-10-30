@@ -70,6 +70,11 @@ class DriveManager: ObservableObject {
   let driveExpansionSubject = PassthroughSubject<Bool, Never>()
 
   var refreshDebounceTimer: Timer?
+  /// Next free-space poll of external volumes (see DriveManager+LowSpacePoll).
+  var lowSpacePollTimer: Timer?
+  /// When volume usage was last read, by a refresh or a poll.
+  var lastUsageRead = Date()
+  var isPollingLowSpace = false
   /// Highest QoS asked for by the notifications the debounce timer coalesces.
   var pendingNotificationRefreshQoS: DispatchQoS.QoSClass?
   private var isFetchInProgress = false
@@ -128,6 +133,7 @@ class DriveManager: ObservableObject {
       knownNetworkMountPoints = DiskEventFilter.networkMountPoints(in: entries)
     }
     setupDiskChangeObservers()
+    observeLowSpacePollSettings()
     // The popover can open right after launch; don't let the first list wait.
     refreshDrives(qos: .userInitiated)
     unlocker.loadSavedPasswordAccounts()
@@ -136,6 +142,7 @@ class DriveManager: ObservableObject {
   deinit {
     NSWorkspace.shared.notificationCenter.removeObserver(self)
     refreshDebounceTimer?.invalidate()
+    lowSpacePollTimer?.invalidate()
   }
 
   // MARK: - Busy State
@@ -265,6 +272,8 @@ class DriveManager: ObservableObject {
       NotificationManager.shared.disksRefreshed(
         disks, unverifiedDiskIDs: unverifiedDiskIDs, ejectingDiskIDs: self.busyEjectingDiskIDs,
         busyVolumeIDs: self.busyVolumeIDs)
+      self.lastUsageRead = Date()
+      self.scheduleLowSpacePoll()
       self.isFetchInProgress = false
       self.isRefreshing = false
       self.refreshError = nil

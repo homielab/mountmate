@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Almost-full notice for drives that stay plugged in**: with Notifications and the almost-full warning on, MountMate checks the free space of mounted external volumes every 15 minutes, so a backup drive that fills up overnight gets its notification within 15 minutes instead of only when you open the menu. It only reads the space macOS already knows (no `diskutil` run), skips internal disks, disk images and network shares, and stops checking when no external volume is mounted or the setting is off.
 - **Faster disk list with a hung drive**: when several exFAT or NTFS drives stop answering, plugging or unplugging a disk now waits about 2 seconds in total instead of 2 seconds per drive before the list updates; their space is read at the same time.
 - **Website search results and link previews** now describe what MountMate does (network shares, Keep Alive, Homebrew), and the screenshots have descriptive text for screen readers that tells the light and dark versions apart.
 - Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).

@@ -65,6 +65,81 @@ enum LowSpaceRules {
     }
   }
 
+  // MARK: - Background poll
+
+  /// How often the free space of mounted external volumes is read again
+  /// when nothing else refreshed the list (a drive plugged in for days fills
+  /// up without any mount event).
+  static let pollInterval: TimeInterval = 15 * 60
+
+  /// What the poll timer should do.
+  enum PollDecision: Equatable {
+    /// No timer: notifications or the warning are off, or no external
+    /// volume is mounted.
+    case off
+    /// Read the volumes again at this date.
+    case wait(until: Date)
+    case pollNow
+  }
+
+  /// Volumes the poll reads: mounted, writable user volumes of external
+  /// disks. Internal disks and disk images are left out; network shares have
+  /// their own throttled reads, so a NAS can sleep.
+  static func pollCandidates(in disks: [PhysicalDisk]) -> [Volume] {
+    disks.filter { $0.type == .physical }.flatMap(\.allVolumes).filter {
+      $0.isMounted && $0.mountPoint != nil && !$0.isReadOnly && $0.category == .user
+    }
+  }
+
+  /// Whether the poll is due: `pollInterval` after the last time volume
+  /// usage was read (a list refresh or a poll).
+  static func pollDecision(
+    notificationsEnabled: Bool, threshold: Double?, disks: [PhysicalDisk], lastRead: Date,
+    now: Date
+  ) -> PollDecision {
+    guard notificationsEnabled, threshold != nil, !pollCandidates(in: disks).isEmpty else {
+      return .off
+    }
+    let due = lastRead.addingTimeInterval(pollInterval)
+    return due > now ? .wait(until: due) : .pollNow
+  }
+
+  /// `disks` with the usage the poll read (by mount point) for its
+  /// candidates. A volume whose read failed or timed out keeps its last
+  /// values.
+  static func applyingPolledUsage(
+    _ outcomes: [String: FileSystemUsage.Outcome], to disks: [PhysicalDisk]
+  ) -> [PhysicalDisk] {
+    func update(_ volume: Volume) -> Volume {
+      guard let mountPoint = volume.mountPoint,
+        case .usage(let total, let free) = outcomes[mountPoint], total > 0
+      else { return volume }
+      let usage = ShareUsage(totalBytes: total, freeBytes: free)
+      var updated = Volume(
+        id: volume.id, deviceIdentifier: volume.deviceIdentifier, diskUUID: volume.diskUUID,
+        name: volume.name, isMounted: volume.isMounted, mountPoint: volume.mountPoint,
+        freeSpace: ShareUsage.formatted(max(0, free)), totalSize: volume.totalSize,
+        usedSpace: ShareUsage.formatted(usage.usedBytes), usedBytes: volume.usedBytes,
+        fileSystemType: volume.fileSystemType, usagePercentage: usage.percentage,
+        category: volume.category, isProtected: volume.isProtected, snapshots: volume.snapshots,
+        storageError: nil)
+      updated.isReadOnly = volume.isReadOnly
+      updated.isTimeMachine = volume.isTimeMachine
+      return updated
+    }
+    return disks.map { disk in
+      guard disk.type == .physical else { return disk }
+      var disk = disk
+      disk.partitions = disk.partitions.map(update)
+      disk.containers = disk.containers.map { container in
+        var container = container
+        container.volumes = container.volumes.map(update)
+        return container
+      }
+      return disk
+    }
+  }
+
   /// "Almost full: 94% used, 12 GB free" (tooltip and VoiceOver).
   static func message(for warning: Warning, bundle: Bundle = .main) -> String {
     if let free = warning.free {
