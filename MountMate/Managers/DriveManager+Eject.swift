@@ -132,6 +132,18 @@ extension DriveManager {
     result: ProcessResult, operation: DiskOperation, timeout: TimeInterval
   )
 
+  /// The user ejected `disk` on purpose: its volumes leave the plan of
+  /// volumes to mount again after wake or unlock, so plugging it back in
+  /// before then does not mount it. A failed eject keeps the plan (the
+  /// volumes are still mounted). Nothing to do for a volume-only operation.
+  static func forgetWakeRemount(
+    afterEjecting disk: PhysicalDisk?, succeeded: Bool,
+    wakeRemount: WakeRemountManager = .shared
+  ) {
+    guard succeeded, let disk else { return }
+    wakeRemount.forget(disk.allVolumes)
+  }
+
   /// The common end of Eject, Force Eject and Force Unmount, on the main
   /// thread. On failure: let Keep Alive watch the volumes again, end the
   /// progress state, report the translated error and refresh. On success the
@@ -143,6 +155,7 @@ extension DriveManager {
     completion: ((Result<Void, Error>) -> Void)? = nil,
     restoreKeepAlive: () -> Void, endProgress: @escaping () -> Void
   ) {
+    Self.forgetWakeRemount(afterEjecting: disk, succeeded: failure == nil)
     guard let failure else {
       refreshDrives(qos: .userInitiated) {
         endProgress()

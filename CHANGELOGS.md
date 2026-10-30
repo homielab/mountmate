@@ -89,6 +89,7 @@ All notable changes to this project will be documented in this file.
 - Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
 
 ### Fixed
+- **Ejected disk mounted again after wake**: a disk you eject from the menu (Eject or Force Eject) is no longer mounted again by Mount Again on Wake or after unlocking the screen if you plug it back in before then. A failed eject keeps the disk in the plan.
 - A "Mount at login" share that was still waiting to retry when Keep Alive was turned on is retried again once Keep Alive is turned off, instead of never mounting.
 - **Mount at login with Keep Alive off**: a network share set to mount at login that fails because the Mac started before Wi-Fi was connected, or before a NAS that lost power with it had finished booting, is now tried again after 15 seconds, 30 seconds, 1 minute, 2 minutes and 2 minutes, and each time the network comes up, up to 5 times in all or until it mounts. A share you unmount in MountMate meanwhile is left alone; with Keep Alive on, its reconnects work as before.
 - **Login mount gave up silently**: with Keep Alive off and Notifications on, a network share that still fails to mount at login after its last try now shows one "Could Not Mount at Login" notification with the share name and the reason (for example a wrong password or a server that is off), instead of only writing to the log.

@@ -305,4 +305,35 @@ final class WakeRemountManagerTests: XCTestCase {
     XCTAssertTrue(scheduler.delays.isEmpty)
     XCTAssertEqual(mountCount, 0)
   }
+
+  // MARK: Eject
+
+  private func disk(_ volumes: [Volume]) -> PhysicalDisk {
+    PhysicalDisk(
+      id: "disk9", diskUUID: nil, connectionType: "USB", name: "Backup", totalSize: nil,
+      freeSpace: nil, usedSpace: nil, usagePercentage: nil, type: .physical, isRAIDSet: false,
+      partitions: volumes, containers: [], storageError: nil)
+  }
+
+  func testASuccessfulEjectDropsTheDisksVolumesFromThePlan() {
+    let manager = WakeRemountManager(defaults: defaults, schedule: { _, _ in })
+    let a = volume(uuidA, name: "A", id: "disk9s1")
+    let b = volume(uuidB, name: "B", id: "disk8s1")
+    manager.begin(volumes: [a, b])
+
+    DriveManager.forgetWakeRemount(afterEjecting: disk([a]), succeeded: true, wakeRemount: manager)
+
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
+  }
+
+  func testAFailedEjectKeepsThePlan() {
+    let manager = WakeRemountManager(defaults: defaults, schedule: { _, _ in })
+    let a = volume(uuidA, name: "A", id: "disk9s1")
+    manager.begin(volumes: [a])
+
+    DriveManager.forgetWakeRemount(afterEjecting: disk([a]), succeeded: false, wakeRemount: manager)
+    DriveManager.forgetWakeRemount(afterEjecting: nil, succeeded: true, wakeRemount: manager)
+
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["A"])
+  }
 }
