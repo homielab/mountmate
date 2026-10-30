@@ -258,7 +258,8 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       return { work.cancel() }
     },
     retryWhenDue: { [weak self] in
-      // Keep Alive on: its reconnect sweep already retries login shares.
+      // Keep Alive on: its reconnect sweep already retries login shares;
+      // turning it off calls retryLoginMounts(), which restarts the timer.
       guard !KeepAliveManager.shared.isEnabled else { return }
       self?.retryLoginMounts()
     },

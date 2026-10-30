@@ -36,7 +36,7 @@ extension KeepAliveManager {
   }
 
   /// Main thread only.
-  private func retryLoginMounts() {
+  func retryLoginMounts() {
     if let loginMountRetryAction {
       loginMountRetryAction()
     } else {

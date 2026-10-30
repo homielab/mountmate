@@ -54,6 +54,9 @@ class KeepAliveManager: ObservableObject {
         sweepPending = false
         pendingSweepResetsBackoff = false
         resetRetryState()
+        // Login shares the sweep was retrying go back to their own retries,
+        // whose timer skipped its turns while Keep Alive was on.
+        retryLoginMounts()
       }
     }
   }

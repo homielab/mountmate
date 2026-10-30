@@ -257,6 +257,64 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertEqual(mounts, 2)
   }
 
+  func testTurningKeepAliveOffResumesLoginRetriesUntilTheyGiveUp() {
+    let share = NetworkShare(
+      name: "NAS", server: "nas.local", sharePath: "media", username: "me",
+      mountAtLogin: true, keepMounted: false)
+    var mounts = 0
+    var timer: (() -> Void)?
+    var gaveUp = 0
+    var keepAliveOn = false
+    var retrier: LoginMountRetrier!
+    retrier = LoginMountRetrier(
+      shares: { [share] }, isMounted: { _ in false }, isSuppressed: { _ in false },
+      mount: { _, completion in
+        mounts += 1
+        completion(false, "offline")
+      },
+      schedule: { _, block in
+        timer = block
+        return { timer = nil }
+      },
+      retryWhenDue: { if !keepAliveOn { retrier.retry() } },
+      onGiveUp: { _, _ in gaveUp += 1 })
+    let manager = KeepAliveManager(
+      networkMonitor: FakeNetworkMonitor(), sweepAction: {},
+      loginMountRetryAction: { retrier.retry() })
+    setKeepAlive(false, on: manager)
+
+    retrier.mountAtLaunch()
+    keepAliveOn = true
+    manager.isEnabled = true
+    drainMain()
+    let fire = timer
+    timer = nil
+    fire?()  // skipped: Keep Alive is on, so no timer follows
+    XCTAssertNil(timer)
+    XCTAssertEqual(mounts, 1)
+
+    keepAliveOn = false
+    manager.isEnabled = false
+    XCTAssertEqual(mounts, 2)
+    while let next = timer {
+      timer = nil
+      next()
+    }
+    XCTAssertEqual(mounts, 1 + LoginMountRules.maxRetries)
+    XCTAssertEqual(gaveUp, 1)
+  }
+
+  func testKeepAliveStayingOnNeverRetriesLoginMounts() {
+    var loginRetries = 0
+    let manager = KeepAliveManager(
+      networkMonitor: FakeNetworkMonitor(), sweepAction: {},
+      loginMountRetryAction: { loginRetries += 1 })
+    setKeepAlive(true, on: manager)
+    manager.isEnabled = true
+    drainMain()
+    XCTAssertEqual(loginRetries, 0)
+  }
+
   func testKeepAliveOnLeavesLoginSharesToTheSweep() {
     var loginRetries = 0
     var sweeps = 0
