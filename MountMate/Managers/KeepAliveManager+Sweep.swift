@@ -42,8 +42,7 @@ extension KeepAliveManager {
       // Targets that vanished while the sweep ran (drive pulled, share
       // removed) must not keep the "reconnecting" badge up.
       self.reconcileTargets()
-      guard self.sweepGeneration == generation else { return }
-      self.isSweeping = false
+      self.finishSweep(generation: generation)
     }
 
     // Watchdog: never let one stuck completion block all future sweeps.
@@ -51,8 +50,16 @@ extension KeepAliveManager {
       [weak self] in
       guard let self, self.isSweeping, self.sweepGeneration == generation else { return }
       Log.keepAlive.error("Keep-alive sweep did not finish in time; allowing new sweeps.")
-      self.isSweeping = false
+      self.finishSweep(generation: generation)
     }
+  }
+
+  /// Ends sweep `generation` (if it is still the running one) and starts the
+  /// sweep requested meanwhile, if any. Main thread only.
+  func finishSweep(generation: Int) {
+    guard isSweeping, sweepGeneration == generation else { return }
+    isSweeping = false
+    runPendingSweep()
   }
 
   private func reconnectShares(group: DispatchGroup) {

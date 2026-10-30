@@ -217,6 +217,126 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertEqual(remounts, 0)
   }
 
+  // MARK: - Sweep requested while a sweep runs
+
+  /// A manager whose sweep only counts runs, with Keep Alive on. Restores the
+  /// stored setting afterwards (`isEnabled` writes UserDefaults).
+  private func queueingManager(runs: @escaping () -> Void) -> KeepAliveManager {
+    let key = "keepAliveEnabled"
+    let stored = UserDefaults.standard.object(forKey: key) as? Bool
+    addTeardownBlock {
+      if let stored {
+        UserDefaults.standard.set(stored, forKey: key)
+      } else {
+        UserDefaults.standard.removeObject(forKey: key)
+      }
+    }
+    let manager = KeepAliveManager(networkMonitor: FakeNetworkMonitor(), sweepAction: runs)
+    manager.isEnabled = true
+    return manager
+  }
+
+  /// Simulates a sweep in flight (e.g. stuck on an offline NAS).
+  private func startFakeSweep(_ manager: KeepAliveManager) -> Int {
+    manager.sweepGeneration &+= 1
+    manager.isSweeping = true
+    return manager.sweepGeneration
+  }
+
+  func testRequestsDuringASweepRunExactlyOneMoreSweepWhenItFinishes() {
+    var runs = 0
+    let manager = queueingManager { runs += 1 }
+    drainMain()
+    runs = 0
+    let generation = startFakeSweep(manager)
+
+    // Network back, then wake, then "Reconnect Now" while the sweep hangs.
+    manager.sweepNow(resetBackoff: true)
+    manager.sweepNow(resetBackoff: true)
+    manager.sweepNow()
+    drainMain()
+    XCTAssertEqual(runs, 0)
+    XCTAssertTrue(manager.sweepPending)
+
+    manager.finishSweep(generation: generation)
+    XCTAssertEqual(runs, 1)
+    XCTAssertFalse(manager.sweepPending)
+    XCTAssertFalse(manager.pendingSweepResetsBackoff)
+
+    // A late completion of the same sweep runs nothing more.
+    manager.finishSweep(generation: generation)
+    XCTAssertEqual(runs, 1)
+  }
+
+  func testRequestWhenIdleSweepsAtOnceAndQueuesNothing() {
+    var runs = 0
+    let manager = queueingManager { runs += 1 }
+    drainMain()
+    runs = 0
+
+    manager.sweepNow()
+    drainMain()
+    XCTAssertEqual(runs, 1)
+    XCTAssertFalse(manager.sweepPending)
+  }
+
+  func testQueuedResetBackoffClearsDelaysRecordedByTheRunningSweep() {
+    let manager = queueingManager {}
+    let id = UUID()
+    drainMain()
+    let generation = startFakeSweep(manager)
+    manager.recordAttempt(shareID: id)
+
+    manager.sweepNow(resetBackoff: true)
+    drainMain()
+    XCTAssertTrue(manager.pendingSweepResetsBackoff)
+    // The running sweep's attempt on the offline server fails afterwards.
+    manager.recordAttempt(shareID: id)
+    XCTAssertNotNil(manager.nextRetryDate(forShareID: id))
+
+    manager.finishSweep(generation: generation)
+    XCTAssertNil(manager.nextRetryDate(forShareID: id))
+    XCTAssertEqual(manager.retryAttempt(forShareID: id), 2)
+  }
+
+  func testQueuedSweepWithoutResetKeepsBackoff() {
+    let manager = queueingManager {}
+    let id = UUID()
+    drainMain()
+    let generation = startFakeSweep(manager)
+
+    manager.sweepNow()
+    drainMain()
+    manager.recordAttempt(shareID: id)
+    manager.finishSweep(generation: generation)
+    XCTAssertNotNil(manager.nextRetryDate(forShareID: id))
+  }
+
+  func testNothingIsQueuedWhenKeepAliveIsOff() {
+    var runs = 0
+    let manager = queueingManager { runs += 1 }
+    drainMain()
+    runs = 0
+
+    // Turned off while a request waits: it is dropped.
+    var generation = startFakeSweep(manager)
+    manager.sweepNow(resetBackoff: true)
+    drainMain()
+    XCTAssertTrue(manager.sweepPending)
+    manager.isEnabled = false
+    XCTAssertFalse(manager.sweepPending)
+    manager.finishSweep(generation: generation)
+    XCTAssertEqual(runs, 0)
+
+    // Already off: a request queues nothing.
+    generation = startFakeSweep(manager)
+    manager.sweepNow(resetBackoff: true)
+    drainMain()
+    XCTAssertFalse(manager.sweepPending)
+    manager.finishSweep(generation: generation)
+    XCTAssertEqual(runs, 0)
+  }
+
   // MARK: - Remounting volumes
 
   private func remountTestVolume() -> Volume {

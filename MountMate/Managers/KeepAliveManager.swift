@@ -49,6 +49,9 @@ class KeepAliveManager: ObservableObject {
       if isEnabled {
         sweepNow()
       } else {
+        // Nothing may run after the sweep in flight once Keep Alive is off.
+        sweepPending = false
+        pendingSweepResetsBackoff = false
         resetRetryState()
       }
     }
@@ -104,12 +107,21 @@ class KeepAliveManager: ObservableObject {
   private let networkMonitor: NetworkChangeMonitoring
   /// Replaces the share remount on an interface change (tests).
   let interfaceChangeAction: (() -> Void)?
+  /// Replaces the reconnect sweep itself (tests).
+  let sweepAction: (() -> Void)?
   private var cancellables = Set<AnyCancellable>()
   /// Main thread only.
   var isSweeping = false
   /// Incremented for every sweep so a late completion (or the watchdog) of
   /// an older sweep never resets `isSweeping` for a newer one. Main only.
   var sweepGeneration = 0
+  /// A sweep was asked for while one was running (network back, wake,
+  /// "Reconnect Now"): run exactly one more as soon as it finishes, so the
+  /// request isn't lost behind a sweep stuck on an offline server. Main only.
+  var sweepPending = false
+  /// The pending sweep must clear backoff delays first (failures recorded by
+  /// the running sweep predate the request). Main only.
+  var pendingSweepResetsBackoff = false
   /// Upper bound for one sweep. Mounts have their own timeouts, but if some
   /// completion still never arrives, `isSweeping` must not stay stuck (which
   /// would silently disable keep-alive for the rest of the session).
@@ -119,13 +131,16 @@ class KeepAliveManager: ObservableObject {
   /// Main thread only.
   var currentInterface: InterfaceSnapshot?
 
-  /// Tests inject a fake `networkMonitor` and an `interfaceChangeAction`.
+  /// Tests inject a fake `networkMonitor`, an `interfaceChangeAction` and a
+  /// `sweepAction`.
   init(
     networkMonitor: NetworkChangeMonitoring = NetworkChangeMonitor(),
-    interfaceChangeAction: (() -> Void)? = nil
+    interfaceChangeAction: (() -> Void)? = nil,
+    sweepAction: (() -> Void)? = nil
   ) {
     self.networkMonitor = networkMonitor
     self.interfaceChangeAction = interfaceChangeAction
+    self.sweepAction = sweepAction
 
     let defaults = UserDefaults.standard
     isEnabled =
@@ -283,12 +298,43 @@ class KeepAliveManager: ObservableObject {
   ///   wake and network recovery: failures from before (e.g. away from the
   ///   server's network) must not delay reconnecting by up to 8× the
   ///   interval now that the server may be reachable again.
+  ///
+  /// While a sweep is running the request is queued: one more sweep runs as
+  /// soon as it finishes, however many requests arrived meanwhile.
   func sweepNow(resetBackoff: Bool = false) {
     DispatchQueue.main.async { [weak self] in
+      guard let self, self.isEnabled else { return }
       if resetBackoff {
-        self?.clearBackoffDelays()
+        // Right away too, so "Retrying in …" goes away at once.
+        self.clearBackoffDelays()
       }
-      self?.sweep()
+      if self.isSweeping {
+        self.sweepPending = true
+        self.pendingSweepResetsBackoff = self.pendingSweepResetsBackoff || resetBackoff
+        return
+      }
+      self.runSweep()
+    }
+  }
+
+  /// Runs the sweep queued while the previous one was running. Main only.
+  func runPendingSweep() {
+    guard sweepPending else { return }
+    let resetBackoff = pendingSweepResetsBackoff
+    sweepPending = false
+    pendingSweepResetsBackoff = false
+    guard isEnabled else { return }
+    if resetBackoff {
+      clearBackoffDelays()
+    }
+    runSweep()
+  }
+
+  private func runSweep() {
+    if let sweepAction {
+      sweepAction()
+    } else {
+      sweep()
     }
   }
 

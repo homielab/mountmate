@@ -88,6 +88,7 @@ All notable changes to this project will be documented in this file.
 - Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
 
 ### Fixed
+- **Keep Alive after wake or a network drop**: when the Mac wakes or the network comes back while Keep Alive is still waiting on a server that was offline, the reconnect now runs as soon as that check ends instead of waiting for the next retry, so NAS shares come back without remounting them by hand.
 - The address under each share in Settings → Network Shares is now the one MountMate really connects to, the same as the Preview in the share sheet: NFS shares show `nas:/volume1/media`, IPv6 servers get brackets (`smb://[fd00::2]/share`) and spaces in paths are encoded. Hover it to see the full address.
 - Importing shares from a hand-written file whose server is a full address (`smb://admin@nas.local/Public`, `\\nas\Public`) now splits it into server, share path and username instead of saving a share that never mounts.
 
