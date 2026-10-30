@@ -48,6 +48,9 @@ struct DiskListParser {
   var fileSystemUsage: @Sendable (String) -> FileSystemUsage.Outcome = { _ in .failed }
   /// Mount points of the file systems that are mounted read-only.
   var readOnlyMountPoints: Set<String> = []
+  /// Mount points of Time Machine volumes found outside `diskutil` (see
+  /// `TimeMachineDetector`).
+  var timeMachineMountPoints: Set<String> = []
   /// Second opinion for whole disks without `diskutil info`; disks missing
   /// from the result count as `.unknown`.
   var classifyDisksWithoutInfo: (Set<String>) -> [String: FallbackDiskKind] = { _ in [:] }
@@ -503,7 +506,8 @@ struct DiskListParser {
       snapshots: snapshots,
       storageError: storageError,
       isReadOnly: mountPoint.map { readOnlyMountPoints.contains($0) } ?? false,
-      isTimeMachine: DiskTopology.isTimeMachineVolume(volumeData))
+      isTimeMachine: DiskTopology.isTimeMachineVolume(volumeData)
+        || mountPoint.map { timeMachineMountPoints.contains($0) } ?? false)
   }
 
   private static func createSnapshot(from snapshotData: [String: Any]) -> APFSSnapshot? {

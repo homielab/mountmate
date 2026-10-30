@@ -160,6 +160,17 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertFalse(normal.isReadOnly)
   }
 
+  func testVolumeFoundByTimeMachineDetectorIsMarked() throws {
+    var detected = parser()
+    detected.timeMachineMountPoints = ["/Volumes/Samsung_T5"]
+    let marked = try XCTUnwrap(
+      parse(detected).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertTrue(marked.isTimeMachine)
+
+    let normal = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertFalse(normal.isTimeMachine)
+  }
+
   func testMountCommandMatchesDiskutilSyntax() throws {
     let volume = try XCTUnwrap(
       parse(parser()).disks.first { $0.id == "disk6" }?.partitions.first)

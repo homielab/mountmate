@@ -655,11 +655,13 @@ class DriveManager: ObservableObject {
       Log.drive.debug(
         "Refresh: \(lookup.fetched.count, privacy: .public) diskutil info run(s), \(lookup.reused.count, privacy: .public) disk(s) from cache."
       )
+      let mountEntries = MountTable.entries() ?? []
       let parser = DiskListParser(
         filters: filters,
         showInternalDisks: UserDefaults.standard.bool(forKey: "showInternalDisks"),
         fileSystemUsage: { FileSystemUsage.read(atPath: $0) },
-        readOnlyMountPoints: MountTable.readOnlyMountPoints(in: MountTable.entries() ?? []),
+        readOnlyMountPoints: MountTable.readOnlyMountPoints(in: mountEntries),
+        timeMachineMountPoints: TimeMachineDetector.mountPoints(in: mountEntries),
         classifyDisksWithoutInfo: DiskListParser.classifyWithSystem)
       completion(
         parser.parse(
