@@ -341,6 +341,8 @@ struct EditNetworkShareSheet: View {
 
     if shareToEdit != nil {
       PersistenceManager.shared.updateNetworkShare(share)
+      // Perhaps the new password: automatic mounts may try again.
+      KeepAliveManager.shared.shareWasEdited(shareID: share.id)
     } else {
       PersistenceManager.shared.addNetworkShare(share)
     }

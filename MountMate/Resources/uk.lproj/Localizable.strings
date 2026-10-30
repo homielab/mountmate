@@ -603,3 +603,8 @@
 "Could Not Mount at Login" = "Не вдалося підключити під час входу";
 "MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate не вдалося підключити «%1$@» після кількох спроб: %2$@";
 "Unknown error" = "Невідома помилка";
+
+/* Share password rejected */
+"Password Rejected" = "Пароль відхилено";
+"The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Сервер відхилив пароль для «%@». MountMate припинив повторне підключення, щоб обліковий запис не заблокувався. Оновіть пароль у Налаштування → Мережеві ресурси.";
+"The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Сервер відхилив збережений пароль, тому MountMate припинив повторно підключати цей ресурс. Відредагуйте ресурс і введіть новий пароль.";

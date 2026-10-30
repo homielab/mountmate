@@ -40,7 +40,9 @@ enum LoginMountRules {
   /// The shares to mount again now. A share qualifies while it is still
   /// marked "Mount at login", has not mounted since launch (`pendingIDs`),
   /// is not mounted now, is not already being mounted, was not unmounted by
-  /// the user in MountMate (suppressed) and has retries left.
+  /// the user in MountMate (suppressed), has retries left and the server has
+  /// not rejected its password (`ShareRetryRules`: retrying would lock the
+  /// account).
   static func sharesToRetry(
     shares: [NetworkShare],
     isNetworkAvailable: Bool,
@@ -48,7 +50,8 @@ enum LoginMountRules {
     mountingIDs: Set<UUID>,
     retries: [UUID: Int],
     isMounted: (NetworkShare) -> Bool,
-    isSuppressed: (UUID) -> Bool
+    isSuppressed: (UUID) -> Bool,
+    isCredentialRejected: (UUID) -> Bool = { _ in false }
   ) -> [NetworkShare] {
     guard isNetworkAvailable else { return [] }
     return shares.filter { share in
@@ -58,6 +61,7 @@ enum LoginMountRules {
         && retries[share.id, default: 0] < maxRetries
         && !isMounted(share)
         && !isSuppressed(share.id)
+        && !isCredentialRejected(share.id)
     }
   }
 }
@@ -76,6 +80,7 @@ final class LoginMountRetrier {
   private let shares: () -> [NetworkShare]
   private let isMounted: (NetworkShare) -> Bool
   private let isSuppressed: (UUID) -> Bool
+  private let isCredentialRejected: (UUID) -> Bool
   private let mount: Mount
   private let schedule: Schedule?
   private let retryWhenDue: (() -> Void)?
@@ -95,11 +100,14 @@ final class LoginMountRetrier {
   /// `schedule` nil: no timer, only network retries. `retryWhenDue` runs
   /// when the timer fires (default: `retry()`). `onGiveUp` runs once per
   /// share when its last try fails (with the sanitized error), unless the
-  /// share was mounted or unmounted by the user meanwhile.
+  /// share was mounted or unmounted by the user meanwhile. A share whose
+  /// password the server rejected (`isCredentialRejected`) is not retried
+  /// nor reported as given up (it has its own notification).
   init(
     shares: @escaping () -> [NetworkShare],
     isMounted: @escaping (NetworkShare) -> Bool,
     isSuppressed: @escaping (UUID) -> Bool,
+    isCredentialRejected: @escaping (UUID) -> Bool = { _ in false },
     mount: @escaping Mount,
     schedule: Schedule? = nil,
     retryWhenDue: (() -> Void)? = nil,
@@ -108,6 +116,7 @@ final class LoginMountRetrier {
     self.shares = shares
     self.isMounted = isMounted
     self.isSuppressed = isSuppressed
+    self.isCredentialRejected = isCredentialRejected
     self.mount = mount
     self.schedule = schedule
     self.retryWhenDue = retryWhenDue
@@ -137,7 +146,7 @@ final class LoginMountRetrier {
     let due = LoginMountRules.sharesToRetry(
       shares: shares(), isNetworkAvailable: isNetworkAvailable, pendingIDs: pendingIDs,
       mountingIDs: mountingIDs, retries: retries, isMounted: isMounted,
-      isSuppressed: isSuppressed)
+      isSuppressed: isSuppressed, isCredentialRejected: isCredentialRejected)
     for share in due {
       let attempt = retries[share.id, default: 0] + 1
       retries[share.id] = attempt
@@ -157,6 +166,10 @@ final class LoginMountRetrier {
         self.retries.removeValue(forKey: share.id)
         Log.network.notice(
           "Auto-mounted \(share.name, privacy: .private)\(label, privacy: .public)")
+      } else if self.isCredentialRejected(share.id) {
+        Log.network.error(
+          "Failed to auto-mount \(share.name, privacy: .private)\(label, privacy: .public): the server rejected the password. Not retrying until the share is edited."
+        )
       } else if let delay = LoginMountRules.retryDelay(beforeRetry: (attempt ?? 0) + 1) {
         Log.network.error(
           "Failed to auto-mount \(share.name, privacy: .private)\(label, privacy: .public): \(error ?? "Unknown error", privacy: .private). Retrying in \(Int(delay), privacy: .public) s or when the network comes up."
@@ -184,6 +197,7 @@ final class LoginMountRetrier {
     guard let schedule else { return }
     let waiting = shares().filter {
       $0.mountAtLogin && pendingIDs.contains($0.id) && !isMounted($0) && !isSuppressed($0.id)
+        && !isCredentialRejected($0.id)
     }
     guard
       let delay = LoginMountRules.nextTimerDelay(

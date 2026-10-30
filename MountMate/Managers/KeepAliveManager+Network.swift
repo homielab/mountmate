@@ -59,6 +59,9 @@ extension KeepAliveManager {
       var needsSweep = false
       for share in shares {
         guard !self.isSuppressed(shareID: share.id) else { continue }
+        // Unmounting would drop a working connection for a mount that the
+        // saved password can no longer make.
+        guard !self.isCredentialRejected(shareID: share.id) else { continue }
         guard NetworkMountManager.shared.isMounted(share: share) else {
           // Not mounted right now — the regular sweep will reconnect it.
           needsSweep = true

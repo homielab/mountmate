@@ -603,3 +603,8 @@
 "Could Not Mount at Login" = "Không thể gắn khi đăng nhập";
 "MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate không gắn được “%1$@” sau nhiều lần thử: %2$@";
 "Unknown error" = "Lỗi không xác định";
+
+/* Share password rejected */
+"Password Rejected" = "Mật khẩu bị từ chối";
+"The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Máy chủ đã từ chối mật khẩu của “%@”. MountMate đã ngừng kết nối lại để tài khoản không bị khoá. Hãy cập nhật mật khẩu trong Cài đặt → Chia sẻ Mạng.";
+"The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Máy chủ đã từ chối mật khẩu đã lưu nên MountMate ngừng kết nối lại chia sẻ này. Hãy sửa chia sẻ để nhập mật khẩu mới.";

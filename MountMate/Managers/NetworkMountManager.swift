@@ -246,6 +246,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     shares: { PersistenceManager.shared.networkShares },
     isMounted: { [weak self] share in self?.isMounted(share: share) ?? false },
     isSuppressed: { KeepAliveManager.shared.isSuppressed(shareID: $0) },
+    isCredentialRejected: { KeepAliveManager.shared.isCredentialRejected(shareID: $0) },
     mount: { [weak self] share, completion in
       guard let self else { return completion(false, nil) }
       // Automatic: must not clear keep-alive suppression or backoff state.

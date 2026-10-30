@@ -26,14 +26,17 @@ enum DiagnosticsReport {
     var keepAlive = 0
     var mountAtLogin = 0
     var almostFull = 0
+    /// Shares not reconnected because the server rejected their password.
+    var passwordRejected = 0
 
     var saved: Int { savedByProtocol.values.reduce(0, +) }
   }
 
-  /// Counts `shares`; `mountedIDs` and `usage` come from the share manager.
+  /// Counts `shares`; `mountedIDs` and `usage` come from the share manager,
+  /// `passwordRejectedIDs` from Keep Alive.
   static func shareSummary(
     of shares: [NetworkShare], mountedIDs: Set<UUID>, usage: [UUID: ShareUsage],
-    threshold: Double?
+    threshold: Double?, passwordRejectedIDs: Set<UUID> = []
   ) -> ShareSummary {
     var summary = ShareSummary()
     for share in shares {
@@ -42,6 +45,7 @@ enum DiagnosticsReport {
       if isMounted { summary.mounted += 1 }
       if share.keepMounted { summary.keepAlive += 1 }
       if share.mountAtLogin { summary.mountAtLogin += 1 }
+      if passwordRejectedIDs.contains(share.id) { summary.passwordRejected += 1 }
       if isMounted, let shareUsage = usage[share.id],
         LowSpaceRules.warning(for: shareUsage, threshold: threshold) != nil
       {
@@ -175,6 +179,7 @@ enum DiagnosticsReport {
       "  Keep Alive: \(shares.keepAlive)",
       "  Mount at login: \(shares.mountAtLogin)",
       "  Almost full: \(shares.almostFull)",
+      "  Password rejected: \(shares.passwordRejected)",
     ]
     out += [
       "",

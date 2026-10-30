@@ -603,3 +603,8 @@
 "Could Not Mount at Login" = "登入時無法裝載";
 "MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate 多次嘗試後仍無法裝載「%1$@」：%2$@";
 "Unknown error" = "未知錯誤";
+
+/* Share password rejected */
+"Password Rejected" = "密碼遭拒";
+"The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "伺服器拒絕了「%@」的密碼。MountMate 已停止重新連線，以免帳號遭鎖定。請在「設定」→「網路共享」中更新密碼。";
+"The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "伺服器拒絕了已儲存的密碼，因此 MountMate 已停止重新連線此共享。請編輯共享並輸入新密碼。";

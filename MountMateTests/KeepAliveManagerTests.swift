@@ -77,6 +77,71 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertFalse(manager.isSuppressed(shareID: id))
   }
 
+  func testRejectedPasswordStopsRetriesUntilTheShareIsEdited() {
+    let manager = KeepAliveManager.shared
+    let share = NetworkShare(
+      name: "KeepAliveTest-\(UUID().uuidString)", server: "nas.local", sharePath: "x",
+      username: "me")
+    defer { manager.resume(shareID: share.id) }
+    manager.recordAttempt(shareID: share.id)
+    manager.recordResult(shareID: share.id, name: share.name, success: false)
+    drainMain()
+    XCTAssertTrue(manager.reconnectingShareIDs.contains(share.id))
+
+    XCTAssertTrue(manager.rejectCredentials(of: share, notify: false))
+    XCTAssertFalse(
+      manager.rejectCredentials(of: share, notify: false), "one notice per rejection")
+    manager.recordResult(shareID: share.id, name: share.name, success: false)
+    drainMain()
+    XCTAssertTrue(manager.isCredentialRejected(shareID: share.id))
+    XCTAssertFalse(manager.isDueForRetry(shareID: share.id))
+    XCTAssertTrue(manager.passwordRejectedShareIDs.contains(share.id))
+    XCTAssertFalse(manager.reconnectingShareIDs.contains(share.id), "not retried: not reconnecting")
+
+    // "Reconnect Now", wake and network recovery do not bring it back.
+    manager.sweepNow(resetBackoff: true)
+    drainMain()
+    XCTAssertFalse(manager.isDueForRetry(shareID: share.id))
+
+    manager.shareWasEdited(shareID: share.id)
+    drainMain()
+    XCTAssertFalse(manager.isCredentialRejected(shareID: share.id))
+    XCTAssertTrue(manager.isDueForRetry(shareID: share.id))
+    XCTAssertFalse(manager.passwordRejectedShareIDs.contains(share.id))
+    // Rejected again with the edited password: announced again.
+    XCTAssertTrue(manager.rejectCredentials(of: share, notify: false))
+  }
+
+  func testMountingByHandClearsARejectedPassword() {
+    let manager = KeepAliveManager.shared
+    let share = NetworkShare(
+      name: "KeepAliveTest-\(UUID().uuidString)", server: "nas.local", sharePath: "x",
+      username: "me")
+    manager.rejectCredentials(of: share, notify: false)
+    XCTAssertFalse(manager.isDueForRetry(shareID: share.id))
+
+    manager.resume(shareID: share.id)
+    drainMain()
+    XCTAssertFalse(manager.isCredentialRejected(shareID: share.id))
+    XCTAssertTrue(manager.isDueForRetry(shareID: share.id))
+    XCTAssertFalse(manager.passwordRejectedShareIDs.contains(share.id))
+  }
+
+  func testNetworkFailureStillBacksOffAndRetries() {
+    let manager = KeepAliveManager.shared
+    let id = UUID()
+    defer { manager.resume(shareID: id) }
+    manager.recordAttempt(shareID: id)
+    manager.recordResult(shareID: id, name: "NAS", success: false)
+    XCTAssertFalse(manager.isCredentialRejected(shareID: id))
+    XCTAssertEqual(manager.retryAttempt(forShareID: id), 1)
+    XCTAssertNotNil(manager.nextRetryDate(forShareID: id))
+
+    manager.sweepNow(resetBackoff: true)
+    drainMain()
+    XCTAssertTrue(manager.isDueForRetry(shareID: id))
+  }
+
   func testUnsuppressKeepsRetryState() {
     let manager = KeepAliveManager.shared
     let id = UUID()

@@ -603,3 +603,8 @@
 "Could Not Mount at Login" = "Could Not Mount at Login";
 "MountMate couldn't mount “%1$@” after several tries: %2$@" = "MountMate couldn't mount “%1$@” after several tries: %2$@";
 "Unknown error" = "Unknown error";
+
+/* Share password rejected */
+"Password Rejected" = "Password Rejected";
+"The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares.";
+"The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password.";

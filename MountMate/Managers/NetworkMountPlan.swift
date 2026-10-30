@@ -13,8 +13,9 @@ enum MountOutcome: Equatable {
   /// showed it under another form of the server name; that mount was
   /// adopted as this share's. Our own (unused) folder can be cleaned up.
   case adopted
-  /// A user-readable error message.
-  case failed(String)
+  /// A user-readable error message, and the NetFS / errno status when the
+  /// mount went through NetFS (nil for NFS and failures before the call).
+  case failed(String, status: Int32? = nil)
 }
 
 /// What to do once the protocol-specific mount step has finished: the result
@@ -188,7 +189,7 @@ enum NetworkMountPlan {
       return MountResolution(
         success: false, message: timeoutMessage(for: share),
         cleanUpMountPoint: !mayStillComplete, undoMount: false)
-    case .failed(let message):
+    case .failed(let message, _):
       return MountResolution(
         success: false, message: message, cleanUpMountPoint: true, undoMount: false)
     }

@@ -91,6 +91,10 @@ class KeepAliveManager: ObservableObject {
   /// Identifiers of targets that are currently down and being retried.
   @Published private(set) var reconnectingShareIDs: Set<UUID> = []
   @Published private(set) var reconnectingVolumeIDs: Set<String> = []
+  /// Shares whose saved credentials the server rejected (`ShareRetryRules`):
+  /// not retried until the user edits the share or mounts it. Main thread
+  /// copy of `credentialRejectedIDs` for the UI.
+  @Published private(set) var passwordRejectedShareIDs: Set<UUID> = []
 
   var maxRetryInterval: Double { retryInterval * 8 }
 
@@ -104,6 +108,10 @@ class KeepAliveManager: ObservableObject {
   private var suppressedShareIDs: Set<UUID> = []
   private var suppressedVolumeIDs: Set<String> = []
   private let suppressionLock = NSLock()
+
+  /// Shares whose credentials the server rejected (session-scoped).
+  private var credentialRejectedIDs: Set<UUID> = []
+  private let credentialLock = NSLock()
 
   // MARK: - Infrastructure
 
@@ -277,6 +285,85 @@ class KeepAliveManager: ObservableObject {
     retryStateLock.lock()
     shareRetries.remove(shareID)
     retryStateLock.unlock()
+    // The user tries again on purpose: if the password is still wrong, this
+    // mount fails and rejects it again.
+    forgetCredentialRejection(shareID: shareID)
+  }
+
+  // MARK: - Rejected credentials
+
+  /// The server rejected the share's saved credentials
+  /// (`ShareRetryRules.isCredentialFailure`): stops every automatic retry of
+  /// the share (Keep Alive, login retries) until the user edits the share or
+  /// mounts it, since each retry with the old password counts as a failed
+  /// sign-in and gets the account locked. `notify`: post the "Password
+  /// Rejected" notification (automatic mounts; a mount the user asked for
+  /// shows its error itself). Notifies once per rejection: returns false
+  /// when the share was already rejected. Any thread.
+  @discardableResult
+  func rejectCredentials(of share: NetworkShare, notify: Bool) -> Bool {
+    let isNew = credentialLock.withLock { credentialRejectedIDs.insert(share.id).inserted }
+    guard isNew else { return false }
+    Log.keepAlive.error(
+      "The server rejected the credentials of \(share.name, privacy: .private). Not reconnecting it until the share is edited or mounted by hand."
+    )
+    retryStateLock.withLock { shareRetries.remove(share.id) }
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      self.passwordRejectedShareIDs.insert(share.id)
+      if self.reconnectingShareIDs.contains(share.id) {
+        self.reconnectingShareIDs.remove(share.id)
+      }
+      // No "Cannot Reconnect": it is not reconnecting any more.
+      NotificationManager.shared.keepAliveForget(
+        targetID: Self.notificationKey(shareID: share.id))
+      if notify {
+        NotificationManager.shared.sharePasswordRejected(shareID: share.id, name: share.name)
+      }
+    }
+    return true
+  }
+
+  /// Whether automatic mounts of the share are stopped because the server
+  /// rejected its credentials. Any thread.
+  func isCredentialRejected(shareID: UUID) -> Bool {
+    credentialLock.withLock { credentialRejectedIDs.contains(shareID) }
+  }
+
+  /// The user edited the share (perhaps entering the new password):
+  /// automatic mounts may try it again, right away. Main thread only.
+  func shareWasEdited(shareID: UUID) {
+    guard forgetCredentialRejection(shareID: shareID) else { return }
+    retryStateLock.withLock { shareRetries.remove(shareID) }
+    if isEnabled {
+      sweepNow()
+    } else {
+      retryLoginMounts()
+    }
+  }
+
+  /// Returns whether the share was rejected.
+  @discardableResult
+  private func forgetCredentialRejection(shareID: UUID) -> Bool {
+    let wasRejected = credentialLock.withLock { credentialRejectedIDs.remove(shareID) != nil }
+    if wasRejected {
+      DispatchQueue.main.async { [weak self] in
+        self?.passwordRejectedShareIDs.remove(shareID)
+      }
+    }
+    return wasRejected
+  }
+
+  /// Drops rejections of shares that were deleted. Main thread only.
+  private func pruneCredentialRejections(keeping savedIDs: Set<UUID>) {
+    let removed = credentialLock.withLock { () -> Set<UUID> in
+      let stale = credentialRejectedIDs.subtracting(savedIDs)
+      credentialRejectedIDs.subtract(stale)
+      return stale
+    }
+    if !removed.isEmpty {
+      passwordRejectedShareIDs.subtract(removed)
+    }
   }
 
   /// Called when the user mounts a volume again — clears any suppression and
@@ -400,6 +487,9 @@ class KeepAliveManager: ObservableObject {
   /// flag (which would otherwise keep the menu bar badge up for good) and
   /// their notification throttle. Main thread only.
   func reconcileTargets() {
+    // Rejections survive Keep Alive being turned off: the login retries
+    // must not use the rejected password either.
+    pruneCredentialRejections(keeping: Set(PersistenceManager.shared.networkShares.map(\.id)))
     reconcileTargets(
       validShareIDs: Set(keepAliveShares.map(\.id)),
       validVolumeIDs: presentKeepAliveVolumeIDs())
@@ -515,8 +605,10 @@ class KeepAliveManager: ObservableObject {
 
   /// Internal (not private) for unit tests.
   func recordResult(shareID: UUID, name: String, success: Bool) {
-    // A share the user ejected in the meantime is not "reconnecting".
-    let clear = success || isSuppressed(shareID: shareID)
+    // A share the user ejected in the meantime is not "reconnecting", nor
+    // one whose password was rejected (it is not retried).
+    let clear =
+      success || isSuppressed(shareID: shareID) || isCredentialRejected(shareID: shareID)
     if clear {
       retryStateLock.withLock { shareRetries.remove(shareID) }
     }
@@ -573,9 +665,11 @@ class KeepAliveManager: ObservableObject {
   }
 
   /// A target is due for a retry when it has never been attempted, or when
-  /// its backoff delay has elapsed.
+  /// its backoff delay has elapsed. A share whose password the server
+  /// rejected never is (`rejectCredentials(of:notify:)`).
   func isDueForRetry(shareID: UUID) -> Bool {
-    retryStateLock.withLock { shareRetries.isDue(shareID) }
+    guard !isCredentialRejected(shareID: shareID) else { return false }
+    return retryStateLock.withLock { shareRetries.isDue(shareID) }
   }
 
   func isDueForRetry(volumeID: String) -> Bool {

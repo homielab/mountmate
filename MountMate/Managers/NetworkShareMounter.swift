@@ -182,6 +182,13 @@ final class NetworkShareMounter {
         share: share, password: password, mountPoint: mountPoint, userInitiated: userInitiated)
     }
 
+    if ShareRetryRules.isCredentialFailure(outcome) {
+      // Before `finish`, so Keep Alive and the login retries see it when
+      // they handle this result.
+      KeepAliveManager.shared.rejectCredentials(
+        of: share, notify: !userInitiated)
+    }
+
     let isSuppressed = KeepAliveManager.shared.isSuppressed(shareID: share.id)
     let resolution = NetworkMountPlan.resolution(
       for: outcome, share: share, userInitiated: userInitiated, isSuppressed: isSuppressed)
@@ -354,7 +361,8 @@ final class NetworkShareMounter {
       "NetFS mount of \(share.name, privacy: .private) failed with status \(status, privacy: .public) (\(NetworkMountManager.netFSStatusName(status) ?? "unknown", privacy: .public))."
     )
     return .failed(
-      NetworkMountManager.netFSErrorMessage(status, share: share, mountPoint: mountPoint))
+      NetworkMountManager.netFSErrorMessage(status, share: share, mountPoint: mountPoint),
+      status: status)
   }
 
   /// One `NetFSMountURLSync` call, waiting at most `NetworkMountPlan

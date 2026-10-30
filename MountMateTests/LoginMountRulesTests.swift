@@ -16,12 +16,13 @@ final class LoginMountRulesTests: XCTestCase {
     mounting: Set<UUID> = [],
     retries: [UUID: Int] = [:],
     mounted: Set<UUID> = [],
-    suppressed: Set<UUID> = []
+    suppressed: Set<UUID> = [],
+    rejected: Set<UUID> = []
   ) -> [UUID] {
     LoginMountRules.sharesToRetry(
       shares: shares ?? [nas], isNetworkAvailable: network, pendingIDs: pending ?? [nas.id],
       mountingIDs: mounting, retries: retries, isMounted: { mounted.contains($0.id) },
-      isSuppressed: { suppressed.contains($0) }
+      isSuppressed: { suppressed.contains($0) }, isCredentialRejected: { rejected.contains($0) }
     ).map(\.id)
   }
 
@@ -46,6 +47,10 @@ final class LoginMountRulesTests: XCTestCase {
 
   func testShareTheUserUnmountedIsNotRetried() {
     XCTAssertEqual(due(suppressed: [nas.id]), [])
+  }
+
+  func testShareWhosePasswordWasRejectedIsNotRetried() {
+    XCTAssertEqual(due(rejected: [nas.id]), [])
   }
 
   func testShareBeingMountedOrNotPendingIsNotRetried() {
@@ -92,6 +97,7 @@ final class LoginMountRulesTests: XCTestCase {
     var shares: [NetworkShare]
     var mounted = Set<UUID>()
     var suppressed = Set<UUID>()
+    var rejected = Set<UUID>()
     var results: [Bool] = []
     private(set) var mounts: [UUID] = []
     /// Completions not answered yet (`answerLater`).
@@ -109,6 +115,7 @@ final class LoginMountRulesTests: XCTestCase {
       shares: { [unowned self] in self.shares },
       isMounted: { [unowned self] in self.mounted.contains($0.id) },
       isSuppressed: { [unowned self] in self.suppressed.contains($0) },
+      isCredentialRejected: { [unowned self] in self.rejected.contains($0) },
       mount: { [unowned self] share, completion in
         self.mounts.append(share.id)
         if self.answerLater {
@@ -237,6 +244,19 @@ final class LoginMountRulesTests: XCTestCase {
     harness.retrier.retry()
     harness.retrier.mountAtLaunch()
     XCTAssertEqual(harness.gaveUp.count, 1)
+  }
+
+  func testRejectedPasswordStopsTheTimerAndIsNotReportedAsGivenUp() {
+    let harness = timedHarness()
+    harness.answerLater = true
+    harness.retrier.mountAtLaunch()
+    // The mounter marks the rejection before answering.
+    harness.rejected.insert(nas.id)
+    harness.answerWaiting(false)
+    XCTAssertFalse(harness.hasTimer)
+    XCTAssertEqual(harness.retrier.retry(), [])
+    XCTAssertEqual(harness.mounts, [nas.id])
+    XCTAssertTrue(harness.gaveUp.isEmpty)
   }
 
   func testShareThatMountsLaterIsNotReported() {

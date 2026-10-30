@@ -155,13 +155,14 @@ final class DiagnosticsReportTests: XCTestCase {
         full.id: ShareUsage(totalBytes: tb, freeBytes: tb / 100),
         idle.id: ShareUsage(totalBytes: tb, freeBytes: 0),
       ],
-      threshold: 0.9)
+      threshold: 0.9, passwordRejectedIDs: [idle.id, UUID()])
     XCTAssertEqual(summary.savedByProtocol, [.smb: 2, .nfs: 1])
     XCTAssertEqual(summary.saved, 3)
     XCTAssertEqual(summary.mounted, 2)
     XCTAssertEqual(summary.keepAlive, 2)
     XCTAssertEqual(summary.mountAtLogin, 1)
     XCTAssertEqual(summary.almostFull, 1)
+    XCTAssertEqual(summary.passwordRejected, 1, "deleted shares are not counted")
 
     let report = DiagnosticsReport.format(
       appVersion: "1", build: "1", macOS: "x", flags: [], shares: summary, lines: [],
@@ -172,6 +173,7 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertTrue(report.contains("  Keep Alive: 2\n"))
     XCTAssertTrue(report.contains("  Mount at login: 1\n"))
     XCTAssertTrue(report.contains("  Almost full: 1\n"))
+    XCTAssertTrue(report.contains("  Password rejected: 1\n"))
     for secret in ["Family", "Backup", "Media", "nas.local", "10.0.0.5", "photos", "alice"] {
       XCTAssertFalse(report.contains(secret), secret)
     }

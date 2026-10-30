@@ -335,6 +335,20 @@ final class NotificationManager: NSObject, ObservableObject {
         name, reason))
   }
 
+  /// The server rejected a share's saved password and MountMate stopped
+  /// reconnecting it. Posted once per rejection (`KeepAliveManager
+  /// .rejectCredentials(of:notify:)`).
+  func sharePasswordRejected(shareID: UUID, name: String) {
+    post(
+      id: "passwordRejected.\(shareID.uuidString)",
+      title: NSLocalizedString("Password Rejected", comment: "Notification title"),
+      body: String(
+        format: NSLocalizedString(
+          "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares.",
+          comment: "Notification: share password rejected; share name"),
+        name))
+  }
+
   /// A blocked volume mounted before MountMate started could not be
   /// unmounted.
   func blockedVolumeStillMounted(name: String, volumeUUID: String) {

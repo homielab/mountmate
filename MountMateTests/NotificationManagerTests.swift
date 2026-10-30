@@ -383,6 +383,25 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertTrue(center.added.isEmpty)
   }
 
+  func testRejectedPasswordNamesTheShareAndPointsToSettings() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let manager = makeManager()
+    let id = UUID()
+    manager.sharePasswordRejected(shareID: id, name: "NAS")
+    XCTAssertEqual(center.added.map(\.identifier), ["passwordRejected.\(id.uuidString)"])
+    XCTAssertEqual(center.added.first?.content.title, "Password Rejected")
+    XCTAssertEqual(
+      center.added.first?.content.body,
+      "The server rejected the password for “NAS”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares."
+    )
+    XCTAssertTrue(center.added.first?.content.categoryIdentifier.isEmpty ?? false)
+  }
+
+  func testRejectedPasswordIsSilentWhenNotificationsAreOff() {
+    makeManager().sharePasswordRejected(shareID: UUID(), name: "NAS")
+    XCTAssertTrue(center.added.isEmpty)
+  }
+
   func testOtherNotificationsUseTheDefaultCategory() {
     defaults.set(true, forKey: NotificationManager.enabledKey)
     let manager = makeManager()

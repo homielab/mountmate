@@ -8,6 +8,7 @@ struct NetworkShareRow: View {
   /// Reports a failed action as (alert title, message).
   let onError: (_ title: String, _ message: String) -> Void
   @ObservedObject private var networkManager = NetworkMountManager.shared
+  @ObservedObject private var keepAlive = KeepAliveManager.shared
   @State private var isWorking = false
   @State private var isConfirmingDelete = false
   /// Set when unmounting before a delete failed: offers "Remove Anyway".
@@ -70,6 +71,25 @@ struct NetworkShareRow: View {
               .background(Color.orange.opacity(0.12))
               .clipShape(.rect(cornerRadius: 4))
               .help("Mounts read-only: files on the share cannot be changed or deleted")
+          }
+
+          if keepAlive.passwordRejectedShareIDs.contains(share.id) {
+            Label(
+              NSLocalizedString(
+                "Password Rejected", comment: "Badge: the server rejected the share's password"),
+              systemImage: "key.slash"
+            )
+            .font(.caption2)
+            .bold()
+            .foregroundStyle(.red)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.red.opacity(0.12))
+            .clipShape(.rect(cornerRadius: 4))
+            .help(
+              NSLocalizedString(
+                "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password.",
+                comment: "Tooltip for the Password Rejected badge"))
           }
 
           if share.shareProtocol.isDeprecated {
