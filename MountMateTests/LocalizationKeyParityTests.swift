@@ -116,6 +116,18 @@ final class LocalizationKeyParityTests: XCTestCase {
     }
   }
 
+  /// Chinese full stops are full width: no space follows "。".
+  func testChineseHasNoSpaceAfterFullStop() throws {
+    for language in ["zh-Hans", "zh-Hant"] {
+      let lproj = try XCTUnwrap(
+        Bundle(for: DriveManager.self).path(forResource: language, ofType: "lproj"))
+      let url = URL(fileURLWithPath: lproj).appendingPathComponent("Localizable.strings")
+      let strings = try XCTUnwrap(NSDictionary(contentsOf: url) as? [String: String])
+      let bad = strings.filter { $0.value.contains("。 ") }.keys.sorted()
+      XCTAssertEqual(bad, [], "\(language): space after 。")
+    }
+  }
+
   func testAllLanguagesKeepTheEnglishPlaceholders() throws {
     for language in languages.dropFirst() {
       XCTAssertEqual(try placeholderMismatches(for: language), [], language)

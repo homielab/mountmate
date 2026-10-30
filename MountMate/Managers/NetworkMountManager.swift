@@ -29,6 +29,8 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// Where each saved (and manually connected) share is currently mounted,
   /// from the last status refresh. Main thread only.
   private(set) var mountPointsByShareID: [UUID: String] = [:]
+  /// Shares whose current mount is read-only (from the mount table).
+  @Published private(set) var readOnlyShareIDs: Set<UUID> = []
   /// Total and free bytes of each mounted share, from the last status refresh.
   @Published private(set) var usageByShareID: [UUID: ShareUsage] = [:]
   @Published var manuallyConnectedShares: [NetworkShare] = []
@@ -132,6 +134,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
         self.mountedShareIDs = parsedData.mountedShareIDs
       }
       self.mountPointsByShareID = parsedData.mountPoints
+      if self.readOnlyShareIDs != parsedData.readOnlyShareIDs {
+        self.readOnlyShareIDs = parsedData.readOnlyShareIDs
+      }
       if self.manuallyConnectedShares != parsedData.manualShares {
         self.manuallyConnectedShares = parsedData.manualShares
       }
@@ -190,7 +195,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
         (PersistenceManager.shared.networkShares + self.manuallyConnectedShares)
           .map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
       NotificationManager.shared.sharesRefreshed(
-        usage: usage, mountedShareIDs: Set(self.mountPointsByShareID.keys), names: names)
+        usage: usage, mountedShareIDs: Set(self.mountPointsByShareID.keys), names: names,
+        readOnlyShareIDs: self.readOnlyShareIDs.union(
+          PersistenceManager.shared.networkShares.filter(\.readOnly).map(\.id)))
     }
   }
 

@@ -118,4 +118,23 @@ final class NetworkMountTableTests: XCTestCase {
     XCTAssertEqual(NetworkMountTable.liveMountPoint(of: [a], lastKnown: nil), a.mountPoint)
     XCTAssertNil(NetworkMountTable.liveMountPoint(of: [], lastKnown: "/Volumes/public"))
   }
+
+  func testReadOnlyMountIsReportedAndImportedReadOnly() throws {
+    let entry = MountEntry(
+      source: "//nas/media", mountPoint: "/Volumes/media", fileSystemType: "smbfs",
+      isReadOnly: true)
+    let readOnly = try XCTUnwrap(MountedNetworkShare(entry: entry))
+    XCTAssertTrue(readOnly.isReadOnly)
+    XCTAssertTrue(NetworkMountTable.importedShare(from: readOnly, localize: { $0 }).readOnly)
+    let writable = try mount("//nas/docs", at: "/Volumes/docs", "smbfs")
+    XCTAssertFalse(writable.isReadOnly)
+    XCTAssertFalse(NetworkMountTable.importedShare(from: writable, localize: { $0 }).readOnly)
+
+    let saved = NetworkShare(name: "media", server: "nas", sharePath: "media", username: "")
+    var cache = [String: NetworkShare]()
+    let parsed = parse([readOnly, writable], saved: [saved], cache: &cache)
+    let manualID = try XCTUnwrap(parsed.manualShares.first?.id)
+    XCTAssertEqual(parsed.readOnlyShareIDs, [saved.id])
+    XCTAssertFalse(parsed.readOnlyShareIDs.contains(manualID))
+  }
 }

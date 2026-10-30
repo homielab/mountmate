@@ -71,8 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁盘仅在插入或登录时不会自动挂载。备份工具等应用仍可在需要时挂载它们。";
 "Unmount All Disks on Sleep" = "进入睡眠时卸载所有磁盘";
 "Unmount All Disks When the Screen Locks" = "锁定屏幕时卸载所有磁盘";
-"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "屏幕锁定时卸载所有可移除磁盘，避免您离开时仍有磁盘处于打开状态。受保护卷宗、由“保持活跃”保持挂载的卷宗以及正在使用的卷宗保持挂载。不会强制卸载。 Time Machine 磁盘和磁盘映像保持挂载。";
-"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Mac 睡眠前卸载所有外置磁盘。受保护卷宗和正在使用的卷宗保持挂载。不会强制卸载。 Time Machine 磁盘和磁盘映像保持挂载。";
+"Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "屏幕锁定时卸载所有可移除磁盘，避免您离开时仍有磁盘处于打开状态。受保护卷宗、由“保持活跃”保持挂载的卷宗以及正在使用的卷宗保持挂载。不会强制卸载。Time Machine 磁盘和磁盘映像保持挂载。";
+"Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Mac 睡眠前卸载所有外置磁盘。受保护卷宗和正在使用的卷宗保持挂载。不会强制卸载。Time Machine 磁盘和磁盘映像保持挂载。";
 
 // Shortcuts & Language Section
 "Shortcuts & Language" = "快捷键与语言";
@@ -383,7 +383,7 @@
 "Off" = "关闭";
 "After %d min Without Use" = "%d 分钟未使用后";
 "No Volumes Unmounted When Idle" = "没有闲置时卸载的卷宗";
-"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "右键点按外置驱动器上的卷宗并选择“闲置时卸载”，即可在若干分钟没有读写后将其卸载。仍在使用的卷宗会保持挂载，稍后再试。 Time Machine 磁盘保持挂载。";
+"Right-click a volume on an external drive and choose “Unmount When Idle” to unmount it after some minutes without reads or writes. A volume still in use stays mounted and is tried again later. Time Machine disks stay mounted." = "右键点按外置驱动器上的卷宗并选择“闲置时卸载”，即可在若干分钟没有读写后将其卸载。仍在使用的卷宗会保持挂载，稍后再试。Time Machine 磁盘保持挂载。";
 "Failed to mount “%@” because it is currently in use by “%@”." = "无法挂载“%@”，因为它正被“%@”使用。";
 "Failed to mount “%@” because it is currently in use by another application." = "无法挂载“%@”，因为它正被其他应用使用。";
 "An unknown error occurred while trying to mount “%@”." = "尝试挂载“%@”时发生未知错误。";

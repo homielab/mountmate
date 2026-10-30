@@ -8,8 +8,10 @@ struct MountedNetworkShare: Equatable, Sendable {
   let source: String
   let mountPoint: String
   let shareProtocol: ShareProtocol
+  /// Mounted read-only (`MNT_RDONLY`), whatever the saved share asks for.
+  let isReadOnly: Bool
 
-  init?(source: String, mountPoint: String, fileSystemType: String) {
+  init?(source: String, mountPoint: String, fileSystemType: String, isReadOnly: Bool = false) {
     // The filesystem type decides the protocol; a mount point that merely
     // contains "smbfs" in its name is never mistaken for one.
     guard let shareProtocol = ShareProtocol.from(mountFilesystemName: fileSystemType),
@@ -18,12 +20,14 @@ struct MountedNetworkShare: Equatable, Sendable {
     self.source = source
     self.mountPoint = mountPoint
     self.shareProtocol = shareProtocol
+    self.isReadOnly = isReadOnly
   }
 
   /// A mount table entry, or nil if it is not a network share.
   init?(entry: MountEntry) {
     self.init(
-      source: entry.source, mountPoint: entry.mountPoint, fileSystemType: entry.fileSystemType)
+      source: entry.source, mountPoint: entry.mountPoint, fileSystemType: entry.fileSystemType,
+      isReadOnly: entry.isReadOnly)
   }
 
   /// Normalized server + path of a network share, compared exactly (never by

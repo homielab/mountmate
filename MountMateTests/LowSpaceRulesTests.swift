@@ -261,6 +261,12 @@ final class LowSpaceRulesTests: XCTestCase {
     XCTAssertEqual(LowSpaceRules.warning(for: share(used: 0.896), threshold: 0.9)?.percentUsed, 90)
   }
 
+  func testReadOnlyShareGetsNoWarning() {
+    XCTAssertNil(LowSpaceRules.warning(for: share(used: 0.95), isReadOnly: true, threshold: 0.9))
+    XCTAssertNotNil(
+      LowSpaceRules.warning(for: share(used: 0.95), isReadOnly: false, threshold: 0.9))
+  }
+
   func testShareWithoutSizeOrWithTheWarningOffGetsNone() {
     XCTAssertNil(LowSpaceRules.warning(for: share(used: 0.99), threshold: nil))
     XCTAssertNil(

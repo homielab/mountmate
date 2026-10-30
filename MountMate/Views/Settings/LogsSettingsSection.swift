@@ -60,7 +60,8 @@ struct LogsSettingsSection: View {
       of: savedShares, mountedIDs: shareManager.mountedShareIDs,
       usage: shareManager.usageByShareID,
       threshold: LowSpaceRules.threshold() ?? Double(LowSpaceRules.defaultPercent) / 100,
-      passwordRejectedIDs: KeepAliveManager.shared.passwordRejectedShareIDs)
+      passwordRejectedIDs: KeepAliveManager.shared.passwordRejectedShareIDs,
+      readOnlyIDs: shareManager.readOnlyShareIDs)
     let mountPoints = DiagnosticsReport.customMountPoints(of: savedShares)
     Task {
       let copied = await DiagnosticsReport.copyToPasteboard(

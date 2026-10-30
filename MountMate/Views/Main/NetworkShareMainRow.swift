@@ -25,9 +25,17 @@ struct NetworkShareMainRow: View {
     isMounted ? networkManager.usageByShareID[share.id] : nil
   }
 
+  /// Read-only as mounted now; while unmounted, as set to mount next time.
+  private var isReadOnly: Bool {
+    isMounted ? networkManager.readOnlyShareIDs.contains(share.id) : share.readOnly
+  }
+
   /// Set when the mounted share is almost full (see `LowSpaceRules`).
   private var lowSpace: LowSpaceRules.Warning? {
-    usage.flatMap { LowSpaceRules.warning(for: $0, threshold: LowSpaceRules.threshold()) }
+    usage.flatMap {
+      LowSpaceRules.warning(
+        for: $0, isReadOnly: isReadOnly || share.readOnly, threshold: LowSpaceRules.threshold())
+    }
   }
 
   private var statusText: String {
@@ -145,7 +153,7 @@ struct NetworkShareMainRow: View {
                 .clipShape(.rect(cornerRadius: 3))
               }
 
-              if share.readOnly {
+              if isReadOnly {
                 Text("Read-only")
                   .font(.caption2).fontWeight(.semibold)
                   .foregroundStyle(.orange)

@@ -14,6 +14,8 @@ enum NetworkMountTable {
     var manualShares = [NetworkShare]()
     /// Where each saved and manually connected share is mounted.
     var mountPoints = [UUID: String]()
+    /// Shares whose current mount is read-only.
+    var readOnlyShareIDs = Set<UUID>()
   }
 
   /// Splits `mountedShares` into saved shares and manual connections.
@@ -35,6 +37,7 @@ enum NetworkMountTable {
         parsed.mountedShareIDs.insert(savedShare.id)
         if parsed.mountPoints[savedShare.id] == nil {
           parsed.mountPoints[savedShare.id] = mountedShare.mountPoint
+          if mountedShare.isReadOnly { parsed.readOnlyShareIDs.insert(savedShare.id) }
         }
         continue
       }
@@ -45,6 +48,7 @@ enum NetworkMountTable {
       manualShareCache[mountedShare.mountPoint] = manualShare
       parsed.manualShares.append(manualShare)
       parsed.mountPoints[manualShare.id] = mountedShare.mountPoint
+      if mountedShare.isReadOnly { parsed.readOnlyShareIDs.insert(manualShare.id) }
     }
 
     manualShareCache = manualShareCache.filter { currentManualMountPoints.contains($0.key) }
@@ -207,7 +211,8 @@ enum NetworkMountTable {
       // mounts must use MountMate's default user-owned location (e.g. not
       // /Volumes/public, which needs admin rights). The current location is
       // tracked in `mountPointsByShareID`.
-      customMountPoint: nil
+      customMountPoint: nil,
+      readOnly: mountedShare.isReadOnly
     )
   }
 }

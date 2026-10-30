@@ -466,12 +466,15 @@ final class NotificationManager: NSObject, ObservableObject {
   ///   - usage: capacity by share ID, as last read.
   ///   - mountedShareIDs: the shares mounted now; the others are forgotten.
   ///   - names: the name shown for each share.
+  ///   - readOnlyShareIDs: read-only shares, never announced.
   func sharesRefreshed(
-    usage: [UUID: ShareUsage], mountedShareIDs: Set<UUID>, names: [UUID: String]
+    usage: [UUID: ShareUsage], mountedShareIDs: Set<UUID>, names: [UUID: String],
+    readOnlyShareIDs: Set<UUID> = []
   ) {
     guard isEnabled, let threshold = LowSpaceRules.threshold(defaults: defaults) else { return }
     for (shareID, warning) in shareLowSpaceTracker.newWarnings(
-      shareUsage: usage, mountedShareIDs: mountedShareIDs, threshold: threshold)
+      shareUsage: usage.filter { !readOnlyShareIDs.contains($0.key) },
+      mountedShareIDs: mountedShareIDs, threshold: threshold)
     {
       guard let name = names[shareID] else { continue }
       post(

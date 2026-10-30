@@ -162,6 +162,11 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertEqual(summary.keepAlive, 2)
     XCTAssertEqual(summary.mountAtLogin, 1)
     XCTAssertEqual(summary.almostFull, 1)
+    let readOnly = DiagnosticsReport.shareSummary(
+      of: [mounted, idle, full], mountedIDs: [mounted.id, full.id],
+      usage: [full.id: ShareUsage(totalBytes: tb, freeBytes: tb / 100)],
+      threshold: 0.9, readOnlyIDs: [full.id])
+    XCTAssertEqual(readOnly.almostFull, 0, "a read-only share is never almost full")
     XCTAssertEqual(summary.passwordRejected, 1, "deleted shares are not counted")
 
     let report = DiagnosticsReport.format(

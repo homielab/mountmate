@@ -36,7 +36,7 @@ enum DiagnosticsReport {
   /// `passwordRejectedIDs` from Keep Alive.
   static func shareSummary(
     of shares: [NetworkShare], mountedIDs: Set<UUID>, usage: [UUID: ShareUsage],
-    threshold: Double?, passwordRejectedIDs: Set<UUID> = []
+    threshold: Double?, passwordRejectedIDs: Set<UUID> = [], readOnlyIDs: Set<UUID> = []
   ) -> ShareSummary {
     var summary = ShareSummary()
     for share in shares {
@@ -47,7 +47,9 @@ enum DiagnosticsReport {
       if share.mountAtLogin { summary.mountAtLogin += 1 }
       if passwordRejectedIDs.contains(share.id) { summary.passwordRejected += 1 }
       if isMounted, let shareUsage = usage[share.id],
-        LowSpaceRules.warning(for: shareUsage, threshold: threshold) != nil
+        LowSpaceRules.warning(
+          for: shareUsage, isReadOnly: share.readOnly || readOnlyIDs.contains(share.id),
+          threshold: threshold) != nil
       {
         summary.almostFull += 1
       }

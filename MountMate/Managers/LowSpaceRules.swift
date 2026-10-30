@@ -44,9 +44,12 @@ enum LowSpaceRules {
   }
 
   /// A warning when a mounted network share is at least `threshold` full.
-  /// A share that reports no size (`totalBytes` 0) gets none.
-  static func warning(for usage: ShareUsage, threshold: Double?) -> Warning? {
-    guard let threshold, usage.totalBytes > 0 else { return nil }
+  /// A share that reports no size (`totalBytes` 0) or is read-only (set to
+  /// mount read-only, or mounted so) gets none: nothing can be freed there.
+  static func warning(
+    for usage: ShareUsage, isReadOnly: Bool = false, threshold: Double?
+  ) -> Warning? {
+    guard let threshold, !isReadOnly, usage.totalBytes > 0 else { return nil }
     let used = usage.percentage
     guard used >= threshold - 0.005 else { return nil }
     return Warning(
