@@ -15,7 +15,8 @@ import Foundation
 ///   per target while the target is down)
 /// - Network path changes (`NWPathMonitor`): on interface switch, mounts are
 ///   remounted through the new primary interface; on network recovery, a
-///   reconnect sweep starts immediately
+///   reconnect sweep starts immediately. With Keep Alive off, the network
+///   coming up only retries the failed login mounts (`LoginMountRules`)
 /// - System wake (`NSWorkspace.didWakeNotification`): prompt reconnect sweep
 /// - App launch / login: initial sweep
 ///
@@ -109,6 +110,8 @@ class KeepAliveManager: ObservableObject {
   let interfaceChangeAction: (() -> Void)?
   /// Replaces the reconnect sweep itself (tests).
   let sweepAction: (() -> Void)?
+  /// Replaces the login mount retry while Keep Alive is off (tests).
+  let loginMountRetryAction: (() -> Void)?
   private var cancellables = Set<AnyCancellable>()
   /// Main thread only.
   var isSweeping = false
@@ -131,16 +134,18 @@ class KeepAliveManager: ObservableObject {
   /// Main thread only.
   var currentInterface: InterfaceSnapshot?
 
-  /// Tests inject a fake `networkMonitor`, an `interfaceChangeAction` and a
-  /// `sweepAction`.
+  /// Tests inject a fake `networkMonitor`, an `interfaceChangeAction`, a
+  /// `sweepAction` and a `loginMountRetryAction`.
   init(
     networkMonitor: NetworkChangeMonitoring = NetworkChangeMonitor(),
     interfaceChangeAction: (() -> Void)? = nil,
-    sweepAction: (() -> Void)? = nil
+    sweepAction: (() -> Void)? = nil,
+    loginMountRetryAction: (() -> Void)? = nil
   ) {
     self.networkMonitor = networkMonitor
     self.interfaceChangeAction = interfaceChangeAction
     self.sweepAction = sweepAction
+    self.loginMountRetryAction = loginMountRetryAction
 
     let defaults = UserDefaults.standard
     isEnabled =

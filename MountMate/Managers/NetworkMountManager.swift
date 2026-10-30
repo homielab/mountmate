@@ -239,20 +239,32 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     OpenAfterMountRules.open([mountPoint])
   }
 
-  func mountAllAutoShares() {
-    let shares = PersistenceManager.shared.networkShares.filter { $0.mountAtLogin }
-    for share in shares {
+  /// Mounts the "Mount at login" shares at launch; `retryLoginMounts`
+  /// tries the failed ones again when the network comes up.
+  private(set) lazy var loginMounts = LoginMountRetrier(
+    shares: { PersistenceManager.shared.networkShares },
+    isMounted: { [weak self] share in self?.isMounted(share: share) ?? false },
+    isSuppressed: { KeepAliveManager.shared.isSuppressed(shareID: $0) },
+    mount: { [weak self] share, completion in
+      guard let self else { return completion(false, nil) }
       // Automatic: must not clear keep-alive suppression or backoff state.
-      mount(share: share, userInitiated: false) { success, error in
-        if !success {
-          // Error is already sanitized by mount()
-          Log.network.error(
-            "Failed to auto-mount \(share.name, privacy: .private): \(error ?? "Unknown error", privacy: .private)"
-          )
-        } else {
-          Log.network.notice("Auto-mounted \(share.name, privacy: .private)")
-        }
-      }
+      // The error is already sanitized by mount().
+      self.mount(share: share, userInitiated: false, completion: completion)
+    })
+
+  /// Main thread only.
+  func mountAllAutoShares() {
+    loginMounts.mountAtLaunch()
+  }
+
+  /// The network became available while Keep Alive is off: mounts the
+  /// "Mount at login" shares that failed at launch (`LoginMountRules`).
+  /// Main thread only.
+  func retryLoginMounts() {
+    guard loginMounts.hasPendingShares else { return }
+    // Read the mount table first: the share may have been mounted elsewhere.
+    refreshMountStatus(readUsage: false) { [weak self] in
+      self?.loginMounts.retry()
     }
   }
 

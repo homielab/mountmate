@@ -217,6 +217,64 @@ final class KeepAliveManagerTests: XCTestCase {
     XCTAssertEqual(remounts, 0)
   }
 
+  // MARK: - Login mounts with Keep Alive off
+
+  /// Sets Keep Alive and restores the stored setting afterwards.
+  private func setKeepAlive(_ on: Bool, on manager: KeepAliveManager) {
+    let key = "keepAliveEnabled"
+    let stored = UserDefaults.standard.object(forKey: key) as? Bool
+    addTeardownBlock {
+      if let stored {
+        UserDefaults.standard.set(stored, forKey: key)
+      } else {
+        UserDefaults.standard.removeObject(forKey: key)
+      }
+    }
+    manager.isEnabled = on
+  }
+
+  func testKeepAliveOffRetriesTheFailedLoginMountWhenTheNetworkComesBack() {
+    let share = NetworkShare(
+      name: "NAS", server: "nas.local", sharePath: "media", username: "me",
+      mountAtLogin: true, keepMounted: false)
+    var mounts = 0
+    let retrier = LoginMountRetrier(
+      shares: { [share] }, isMounted: { _ in false }, isSuppressed: { _ in false },
+      mount: { _, completion in
+        mounts += 1
+        completion(false, nil)
+      })
+    let monitor = FakeNetworkMonitor()
+    let manager = KeepAliveManager(
+      networkMonitor: monitor, sweepAction: {}, loginMountRetryAction: { retrier.retry() })
+    setKeepAlive(false, on: manager)
+
+    retrier.mountAtLaunch()  // Wi-Fi not up yet: fails
+    XCTAssertEqual(mounts, 1)
+    monitor.send(path([], satisfied: false))
+    XCTAssertEqual(mounts, 1)
+    monitor.send(path([wifi]))
+    XCTAssertEqual(mounts, 2)
+  }
+
+  func testKeepAliveOnLeavesLoginSharesToTheSweep() {
+    var loginRetries = 0
+    var sweeps = 0
+    let monitor = FakeNetworkMonitor()
+    let manager = KeepAliveManager(
+      networkMonitor: monitor, sweepAction: { sweeps += 1 },
+      loginMountRetryAction: { loginRetries += 1 })
+    setKeepAlive(true, on: manager)
+    drainMain()
+    sweeps = 0
+
+    monitor.send(path([], satisfied: false))
+    monitor.send(path([wifi]))
+    drainMain()
+    XCTAssertEqual(loginRetries, 0)
+    XCTAssertEqual(sweeps, 1)
+  }
+
   // MARK: - Sweep requested while a sweep runs
 
   /// A manager whose sweep only counts runs, with Keep Alive on. Restores the

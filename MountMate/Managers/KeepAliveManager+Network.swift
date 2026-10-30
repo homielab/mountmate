@@ -7,7 +7,13 @@ extension KeepAliveManager {
 
   /// Main thread only.
   func handleNetworkChange(_ path: NetworkPathSnapshot) {
-    guard isEnabled else { return }
+    guard isEnabled else {
+      // Keep Alive off: nothing reconnects, but a "Mount at login" share
+      // that failed because the Mac started before Wi-Fi still deserves its
+      // mount once the network is up.
+      if path.isSatisfied { retryLoginMounts() }
+      return
+    }
 
     switch NetworkChangeRules.decision(previous: currentInterface, path: path) {
     case .unavailable:
@@ -26,6 +32,15 @@ extension KeepAliveManager {
         // about reachability now, so retry everything right away.
         sweepNow(resetBackoff: networkChanged)
       }
+    }
+  }
+
+  /// Main thread only.
+  private func retryLoginMounts() {
+    if let loginMountRetryAction {
+      loginMountRetryAction()
+    } else {
+      NetworkMountManager.shared.retryLoginMounts()
     }
   }
 
