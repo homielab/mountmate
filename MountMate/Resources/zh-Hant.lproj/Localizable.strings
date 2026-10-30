@@ -619,3 +619,5 @@
 "Is Volume Mounted" = "磁碟卷是否已掛載";
 "Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "判斷某個外接磁碟卷目前是否已掛載。未連接的磁碟卷視為未掛載。";
 "Mount Point" = "掛載點";
+"Mount Point Used By Volume" = "已被磁碟卷「%@」使用。";
+"Mount Point Used By Share" = "已被網路共享「%@」使用。";

@@ -619,3 +619,5 @@
 "Is Volume Mounted" = "Смонтирован ли том";
 "Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Сообщает, смонтирован ли сейчас внешний том. Неподключённый том не смонтирован.";
 "Mount Point" = "Точка монтирования";
+"Mount Point Used By Volume" = "Уже используется томом «%@».";
+"Mount Point Used By Share" = "Уже используется сетевым ресурсом «%@».";

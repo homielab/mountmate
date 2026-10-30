@@ -60,7 +60,8 @@ struct EditNetworkShareSheet: View {
     return NetworkShareValidation.error(
       candidate: candidate, original: shareToEdit,
       otherShares: PersistenceManager.shared.networkShares.filter { $0.id != candidate.id },
-      mountPoint: NetworkMountManager.shared.configuredMountPoint(for:))
+      mountPoint: NetworkMountManager.shared.configuredMountPoint(for:),
+      volumeClaims: MountPointClaims.volumeClaims(PersistenceManager.shared.customMountPoints))
   }
 
   private var connectionStringPreview: String {

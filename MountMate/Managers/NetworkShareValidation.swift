@@ -9,9 +9,10 @@ enum NetworkShareValidation {
   ///   - original: the share before editing, nil for a new one.
   ///   - otherShares: every saved share except the one being edited.
   ///   - mountPoint: the folder a share is (or will be) mounted at.
+  ///   - volumeClaims: the saved volume custom mount points.
   static func error(
     candidate: NetworkShare, original: NetworkShare?, otherShares: [NetworkShare],
-    mountPoint: (NetworkShare) -> String
+    mountPoint: (NetworkShare) -> String, volumeClaims: [MountPointClaims.Claim] = []
   ) -> String? {
     // Existing names stay valid when editing other fields.
     if candidate.name != original?.name,
@@ -51,6 +52,7 @@ enum NetworkShareValidation {
           comment: "Network share validation error"),
         path, clash.name)
     }
-    return nil
+    // A volume's /etc/fstab rule on the same folder fails the same way.
+    return MountPointClaims.error(for: path, in: volumeClaims, excludingKey: nil)
   }
 }

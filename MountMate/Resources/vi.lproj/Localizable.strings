@@ -619,3 +619,5 @@
 "Is Volume Mounted" = "Phân vùng đã mount chưa";
 "Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Cho biết một phân vùng ngoài hiện có đang được mount không. Phân vùng chưa kết nối được coi là chưa mount.";
 "Mount Point" = "Điểm gắn";
+"Mount Point Used By Volume" = "Đã được phân vùng “%@” sử dụng.";
+"Mount Point Used By Share" = "Đã được thư mục chia sẻ mạng “%@” sử dụng.";

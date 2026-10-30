@@ -45,11 +45,15 @@ enum CustomMountPointValidator {
   /// Why `rawPath` cannot be used as a custom mount point, or nil if it can.
   /// - Parameter mountedVolumeName: the name of another volume already
   ///   mounted at the (normalized) path, if any.
+  /// - Parameter savedClaim: the error for a folder another saved volume
+  ///   rule or network share already uses, if any.
   static func validationError(
-    for rawPath: String, mountedVolumeName: (String) -> String?
+    for rawPath: String, savedClaim: (String) -> String? = { _ in nil },
+    mountedVolumeName: (String) -> String?
   ) -> String? {
     let path = normalizedPath(rawPath)
     if let error = pathRuleError(path) { return error }
+    if let claimError = savedClaim(path) { return claimError }
     if let mountedVolumeName = mountedVolumeName(path) {
       return String(
         format: NSLocalizedString(
@@ -81,14 +85,22 @@ enum CustomMountPointValidator {
   /// Validates and inspects `rawPath` off the main thread and calls
   /// `completion` on the main thread, after `timeout` at the latest. The folder
   /// may sit on a network share that no longer answers.
+  /// - Parameters:
+  ///   - claims: the saved mount folders (`MountPointClaims`), read on the
+  ///     main thread by the caller.
+  ///   - claimKey: the edited volume's own saved entry, which may keep its path.
   static func check(
-    _ rawPath: String, excluding volume: Volume? = nil, timeout: TimeInterval = 2,
+    _ rawPath: String, excluding volume: Volume? = nil,
+    claims: [MountPointClaims.Claim] = [], claimKey: String? = nil,
+    timeout: TimeInterval = 2,
     completion: @escaping (Check) -> Void
   ) {
     runWithTimeout(
       timeout,
       work: { () -> Check in
-        if let error = validationError(for: rawPath, excluding: volume) {
+        if let error = validationError(
+          for: rawPath, excluding: volume, claims: claims, claimKey: claimKey)
+        {
           return .invalid(error)
         }
         do {
@@ -138,10 +150,14 @@ enum CustomMountPointValidator {
 
   /// `validationError(for:mountedVolumeName:)` looking at the volumes mounted
   /// right now (other than `volume`).
-  static func validationError(for rawPath: String, excluding volume: Volume?) -> String? {
-    validationError(for: rawPath) { path in
-      mountedVolumeName(at: path, excluding: volume)
-    }
+  static func validationError(
+    for rawPath: String, excluding volume: Volume?,
+    claims: [MountPointClaims.Claim] = [], claimKey: String? = nil
+  ) -> String? {
+    validationError(
+      for: rawPath,
+      savedClaim: { MountPointClaims.error(for: $0, in: claims, excludingKey: claimKey) },
+      mountedVolumeName: { mountedVolumeName(at: $0, excluding: volume) })
   }
 
   static func mountedVolumeName(at rawPath: String, excluding volume: Volume? = nil) -> String? {

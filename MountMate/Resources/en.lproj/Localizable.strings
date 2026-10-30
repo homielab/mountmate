@@ -619,3 +619,5 @@
 "Is Volume Mounted" = "Is Volume Mounted";
 "Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Tells whether an external volume is mounted now. A volume that is not connected is not mounted.";
 "Mount Point" = "Mount Point";
+"Mount Point Used By Volume" = "Already used by volume “%@”.";
+"Mount Point Used By Share" = "Already used by network share “%@”.";

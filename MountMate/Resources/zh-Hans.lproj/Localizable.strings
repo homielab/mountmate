@@ -619,3 +619,5 @@
 "Is Volume Mounted" = "卷宗是否已挂载";
 "Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "判断某个外置卷宗当前是否已挂载。未连接的卷宗视为未挂载。";
 "Mount Point" = "挂载点";
+"Mount Point Used By Volume" = "已被卷“%@”使用。";
+"Mount Point Used By Share" = "已被网络共享“%@”使用。";

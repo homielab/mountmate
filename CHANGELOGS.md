@@ -91,6 +91,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- A custom mount point or network share folder already saved for another volume or share is now refused at Save, naming the volume or share that uses it, instead of the later mount failing with a "not empty" error.
 - **Read-only network shares**: a read-only share no longer gets the orange "Almost full" ring, notification or Copy Diagnostics count, since nothing can be freed on it. The "Read-only" badge now shows how the share is actually mounted (also for shares mounted read-only in Finder), and Import Mounted keeps a read-only mount read-only. Chinese texts no longer have a stray space after "。".
 - **Time Machine disks recognized more reliably**: HFS+ backup disks (with a Backups.backupdb folder) and disks chosen as a backup destination in Time Machine settings now count as Time Machine disks, so unmounting on sleep, screen lock or idle leaves them mounted and they are not reported as disconnected without ejecting. A slow disk is checked for at most a second.
 - **Slow hubs and hard disks after wake**: Mount Again on Wake now looks for the disks a third time, about 45 seconds after wake, so a hub or hard disk that takes long to spin up is mounted again too. Disks that are still missing or fail to mount after that are no longer skipped silently: with Notifications on you get one "Disks Were Not Mounted Again" notification naming them.

@@ -182,7 +182,15 @@ struct InlineCustomMountPointEditor: View {
     // a network share: they run off the main thread (the spinner shows
     // meanwhile) and give up after 2 seconds.
     editorState.savingVolumeIDs.insert(volume.id)
-    CustomMountPointValidator.check(normalizedPath, excluding: volume) { check in
+    let claims =
+      MountPointClaims.volumeClaims(persistence.customMountPoints)
+      + MountPointClaims.shareClaims(
+        persistence.networkShares, mountPoint: NetworkMountManager.shared.configuredMountPoint(for:)
+      )
+    CustomMountPointValidator.check(
+      normalizedPath, excluding: volume, claims: claims,
+      claimKey: persistence.stableIdentifier(for: volume)
+    ) { check in
       editorState.savingVolumeIDs.remove(volume.id)
       // The editor may have been closed or reopened for another row meanwhile.
       guard editorState.expandedRowID == rowID else { return }
