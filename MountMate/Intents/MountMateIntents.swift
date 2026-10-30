@@ -91,12 +91,15 @@ enum IntentActions {
     }
   }
 
-  /// Decides what to do for a volume name after refreshing the drive list.
-  static func volumePlan(name: String, mount: Bool) async -> VolumeIntentPlanner.Plan {
+  /// Decides what to do for a volume (UUID, else name) after refreshing the
+  /// drive list.
+  static func volumePlan(
+    _ reference: VolumeIntentPlanner.Reference, mount: Bool
+  ) async -> VolumeIntentPlanner.Plan {
     let manager = await refreshedDriveManager()
     let volumes = VolumeIntentPlanner.candidates(
       in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
-    return VolumeIntentPlanner.plan(name: name, in: volumes, mount: mount)
+    return VolumeIntentPlanner.plan(reference, in: volumes, mount: mount)
   }
 
   /// `nil` when the volume is mounted, else the error (possibly empty).
@@ -118,12 +121,14 @@ enum IntentActions {
     }
   }
 
-  /// Decides which disk to eject for a volume name after refreshing the
-  /// drive list.
-  static func ejectPlan(name: String) async -> VolumeIntentPlanner.EjectPlan {
+  /// Decides which disk to eject for a volume (UUID, else name) after
+  /// refreshing the drive list.
+  static func ejectPlan(
+    _ reference: VolumeIntentPlanner.Reference
+  ) async -> VolumeIntentPlanner.EjectPlan {
     let manager = await refreshedDriveManager()
     return VolumeIntentPlanner.ejectPlan(
-      name: name, in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+      reference, in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
   }
 
   /// `nil` when the disk is ejected, else the error (possibly empty). Never
@@ -276,7 +281,7 @@ struct MountVolumeIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    switch await IntentActions.volumePlan(name: volume.id, mount: true) {
+    switch await IntentActions.volumePlan(volume.reference, mount: true) {
     case .failure(let message):
       throw IntentFailure(message: message)
     case .alreadyDone(let found):
@@ -303,7 +308,7 @@ struct UnmountVolumeIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    switch await IntentActions.volumePlan(name: volume.id, mount: false) {
+    switch await IntentActions.volumePlan(volume.reference, mount: false) {
     case .failure(let message):
       throw IntentFailure(message: message)
     case .alreadyDone(let found):
@@ -331,11 +336,11 @@ struct EjectVolumeIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    switch await IntentActions.ejectPlan(name: volume.id) {
+    switch await IntentActions.ejectPlan(volume.reference) {
     case .failure(let message):
       throw IntentFailure(message: message)
     case .run(let disk):
-      let name = volume.id.trimmingCharacters(in: .whitespacesAndNewlines)
+      let name = volume.name.trimmingCharacters(in: .whitespacesAndNewlines)
       if let error = await IntentActions.eject(disk: disk) {
         throw IntentFailure(message: IntentMessages.volumeEjectFailure(name: name, reason: error))
       }

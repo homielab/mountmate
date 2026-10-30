@@ -493,7 +493,7 @@
 "Could not unmount “%@”: %@" = "无法卸载“%@”：%@";
 "Could not unmount “%@”." = "无法卸载“%@”。";
 "No volume named “%@”." = "没有名为“%@”的卷宗。";
-"More than one volume is named “%@”." = "有多个卷宗名为“%@”。";
+"More than one volume is named “%@”. Choose the volume again in the shortcut." = "有多个卷宗名为“%@”。请在快捷指令中重新选择该卷宗。";
 "“%@” is protected and cannot be unmounted." = "“%@”受保护，无法卸载。";
 "Disk Is Failing" = "磁盘即将故障";
 "“%@” reports a failing SMART status. Back up its data now." = "“%@”的 SMART 状态为故障。请立即备份其中的数据。";

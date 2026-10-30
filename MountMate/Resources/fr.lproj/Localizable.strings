@@ -493,7 +493,7 @@
 "Could not unmount “%@”: %@" = "Impossible de démonter « %@ » : %@";
 "Could not unmount “%@”." = "Impossible de démonter « %@ ».";
 "No volume named “%@”." = "Aucun volume nommé « %@ ».";
-"More than one volume is named “%@”." = "Plusieurs volumes portent le nom « %@ ».";
+"More than one volume is named “%@”. Choose the volume again in the shortcut." = "Plusieurs volumes portent le nom « %@ ». Choisissez à nouveau le volume dans le raccourci.";
 "“%@” is protected and cannot be unmounted." = "« %@ » est protégé et ne peut pas être démonté.";
 "Disk Is Failing" = "Disque défaillant";
 "“%@” reports a failing SMART status. Back up its data now." = "« %@ » signale un état SMART défaillant. Sauvegardez ses données maintenant.";

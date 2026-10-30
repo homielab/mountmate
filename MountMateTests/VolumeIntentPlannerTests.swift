@@ -54,6 +54,90 @@ final class VolumeIntentPlannerTests: XCTestCase {
     XCTAssertEqual(VolumeIntentPlanner.match(name: "Backup", in: [twin, other]), .ambiguous)
   }
 
+  // MARK: Same-named volumes (UUID references)
+
+  private let uuidA = "11111111-1111-1111-1111-111111111111"
+  private let uuidB = "22222222-2222-2222-2222-222222222222"
+
+  private func untitled(_ uuid: String, device: String, mounted: Bool = true) -> Volume {
+    Volume(
+      id: uuid, deviceIdentifier: device, diskUUID: nil, name: "Untitled",
+      isMounted: mounted, mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [], storageError: nil)
+  }
+
+  func testTwoSameNamedVolumesAreToldApartByUUID() {
+    let first = untitled(uuidA, device: "disk4s1")
+    let second = untitled(uuidB, device: "disk5s1", mounted: false)
+    let volumes = [first, second]
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "Untitled", volumeUUID: uuidB), in: volumes),
+      .found(second))
+    XCTAssertEqual(
+      VolumeIntentPlanner.plan(
+        .init(name: "Untitled", volumeUUID: uuidB.lowercased()), in: volumes, mount: true),
+      .run(second))
+    XCTAssertEqual(
+      VolumeIntentPlanner.plan(
+        .init(name: "Untitled", volumeUUID: uuidA), in: volumes, mount: false),
+      .run(first))
+  }
+
+  func testEjectPlanPicksTheDiskOfTheVolumeWithThatUUID() {
+    let first = disk("disk4", volumes: [untitled(uuidA, device: "disk4s1")])
+    let second = disk("disk5", volumes: [untitled(uuidB, device: "disk5s1")])
+    XCTAssertEqual(
+      VolumeIntentPlanner.ejectPlan(
+        .init(name: "Untitled", volumeUUID: uuidB), in: [first, second], unverifiedDiskIDs: []),
+      .run(second))
+  }
+
+  func testNameOnlyReferenceOfAnOlderShortcutStillMatchesAUniqueName() {
+    let volumes = [untitled(uuidA, device: "disk4s1"), volume("Photos")]
+    let saved = VolumeIntentPlanner.Reference(identifier: "untitled")
+    XCTAssertNil(saved.volumeUUID)
+    XCTAssertEqual(VolumeIntentPlanner.match(saved, in: volumes), .found(volumes[0]))
+  }
+
+  func testSameNameWithoutUUIDStaysAmbiguous() {
+    let volumes = [untitled(uuidA, device: "disk4s1"), untitled(uuidB, device: "disk5s1")]
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "Untitled", volumeUUID: nil), in: volumes), .ambiguous)
+    let noUUID = [volume("Untitled"), volume("Untitled")]
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "Untitled", volumeUUID: uuidA), in: noUUID), .ambiguous)
+  }
+
+  func testUnknownUUIDFallsBackToTheName() {
+    let erased = untitled(uuidB, device: "disk4s1")
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "untitled", volumeUUID: uuidA), in: [erased]),
+      .found(erased))
+    XCTAssertEqual(
+      VolumeIntentPlanner.match(.init(name: "Ghost", volumeUUID: uuidA), in: [erased]), .notFound)
+  }
+
+  func testReferenceIdentifierRoundTrips() {
+    let withUUID = VolumeIntentPlanner.Reference(name: "My: Disk", volumeUUID: uuidA)
+    XCTAssertEqual(withUUID.identifier, "volume-uuid:\(uuidA):My: Disk")
+    XCTAssertEqual(VolumeIntentPlanner.Reference(identifier: withUUID.identifier), withUUID)
+    let plain = VolumeIntentPlanner.Reference(name: "Backup", volumeUUID: nil)
+    XCTAssertEqual(plain.identifier, "Backup")
+    XCTAssertEqual(VolumeIntentPlanner.Reference(identifier: "Backup"), plain)
+    // Not a valid UUID after the prefix: the whole text is a name.
+    XCTAssertEqual(
+      VolumeIntentPlanner.Reference(identifier: "volume-uuid:nope"),
+      .init(name: "volume-uuid:nope", volumeUUID: nil))
+  }
+
+  func testReferenceOfAVolumeWithoutUUIDIsItsName() {
+    let reference = VolumeIntentPlanner.Reference(volume: volume("Stick"))
+    XCTAssertEqual(reference, .init(name: "Stick", volumeUUID: nil))
+    XCTAssertEqual(
+      VolumeIntentPlanner.Reference(volume: untitled(uuidA, device: "disk4s1")).volumeUUID, uuidA)
+  }
+
   func testEjectPlanRunsTheDiskHoldingAnExternalVolume() {
     let target = disk("disk2", volumes: [volume("Backup"), volume("Photos")])
     let disks = [disk("disk1", volumes: [volume("Other")]), target]
@@ -146,7 +230,7 @@ final class VolumeIntentPlannerTests: XCTestCase {
     XCTAssertEqual(
       VolumeIntentPlanner.plan(
         name: "Data", in: [volume("DATA"), volume("data")], mount: true, localize: { $0 }),
-      .failure("More than one volume is named “Data”."))
+      .failure("More than one volume is named “Data”. Choose the volume again in the shortcut."))
   }
 
   func testShareUnmountMessages() {
@@ -167,6 +251,9 @@ final class VolumeIntentPlannerTests: XCTestCase {
       XCTAssertNotEqual(
         IntentMessages.volumeNotFound(name: "X", localize: localize),
         IntentMessages.volumeNotFound(name: "X", localize: english), language)
+      XCTAssertNotEqual(
+        IntentMessages.volumeNameAmbiguous(name: "X", localize: localize),
+        IntentMessages.volumeNameAmbiguous(name: "X", localize: english), language)
       XCTAssertNotEqual(
         IntentMessages.volumeProtected(name: "X", localize: localize),
         IntentMessages.volumeProtected(name: "X", localize: english), language)

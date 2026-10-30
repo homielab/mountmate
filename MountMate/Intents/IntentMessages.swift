@@ -88,7 +88,9 @@ enum IntentMessages {
   }
 
   static func volumeNameAmbiguous(name: String, localize: Localize = defaultLocalize) -> String {
-    String(format: localize("More than one volume is named “%@”."), name)
+    String(
+      format: localize(
+        "More than one volume is named “%@”. Choose the volume again in the shortcut."), name)
   }
 
   static func volumeProtected(name: String, localize: Localize = defaultLocalize) -> String {

@@ -3,8 +3,51 @@
 import Foundation
 
 /// Decides what the "Mount Volume" / "Unmount Volume" Shortcuts actions do for
-/// a volume name. Pure, so the matching and the error texts are testable.
+/// a volume chosen by UUID or name. Pure, so the matching and the error texts
+/// are testable.
 enum VolumeIntentPlanner {
+  /// What a saved shortcut remembers about its volume: the volume UUID when
+  /// it has one (so two volumes with the same name stay apart) and the name
+  /// (shown when the drive is unplugged, and matched when the UUID is gone).
+  /// Shortcuts saved before UUIDs were stored hold only the name.
+  struct Reference: Equatable, Sendable {
+    let name: String
+    let volumeUUID: String?
+
+    private static let prefix = "volume-uuid:"
+
+    init(name: String, volumeUUID: String?) {
+      self.name = name
+      self.volumeUUID = volumeUUID
+    }
+
+    init(volume: Volume) {
+      self.init(name: volume.name, volumeUUID: volume.stableVolumeUUID)
+    }
+
+    /// Reads an identifier written by `identifier`; anything else (an
+    /// older shortcut, a typed name) is a plain name.
+    init(identifier: String) {
+      let uuidLength = 36
+      if identifier.hasPrefix(Self.prefix) {
+        let rest = identifier.dropFirst(Self.prefix.count)
+        let uuid = String(rest.prefix(uuidLength))
+        let tail = rest.dropFirst(uuidLength)
+        if UUID(uuidString: uuid) != nil, tail.first == ":" {
+          self.init(name: String(tail.dropFirst()), volumeUUID: uuid)
+          return
+        }
+      }
+      self.init(name: identifier, volumeUUID: nil)
+    }
+
+    /// "volume-uuid:<UUID>:<name>", or just the name without a UUID.
+    var identifier: String {
+      guard let volumeUUID else { return name }
+      return "\(Self.prefix)\(volumeUUID):\(name)"
+    }
+  }
+
   enum Match: Equatable {
     case found(Volume)
     case notFound
@@ -26,6 +69,19 @@ enum VolumeIntentPlanner {
   static func candidates(in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>) -> [Volume] {
     BulkVolumeActions.actionableDisks(disks, unverifiedDiskIDs: unverifiedDiskIDs)
       .flatMap(\.allVolumes).filter { $0.category == .user }
+  }
+
+  /// Finds the volume with this UUID; when none has it (another drive, or
+  /// the volume was erased) or there is no UUID, falls back to the name.
+  static func match(_ reference: Reference, in volumes: [Volume]) -> Match {
+    if let uuid = reference.volumeUUID,
+      let volume = volumes.first(where: {
+        $0.stableVolumeUUID?.caseInsensitiveCompare(uuid) == .orderedSame
+      })
+    {
+      return .found(volume)
+    }
+    return match(name: reference.name, in: volumes)
   }
 
   /// Finds a volume by name, ignoring case and surrounding spaces. When
@@ -50,7 +106,15 @@ enum VolumeIntentPlanner {
     name: String, in volumes: [Volume], mount: Bool,
     localize: IntentMessages.Localize = IntentMessages.defaultLocalize
   ) -> Plan {
-    switch match(name: name, in: volumes) {
+    plan(Reference(name: name, volumeUUID: nil), in: volumes, mount: mount, localize: localize)
+  }
+
+  static func plan(
+    _ reference: Reference, in volumes: [Volume], mount: Bool,
+    localize: IntentMessages.Localize = IntentMessages.defaultLocalize
+  ) -> Plan {
+    let name = reference.name
+    switch match(reference, in: volumes) {
     case .notFound:
       return .failure(IntentMessages.volumeNotFound(name: name, localize: localize))
     case .ambiguous:
@@ -79,9 +143,19 @@ enum VolumeIntentPlanner {
     name: String, in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>,
     localize: IntentMessages.Localize = IntentMessages.defaultLocalize
   ) -> EjectPlan {
+    ejectPlan(
+      Reference(name: name, volumeUUID: nil), in: disks, unverifiedDiskIDs: unverifiedDiskIDs,
+      localize: localize)
+  }
+
+  static func ejectPlan(
+    _ reference: Reference, in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>,
+    localize: IntentMessages.Localize = IntentMessages.defaultLocalize
+  ) -> EjectPlan {
+    let name = reference.name
     let external = disks.filter(\.isRemovable)
     let volumes = external.flatMap(\.allVolumes).filter { $0.category == .user }
-    switch match(name: name, in: volumes) {
+    switch match(reference, in: volumes) {
     case .notFound:
       return .failure(IntentMessages.volumeNotFound(name: name, localize: localize))
     case .ambiguous:

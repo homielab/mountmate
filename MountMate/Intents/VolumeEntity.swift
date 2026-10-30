@@ -3,9 +3,11 @@
 import AppIntents
 import Foundation
 
-/// A volume as a Shortcuts parameter. The identifier is the volume's name, so
-/// a shortcut keeps working when the drive is unplugged and plugged in again
-/// (device identifiers change); the action looks the name up when it runs.
+/// A volume as a Shortcuts parameter. The identifier holds the volume UUID and
+/// name (`VolumeIntentPlanner.Reference`), not a device identifier, so a
+/// shortcut keeps working when the drive is unplugged and plugged in again,
+/// and two volumes with the same name ("Untitled") stay apart. Shortcuts saved
+/// with only a name still work: the action then looks the name up.
 struct VolumeEntity: AppEntity {
   static var typeDisplayRepresentation: TypeDisplayRepresentation {
     TypeDisplayRepresentation(name: "Volume")
@@ -13,28 +15,94 @@ struct VolumeEntity: AppEntity {
   static var defaultQuery = VolumeQuery()
 
   let id: String
+  /// Size and BSD name (plus mount point when mounted) of the volume while it
+  /// is connected, so the picker can tell same-named volumes apart.
+  let subtitle: String?
+
+  var reference: VolumeIntentPlanner.Reference {
+    VolumeIntentPlanner.Reference(identifier: id)
+  }
+
+  var name: String { reference.name }
+
+  init(id: String, subtitle: String? = nil) {
+    self.id = id
+    self.subtitle = subtitle
+  }
+
+  init(volume: Volume) {
+    self.init(
+      id: VolumeIntentPlanner.Reference(volume: volume).identifier,
+      subtitle: Self.subtitle(for: volume))
+  }
+
+  /// "16 GB · disk4s1 · /Volumes/Untitled 1"; parts that are unknown are left out.
+  static func subtitle(for volume: Volume) -> String? {
+    let parts = [volume.totalSize, volume.deviceIdentifier, volume.mountPoint]
+      .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+      .filter { !$0.isEmpty }
+    return parts.isEmpty ? nil : parts.joined(separator: " · ")
+  }
 
   var displayRepresentation: DisplayRepresentation {
-    DisplayRepresentation(title: "\(id)")
+    if let subtitle {
+      return DisplayRepresentation(title: "\(name)", subtitle: "\(subtitle)")
+    }
+    return DisplayRepresentation(title: "\(name)")
   }
 }
 
 struct VolumeQuery: EntityQuery {
   func entities(for identifiers: [String]) async throws -> [VolumeEntity] {
-    identifiers.map(VolumeEntity.init(id:))
+    let current = await Self.knownVolumes()
+    return Self.entities(for: identifiers, current: current)
   }
 
-  /// The volumes known right now; others can still be picked by variable.
+  /// Every volume known right now, same-named ones included; others can
+  /// still be picked by variable.
   func suggestedEntities() async throws -> [VolumeEntity] {
-    await Self.currentVolumeNames().map(VolumeEntity.init(id:))
+    Self.suggestions(from: await Self.currentVolumes())
+  }
+
+  /// One entity per identifier; a volume that is connected gets its
+  /// subtitle, one that is not keeps its name only.
+  static func entities(for identifiers: [String], current: [Volume]) -> [VolumeEntity] {
+    identifiers.map { identifier in
+      guard let uuid = VolumeIntentPlanner.Reference(identifier: identifier).volumeUUID,
+        let volume = current.first(where: {
+          $0.stableVolumeUUID?.caseInsensitiveCompare(uuid) == .orderedSame
+        })
+      else { return VolumeEntity(id: identifier) }
+      return VolumeEntity(id: identifier, subtitle: VolumeEntity.subtitle(for: volume))
+    }
+  }
+
+  /// One entry per volume, sorted by name then subtitle. Volumes without a
+  /// UUID are identified by name, so same-named ones of those collapse into
+  /// one entry (picking it fails as ambiguous, as it always did).
+  static func suggestions(from volumes: [Volume]) -> [VolumeEntity] {
+    var seen = Set<String>()
+    return volumes.map(VolumeEntity.init(volume:))
+      .filter { seen.insert($0.id).inserted }
+      .sorted {
+        let order = $0.name.localizedStandardCompare($1.name)
+        if order != .orderedSame { return order == .orderedAscending }
+        return ($0.subtitle ?? "") < ($1.subtitle ?? "")
+      }
   }
 
   @MainActor
-  static func currentVolumeNames() async -> [String] {
-    let manager = await IntentActions.refreshedDriveManager()
-    let names = VolumeIntentPlanner.candidates(
-      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs
-    ).map(\.name)
-    return Array(Set(names)).sorted()
+  static func currentVolumes() async -> [Volume] {
+    _ = await IntentActions.refreshedDriveManager()
+    return knownVolumes()
+  }
+
+  /// The volumes read last, without a refresh (Shortcuts asks for entities
+  /// often; the action itself refreshes before it runs).
+  @MainActor
+  static func knownVolumes() -> [Volume] {
+    let manager = DriveManager.shared
+    return VolumeIntentPlanner.candidates(
+      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
   }
 }

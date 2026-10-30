@@ -493,7 +493,7 @@
 "Could not unmount “%@”: %@" = "Không unmount được “%@”: %@";
 "Could not unmount “%@”." = "Không unmount được “%@”.";
 "No volume named “%@”." = "Không có phân vùng nào tên “%@”.";
-"More than one volume is named “%@”." = "Có nhiều hơn một phân vùng tên “%@”.";
+"More than one volume is named “%@”. Choose the volume again in the shortcut." = "Có nhiều hơn một phân vùng tên “%@”. Hãy chọn lại phân vùng trong phím tắt.";
 "“%@” is protected and cannot be unmounted." = "“%@” được bảo vệ nên không thể unmount.";
 "Disk Is Failing" = "Ổ đĩa sắp hỏng";
 "“%@” reports a failing SMART status. Back up its data now." = "“%@” báo trạng thái SMART là hỏng. Hãy sao lưu dữ liệu ngay.";

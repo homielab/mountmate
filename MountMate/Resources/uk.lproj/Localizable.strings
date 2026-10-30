@@ -493,7 +493,7 @@
 "Could not unmount “%@”: %@" = "Не вдалося відключити «%@»: %@";
 "Could not unmount “%@”." = "Не вдалося відключити «%@».";
 "No volume named “%@”." = "Немає тому з назвою «%@».";
-"More than one volume is named “%@”." = "Кілька томів мають назву «%@».";
+"More than one volume is named “%@”. Choose the volume again in the shortcut." = "Кілька томів мають назву «%@». Виберіть том у швидкій команді знову.";
 "“%@” is protected and cannot be unmounted." = "«%@» захищений і не може бути відключений.";
 "Disk Is Failing" = "Диск виходить з ладу";
 "“%@” reports a failing SMART status. Back up its data now." = "«%@» повідомляє про збій SMART. Зробіть резервну копію даних зараз.";
