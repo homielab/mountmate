@@ -33,6 +33,15 @@ struct VolumeRowView: View {
     "\(context.rawValue):\(volume.id)"
   }
 
+  /// Tooltip and VoiceOver value for a volume whose UUID another listed
+  /// volume shares (`Volume.isDuplicateUUID`), nil otherwise.
+  static func duplicateUUIDNote(for volume: Volume) -> String? {
+    guard volume.isDuplicateUUID else { return nil }
+    return NSLocalizedString(
+      "Same UUID as another volume. Use the disk or device name to tell them apart.",
+      comment: "Tooltip and VoiceOver value: two volumes share one VolumeUUID")
+  }
+
   private var editorRowID: String { Self.editorRowID(for: volume, context: context) }
   private var currentVolume: Volume { volume }
   private var customMountPoint: String? { state.customMountPoint }
@@ -94,6 +103,7 @@ struct VolumeRowView: View {
               .font(.body)
               .bold()
               .foregroundStyle(currentVolume.isMounted ? .primary : .secondary)
+              .help(Self.duplicateUUIDNote(for: currentVolume) ?? "")
 
             if currentVolume.isMounted {
               if state.isVerifying {
@@ -190,6 +200,7 @@ struct VolumeRowView: View {
           Spacer()
         }
         .accessibilityElement(children: .combine)
+        .accessibilityValue(Text(Self.duplicateUUIDNote(for: currentVolume) ?? ""))
         .contentShape(Rectangle())
         .onTapGesture {
           if currentVolume.isMounted, let mountPoint = currentVolume.mountPoint {

@@ -35,6 +35,10 @@ final class MenuBarIconStateTests: XCTestCase {
   func testSymbolsAreDistinctAndKeysExist() {
     let all: [MenuBarIconState] = [.idle, .busy, .reconnecting, .error]
     XCTAssertEqual(Set(all.map(\.symbolName)).count, 4)
+    XCTAssertFalse(MenuBarIconState.busy.symbolName.contains("timemachine"))
+    for symbol in all.map(\.symbolName) {
+      XCTAssertNotNil(NSImage(systemSymbolName: symbol, accessibilityDescription: nil), symbol)
+    }
     for key in all.compactMap(\.accessibilityKey) {
       XCTAssertNotEqual(NSLocalizedString(key, comment: ""), key)
     }

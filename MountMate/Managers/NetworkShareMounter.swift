@@ -77,6 +77,7 @@ final class NetworkShareMounter {
       let waiters = self.pendingMountCompletions.removeValue(forKey: share.id) ?? []
       self.mountLock.unlock()
       DispatchQueue.main.async {
+        if success { NotificationManager.shared.shareMounted(shareID: share.id) }
         for completion in waiters { completion(success, error) }
       }
     }

@@ -136,8 +136,30 @@ struct Volume: Identifiable, Hashable, Sendable {
   /// "<disk UUID or NONE>-<volume UUID>". Nil when the volume has no UUID.
   /// DiskMounter builds the same key from Disk Arbitration descriptions.
   var compositeId: String? {
-    guard let volumeUUID = stableVolumeUUID else { return nil }
+    Self.compositeID(volumeUUID: stableVolumeUUID, diskUUID: diskUUID, isDuplicate: isDuplicateUUID)
+  }
+
+  /// The `compositeId` rule, shared with DiskMounter: nil without a volume
+  /// UUID or when another connected volume has the same one (see
+  /// `DiskListParser.disambiguatingDuplicateUUIDs`), so a saved setting of
+  /// one such volume is never applied to the other.
+  static func compositeID(volumeUUID: String?, diskUUID: String?, isDuplicate: Bool) -> String? {
+    guard let volumeUUID, !isDuplicate else { return nil }
     return "\(diskUUID ?? "NONE")-\(volumeUUID)"
+  }
+
+  /// True when a volume in `volumes` other than `deviceIdentifier` has the
+  /// VolumeUUID `volumeUUID` (also after the parser made its id
+  /// "<uuid>#<device>").
+  static func isUUID(
+    _ volumeUUID: String, sharedByOtherThan deviceIdentifier: String?, in volumes: [Volume]
+  ) -> Bool {
+    let uuid = volumeUUID.uppercased()
+    return volumes.contains { volume in
+      guard volume.deviceIdentifier != deviceIdentifier else { return false }
+      let id = volume.id.uppercased()
+      return id == uuid || id.hasPrefix(uuid + "#")
+    }
   }
 
   var managedVolumeInfo: ManagedVolumeInfo? {

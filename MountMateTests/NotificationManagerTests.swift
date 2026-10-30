@@ -377,6 +377,16 @@ final class NotificationManagerTests: XCTestCase {
       "MountMate couldn't mount “NAS” after several tries: Wrong password")
   }
 
+  func testLoginMountGiveUpIsAnnouncedAgainAfterTheShareMounted() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let manager = makeManager()
+    let id = UUID()
+    manager.loginMountFailed(shareID: id, name: "NAS", error: nil)
+    manager.shareMounted(shareID: id)
+    manager.loginMountFailed(shareID: id, name: "NAS", error: nil)
+    XCTAssertEqual(center.added.count, 2)
+  }
+
   func testLoginMountGiveUpIsSilentWhenNotificationsAreOff() {
     let manager = makeManager()
     manager.loginMountFailed(shareID: UUID(), name: "NAS", error: nil)

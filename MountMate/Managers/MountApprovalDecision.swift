@@ -42,6 +42,9 @@ enum MountApprovalDecision: Equatable {
     /// True when the composite id (`MountApprovalDecision.blockedVolumeID`)
     /// is in the blocked volumes list.
     var isBlockedVolumeID: (String) -> Bool
+    /// True when another connected volume has the same volume UUID; such a
+    /// volume has no composite id, like in the volume list.
+    var isDuplicateUUID: () -> Bool = { false }
     var allowRequestedMounts: Bool
     /// True while the mount is the automatic one right after the disk
     /// appeared (records the appearance when unknown).
@@ -65,7 +68,10 @@ enum MountApprovalDecision: Equatable {
       shouldBlock = true
     }
 
-    if let id = blockedVolumeID(volumeUUID: input.volumeUUID, diskUUID: input.diskUUID),
+    if input.volumeUUID != nil,
+      let id = blockedVolumeID(
+        volumeUUID: input.volumeUUID, diskUUID: input.diskUUID,
+        isDuplicateUUID: input.isDuplicateUUID()),
       input.isBlockedVolumeID(id)
     {
       shouldBlock = true
@@ -81,9 +87,11 @@ enum MountApprovalDecision: Equatable {
 
   /// Id of the volume in the blocked volumes list ("<disk UUID>-<volume
   /// UUID>", "NONE" for a missing disk UUID), or nil without a volume UUID.
-  static func blockedVolumeID(volumeUUID: String?, diskUUID: String?) -> String? {
-    guard let volumeUUID else { return nil }
-    return "\(diskUUID ?? "NONE")-\(volumeUUID)"
+  /// Nil as well when another volume shares the UUID (`Volume.compositeID`).
+  static func blockedVolumeID(
+    volumeUUID: String?, diskUUID: String?, isDuplicateUUID: Bool = false
+  ) -> String? {
+    Volume.compositeID(volumeUUID: volumeUUID, diskUUID: diskUUID, isDuplicate: isDuplicateUUID)
   }
 
   /// "USB", "SD" or "Secure Digital", ignoring case and surrounding spaces.

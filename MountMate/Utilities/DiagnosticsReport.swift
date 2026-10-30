@@ -152,6 +152,7 @@ enum DiagnosticsReport {
     failingDiskCount: Int = 0,
     almostFullVolumeCount: Int = 0,
     lowSpaceMutedVolumeCount: Int = 0,
+    duplicateUUIDVolumeCount: Int = 0,
     shares: ShareSummary = ShareSummary(),
     lines: [LogLine],
     generatedAt: Date,
@@ -174,6 +175,7 @@ enum DiagnosticsReport {
       "", "Disks reporting SMART failing: \(failingDiskCount)",
       "Volumes almost full: \(almostFullVolumeCount)",
       "Volumes with the free space warning off: \(lowSpaceMutedVolumeCount)",
+      "Volumes sharing a UUID with another volume: \(duplicateUUIDVolumeCount)",
       "",
       "Network shares (saved): \(shares.saved)",
     ]
@@ -243,6 +245,7 @@ enum DiagnosticsReport {
   /// The whole report for this run. Slow: call it off the main thread.
   static func build(
     failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, lowSpaceMutedVolumeCount: Int = 0,
+    duplicateUUIDVolumeCount: Int = 0,
     shares: ShareSummary = ShareSummary(), mountPoints: [String] = [], now: Date = Date()
   ) throws -> String {
     let info = Bundle.main.infoDictionary
@@ -254,6 +257,7 @@ enum DiagnosticsReport {
       failingDiskCount: failingDiskCount,
       almostFullVolumeCount: almostFullVolumeCount,
       lowSpaceMutedVolumeCount: lowSpaceMutedVolumeCount,
+      duplicateUUIDVolumeCount: duplicateUUIDVolumeCount,
       shares: shares,
       lines: try collectLogLines(now: now),
       generatedAt: now,
@@ -264,13 +268,15 @@ enum DiagnosticsReport {
   /// Returns false when the log could not be read.
   static func copyToPasteboard(
     failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, lowSpaceMutedVolumeCount: Int = 0,
+    duplicateUUIDVolumeCount: Int = 0,
     shares: ShareSummary = ShareSummary(), mountPoints: [String] = []
   ) async -> Bool {
     let report = await Task.detached(priority: .userInitiated) { () -> String? in
       do {
         return try build(
           failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount,
-          lowSpaceMutedVolumeCount: lowSpaceMutedVolumeCount, shares: shares,
+          lowSpaceMutedVolumeCount: lowSpaceMutedVolumeCount,
+          duplicateUUIDVolumeCount: duplicateUUIDVolumeCount, shares: shares,
           mountPoints: mountPoints)
       } catch {
         Log.app.error(

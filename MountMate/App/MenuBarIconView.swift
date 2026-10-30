@@ -28,7 +28,7 @@ enum MenuBarIconState: Equatable {
   var symbolName: String {
     switch self {
     case .idle: return "externaldrive.fill"
-    case .busy: return "externaldrive.fill.badge.timemachine"
+    case .busy: return "arrow.triangle.2.circlepath"
     case .reconnecting: return "externaldrive.fill.badge.wifi"
     case .error: return "externaldrive.fill.trianglebadge.exclamationmark"
     }

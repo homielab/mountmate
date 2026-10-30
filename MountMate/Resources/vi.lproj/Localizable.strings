@@ -638,3 +638,6 @@
 
 "Don't Warn About Free Space on This Volume" = "Không cảnh báo dung lượng trống của phân vùng này";
 "Warn About Free Space on This Volume" = "Cảnh báo dung lượng trống của phân vùng này";
+
+/* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
+"Same UUID as another volume. Use the disk or device name to tell them apart." = "Cùng UUID với một volume khác. Dùng tên đĩa hoặc thiết bị để phân biệt.";

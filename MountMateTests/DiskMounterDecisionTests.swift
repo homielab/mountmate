@@ -23,6 +23,7 @@ final class DiskMounterDecisionTests: XCTestCase {
     var listed = false
     var allowRequested = false
     var automatic = true
+    var duplicateUUID = false
   }
 
   private func decide(_ c: Case, calls: Calls = Calls()) -> MountApprovalDecision {
@@ -45,6 +46,7 @@ final class DiskMounterDecisionTests: XCTestCase {
           calls.names.append("isBlockedVolumeID")
           return c.listed && id == blockedID
         },
+        isDuplicateUUID: { c.duplicateUUID },
         allowRequestedMounts: c.allowRequested,
         isAutomaticMount: {
           calls.names.append("isAutomaticMount")
@@ -131,6 +133,48 @@ final class DiskMounterDecisionTests: XCTestCase {
     XCTAssertNil(MountApprovalDecision.blockedVolumeID(volumeUUID: nil, diskUUID: diskUUID))
     // The listed id has the disk UUID, so a volume without one does not match.
     XCTAssertEqual(decide(Case(hasDiskUUID: false, listed: true)), .allow(.notBlocked))
+  }
+
+  // MARK: - Volumes sharing a UUID
+
+  func testBlockedCardDoesNotBlockAnotherCardWithTheSameUUID() {
+    XCTAssertEqual(decide(Case(listed: true)), .dissent(blockedByList: true))
+    XCTAssertEqual(decide(Case(listed: true, duplicateUUID: true)), .allow(.notBlocked))
+    XCTAssertNil(
+      MountApprovalDecision.blockedVolumeID(
+        volumeUUID: volumeUUID, diskUUID: diskUUID, isDuplicateUUID: true))
+  }
+
+  func testDiskMounterAndVolumeListBuildTheSameID() {
+    func volume(_ id: String, _ device: String, duplicate: Bool = false) -> Volume {
+      var v = Volume(
+        id: id, deviceIdentifier: device, diskUUID: diskUUID, name: "SD", isMounted: false,
+        mountPoint: nil, freeSpace: nil, totalSize: nil, usedSpace: nil, usedBytes: nil,
+        fileSystemType: "ExFAT", usagePercentage: nil, category: .user, isProtected: false,
+        snapshots: [])
+      v.isDuplicateUUID = duplicate
+      return v
+    }
+    let single = volume(volumeUUID, "disk4s1")
+    XCTAssertEqual(
+      single.compositeId,
+      MountApprovalDecision.blockedVolumeID(volumeUUID: volumeUUID, diskUUID: diskUUID))
+    XCTAssertEqual(single.compositeId, "\(diskUUID)-\(volumeUUID)", "saved ids still match")
+
+    func disk(_ id: String, _ volume: Volume) -> PhysicalDisk {
+      PhysicalDisk(
+        id: id, diskUUID: nil, connectionType: "SD", name: "Card", totalSize: nil,
+        freeSpace: nil, usedSpace: nil, usagePercentage: nil, type: .physical, isRAIDSet: false,
+        partitions: [volume], containers: [], storageError: nil)
+    }
+    let disks = [disk("disk4", single), disk("disk5", volume(volumeUUID, "disk5s1"))]
+    let listed = DiskListParser.disambiguatingDuplicateUUIDs(disks).flatMap(\.allVolumes)
+    XCTAssertTrue(listed.allSatisfy { $0.isDuplicateUUID && $0.compositeId == nil })
+
+    // The second card appears while only the first is listed.
+    XCTAssertTrue(Volume.isUUID(volumeUUID, sharedByOtherThan: "disk5s1", in: [single]))
+    XCTAssertTrue(Volume.isUUID(volumeUUID.lowercased(), sharedByOtherThan: "disk5s1", in: listed))
+    XCTAssertFalse(Volume.isUUID(volumeUUID, sharedByOtherThan: "disk4s1", in: [single]))
   }
 
   // MARK: - Allow Requested Mounts

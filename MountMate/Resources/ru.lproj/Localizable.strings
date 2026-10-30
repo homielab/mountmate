@@ -638,3 +638,6 @@
 
 "Don't Warn About Free Space on This Volume" = "Не предупреждать о свободном месте на этом томе";
 "Warn About Free Space on This Volume" = "Предупреждать о свободном месте на этом томе";
+
+/* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
+"Same UUID as another volume. Use the disk or device name to tell them apart." = "Тот же UUID, что и у другого тома. Различайте их по имени диска или устройства.";

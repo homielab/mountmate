@@ -320,8 +320,13 @@ final class NotificationManager: NSObject, ObservableObject {
     keepAliveThrottle.reset()
   }
 
+  /// The share mounted: a later login-mount failure is announced again.
+  func shareMounted(shareID: UUID) {
+    loginMountFailures.remove(shareID)
+  }
+
   /// A "Mount at login" share failed its last try (Keep Alive off): says
-  /// which share and why, at most once per share per session.
+  /// which share and why, at most once per failure (until it mounts again).
   func loginMountFailed(shareID: UUID, name: String, error: String?) {
     guard isEnabled, loginMountFailures.insert(shareID).inserted else { return }
     let reason = error ?? NSLocalizedString("Unknown error", comment: "Fallback error message")

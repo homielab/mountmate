@@ -150,6 +150,13 @@ class DiskMounter: ObservableObject {
           isBlockedVolumeID: { id in
             PersistenceManager.shared.blockedVolumes.contains { $0.id == id }
           },
+          isDuplicateUUID: {
+            // Disk Arbitration calls back on the main queue, where the list lives.
+            guard let volumeUUIDString else { return false }
+            return Volume.isUUID(
+              volumeUUIDString, sharedByOtherThan: bsdName,
+              in: (DriveManager.shared.physicalDisks ?? []).flatMap(\.allVolumes))
+          },
           allowRequestedMounts: this.allowRequestedMounts,
           isAutomaticMount: { this.withLedger { $0.isAutomaticMount(bsdName: bsdName) } }))
 

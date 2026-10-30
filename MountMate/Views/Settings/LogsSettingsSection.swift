@@ -54,6 +54,8 @@ struct LogsSettingsSection: View {
       in: DriveManager.shared.physicalDisks ?? [],
       threshold: LowSpaceRules.threshold() ?? Double(LowSpaceRules.defaultPercent) / 100
     ).count
+    let duplicateUUIDs = (DriveManager.shared.physicalDisks ?? []).flatMap(\.allVolumes)
+      .filter(\.isDuplicateUUID).count
     let savedShares = PersistenceManager.shared.networkShares
     let shareManager = NetworkMountManager.shared
     var shares = DiagnosticsReport.shareSummary(
@@ -68,7 +70,7 @@ struct LogsSettingsSection: View {
       let copied = await DiagnosticsReport.copyToPasteboard(
         failingDiskCount: failing.count, almostFullVolumeCount: almostFull,
         lowSpaceMutedVolumeCount: PersistenceManager.shared.lowSpaceMutedVolumeIDs.count,
-        shares: shares, mountPoints: mountPoints)
+        duplicateUUIDVolumeCount: duplicateUUIDs, shares: shares, mountPoints: mountPoints)
       diagnosticsState = copied ? .copied : .failed
     }
   }

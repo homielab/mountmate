@@ -638,3 +638,6 @@
 
 "Don't Warn About Free Space on This Volume" = "不再提醒此磁碟卷的可用空間";
 "Warn About Free Space on This Volume" = "提醒此磁碟卷的可用空間";
+
+/* Tooltip and VoiceOver value: two volumes share one VolumeUUID */
+"Same UUID as another volume. Use the disk or device name to tell them apart." = "與另一個卷宗的 UUID 相同。請依磁碟或裝置名稱區分它們。";
