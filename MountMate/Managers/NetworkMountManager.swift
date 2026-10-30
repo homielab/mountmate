@@ -239,8 +239,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     OpenAfterMountRules.open([mountPoint])
   }
 
-  /// Mounts the "Mount at login" shares at launch; `retryLoginMounts`
-  /// tries the failed ones again when the network comes up.
+  /// Mounts the "Mount at login" shares at launch; the failed ones are
+  /// tried again after 15 s, 30 s, 1 min, 2 min, 2 min and when the network
+  /// comes up (`retryLoginMounts`), while Keep Alive is off.
   private(set) lazy var loginMounts = LoginMountRetrier(
     shares: { PersistenceManager.shared.networkShares },
     isMounted: { [weak self] share in self?.isMounted(share: share) ?? false },
@@ -250,6 +251,16 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
       // Automatic: must not clear keep-alive suppression or backoff state.
       // The error is already sanitized by mount().
       self.mount(share: share, userInitiated: false, completion: completion)
+    },
+    schedule: { delay, block in
+      let work = DispatchWorkItem(block: block)
+      DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+      return { work.cancel() }
+    },
+    retryWhenDue: { [weak self] in
+      // Keep Alive on: its reconnect sweep already retries login shares.
+      guard !KeepAliveManager.shared.isEnabled else { return }
+      self?.retryLoginMounts()
     })
 
   /// Main thread only.
@@ -257,8 +268,9 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     loginMounts.mountAtLaunch()
   }
 
-  /// The network became available while Keep Alive is off: mounts the
-  /// "Mount at login" shares that failed at launch (`LoginMountRules`).
+  /// The network became available while Keep Alive is off, or the login
+  /// retry timer fired: mounts the "Mount at login" shares that failed at
+  /// launch (`LoginMountRules`).
   /// Main thread only.
   func retryLoginMounts() {
     guard loginMounts.hasPendingShares else { return }
