@@ -19,6 +19,7 @@ enum MountPointActions {
         withBundleIdentifier: terminalBundleIdentifier)
     else {
       Log.app.error("Terminal.app not found")
+      reportTerminalFailure(path)
       return
     }
     NSWorkspace.shared.open(
@@ -27,7 +28,21 @@ enum MountPointActions {
     ) { _, error in
       if let error {
         Log.app.error("Open in Terminal failed: \(error.localizedDescription, privacy: .private)")
+        DispatchQueue.main.async { reportTerminalFailure(path) }
       }
     }
+  }
+
+  /// Main thread. Says the Terminal window could not be opened instead of
+  /// doing nothing.
+  private static func reportTerminalFailure(_ path: String) {
+    DriveManager.shared.userActionError = AppAlert(
+      title: NSLocalizedString(
+        "Could Not Open Terminal", comment: "Alert title: Open in Terminal failed"),
+      message: String(
+        format: NSLocalizedString(
+          "MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it.",
+          comment: "Alert message: Open in Terminal failed; %@ is the folder path"), path),
+      kind: .basic)
   }
 }

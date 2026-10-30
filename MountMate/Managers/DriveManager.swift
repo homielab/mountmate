@@ -409,16 +409,19 @@ class DriveManager: ObservableObject {
   /// - Parameter completion: Called on the main thread with the disks that
   ///   could not be ejected (and why), after the drive list refreshed
   ///   (immediately with `[]` when there is nothing to eject).
+  /// - Parameter disks: the disks to eject; `nil` for every `ejectAllCandidates` disk.
   func ejectAllDisks(
+    disks requested: [PhysicalDisk]? = nil,
     reportFailures: Bool = true, completion: (([BulkVolumeActions.DiskEjectFailure]) -> Void)? = nil
   ) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async {
-        self.ejectAllDisks(reportFailures: reportFailures, completion: completion)
+        self.ejectAllDisks(
+          disks: requested, reportFailures: reportFailures, completion: completion)
       }
       return
     }
-    let disks = ejectAllCandidates
+    let disks = requested ?? ejectAllCandidates
     guard !disks.isEmpty else {
       completion?([])
       return

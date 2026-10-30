@@ -176,6 +176,7 @@ enum DiagnosticsReport {
       "Volumes almost full: \(almostFullVolumeCount)",
       "Volumes with the free space warning off: \(lowSpaceMutedVolumeCount)",
       "Volumes sharing a UUID with another volume: \(duplicateUUIDVolumeCount)",
+      "Previous /etc/fstab kept at: \(FstabWriter.backupPath())",
       "",
       "Network shares (saved): \(shares.saved)",
     ]

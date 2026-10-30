@@ -99,7 +99,7 @@ struct DiskHeaderRow: View {
           manager.refreshDrives(qos: .userInitiated)
         }
         if canEject {
-          Button("Eject") { manager.eject(disk: disk) }
+          Button("Eject") { manager.ejectAskingAboutTimeMachine(disk) }
             .disabled(manager.isEjecting(disk.id) || hasProtectedVolume)
         }
       }
@@ -108,7 +108,7 @@ struct DiskHeaderRow: View {
 
       if canEject {
         let isEjecting = manager.isEjecting(disk.id)
-        Button(action: { manager.eject(disk: disk) }) {
+        Button(action: { manager.ejectAskingAboutTimeMachine(disk) }) {
           Image(systemName: "eject.fill")
             .opacity(isEjecting ? 0 : 1)
         }

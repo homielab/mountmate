@@ -61,7 +61,7 @@ struct HeaderActionsView: View {
         // Unmount All Button
         Button(action: {
           guard !driveManager.isUnmountingAll else { return }
-          driveManager.unmountAllDrives()
+          driveManager.unmountAllAskingAboutTimeMachine()
         }) {
           Group {
             if driveManager.isUnmountingAll {
@@ -83,7 +83,7 @@ struct HeaderActionsView: View {
         .disabled(!canUnmountAll || driveManager.isUnmountingAll)
 
         // Eject All External Disks Button
-        Button(action: { driveManager.ejectAllDisks() }) {
+        Button(action: { driveManager.ejectAllAskingAboutTimeMachine() }) {
           Group {
             if isEjectingAny {
               ProgressView().controlSize(.small)

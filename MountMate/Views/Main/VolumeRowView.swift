@@ -330,7 +330,7 @@ struct VolumeRowView: View {
   private func toggleMount() {
     guard !isLoading, !state.isVerifying else { return }
     if currentVolume.isMounted {
-      manager.unmount(volume: currentVolume)
+      manager.unmountAskingAboutTimeMachine(currentVolume)
     } else {
       manager.mount(volume: currentVolume, trigger: .popover)
     }

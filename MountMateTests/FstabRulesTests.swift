@@ -368,4 +368,32 @@ final class FstabRulesTests: XCTestCase {
       FstabRules.untrackedCustomMountRules(rules, savedEntries: [savedByUUID]).map(\.identifier),
       ["A"], "an entry saved under another disk identifier still tracks its volume's rule")
   }
+
+  // MARK: - CRLF files
+
+  private let crlfFstab =
+    "# hand-written\r\nUUID=11111111-1111-1111-1111-111111111111 none apfs rw,noauto\r\n"
+    + "# MountMate custom mount: disk5s1\r\n"
+    + "UUID=22222222-2222-2222-2222-222222222222 /Users/me/Backup apfs rw\r\n"
+
+  func testCRLFLinesAreNotSplitInTwo() {
+    XCTAssertEqual(FstabRules.fstabLines(crlfFstab).count, 5)
+    XCTAssertEqual(FstabRules.fstabLines("a\rb\nc").count, 3)
+    XCTAssertEqual(FstabRules.customMountRules(in: crlfFstab).count, 1)
+  }
+
+  func testUnchangedCRLFFileComparesEqualAndIsNotRewritten() {
+    XCTAssertEqual(
+      FstabRules.removingCustomMountEntry(
+        volumeUUID: "33333333-3333-3333-3333-333333333333", from: crlfFstab), crlfFstab)
+    XCTAssertEqual(FstabRules.trimmedFstabContents(crlfFstab), crlfFstab)
+  }
+
+  func testEditedCRLFFileKeepsCRLF() {
+    let removed = FstabRules.removingCustomMountEntry(
+      volumeUUID: "22222222-2222-2222-2222-222222222222", from: crlfFstab)
+    XCTAssertEqual(
+      removed,
+      "# hand-written\r\nUUID=11111111-1111-1111-1111-111111111111 none apfs rw,noauto\r\n")
+  }
 }

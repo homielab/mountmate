@@ -16,12 +16,23 @@ struct RenameVolumeAppAlert {
   let onConfirm: (String) -> Void
 }
 
+/// A Time Machine backup is writing to a volume the user is about to
+/// unmount or eject.
+struct TimeMachineBackupAppAlert {
+  /// "Unmount Anyway" or "Eject Anyway".
+  let proceedTitle: String
+  let onProceed: () -> Void
+  /// Runs the action without the backing-up volumes (nothing for one volume).
+  let onSkip: () -> Void
+}
+
 enum AppAlertKind {
   case basic
   case renameVolume(RenameVolumeAppAlert)
   case lockedVolume(LockedVolumeAppAlert)
   case forceEject(() -> Void)
   case forceUnmount(() -> Void)
+  case timeMachineBackup(TimeMachineBackupAppAlert)
 }
 
 struct AppAlert: Identifiable {

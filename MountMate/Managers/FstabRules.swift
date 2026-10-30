@@ -69,7 +69,7 @@ enum FstabRules {
     }
 
     let withoutManagedEntry = removingCustomMountEntry(volumeUUID: volumeUUID, from: contents)
-    let activeLines = withoutManagedEntry.components(separatedBy: .newlines)
+    let activeLines = fstabLines(withoutManagedEntry)
 
     if activeLines.contains(where: { isConflictingFstabEntry($0, volumeUUID: volumeUUID) }) {
       throw NSError(
@@ -82,14 +82,15 @@ enum FstabRules {
         ])
     }
 
+    let eol = lineEnding(of: contents)
     var normalized = trimmedFstabContents(withoutManagedEntry)
     if !normalized.isEmpty {
-      normalized += "\n"
+      normalized += eol
     }
 
     let entryLine =
       "UUID=\(volumeUUID) \(fstabEscapedField(mountPoint)) \(fileSystemType) rw"
-    normalized += "\(managedFstabComment(identifier: identifier))\n\(entryLine)\n"
+    normalized += "\(managedFstabComment(identifier: identifier))\(eol)\(entryLine)\(eol)"
     return normalized
   }
 
@@ -183,7 +184,7 @@ enum FstabRules {
   /// Every MountMate custom mount point rule in `contents`, in file order.
   /// A comment whose next line is not a `UUID=` rule is skipped.
   static func customMountRules(in contents: String) -> [CustomMountRule] {
-    let lines = contents.components(separatedBy: .newlines)
+    let lines = fstabLines(contents)
     var rules: [CustomMountRule] = []
     for index in lines.indices.dropLast() {
       let comment = lines[index].trimmingCharacters(in: .whitespaces)
@@ -407,7 +408,7 @@ enum FstabRules {
         skipped.append(addition)
         continue
       }
-      updated += entry
+      updated += entry.replacingOccurrences(of: "\n", with: lineEnding(of: contents))
     }
     return (updated, skipped)
   }
@@ -531,7 +532,7 @@ enum FstabRules {
   static func removingManagedFstabEntries(
     volumeUUID: String, kinds: Set<String>, from contents: String
   ) -> String {
-    let lines = contents.components(separatedBy: .newlines)
+    let lines = fstabLines(contents)
     var filtered: [String] = []
     var index = 0
 
@@ -546,7 +547,7 @@ enum FstabRules {
       index += 1
     }
 
-    return trimmedFstabContents(filtered.joined(separator: "\n"))
+    return trimmedFstabContents(filtered.joined(separator: lineEnding(of: contents)))
   }
 
   private static func managedFstabKind(of line: String) -> String? {
@@ -579,7 +580,7 @@ enum FstabRules {
 
   /// Volume UUIDs (uppercased) addressed by the managed entries of `kinds`.
   static func managedFstabVolumeUUIDs(kinds: Set<String>, in contents: String) -> Set<String> {
-    let lines = contents.components(separatedBy: .newlines)
+    let lines = fstabLines(contents)
     var uuids: Set<String> = []
     var index = 0
 
@@ -606,7 +607,7 @@ enum FstabRules {
   /// by hand). A second line for the same volume would conflict, so no
   /// startup-block rule is added in that case.
   static func hasOtherFstabEntry(volumeUUID: String, in contents: String) -> Bool {
-    let lines = contents.components(separatedBy: .newlines)
+    let lines = fstabLines(contents)
     var index = 0
 
     while index < lines.count {
@@ -631,14 +632,27 @@ enum FstabRules {
   }
 
   static func trimmedFstabContents(_ contents: String) -> String {
-    let lines = contents.components(separatedBy: .newlines)
+    let lines = fstabLines(contents)
     var end = lines.count
     while end > 0 && lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty {
       end -= 1
     }
 
     guard end > 0 else { return "" }
-    return lines[..<end].joined(separator: "\n") + "\n"
+    let eol = lineEnding(of: contents)
+    return lines[..<end].joined(separator: eol) + eol
+  }
+
+  /// The lines of an fstab, split at `\n`, `\r\n` or `\r`. A CRLF pair is
+  /// one line break (`.newlines` would split it in two and add blank lines).
+  static func fstabLines(_ contents: String) -> [String] {
+    contents.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).map(String.init)
+  }
+
+  /// The line ending `contents` uses, so an edited CRLF file stays CRLF and
+  /// an unchanged one compares equal (and is not rewritten).
+  static func lineEnding(of contents: String) -> String {
+    contents.contains("\r\n") ? "\r\n" : "\n"
   }
 
   // MARK: - Field Validation

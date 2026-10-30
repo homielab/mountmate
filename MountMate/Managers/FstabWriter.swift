@@ -165,6 +165,12 @@ enum FstabWriter {
   ///   process could swap it. It is read exactly once into a shell variable;
   ///   the variable is hashed and the same variable is written, so nothing
   ///   reopens the file between the check and the write.
+  /// The copy of the previous fstab kept before every write (one file,
+  /// replaced each time), e.g. /etc/fstab.mountmate.bak.
+  static func backupPath(for fstabPath: String = "/etc/fstab") -> String {
+    fstabPath + ".mountmate.bak"
+  }
+
   static func systemFstabWriteCommand(
     stagedPath: String?, stagedData: Data, expectedCurrent: Data,
     fstabPath: String = "/etc/fstab"
@@ -175,7 +181,9 @@ enum FstabWriter {
       + "[ \"$(/usr/bin/shasum -a 256 < \(target) | /usr/bin/awk '{print $1}')\" = "
       + "\"\(sha256Hex(expectedCurrent))\" ]; "
       + "else \(expectedCurrent.isEmpty ? "true" : "false"); fi "
-      + "|| { echo \(fstabChangedMarker) >&2; exit 1; }"
+      + "|| { echo \(fstabChangedMarker) >&2; exit 1; }; "
+      + "if [ -e \(target) ]; then /bin/cp -p \(target) \(backupPath(for: fstabPath).shellQuoted) "
+      + "|| exit 1; fi"
 
     guard let stagedPath else {
       return "\(guardCommand); /bin/rm -f \(target)"

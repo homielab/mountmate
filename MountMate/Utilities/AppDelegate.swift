@@ -356,6 +356,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       alert.addButton(
         withTitle: NSLocalizedString("Force Unmount", comment: "Force Unmount button"))
       alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel button"))
+
+    case .timeMachineBackup(let backupAlert):
+      alert.addButton(withTitle: backupAlert.proceedTitle)
+      alert.addButton(
+        withTitle: NSLocalizedString("Skip", comment: "Button: leave the Time Machine volume"))
     }
 
     NSApp.activate(ignoringOtherApps: true)
@@ -384,7 +389,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         action()
       } else if case .forceUnmount(let action) = appAlert.kind {
         action()
+      } else if case .timeMachineBackup(let backupAlert) = appAlert.kind {
+        backupAlert.onProceed()
       }
+    } else if case .timeMachineBackup(let backupAlert) = appAlert.kind {
+      backupAlert.onSkip()
     }
 
     DriveManager.shared.userActionError = nil

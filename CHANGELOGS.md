@@ -91,6 +91,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Safer /etc/fstab edits**: an fstab with Windows line endings (CRLF) is read line by line again instead of gaining blank lines and being rewritten in full, and MountMate keeps the previous file as `/etc/fstab.mountmate.bak` before every change (also shown in Copy Diagnostics).
+- **Time Machine backups**: Unmount, Eject, Unmount All and Eject All External Disks ask first ("Unmount Anyway" or "Skip") when Time Machine is backing up to one of the volumes.
+- **Open in Terminal** shows an alert when Terminal cannot be opened instead of doing nothing.
+
 - **Encrypted volumes and a locked Keychain**: when the Keychain is locked or denies access to a saved APFS password, the password prompt now says so (with the Keychain error) instead of asking again with no reason, and a password deleted in Keychain Access no longer shows as saved.
 - **Keyboard shortcut recorder**: system combinations (⌘C, ⌘V, ⌘Q, ⌘W, ⌘Tab, ⌘Space, ⌘⇧4, ⌃Space, ⌘⌥Esc…) are refused with a "reserved by macOS" message, and pressing ⌘Q or ⌘W while recording no longer quits MountMate or closes Settings.
 - **Key names in shortcuts** (Space, Esc, Help, keypad keys) are now translated.

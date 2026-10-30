@@ -670,3 +670,24 @@
 
 /* Alert message: Keychain locked or access denied when reading the saved APFS password */
 "MountMate could not read the saved password from the Keychain (error %d). Enter the password to unlock “%@”" = "MountMate 无法从钥匙串读取已存储的密码（错误 %d）。请输入密码以解锁“%@”";
+
+/* Button: leave the Time Machine volume */
+"Skip" = "跳过";
+
+/* Alert title before unmounting or ejecting a volume a backup is writing to */
+"Time Machine is backing up to “%@”" = "时间机器正在备份到“%@”";
+
+/* Alert message: Time Machine backup in progress */
+"Unmounting it now stops the backup. Time Machine tries again at its next backup." = "现在推出会中断备份。时间机器会在下次备份时重试。";
+
+/* Button: unmount during a Time Machine backup */
+"Unmount Anyway" = "仍然推出";
+
+/* Button: eject during a Time Machine backup */
+"Eject Anyway" = "仍然弹出";
+
+/* Alert title: Open in Terminal failed */
+"Could Not Open Terminal" = "无法打开终端";
+
+/* Alert message: Open in Terminal failed; %@ is the folder path */
+"MountMate could not open a Terminal window at “%@”. Check that Terminal is installed and MountMate may control it." = "MountMate 无法在“%@”打开终端窗口。请检查终端是否已安装，以及 MountMate 是否有权控制它。";

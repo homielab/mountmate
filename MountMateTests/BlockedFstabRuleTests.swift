@@ -205,6 +205,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer {
       try? FileManager.default.removeItem(at: staged)
       try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: FstabWriter.backupPath(for: target.path))
     }
 
     // chown root:wheel fails without root; everything before it must work.
@@ -216,6 +217,30 @@ final class BlockedFstabRuleTests: XCTestCase {
     XCTAssertEqual(try Data(contentsOf: target), hostileContents)
   }
 
+  func testSystemFstabWriteCommandBacksUpThePreviousFileFirst() throws {
+    let staged = stagedFile(Data("# new\n".utf8))
+    let target = temporaryPath("target")
+    let backup = FstabWriter.backupPath(for: target.path)
+    let current = Data("# old\n".utf8)
+    try current.write(to: target)
+    try Data("# older\n".utf8).write(to: URL(fileURLWithPath: backup))
+    defer {
+      try? FileManager.default.removeItem(at: staged)
+      try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: backup)
+    }
+
+    let command = FstabWriter.systemFstabWriteCommand(
+      stagedPath: staged.path, stagedData: Data("# new\n".utf8), expectedCurrent: current,
+      fstabPath: target.path)
+    XCTAssertLessThan(
+      command.range(of: "/bin/cp -p")!.lowerBound, command.range(of: "/bin/chmod")!.lowerBound)
+    _ = runShell(command)
+    XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: backup)), current)
+    XCTAssertEqual(try Data(contentsOf: target), Data("# new\n".utf8))
+    XCTAssertEqual(FstabWriter.backupPath(), "/etc/fstab.mountmate.bak")
+  }
+
   func testSystemFstabWriteCommandAbortsWhenStagedFileWasSwapped() throws {
     let staged = stagedFile(Data("swapped\n".utf8))
     let target = temporaryPath("target")
@@ -224,6 +249,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer {
       try? FileManager.default.removeItem(at: staged)
       try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: FstabWriter.backupPath(for: target.path))
     }
 
     let result = runShell(
@@ -242,6 +268,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer {
       try? FileManager.default.removeItem(at: staged)
       try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: FstabWriter.backupPath(for: target.path))
     }
 
     let result = runShell(
@@ -259,6 +286,7 @@ final class BlockedFstabRuleTests: XCTestCase {
     defer {
       try? FileManager.default.removeItem(at: staged)
       try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: FstabWriter.backupPath(for: target.path))
     }
 
     let refused = runShell(
@@ -279,7 +307,10 @@ final class BlockedFstabRuleTests: XCTestCase {
     let target = temporaryPath("target")
     let current = Data("# old\n".utf8)
     try current.write(to: target)
-    defer { try? FileManager.default.removeItem(at: target) }
+    defer {
+      try? FileManager.default.removeItem(at: target)
+      try? FileManager.default.removeItem(atPath: FstabWriter.backupPath(for: target.path))
+    }
 
     let command = FstabWriter.systemFstabWriteCommand(
       stagedPath: nil, stagedData: Data(), expectedCurrent: current, fstabPath: target.path)

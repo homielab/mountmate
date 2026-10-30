@@ -26,7 +26,7 @@ struct VolumeContextMenu: View {
     }
     if rules.showsMountedActions {
       Button {
-        manager.unmount(volume: volume)
+        manager.unmountAskingAboutTimeMachine(volume)
       } label: {
         Label("Unmount", systemImage: "minus.circle")
       }
