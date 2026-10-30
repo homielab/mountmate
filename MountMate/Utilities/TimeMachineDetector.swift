@@ -48,9 +48,12 @@ enum TimeMachineDetector {
     }
     let results = Results()
     let group = DispatchGroup()
+    // At the caller's QoS, as it waits on the checks.
+    let queue = DispatchQueue.global(
+      qos: DispatchQoS.QoSClass(rawValue: qos_class_self()) ?? .utility)
     for mountPoint in mountPoints {
       group.enter()
-      DispatchQueue.global(qos: .utility).async {
+      queue.async {
         if check(mountPoint) {
           results.lock.lock()
           results.found.insert(mountPoint)

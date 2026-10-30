@@ -16,7 +16,7 @@ enum FileSystemUsage {
     func end(_ path: String) { lock.withLock { _ = paths.remove(path) } }
   }
 
-  /// Carries the answer of the statfs queue back to the waiting caller.
+  /// Carries the answer of the worker thread back to the waiting caller.
   private final class Box<T>: @unchecked Sendable {
     var value: T?
   }
@@ -27,8 +27,6 @@ enum FileSystemUsage {
   /// apart so a capacity read running at the same moment is never mistaken
   /// for a blocked probe.
   private static let probes = InFlightPaths()
-  private static let statfsQueue = DispatchQueue(
-    label: "com.homielab.mountmate.statfs", qos: .utility, attributes: .concurrent)
 
   enum Outcome {
     case usage(total: Int64, free: Int64)
@@ -51,7 +49,7 @@ enum FileSystemUsage {
 
   static func endRead(of path: String) { reads.end(path) }
 
-  /// Runs `work` on the statfs queue and waits at most `timeout` for it.
+  /// Runs `work` on another thread and waits at most `timeout` for it.
   /// Nil on timeout, or at once when a call for `path` in `inFlight` is
   /// still running.
   private static func run<T>(
@@ -62,7 +60,9 @@ enum FileSystemUsage {
 
     let box = Box<T>()
     let done = DispatchSemaphore(value: 0)
-    statfsQueue.async {
+    // At the caller's QoS: a semaphore wait does not raise the worker's
+    // priority, so a lower class would be a priority inversion.
+    DispatchQueue.global(qos: DispatchQoS.QoSClass(rawValue: qos_class_self()) ?? .utility).async {
       box.value = work()
       inFlight.end(path)
       done.signal()
