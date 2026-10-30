@@ -54,7 +54,7 @@ struct NetworkServicePickerSheet: View {
                 VStack(alignment: .leading, spacing: 2) {
                   Text(service.displayName)
                     .font(.body)
-                  Text("\(service.host) · \(service.shareProtocol.displayName)")
+                  Text("\(service.serverAddress) · \(service.shareProtocol.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }

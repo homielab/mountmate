@@ -27,11 +27,43 @@ final class NetworkServiceResolverTests: XCTestCase {
 
   // MARK: host names
 
-  func testHostFromServiceNameStripsDomainAndWhitespace() {
-    XCTAssertEqual(NetworkServiceResolver.hostFromServiceName("MyNAS"), "MyNAS")
-    XCTAssertEqual(NetworkServiceResolver.hostFromServiceName("MyNAS.local."), "MyNAS")
-    XCTAssertEqual(NetworkServiceResolver.hostFromServiceName("  My NAS  "), "My NAS")
-    XCTAssertEqual(NetworkServiceResolver.hostFromServiceName(""), "")
+  func testFallbackHostTurnsTheServiceNameIntoALocalHostName() {
+    let fallback = NetworkServiceResolver.fallbackHost(forServiceName:)
+    XCTAssertEqual(fallback("  My NAS  "), "my-nas.local")
+    XCTAssertEqual(fallback("MyNAS"), "mynas.local")
+    XCTAssertEqual(fallback("MyNAS.local."), "mynas.local")
+    XCTAssertEqual(fallback("John's MacBook Pro"), "johns-macbook-pro.local")
+    XCTAssertEqual(fallback("John\u{2019}s MacBook Pro"), "johns-macbook-pro.local")
+    XCTAssertEqual(fallback("NAS (Office) #2"), "nas-office-2.local")
+    XCTAssertEqual(fallback("Máy chủ Đức"), "may-chu-duc.local")
+    XCTAssertEqual(fallback(""), "")
+    XCTAssertEqual(fallback(" 💾 "), "")
+  }
+
+  func testFallbackHostNeverContainsSpacesOrApostrophes() {
+    for name in ["My NAS", "John's MacBook Pro", "a  b\tc", "'quoted'", "x.local. "] {
+      let host = NetworkServiceResolver.fallbackHost(forServiceName: name)
+      XCTAssertFalse(host.contains(" "), host)
+      XCTAssertFalse(host.contains("'"), host)
+      XCTAssertTrue(host.hasSuffix(".local"), host)
+    }
+  }
+
+  func testHostFromHostTargetDropsTheRootDot() {
+    let host = NetworkServiceResolver.host(fromHostTarget:)
+    XCTAssertEqual(host("Johns-MacBook-Pro.local."), "Johns-MacBook-Pro.local")
+    XCTAssertEqual(host("nas.example.com"), "nas.example.com")
+    XCTAssertNil(host(""))
+    XCTAssertNil(host("."))
+    XCTAssertNil(host("My NAS.local."))
+  }
+
+  func testOnlyNonDefaultPortsAreKept() {
+    XCTAssertNil(NetworkServiceResolver.nonDefaultPort(445, for: .smb))
+    XCTAssertNil(NetworkServiceResolver.nonDefaultPort(2049, for: .nfs))
+    XCTAssertNil(NetworkServiceResolver.nonDefaultPort(0, for: .smb))
+    XCTAssertEqual(NetworkServiceResolver.nonDefaultPort(1445, for: .smb), 1445)
+    XCTAssertEqual(NetworkServiceResolver.nonDefaultPort(445, for: .nfs), 445)
   }
 
   // MARK: resolve
@@ -44,8 +76,9 @@ final class NetworkServiceResolverTests: XCTestCase {
     XCTAssertEqual(
       resolved,
       [
-        BrowsedShareService(host: "Backups", shareProtocol: .nfs, displayName: "Backups"),
-        BrowsedShareService(host: "Photos NAS", shareProtocol: .smb, displayName: "Photos NAS"),
+        BrowsedShareService(host: "backups.local", shareProtocol: .nfs, displayName: "Backups"),
+        BrowsedShareService(
+          host: "photos-nas.local", shareProtocol: .smb, displayName: "Photos NAS"),
       ])
   }
 
@@ -55,7 +88,7 @@ final class NetworkServiceResolverTests: XCTestCase {
       service("", "_smb._tcp"),
       service("Real", "_smb._tcp"),
     ])
-    XCTAssertEqual(resolved.map(\.host), ["Real"])
+    XCTAssertEqual(resolved.map(\.host), ["real.local"])
   }
 
   func testResolveCollapsesDuplicatesAcrossInterfaces() {
@@ -65,7 +98,7 @@ final class NetworkServiceResolverTests: XCTestCase {
       service("nas", "_smb._tcp"),  // same host, different case
     ])
     XCTAssertEqual(resolved.count, 1)
-    XCTAssertEqual(resolved.first?.host, "NAS")
+    XCTAssertEqual(resolved.first?.host, "nas.local")
   }
 
   func testSameHostAnnouncingSMBAndNFSGivesTwoEntries() {
@@ -82,7 +115,48 @@ final class NetworkServiceResolverTests: XCTestCase {
       service("Alpha", "_smb._tcp"),
       service("beta", "_smb._tcp"),
     ])
-    XCTAssertEqual(resolved.map(\.host), ["Alpha", "beta", "zeta"])
+    XCTAssertEqual(resolved.map(\.displayName), ["Alpha", "beta", "zeta"])
+  }
+
+  func testResolvedHostWinsOverTheNameDerivedOne() {
+    let mac = service("John's MacBook Pro", "_smb._tcp")
+    let nas = service("My NAS", "_smb._tcp")
+    let resolved = NetworkServiceResolver.resolve(
+      [mac, nas],
+      resolved: [mac: ResolvedServiceAddress(hostTarget: "Johns-MBP.local.", port: 445)])
+    XCTAssertEqual(
+      resolved,
+      [
+        BrowsedShareService(
+          host: "Johns-MBP.local", shareProtocol: .smb, displayName: "John's MacBook Pro"),
+        BrowsedShareService(host: "my-nas.local", shareProtocol: .smb, displayName: "My NAS"),
+      ])
+  }
+
+  func testResolvedNonDefaultPortGoesIntoTheServerAddress() {
+    let nas = service("NAS", "_smb._tcp")
+    let resolved = NetworkServiceResolver.resolve(
+      [nas], resolved: [nas: ResolvedServiceAddress(hostTarget: "nas.local.", port: 1445)])
+    XCTAssertEqual(resolved.first?.serverAddress, "nas.local:1445")
+    XCTAssertEqual(resolved.first?.id, "nas.local:1445-smb")
+  }
+
+  func testUnusableResolvedHostFallsBackToTheServiceName() {
+    let nas = service("My NAS", "_smb._tcp")
+    let resolved = NetworkServiceResolver.resolve(
+      [nas], resolved: [nas: ResolvedServiceAddress(hostTarget: "", port: 445)])
+    XCTAssertEqual(resolved.first?.serverAddress, "my-nas.local")
+  }
+
+  func testServerAddressHasNoSpacesOrApostrophes() {
+    let resolved = NetworkServiceResolver.resolve([
+      service("John's MacBook Pro", "_smb._tcp"),
+      service("  My NAS  ", "_nfs._tcp"),
+    ])
+    for entry in resolved {
+      XCTAssertFalse(entry.serverAddress.contains(" "), entry.serverAddress)
+      XCTAssertFalse(entry.serverAddress.contains("'"), entry.serverAddress)
+    }
   }
 
   func testResolveEmptyListGivesNoEntries() {

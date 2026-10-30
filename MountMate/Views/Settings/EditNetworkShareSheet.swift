@@ -251,7 +251,7 @@ struct EditNetworkShareSheet: View {
     }
     .sheet(isPresented: $showBrowser) {
       NetworkServicePickerSheet(isPresented: $showBrowser) { service in
-        server = service.host
+        server = service.serverAddress
         shareProtocol = service.shareProtocol
       }
     }
