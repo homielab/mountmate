@@ -56,6 +56,16 @@ struct HotkeyShortcut: Equatable, Sendable {
     kVK_PageUp: "⇞", kVK_PageDown: "⇟",
     kVK_F1: "F1", kVK_F2: "F2", kVK_F3: "F3", kVK_F4: "F4", kVK_F5: "F5", kVK_F6: "F6",
     kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9", kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
+    kVK_F13: "F13", kVK_F14: "F14", kVK_F15: "F15", kVK_F16: "F16", kVK_F17: "F17",
+    kVK_F18: "F18", kVK_F19: "F19", kVK_F20: "F20", kVK_Help: "Help",
+    kVK_ANSI_Keypad0: "Keypad 0", kVK_ANSI_Keypad1: "Keypad 1", kVK_ANSI_Keypad2: "Keypad 2",
+    kVK_ANSI_Keypad3: "Keypad 3", kVK_ANSI_Keypad4: "Keypad 4", kVK_ANSI_Keypad5: "Keypad 5",
+    kVK_ANSI_Keypad6: "Keypad 6", kVK_ANSI_Keypad7: "Keypad 7", kVK_ANSI_Keypad8: "Keypad 8",
+    kVK_ANSI_Keypad9: "Keypad 9", kVK_ANSI_KeypadDecimal: "Keypad .",
+    kVK_ANSI_KeypadMultiply: "Keypad *", kVK_ANSI_KeypadPlus: "Keypad +",
+    kVK_ANSI_KeypadClear: "Keypad Clear", kVK_ANSI_KeypadDivide: "Keypad /",
+    kVK_ANSI_KeypadEnter: "Keypad Enter", kVK_ANSI_KeypadMinus: "Keypad -",
+    kVK_ANSI_KeypadEquals: "Keypad =",
   ]
 
   /// US layout labels, used when the current layout cannot be read.

@@ -21,6 +21,21 @@ final class KeyboardLayoutLabelTests: XCTestCase {
     XCTAssertEqual(HotkeyShortcut.keyLabel(for: 0x7F, layout: none), "Key 127")
   }
 
+  func testExtendedKeyboardKeysHaveFixedLabels() {
+    // The layout may translate keypad keys to a bare digit; the label must not.
+    let keypad = FakeLayout(map: [kVK_ANSI_Keypad1: "1", kVK_F13: "\u{F710}"])
+    let expected: [(Int, String)] = [
+      (kVK_F13, "F13"), (kVK_F14, "F14"), (kVK_F15, "F15"), (kVK_F16, "F16"),
+      (kVK_F17, "F17"), (kVK_F18, "F18"), (kVK_F19, "F19"), (kVK_F20, "F20"),
+      (kVK_Help, "Help"), (kVK_ANSI_Keypad0, "Keypad 0"), (kVK_ANSI_Keypad1, "Keypad 1"),
+      (kVK_ANSI_Keypad9, "Keypad 9"), (kVK_ANSI_KeypadEnter, "Keypad Enter"),
+      (kVK_ANSI_KeypadPlus, "Keypad +"), (kVK_ANSI_KeypadClear, "Keypad Clear"),
+    ]
+    for (code, label) in expected {
+      XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(code), layout: keypad), label)
+    }
+  }
+
   func testLabelsFollowTheLayout() {
     XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(kVK_ANSI_Q), layout: azerty), "A")
     XCTAssertEqual(HotkeyShortcut.keyLabel(for: UInt16(kVK_ANSI_M), layout: azerty), ",")

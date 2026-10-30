@@ -91,6 +91,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Shortcut keys on extended keyboards**: shortcuts using F13–F20, Help or keypad keys now show as "⌘F13" or "⌃Keypad 1" in Settings (and VoiceOver reads them right) instead of "Key 105" or a stray symbol.
+- **Reduce Motion**: the small message after a keyboard shortcut now appears and disappears without fading when Reduce Motion is on.
 - **Volumes with the same UUID** (two SD cards flashed from one image, a cloned drive): the volume name explains on hover and in VoiceOver that another volume has the same UUID, Copy Diagnostics counts such volumes, and blocking one card no longer stops the other card from mounting automatically.
 - **Could Not Mount at Login** is shown again for a share that mounted and later failed again, instead of once per session.
 - The menu bar icon while a disk operation runs no longer looks like Time Machine is backing up.

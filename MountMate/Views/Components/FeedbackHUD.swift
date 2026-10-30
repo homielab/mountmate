@@ -27,6 +27,11 @@ enum FeedbackHUD {
   private static var hideWork: DispatchWorkItem?
   private static var visibility = HUDVisibility()
 
+  /// Fade length; 0 when Reduce Motion is on, so the HUD just appears and disappears.
+  static func fadeDuration(_ duration: TimeInterval, reduceMotion: Bool) -> TimeInterval {
+    reduceMotion ? 0 : duration
+  }
+
   static func show(
     _ message: String, systemImage: String = "checkmark.circle.fill", tint: HUDTint = .success
   ) {
@@ -50,11 +55,12 @@ enum FeedbackHUD {
     }
 
     hideWork?.cancel()
+    let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     let generation = visibility.show()
     panel.alphaValue = 0
     panel.orderFrontRegardless()
     NSAnimationContext.runAnimationGroup {
-      $0.duration = 0.18
+      $0.duration = fadeDuration(0.18, reduceMotion: reduceMotion)
       panel.animator().alphaValue = 1
     }
     NSAccessibility.post(
@@ -67,7 +73,7 @@ enum FeedbackHUD {
       guard visibility.isCurrent(generation) else { return }
       NSAnimationContext.runAnimationGroup(
         {
-          $0.duration = 0.3
+          $0.duration = fadeDuration(0.3, reduceMotion: reduceMotion)
           panel.animator().alphaValue = 0
         },
         completionHandler: {
