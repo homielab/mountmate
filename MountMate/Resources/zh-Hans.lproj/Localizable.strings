@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "挂载所有尚未挂载的外置卷宗。";
 "Unmounts every mounted external volume except protected ones." = "卸载所有已挂载的外置卷宗（受保护的除外）。";
-"Mounts a network share saved in MountMate." = "挂载 MountMate 中保存的网络共享。";
+"Mounts a network share saved in MountMate and returns its mount point." = "挂载 MountMate 中保存的网络共享，并返回其挂载点。";
 "Mount Network Share" = "挂载网络共享";
 "Network Share" = "网络共享";
 "Volumes mounted." = "卷宗已挂载。";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "卸载 MountMate 中保存的网络共享。";
-"Mounts one external volume by its name." = "按名称挂载一个外置卷宗。";
+"Mounts one external volume by its name and returns its mount point." = "按名称挂载一个外置卷宗，并返回其挂载点。";
 "Unmounts one external volume by its name. A protected volume is refused." = "按名称卸载一个外置卷宗。受保护的卷宗会被拒绝。";
 "Unmount Network Share" = "卸载网络共享";
 "Mount Volume" = "挂载卷宗";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "服务器拒绝了“%@”的密码。MountMate 已停止重新连接，以免账户被锁定。请在“设置”→“网络共享”中更新密码。";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "服务器拒绝了已保存的密码，因此 MountMate 已停止重新连接此共享。请编辑共享并输入新密码。";
 "Disks Were Not Mounted Again" = "磁盘未重新装载";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "获取已挂载的卷宗";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "按 MountMate 菜单中的顺序返回当前已挂载的外置卷宗。";
+"Get Network Shares" = "获取网络共享";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "返回 MountMate 中保存的网络共享，以及每个共享是否已挂载和其挂载点。";
+"Is Volume Mounted" = "卷宗是否已挂载";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "判断某个外置卷宗当前是否已挂载。未连接的卷宗视为未挂载。";
+"Mount Point" = "挂载点";

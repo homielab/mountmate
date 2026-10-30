@@ -43,6 +43,33 @@ final class VolumeEntityTests: XCTestCase {
     XCTAssertEqual(suggestions.map(\.id), ["Stick"])
   }
 
+  func testEntityCarriesTheMountState() {
+    let mounted = VolumeEntity(
+      volume: volume("Backup", id: uuidA, device: "disk4s1", mountPoint: "/Volumes/Backup"))
+    XCTAssertTrue(mounted.isMounted)
+    XCTAssertEqual(mounted.mountPoint, "/Volumes/Backup")
+    let unmounted = VolumeEntity(volume: volume("Photos", id: uuidB, device: "disk5s1"))
+    XCTAssertFalse(unmounted.isMounted)
+    XCTAssertNil(unmounted.mountPoint)
+    let unplugged = VolumeQuery.entities(for: ["Old Name"], current: [])
+    XCTAssertEqual(unplugged.map(\.isMounted), [false])
+  }
+
+  func testShareEntitiesFollowTheMountTable() {
+    let nas = NetworkShare(
+      name: "NAS", server: "nas.local", sharePath: "/media", username: "",
+      mountAtLogin: false, keepMounted: false, shareProtocol: .smb)
+    let photos = NetworkShare(
+      name: "Photos", server: "nas.local", sharePath: "/photos", username: "",
+      mountAtLogin: false, keepMounted: false, shareProtocol: .smb)
+    let entities = NetworkShareEntity.entities(
+      for: [nas, photos], mountPoints: [photos.id: "/Users/me/mountmate/Photos"])
+    XCTAssertEqual(entities.map(\.name), ["NAS", "Photos"])
+    XCTAssertEqual(entities.map(\.isMounted), [false, true])
+    XCTAssertEqual(entities.map(\.mountPoint), [nil, "/Users/me/mountmate/Photos"])
+    XCTAssertFalse(NetworkShareEntity(share: nas, mountPoint: " ").isMounted)
+  }
+
   func testSubtitleLeavesOutUnknownParts() {
     XCTAssertEqual(
       VolumeEntity.subtitle(for: volume("A", id: uuidA, device: "disk4s1", size: nil)), "disk4s1")

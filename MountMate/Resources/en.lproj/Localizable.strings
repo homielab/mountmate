@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mounts every external volume that is not mounted yet.";
 "Unmounts every mounted external volume except protected ones." = "Unmounts every mounted external volume except protected ones.";
-"Mounts a network share saved in MountMate." = "Mounts a network share saved in MountMate.";
+"Mounts a network share saved in MountMate and returns its mount point." = "Mounts a network share saved in MountMate and returns its mount point.";
 "Mount Network Share" = "Mount Network Share";
 "Network Share" = "Network Share";
 "Volumes mounted." = "Volumes mounted.";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "Unmounts a network share saved in MountMate.";
-"Mounts one external volume by its name." = "Mounts one external volume by its name.";
+"Mounts one external volume by its name and returns its mount point." = "Mounts one external volume by its name and returns its mount point.";
 "Unmounts one external volume by its name. A protected volume is refused." = "Unmounts one external volume by its name. A protected volume is refused.";
 "Unmount Network Share" = "Unmount Network Share";
 "Mount Volume" = "Mount Volume";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password.";
 "Disks Were Not Mounted Again" = "Disks Were Not Mounted Again";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "Get Mounted Volumes";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "Returns the external volumes that are mounted now, in the order of the MountMate menu.";
+"Get Network Shares" = "Get Network Shares";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "Returns the network shares saved in MountMate, each with whether it is mounted and its mount point.";
+"Is Volume Mounted" = "Is Volume Mounted";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Tells whether an external volume is mounted now. A volume that is not connected is not mounted.";
+"Mount Point" = "Mount Point";

@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Monte tous les volumes externes qui ne sont pas encore montés.";
 "Unmounts every mounted external volume except protected ones." = "Démonte tous les volumes externes montés, sauf ceux protégés.";
-"Mounts a network share saved in MountMate." = "Monte un partage réseau enregistré dans MountMate.";
+"Mounts a network share saved in MountMate and returns its mount point." = "Monte un partage réseau enregistré dans MountMate et renvoie son point de montage.";
 "Mount Network Share" = "Monter un partage réseau";
 "Network Share" = "Partage réseau";
 "Volumes mounted." = "Volumes montés.";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "Démonte un partage réseau enregistré dans MountMate.";
-"Mounts one external volume by its name." = "Monte un volume externe d’après son nom.";
+"Mounts one external volume by its name and returns its mount point." = "Monte un volume externe d’après son nom et renvoie son point de montage.";
 "Unmounts one external volume by its name. A protected volume is refused." = "Démonte un volume externe d’après son nom. Un volume protégé est refusé.";
 "Unmount Network Share" = "Démonter un partage réseau";
 "Mount Volume" = "Monter un volume";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Le serveur a refusé le mot de passe de « %@ ». MountMate a cessé de le reconnecter pour que le compte ne soit pas verrouillé. Mettez à jour le mot de passe dans Paramètres → Partages réseau.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Le serveur a refusé le mot de passe enregistré : MountMate a cessé de reconnecter ce partage. Modifiez le partage pour saisir le nouveau mot de passe.";
 "Disks Were Not Mounted Again" = "Disques non remontés";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "Obtenir les volumes montés";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "Renvoie les volumes externes montés en ce moment, dans l’ordre du menu MountMate.";
+"Get Network Shares" = "Obtenir les partages réseau";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "Renvoie les partages réseau enregistrés dans MountMate, avec pour chacun s’il est monté et son point de montage.";
+"Is Volume Mounted" = "Volume monté ?";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Indique si un volume externe est monté en ce moment. Un volume non connecté n’est pas monté.";
+"Mount Point" = "Point de montage";

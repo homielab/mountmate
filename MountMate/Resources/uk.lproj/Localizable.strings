@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Підключає всі зовнішні томи, які ще не підключено.";
 "Unmounts every mounted external volume except protected ones." = "Відключає всі підключені зовнішні томи, окрім захищених.";
-"Mounts a network share saved in MountMate." = "Підключає мережеву папку, збережену в MountMate.";
+"Mounts a network share saved in MountMate and returns its mount point." = "Підключає мережеву папку, збережену в MountMate, і повертає її точку монтування.";
 "Mount Network Share" = "Підключити мережеву папку";
 "Network Share" = "Мережева папка";
 "Volumes mounted." = "Томи підключено.";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "Відключає мережеву папку, збережену в MountMate.";
-"Mounts one external volume by its name." = "Підключає зовнішній том за назвою.";
+"Mounts one external volume by its name and returns its mount point." = "Підключає зовнішній том за назвою і повертає його точку монтування.";
 "Unmounts one external volume by its name. A protected volume is refused." = "Відключає зовнішній том за назвою. Захищений том не відключається.";
 "Unmount Network Share" = "Відключити мережеву папку";
 "Mount Volume" = "Підключити том";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Сервер відхилив пароль для «%@». MountMate припинив повторне підключення, щоб обліковий запис не заблокувався. Оновіть пароль у Налаштування → Мережеві ресурси.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Сервер відхилив збережений пароль, тому MountMate припинив повторно підключати цей ресурс. Відредагуйте ресурс і введіть новий пароль.";
 "Disks Were Not Mounted Again" = "Диски не підключено знову";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "Отримати підключені томи";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "Повертає зовнішні томи, підключені зараз, у порядку меню MountMate.";
+"Get Network Shares" = "Отримати мережеві папки";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "Повертає мережеві папки, збережені в MountMate, і для кожної — чи підключена вона та її точку монтування.";
+"Is Volume Mounted" = "Чи підключено том";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Повідомляє, чи підключено зараз зовнішній том. Том, який не під’єднано, не підключений.";
+"Mount Point" = "Точка монтування";

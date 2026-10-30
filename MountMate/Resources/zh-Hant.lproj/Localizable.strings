@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "掛載所有尚未掛載的外接磁碟卷。";
 "Unmounts every mounted external volume except protected ones." = "卸載所有已掛載的外接磁碟卷（受保護的除外）。";
-"Mounts a network share saved in MountMate." = "掛載 MountMate 中儲存的網路共享。";
+"Mounts a network share saved in MountMate and returns its mount point." = "掛載 MountMate 中儲存的網路共享，並傳回其掛載點。";
 "Mount Network Share" = "掛載網路共享";
 "Network Share" = "網路共享";
 "Volumes mounted." = "磁碟卷已掛載。";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "卸載 MountMate 中儲存的網路共享。";
-"Mounts one external volume by its name." = "依名稱掛載一個外接磁碟卷。";
+"Mounts one external volume by its name and returns its mount point." = "依名稱掛載一個外接磁碟卷，並傳回其掛載點。";
 "Unmounts one external volume by its name. A protected volume is refused." = "依名稱卸載一個外接磁碟卷。受保護的磁碟卷會被拒絕。";
 "Unmount Network Share" = "卸載網路共享";
 "Mount Volume" = "掛載磁碟卷";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "伺服器拒絕了「%@」的密碼。MountMate 已停止重新連線，以免帳號遭鎖定。請在「設定」→「網路共享」中更新密碼。";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "伺服器拒絕了已儲存的密碼，因此 MountMate 已停止重新連線此共享。請編輯共享並輸入新密碼。";
 "Disks Were Not Mounted Again" = "磁碟未重新裝載";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "取得已掛載的磁碟卷";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "依 MountMate 選單中的順序傳回目前已掛載的外接磁碟卷。";
+"Get Network Shares" = "取得網路共享";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "傳回 MountMate 中儲存的網路共享，以及每個共享是否已掛載與其掛載點。";
+"Is Volume Mounted" = "磁碟卷是否已掛載";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "判斷某個外接磁碟卷目前是否已掛載。未連接的磁碟卷視為未掛載。";
+"Mount Point" = "掛載點";

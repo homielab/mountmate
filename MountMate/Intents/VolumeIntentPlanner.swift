@@ -2,9 +2,9 @@
 
 import Foundation
 
-/// Decides what the "Mount Volume" / "Unmount Volume" Shortcuts actions do for
-/// a volume chosen by UUID or name. Pure, so the matching and the error texts
-/// are testable.
+/// Decides what the volume Shortcuts actions (Mount, Unmount, Eject, Is
+/// Volume Mounted, Get Mounted Volumes) do for a volume chosen by UUID or
+/// name. Pure, so the matching, the answers and the error texts are testable.
 enum VolumeIntentPlanner {
   /// What a saved shortcut remembers about its volume: the volume UUID when
   /// it has one (so two volumes with the same name stay apart) and the name
@@ -126,6 +126,54 @@ enum VolumeIntentPlanner {
       }
       return volume.isMounted ? .run(volume) : .alreadyDone(volume)
     }
+  }
+
+  /// What "Get Mounted Volumes" lists: the mounted ordinary volumes of
+  /// external disks (the same set as Mount Volume), in the order of the menu:
+  /// external drives first, then disk images, each disk's volumes as listed.
+  static func mountedVolumes(
+    in disks: [PhysicalDisk], unverifiedDiskIDs: Set<String>
+  ) -> [Volume] {
+    let disks = BulkVolumeActions.actionableDisks(disks, unverifiedDiskIDs: unverifiedDiskIDs)
+    let ordered = disks.filter { $0.type != .diskImage } + disks.filter { $0.type == .diskImage }
+    return ordered.flatMap(\.allVolumes).filter { $0.category == .user && $0.isMounted }
+  }
+
+  enum MountedAnswer: Equatable {
+    case answer(Bool)
+    /// The intent fails with this message.
+    case failure(String)
+  }
+
+  /// What "Is Volume Mounted" answers. A volume that is not connected is not
+  /// mounted (so a shortcut can branch on a drive being plugged in); two
+  /// volumes it cannot tell apart are an error rather than a guess.
+  static func isMounted(
+    _ reference: Reference, in volumes: [Volume],
+    localize: IntentMessages.Localize = IntentMessages.defaultLocalize
+  ) -> MountedAnswer {
+    switch match(reference, in: volumes) {
+    case .notFound: return .answer(false)
+    case .ambiguous:
+      return .failure(IntentMessages.volumeNameAmbiguous(name: reference.name, localize: localize))
+    case .found(let volume): return .answer(volume.isMounted)
+    }
+  }
+
+  /// Where `volume` is mounted according to `volumes` (the list read after
+  /// the mount), found by its identifier, else its volume UUID; `nil` when it
+  /// is not mounted there or reports no mount point.
+  static func mountPoint(of volume: Volume, in volumes: [Volume]) -> String? {
+    let current =
+      volumes.first { $0.id == volume.id }
+      ?? volume.stableVolumeUUID.flatMap { uuid in
+        volumes.first { $0.stableVolumeUUID?.caseInsensitiveCompare(uuid) == .orderedSame }
+      }
+    guard let current, current.isMounted,
+      let path = current.mountPoint?.trimmingCharacters(in: .whitespacesAndNewlines),
+      !path.isEmpty
+    else { return nil }
+    return path
   }
 
   enum EjectPlan: Equatable {

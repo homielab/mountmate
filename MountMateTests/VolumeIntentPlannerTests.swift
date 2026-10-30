@@ -54,6 +54,86 @@ final class VolumeIntentPlannerTests: XCTestCase {
     XCTAssertEqual(VolumeIntentPlanner.match(name: "Backup", in: [twin, other]), .ambiguous)
   }
 
+  // MARK: Results and state (Get Mounted Volumes, Is Volume Mounted)
+
+  private func mountedAt(
+    _ path: String?, id: String, name: String = "Backup", category: DriveCategory = .user
+  ) -> Volume {
+    Volume(
+      id: id, deviceIdentifier: "disk-\(id)", diskUUID: nil, name: name,
+      isMounted: path != nil, mountPoint: path, freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: nil, usagePercentage: nil, category: category,
+      isProtected: false, snapshots: [], storageError: nil)
+  }
+
+  func testMountedVolumesListsMountedUserVolumesOfExternalDisksInMenuOrder() {
+    let image = disk("disk9", type: .diskImage, volumes: [volume("Installer")])
+    let usb = disk(
+      "disk4",
+      volumes: [
+        volume("EFI", category: .system), volume("Photos"), volume("Off", mounted: false),
+        volume("Backup"),
+      ])
+    let builtIn = disk("disk0", type: .internalDisk, volumes: [volume("Macintosh HD")])
+    let unverified = disk("disk5", volumes: [volume("Unknown")])
+    let mounted = VolumeIntentPlanner.mountedVolumes(
+      in: [image, builtIn, usb, unverified], unverifiedDiskIDs: ["disk5"])
+    XCTAssertEqual(mounted.map(\.name), ["Photos", "Backup", "Installer"])
+    XCTAssertEqual(VolumeIntentPlanner.mountedVolumes(in: [], unverifiedDiskIDs: []), [])
+  }
+
+  func testIsMountedAnswersFromTheMountTable() {
+    let volumes = [volume("Backup"), volume("Photos", mounted: false)]
+    XCTAssertEqual(
+      VolumeIntentPlanner.isMounted(.init(name: "backup", volumeUUID: nil), in: volumes),
+      .answer(true))
+    XCTAssertEqual(
+      VolumeIntentPlanner.isMounted(.init(name: "Photos", volumeUUID: nil), in: volumes),
+      .answer(false))
+  }
+
+  func testIsMountedIsFalseForAVolumeThatIsNotConnected() {
+    XCTAssertEqual(
+      VolumeIntentPlanner.isMounted(.init(name: "Gone", volumeUUID: uuidA), in: [volume("A")]),
+      .answer(false))
+  }
+
+  func testIsMountedFailsWhenTwoVolumesCannotBeToldApart() {
+    let volumes = [untitled(uuidA, device: "disk4s1"), untitled(uuidB, device: "disk5s1")]
+    XCTAssertEqual(
+      VolumeIntentPlanner.isMounted(
+        .init(name: "Untitled", volumeUUID: nil), in: volumes, localize: { $0 }),
+      .failure(
+        "More than one volume is named “Untitled”. Choose the volume again in the shortcut."))
+    XCTAssertEqual(
+      VolumeIntentPlanner.isMounted(.init(name: "Untitled", volumeUUID: uuidB), in: volumes),
+      .answer(true))
+  }
+
+  func testMountPointIsReadFromTheListAfterTheMount() {
+    let before = mountedAt(nil, id: uuidA)
+    let after = [mountedAt("/Volumes/Other", id: uuidB), mountedAt("/Volumes/Backup 1", id: uuidA)]
+    XCTAssertEqual(VolumeIntentPlanner.mountPoint(of: before, in: after), "/Volumes/Backup 1")
+    XCTAssertNil(VolumeIntentPlanner.mountPoint(of: before, in: [mountedAt(nil, id: uuidA)]))
+    XCTAssertNil(VolumeIntentPlanner.mountPoint(of: before, in: [mountedAt("  ", id: uuidA)]))
+    XCTAssertNil(VolumeIntentPlanner.mountPoint(of: before, in: []))
+  }
+
+  func testMountPointFindsTheVolumeByUUIDWhenItsIdentifierChanged() {
+    let before = mountedAt(nil, id: uuidA)
+    let after = mountedAt("/Users/me/Backup", id: uuidA.lowercased())
+    XCTAssertEqual(VolumeIntentPlanner.mountPoint(of: before, in: [after]), "/Users/me/Backup")
+  }
+
+  func testMountPlanOfAMountedVolumeKeepsItsMountPoint() {
+    let mounted = mountedAt("/Volumes/Backup", id: uuidA)
+    guard
+      case .alreadyDone(let found) = VolumeIntentPlanner.plan(
+        .init(name: "Backup", volumeUUID: uuidA), in: [mounted], mount: true)
+    else { return XCTFail("expected alreadyDone") }
+    XCTAssertEqual(VolumeIntentPlanner.mountPoint(of: found, in: [mounted]), "/Volumes/Backup")
+  }
+
   // MARK: Same-named volumes (UUID references)
 
   private let uuidA = "11111111-1111-1111-1111-111111111111"

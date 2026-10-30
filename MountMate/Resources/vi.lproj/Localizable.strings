@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mount mọi phân vùng ngoài chưa được mount.";
 "Unmounts every mounted external volume except protected ones." = "Unmount mọi phân vùng ngoài đang mount, trừ các phân vùng được bảo vệ.";
-"Mounts a network share saved in MountMate." = "Mount một chia sẻ mạng đã lưu trong MountMate.";
+"Mounts a network share saved in MountMate and returns its mount point." = "Mount một chia sẻ mạng đã lưu trong MountMate và trả về điểm gắn của nó.";
 "Mount Network Share" = "Mount chia sẻ mạng";
 "Network Share" = "Chia sẻ mạng";
 "Volumes mounted." = "Đã mount các phân vùng.";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "Unmount một chia sẻ mạng đã lưu trong MountMate.";
-"Mounts one external volume by its name." = "Mount một phân vùng ngoài theo tên.";
+"Mounts one external volume by its name and returns its mount point." = "Mount một phân vùng ngoài theo tên và trả về điểm gắn của nó.";
 "Unmounts one external volume by its name. A protected volume is refused." = "Unmount một phân vùng ngoài theo tên. Phân vùng được bảo vệ sẽ bị từ chối.";
 "Unmount Network Share" = "Unmount chia sẻ mạng";
 "Mount Volume" = "Mount phân vùng";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Máy chủ đã từ chối mật khẩu của “%@”. MountMate đã ngừng kết nối lại để tài khoản không bị khoá. Hãy cập nhật mật khẩu trong Cài đặt → Chia sẻ Mạng.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Máy chủ đã từ chối mật khẩu đã lưu nên MountMate ngừng kết nối lại chia sẻ này. Hãy sửa chia sẻ để nhập mật khẩu mới.";
 "Disks Were Not Mounted Again" = "Một số ổ chưa được gắn lại";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "Lấy các phân vùng đã mount";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "Trả về các phân vùng ngoài đang được mount, theo thứ tự trong menu MountMate.";
+"Get Network Shares" = "Lấy các chia sẻ mạng";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "Trả về các chia sẻ mạng đã lưu trong MountMate, kèm trạng thái đã mount hay chưa và điểm gắn của từng chia sẻ.";
+"Is Volume Mounted" = "Phân vùng đã mount chưa";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Cho biết một phân vùng ngoài hiện có đang được mount không. Phân vùng chưa kết nối được coi là chưa mount.";
+"Mount Point" = "Điểm gắn";

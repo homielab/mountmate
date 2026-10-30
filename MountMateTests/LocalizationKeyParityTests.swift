@@ -266,14 +266,15 @@ final class LocalizationKeyParityTests: XCTestCase {
     }
   }
 
-  /// Titles, short titles, descriptions and parameter titles of App Intents:
-  /// keys of Localizable.strings.
+  /// Titles, short titles, descriptions, parameter and entity property titles
+  /// of App Intents: keys of Localizable.strings.
   static func intentStrings(inSwift text: String) -> [String] {
     [
       #"title:\s*LocalizedStringResource\s*=\s*"#,
       #"shortTitle:\s*"#,
       #"IntentDescription\(\s*"#,
       #"@Parameter\(title:\s*"#,
+      #"@Property\(title:\s*"#,
     ].flatMap { literals(matching: $0 + stringLiteral, in: text) }
   }
 
@@ -283,6 +284,7 @@ final class LocalizationKeyParityTests: XCTestCase {
       static var description = IntentDescription(
         "Mounts all.")
       @Parameter(title: "Volume")
+      @Property(title: "Mount Point")
       AppShortcut(
         intent: MountAllIntent(),
         phrases: [
@@ -296,15 +298,22 @@ final class LocalizationKeyParityTests: XCTestCase {
       ["Mount all with ${applicationName}", "Mount ${volume} with ${applicationName}"])
     XCTAssertEqual(
       Self.intentStrings(inSwift: sample).sorted(),
-      ["Mount All", "Mount All", "Mounts all.", "Volume"])
+      ["Mount All", "Mount All", "Mount Point", "Mounts all.", "Volume"])
   }
 
+  /// Every Swift file of `MountMate/Intents/` (intents and entities).
   private func intentsSource() throws -> (root: URL, text: String) {
     let root = URL(fileURLWithPath: #filePath)
       .deletingLastPathComponent().deletingLastPathComponent()
-    let text = try String(
-      contentsOf: root.appendingPathComponent("MountMate/Intents/MountMateIntents.swift"),
-      encoding: .utf8)
+    let folder = root.appendingPathComponent("MountMate/Intents")
+    let files = try FileManager.default.contentsOfDirectory(
+      at: folder, includingPropertiesForKeys: nil
+    )
+    .filter { $0.pathExtension == "swift" }
+    .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    XCTAssertTrue(files.contains { $0.lastPathComponent == "MountMateIntents.swift" })
+    let text = try files.map { try String(contentsOf: $0, encoding: .utf8) }
+      .joined(separator: "\n")
     return (root, text)
   }
 

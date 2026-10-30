@@ -18,6 +18,13 @@ struct VolumeEntity: AppEntity {
   /// Size and BSD name (plus mount point when mounted) of the volume while it
   /// is connected, so the picker can tell same-named volumes apart.
   let subtitle: String?
+  /// Whether the volume was mounted when the entity was made; false when it
+  /// is not connected.
+  @Property(title: "Mounted")
+  var isMounted: Bool
+  /// Where it was mounted then ("/Volumes/Backup"), else `nil`.
+  @Property(title: "Mount Point")
+  var mountPoint: String?
 
   var reference: VolumeIntentPlanner.Reference {
     VolumeIntentPlanner.Reference(identifier: id)
@@ -25,15 +32,23 @@ struct VolumeEntity: AppEntity {
 
   var name: String { reference.name }
 
-  init(id: String, subtitle: String? = nil) {
+  init(id: String, subtitle: String? = nil, isMounted: Bool = false, mountPoint: String? = nil) {
     self.id = id
     self.subtitle = subtitle
+    self.isMounted = isMounted
+    self.mountPoint = mountPoint
   }
 
   init(volume: Volume) {
+    self.init(id: VolumeIntentPlanner.Reference(volume: volume).identifier, current: volume)
+  }
+
+  /// `identifier` with the subtitle and mount state of `volume`, the volume
+  /// it stands for as connected now.
+  init(id identifier: String, current volume: Volume) {
     self.init(
-      id: VolumeIntentPlanner.Reference(volume: volume).identifier,
-      subtitle: Self.subtitle(for: volume))
+      id: identifier, subtitle: Self.subtitle(for: volume), isMounted: volume.isMounted,
+      mountPoint: VolumeIntentPlanner.mountPoint(of: volume, in: [volume]))
   }
 
   /// "16 GB · disk4s1 · /Volumes/Untitled 1"; parts that are unknown are left out.
@@ -65,7 +80,7 @@ struct VolumeQuery: EntityQuery {
   }
 
   /// One entity per identifier; a volume that is connected gets its
-  /// subtitle, one that is not keeps its name only.
+  /// subtitle and mount state, one that is not keeps its name only.
   static func entities(for identifiers: [String], current: [Volume]) -> [VolumeEntity] {
     identifiers.map { identifier in
       guard let uuid = VolumeIntentPlanner.Reference(identifier: identifier).volumeUUID,
@@ -73,7 +88,7 @@ struct VolumeQuery: EntityQuery {
           $0.stableVolumeUUID?.caseInsensitiveCompare(uuid) == .orderedSame
         })
       else { return VolumeEntity(id: identifier) }
-      return VolumeEntity(id: identifier, subtitle: VolumeEntity.subtitle(for: volume))
+      return VolumeEntity(id: identifier, current: volume)
     }
   }
 

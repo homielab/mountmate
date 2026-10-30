@@ -141,6 +141,45 @@ enum IntentActions {
     }
   }
 
+  /// Where `volume` is mounted in the drive list read after its mount (the
+  /// mount refreshes it), or `""` when the list reports no mount point.
+  static func mountPoint(of volume: Volume) -> String {
+    let manager = DriveManager.shared
+    let volumes = VolumeIntentPlanner.candidates(
+      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+    return VolumeIntentPlanner.mountPoint(of: volume, in: volumes) ?? volume.mountPoint ?? ""
+  }
+
+  /// The mounted user volumes of external disks, in menu order, after
+  /// refreshing the drive list.
+  static func mountedVolumes() async -> [Volume] {
+    let manager = await refreshedDriveManager()
+    return VolumeIntentPlanner.mountedVolumes(
+      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+  }
+
+  /// Whether the volume is mounted, after refreshing the drive list.
+  static func isMounted(
+    _ reference: VolumeIntentPlanner.Reference
+  ) async -> VolumeIntentPlanner.MountedAnswer {
+    let manager = await refreshedDriveManager()
+    let volumes = VolumeIntentPlanner.candidates(
+      in: manager.physicalDisks ?? [], unverifiedDiskIDs: manager.unverifiedDiskIDs)
+    return VolumeIntentPlanner.isMounted(reference, in: volumes)
+  }
+
+  /// Where `share` is mounted, read from the mount table after its mount.
+  static func mountPoint(of share: NetworkShare) async -> String {
+    await refreshedNetworkManager().getMountPoint(for: share)
+  }
+
+  /// The saved shares with their mount state, after reading the mount table.
+  static func networkShares() async -> [NetworkShareEntity] {
+    let manager = await refreshedNetworkManager()
+    return NetworkShareEntity.entities(
+      for: NetworkShareQuery.savedShares(), mountPoints: manager.mountPointsByShareID)
+  }
+
   private static func failureMessage(_ result: Result<Void, Error>) -> String? {
     if case .failure(let error) = result { return error.localizedDescription }
     return nil
@@ -233,13 +272,16 @@ struct UnmountAllSharesIntent: AppIntent {
 
 struct MountShareIntent: AppIntent {
   static var title: LocalizedStringResource = "Mount Network Share"
-  static var description = IntentDescription("Mounts a network share saved in MountMate.")
+  static var description = IntentDescription(
+    "Mounts a network share saved in MountMate and returns its mount point.")
 
   @Parameter(title: "Network Share")
   var share: NetworkShareEntity
 
+  /// Returns the mount point as text, so it goes straight into Run Shell
+  /// Script (rsync) or a path field.
   @MainActor
-  func perform() async throws -> some IntentResult & ProvidesDialog {
+  func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
     guard let saved = NetworkShareQuery.savedShares().first(where: { $0.id == share.id }) else {
       throw IntentFailure(message: IntentMessages.shareNotFound())
     }
@@ -247,6 +289,7 @@ struct MountShareIntent: AppIntent {
       throw IntentFailure(message: IntentMessages.shareFailure(name: saved.name, reason: error))
     }
     return .result(
+      value: await IntentActions.mountPoint(of: saved),
       dialog: IntentDialog(stringLiteral: IntentMessages.shareMounted(name: saved.name)))
   }
 }
@@ -274,18 +317,21 @@ struct UnmountShareIntent: AppIntent {
 
 struct MountVolumeIntent: AppIntent {
   static var title: LocalizedStringResource = "Mount Volume"
-  static var description = IntentDescription("Mounts one external volume by its name.")
+  static var description = IntentDescription(
+    "Mounts one external volume by its name and returns its mount point.")
 
   @Parameter(title: "Volume")
   var volume: VolumeEntity
 
+  /// Returns the mount point as text (see `MountShareIntent`).
   @MainActor
-  func perform() async throws -> some IntentResult & ProvidesDialog {
+  func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
     switch await IntentActions.volumePlan(volume.reference, mount: true) {
     case .failure(let message):
       throw IntentFailure(message: message)
     case .alreadyDone(let found):
       return .result(
+        value: IntentActions.mountPoint(of: found),
         dialog: IntentDialog(stringLiteral: IntentMessages.shareMounted(name: found.name)))
     case .run(let found):
       if let error = await IntentActions.mount(volume: found) {
@@ -293,6 +339,7 @@ struct MountVolumeIntent: AppIntent {
           message: IntentMessages.shareFailure(name: found.name, reason: error))
       }
       return .result(
+        value: IntentActions.mountPoint(of: found),
         dialog: IntentDialog(stringLiteral: IntentMessages.shareMounted(name: found.name)))
     }
   }
@@ -349,6 +396,52 @@ struct EjectVolumeIntent: AppIntent {
   }
 }
 
+struct GetMountedVolumesIntent: AppIntent {
+  static var title: LocalizedStringResource = "Get Mounted Volumes"
+  static var description = IntentDescription(
+    "Returns the external volumes that are mounted now, in the order of the MountMate menu.")
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ReturnsValue<[VolumeEntity]> {
+    .result(value: await IntentActions.mountedVolumes().map(VolumeEntity.init(volume:)))
+  }
+}
+
+struct GetNetworkSharesIntent: AppIntent {
+  static var title: LocalizedStringResource = "Get Network Shares"
+  static var description = IntentDescription(
+    "Returns the network shares saved in MountMate, each with whether it is mounted and its mount point."
+  )
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ReturnsValue<[NetworkShareEntity]> {
+    .result(value: await IntentActions.networkShares())
+  }
+}
+
+struct IsVolumeMountedIntent: AppIntent {
+  static var title: LocalizedStringResource = "Is Volume Mounted"
+  static var description = IntentDescription(
+    "Tells whether an external volume is mounted now. A volume that is not connected is not mounted."
+  )
+
+  @Parameter(title: "Volume")
+  var volume: VolumeEntity
+
+  @MainActor
+  func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
+    switch await IntentActions.isMounted(volume.reference) {
+    case .failure(let message):
+      throw IntentFailure(message: message)
+    case .answer(let mounted):
+      return .result(value: mounted)
+    }
+  }
+}
+
+/// At most 10 App Shortcuts per app: the actions that only read state (Get
+/// Mounted Volumes, Get Network Shares, Is Volume Mounted) have no phrase and
+/// are found in the Shortcuts app's action list.
 struct MountMateShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(

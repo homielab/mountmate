@@ -447,7 +447,7 @@
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Монтирует все внешние тома, которые ещё не смонтированы.";
 "Unmounts every mounted external volume except protected ones." = "Размонтирует все смонтированные внешние тома, кроме защищённых.";
-"Mounts a network share saved in MountMate." = "Монтирует сетевую папку, сохранённую в MountMate.";
+"Mounts a network share saved in MountMate and returns its mount point." = "Монтирует сетевую папку, сохранённую в MountMate, и возвращает её точку монтирования.";
 "Mount Network Share" = "Смонтировать сетевую папку";
 "Network Share" = "Сетевая папка";
 "Volumes mounted." = "Тома смонтированы.";
@@ -483,7 +483,7 @@
 
 // MARK: - Shortcuts: unmount share, mount/unmount volume
 "Unmounts a network share saved in MountMate." = "Размонтирует сетевую папку, сохранённую в MountMate.";
-"Mounts one external volume by its name." = "Монтирует внешний том по имени.";
+"Mounts one external volume by its name and returns its mount point." = "Монтирует внешний том по имени и возвращает его точку монтирования.";
 "Unmounts one external volume by its name. A protected volume is refused." = "Размонтирует внешний том по имени. Защищённый том не размонтируется.";
 "Unmount Network Share" = "Размонтировать сетевую папку";
 "Mount Volume" = "Смонтировать том";
@@ -609,3 +609,12 @@
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Сервер отклонил пароль для «%@». MountMate прекратил переподключение, чтобы учётная запись не была заблокирована. Обновите пароль в Настройки → Сетевые ресурсы.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Сервер отклонил сохранённый пароль, поэтому MountMate прекратил переподключать этот ресурс. Отредактируйте ресурс и введите новый пароль.";
 "Disks Were Not Mounted Again" = "Диски не подключены снова";
+
+// MARK: - Shortcuts: results and state
+"Get Mounted Volumes" = "Получить смонтированные тома";
+"Returns the external volumes that are mounted now, in the order of the MountMate menu." = "Возвращает внешние тома, смонтированные сейчас, в порядке меню MountMate.";
+"Get Network Shares" = "Получить сетевые папки";
+"Returns the network shares saved in MountMate, each with whether it is mounted and its mount point." = "Возвращает сетевые папки, сохранённые в MountMate, и для каждой — смонтирована ли она и её точку монтирования.";
+"Is Volume Mounted" = "Смонтирован ли том";
+"Tells whether an external volume is mounted now. A volume that is not connected is not mounted." = "Сообщает, смонтирован ли сейчас внешний том. Неподключённый том не смонтирован.";
+"Mount Point" = "Точка монтирования";
