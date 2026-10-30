@@ -608,3 +608,4 @@
 "Password Rejected" = "Mật khẩu bị từ chối";
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Máy chủ đã từ chối mật khẩu của “%@”. MountMate đã ngừng kết nối lại để tài khoản không bị khoá. Hãy cập nhật mật khẩu trong Cài đặt → Chia sẻ Mạng.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Máy chủ đã từ chối mật khẩu đã lưu nên MountMate ngừng kết nối lại chia sẻ này. Hãy sửa chia sẻ để nhập mật khẩu mới.";
+"Disks Were Not Mounted Again" = "Một số ổ chưa được gắn lại";

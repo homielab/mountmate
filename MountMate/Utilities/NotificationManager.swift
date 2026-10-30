@@ -386,6 +386,16 @@ final class NotificationManager: NSObject, ObservableObject {
         names.joined(separator: ", ")))
   }
 
+  /// "Mount Again on Wake" gave up: these disks did not come back or could
+  /// not be mounted.
+  func wakeRemountUnfinished(names: [String]) {
+    post(
+      id: "wakeRemountUnfinished",
+      title: NSLocalizedString("Disks Were Not Mounted Again", comment: "Notification title"),
+      body: PluralizedString.format(
+        "wake.notRemounted", names.count, names.joined(separator: ", ")))
+  }
+
   /// A volume was unmounted by "Unmount When Idle". Returns false when no
   /// notification is shown, so the caller can fall back to its own feedback.
   @discardableResult

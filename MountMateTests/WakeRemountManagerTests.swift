@@ -178,6 +178,89 @@ final class WakeRemountManagerTests: XCTestCase {
     XCTAssertFalse(manager.isRunning)
   }
 
+  func testSlowDiskThatAppearsOnTheThirdAttemptIsMounted() {
+    var currentVolumes: [Volume] = []
+    var mounted: [String] = []
+    var notified: [[String]] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion(currentVolumes) },
+      isBusy: { _ in false },
+      mount: { volume, completion in
+        mounted.append(volume.name)
+        completion(true)
+      },
+      notifyNotRemounted: { notified.append($0) })
+
+    manager.begin(volumes: [volume(uuidA, name: "A", isMounted: true)])
+    manager.handleWake()
+    scheduler.fireNext()
+    scheduler.fireNext()
+    XCTAssertEqual(scheduler.delays, [3, 10, 30])
+    XCTAssertTrue(mounted.isEmpty)
+
+    currentVolumes = [volume(uuidA, name: "A")]
+    scheduler.fireNext()
+    XCTAssertEqual(mounted, ["A"])
+    XCTAssertNil(manager.plan)
+    XCTAssertFalse(manager.isRunning)
+    XCTAssertTrue(notified.isEmpty)
+  }
+
+  func testDisksLeftAfterTheLastAttemptAreAnnouncedOnce() {
+    var pendingMounts: [(Bool) -> Void] = []
+    var notified: [[String]] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { [uuidB] completion in completion([self.volume(uuidB, name: "B")]) },
+      isBusy: { _ in false },
+      mount: { _, completion in pendingMounts.append(completion) },
+      notifyNotRemounted: { notified.append($0) })
+
+    manager.begin(volumes: [
+      volume(uuidA, name: "Backup", isMounted: true),
+      volume(uuidB, name: "B", id: "disk9s2", isMounted: true),
+    ])
+    manager.handleWake()
+    for _ in 0..<2 {
+      scheduler.fireNext()
+      pendingMounts.removeFirst()(false)
+    }
+    scheduler.fireNext()
+    // The last mount is still running: nothing is announced yet.
+    XCTAssertTrue(notified.isEmpty)
+    XCTAssertTrue(manager.isRunning)
+
+    pendingMounts.removeFirst()(true)
+    XCTAssertEqual(notified, [["Backup"]])
+    XCTAssertNil(manager.plan)
+    XCTAssertFalse(manager.isRunning)
+    XCTAssertTrue(scheduler.pending.isEmpty)
+  }
+
+  func testAPlanEmptiedByTheUserIsNotAnnounced() {
+    var notified: [[String]] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      isBusy: { _ in false },
+      mount: { _, completion in completion(true) },
+      notifyNotRemounted: { notified.append($0) })
+
+    let a = volume(uuidA, name: "A", isMounted: true)
+    manager.begin(volumes: [a])
+    manager.handleWake()
+    scheduler.fireNext()
+    manager.forget([a])
+    scheduler.fireNext()
+    XCTAssertTrue(notified.isEmpty)
+    XCTAssertNil(manager.plan)
+    XCTAssertFalse(manager.isRunning)
+  }
+
   func testBusyVolumeStaysInPlanForSecondAttempt() {
     let unmountedA = volume(uuidA, name: "A", id: "disk9s1", isMounted: false)
     var busy = true

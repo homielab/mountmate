@@ -462,5 +462,25 @@
 			<string>Не удалось размонтировать %d сетевой папки</string>
 		</dict>
 	</dict>
+	<key>wake.notRemounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@: %@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d диск не был подключён снова</string>
+			<key>few</key>
+			<string>%d диска не были подключены снова</string>
+			<key>many</key>
+			<string>%d дисков не были подключены снова</string>
+			<key>other</key>
+			<string>%d дисков не были подключены снова</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

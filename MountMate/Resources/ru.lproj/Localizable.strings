@@ -608,3 +608,4 @@
 "Password Rejected" = "Пароль отклонён";
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Сервер отклонил пароль для «%@». MountMate прекратил переподключение, чтобы учётная запись не была заблокирована. Обновите пароль в Настройки → Сетевые ресурсы.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Сервер отклонил сохранённый пароль, поэтому MountMate прекратил переподключать этот ресурс. Отредактируйте ресурс и введите новый пароль.";
+"Disks Were Not Mounted Again" = "Диски не подключены снова";

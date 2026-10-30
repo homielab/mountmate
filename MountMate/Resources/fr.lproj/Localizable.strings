@@ -608,3 +608,4 @@
 "Password Rejected" = "Mot de passe refusé";
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "Le serveur a refusé le mot de passe de « %@ ». MountMate a cessé de le reconnecter pour que le compte ne soit pas verrouillé. Mettez à jour le mot de passe dans Paramètres → Partages réseau.";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "Le serveur a refusé le mot de passe enregistré : MountMate a cessé de reconnecter ce partage. Modifiez le partage pour saisir le nouveau mot de passe.";
+"Disks Were Not Mounted Again" = "Disques non remontés";

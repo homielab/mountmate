@@ -608,3 +608,4 @@
 "Password Rejected" = "密码被拒绝";
 "The server rejected the password for “%@”. MountMate stopped reconnecting it so the account doesn't get locked. Update the password in Settings → Network Shares." = "服务器拒绝了“%@”的密码。MountMate 已停止重新连接，以免账户被锁定。请在“设置”→“网络共享”中更新密码。";
 "The server rejected the saved password, so MountMate stopped reconnecting this share. Edit the share to enter the new password." = "服务器拒绝了已保存的密码，因此 MountMate 已停止重新连接此共享。请编辑共享并输入新密码。";
+"Disks Were Not Mounted Again" = "磁盘未重新装载";

@@ -20,9 +20,10 @@ final class WakeRemountManager {
   static let enabledKey = "remountOnWakeEnabled"
   static let planKey = "mountmate_wakeRemountPlan_v1"
 
-  /// Seconds after wake to look for the disks (they come back a moment after
-  /// the Mac). The last attempt ends the plan.
-  static let attemptDelays: [TimeInterval] = [3, 10]
+  /// Seconds to wait before each look for the disks, counted from the
+  /// previous look (they come back a moment after the Mac; a slow hub or hard
+  /// disk can take half a minute). The last attempt ends the plan.
+  static let attemptDelays: [TimeInterval] = [3, 10, 30]
 
   static let mainQueueScheduler: Scheduler = { delay, work in
     DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
@@ -54,6 +55,7 @@ final class WakeRemountManager {
   private let isBusy: (String) -> Bool
   private let mount: Mounter
   private let notifyLeftover: ([String]) -> Void
+  private let notifyNotRemounted: ([String]) -> Void
   private var wakeToken: NSObjectProtocol?
   private(set) var isRunning = false
   /// True while the plan must wait for the screen to unlock: a wake then
@@ -69,6 +71,9 @@ final class WakeRemountManager {
     mount: @escaping Mounter = WakeRemountManager.liveMounter,
     notifyLeftover: @escaping ([String]) -> Void = {
       NotificationManager.shared.sleepUnmountLeftoverMounted(names: $0)
+    },
+    notifyNotRemounted: @escaping ([String]) -> Void = {
+      NotificationManager.shared.wakeRemountUnfinished(names: $0)
     }
   ) {
     self.defaults = defaults
@@ -77,6 +82,7 @@ final class WakeRemountManager {
     self.isBusy = isBusy
     self.mount = mount
     self.notifyLeftover = notifyLeftover
+    self.notifyNotRemounted = notifyNotRemounted
   }
 
   var isEnabled: Bool {
@@ -228,24 +234,47 @@ final class WakeRemountManager {
     let byUUID = Dictionary(
       volumes.compactMap { volume in volume.stableVolumeUUID.map { ($0, volume) } },
       uniquingKeysWith: { first, _ in first })
+    let isLast = index + 1 >= Self.attemptDelays.count
+    var pendingMounts = 0
+    var dispatching = true
     for entry in entries {
       guard let volume = byUUID[entry.volumeUUID], !isBusy(volume.id) else {
         continue
       }
+      pendingMounts += 1
       mount(volume) { [weak self] succeeded in
-        guard let self, self.isRunning, self.generation == generation, succeeded else { return }
-        self.plan = self.plan?.remaining(afterMounted: [entry.volumeUUID])
+        guard let self, self.isRunning, self.generation == generation else { return }
+        if succeeded {
+          self.plan = self.plan?.remaining(afterMounted: [entry.volumeUUID])
+        }
+        pendingMounts -= 1
         if self.plan == nil {
           self.finish()
+        } else if isLast, !dispatching, pendingMounts == 0 {
+          self.finishAnnouncingLeftover()
         }
       }
     }
+    dispatching = false
 
     guard isRunning, self.generation == generation else { return }
-    if index + 1 < Self.attemptDelays.count, plan?.isEmpty == false {
+    if !isLast, plan?.isEmpty == false {
       attempt(index: index + 1, generation: generation, announceUnfinished: false)
-    } else {
-      finish()
+    } else if pendingMounts == 0 {
+      finishAnnouncingLeftover()
+    }
+    // Otherwise the last mount completion ends the plan.
+  }
+
+  /// The last attempt is over: tells the user which disks stay unmounted
+  /// (not connected yet, or the mount failed), then ends the plan.
+  private func finishAnnouncingLeftover() {
+    let names = plan?.entries.map(\.name) ?? []
+    finish()
+    if !names.isEmpty {
+      Log.drive.notice(
+        "Mount Again on Wake gave up on \(names.count, privacy: .public) volume(s).")
+      notifyNotRemounted(names)
     }
   }
 

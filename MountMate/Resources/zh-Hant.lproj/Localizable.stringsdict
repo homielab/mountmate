@@ -324,5 +324,21 @@
 			<string>無法卸載 %d 個網路共享</string>
 		</dict>
 	</dict>
+	<key>wake.notRemounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@：%@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d 個磁碟未重新裝載</string>
+			<key>other</key>
+			<string>%d 個磁碟未重新裝載</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

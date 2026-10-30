@@ -370,5 +370,21 @@
 			<string>Impossible de démonter %d partages réseau</string>
 		</dict>
 	</dict>
+	<key>wake.notRemounted</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@n@ : %@</string>
+		<key>n</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d disque n’a pas été remonté</string>
+			<key>other</key>
+			<string>%d disques n’ont pas été remontés</string>
+		</dict>
+	</dict>
 </dict>
 </plist>
