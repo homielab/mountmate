@@ -109,6 +109,21 @@ struct VolumeContextMenu: View {
         Label("Pin to Top", systemImage: "pin")
       }
     }
+    if volume.category == .user, volume.compositeId != nil {
+      Button {
+        if persistence.setLowSpaceMuted(!volume.isLowSpaceMuted, volume: volume) {
+          manager.refreshDrives(qos: .userInitiated)
+        } else {
+          showPersistenceError()
+        }
+      } label: {
+        if volume.isLowSpaceMuted {
+          Label("Warn About Free Space on This Volume", systemImage: "bell")
+        } else {
+          Label("Don't Warn About Free Space on This Volume", systemImage: "bell.slash")
+        }
+      }
+    }
     if rules.isKeepAlive {
       Button {
         if !persistence.setKeepAlive(false, volume: volume) {

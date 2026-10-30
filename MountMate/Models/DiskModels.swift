@@ -105,6 +105,12 @@ struct Volume: Identifiable, Hashable, Sendable {
   /// A Time Machine backup volume; see `DiskTopology.isTimeMachineVolume`.
   var isTimeMachine: Bool = false
 
+  /// The volume's size in bytes, when diskutil reports one.
+  var totalBytes: Int64?
+
+  /// The user turned off the low-space warning for this volume.
+  var isLowSpaceMuted: Bool = false
+
   /// The kernel's file system type of a mounted volume ("apfs", "ufsd_NTFS"…;
   /// `MountEntry.fileSystemType`), nil while unmounted. `fileSystemType` is
   /// the partition content instead, which can be vague ("Microsoft Basic Data").

@@ -215,7 +215,8 @@ class DriveManager: ObservableObject {
     // on a background queue, so it gets an immutable copy.
     let filters = DiskListParser.Filters(
       ignoredIDs: Set(PersistenceManager.shared.ignoredVolumes.map(\.id)),
-      protectedIDs: Set(PersistenceManager.shared.protectedVolumes.map(\.id)))
+      protectedIDs: Set(PersistenceManager.shared.protectedVolumes.map(\.id)),
+      lowSpaceMutedIDs: Set(PersistenceManager.shared.lowSpaceMutedVolumeIDs))
 
     DispatchQueue.global(qos: qos).async { [weak self] in
       guard let self = self else { return }

@@ -66,6 +66,7 @@ struct LogsSettingsSection: View {
     Task {
       let copied = await DiagnosticsReport.copyToPasteboard(
         failingDiskCount: failing.count, almostFullVolumeCount: almostFull,
+        lowSpaceMutedVolumeCount: PersistenceManager.shared.lowSpaceMutedVolumeIDs.count,
         shares: shares, mountPoints: mountPoints)
       diagnosticsState = copied ? .copied : .failed
     }

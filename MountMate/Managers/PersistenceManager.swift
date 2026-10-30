@@ -7,6 +7,7 @@ class PersistenceManager: ObservableObject {
   static let shared = PersistenceManager()
 
   private static let pinnedVolumeIDsKey = "pinnedVolumeIDs"
+  private static let lowSpaceMutedVolumeIDsKey = "lowSpaceMutedVolumeIDs"
   private static let blockAtStartupKey = "blockAtStartup"
 
   /// Where every list and setting is stored. Tests pass a temporary suite.
@@ -33,6 +34,23 @@ class PersistenceManager: ObservableObject {
   /// pinned. Stored by composite ID so pins survive reconnecting the drive.
   @Published var pinnedVolumeIDs: [String] {
     didSet { defaults.set(pinnedVolumeIDs, forKey: Self.pinnedVolumeIDsKey) }
+  }
+
+  /// Volumes (composite IDs) whose low-space warning the user turned off.
+  @Published var lowSpaceMutedVolumeIDs: [String] {
+    didSet { defaults.set(lowSpaceMutedVolumeIDs, forKey: Self.lowSpaceMutedVolumeIDsKey) }
+  }
+
+  /// Returns false when the volume has no stable identifier to save it by.
+  @discardableResult
+  func setLowSpaceMuted(_ muted: Bool, volume: Volume) -> Bool {
+    guard let id = volume.compositeId else { return false }
+    if muted {
+      if !lowSpaceMutedVolumeIDs.contains(id) { lowSpaceMutedVolumeIDs.append(id) }
+    } else {
+      lowSpaceMutedVolumeIDs.removeAll { $0 == id }
+    }
+    return true
   }
 
   func isPinned(_ volume: Volume) -> Bool {
@@ -126,6 +144,8 @@ class PersistenceManager: ObservableObject {
     self.pinnedVolumeIDs = (defaults.stringArray(forKey: Self.pinnedVolumeIDsKey) ?? []).filter {
       Self.normalizedSystemVolumeUUID(String($0.suffix(36))) != nil
     }
+    self.lowSpaceMutedVolumeIDs =
+      defaults.stringArray(forKey: Self.lowSpaceMutedVolumeIDsKey) ?? []
   }
 
   /// Volumes without a volume UUID used to be saved under their BSD device

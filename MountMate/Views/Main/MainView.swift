@@ -61,6 +61,7 @@ struct MainView: View {
           manualShares: networkManager.manuallyConnectedShares,
           customMountPointEditor: customMountPointEditor
         )
+        .frame(maxHeight: PopoverHeightRules.maxListHeight)
       }
     }
     .frame(width: 350)

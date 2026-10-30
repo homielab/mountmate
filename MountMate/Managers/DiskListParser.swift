@@ -14,6 +14,7 @@ struct DiskListParser {
   struct Filters: Sendable {
     var ignoredIDs: Set<String> = []
     var protectedIDs: Set<String> = []
+    var lowSpaceMutedIDs: Set<String> = []
   }
 
   struct Result {
@@ -403,6 +404,8 @@ struct DiskListParser {
         storageError: volume.storageError)
       updated.isReadOnly = volume.isReadOnly
       updated.isTimeMachine = volume.isTimeMachine
+      updated.totalBytes = volume.totalBytes
+      updated.isLowSpaceMuted = volume.isLowSpaceMuted
       updated.mountedFileSystemType = volume.mountedFileSystemType
       return updated
     }
@@ -491,11 +494,13 @@ struct DiskListParser {
     var usedSpaceStr: String?
     var usagePercentage: Double?
     var usedBytes: Int64?
+    var totalBytes: Int64?
     var storageError: String?
 
     if let totalSize = volumeData["Size"] as? Int64, totalSize > 0 {
       let formatter = Self.byteCountFormatter()
       totalSizeStr = formatter.string(fromByteCount: totalSize)
+      totalBytes = totalSize
 
       var calculatedUsedBytes: Int64?
       if let capacityInUse = volumeData["CapacityInUse"] as? Int64 {
@@ -541,6 +546,8 @@ struct DiskListParser {
       isTimeMachine: DiskTopology.isTimeMachineVolume(volumeData)
         || mountPoint.map { timeMachineMountPoints.contains($0) } ?? false)
     volume.mountedFileSystemType = mountPoint.flatMap { mountedFileSystemTypes[$0] }
+    volume.totalBytes = totalBytes
+    volume.isLowSpaceMuted = compositeId.map { filters.lowSpaceMutedIDs.contains($0) } ?? false
     return volume
   }
 

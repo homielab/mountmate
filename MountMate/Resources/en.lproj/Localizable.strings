@@ -632,3 +632,6 @@
 "“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "“%@” is still being mounted, unmounted or unlocked. Try again when it is done.";
 "A volume on this disk is protected. Turn off Protect to eject it." = "A volume on this disk is protected. Turn off Protect to eject it.";
 "Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts.";
+
+"Don't Warn About Free Space on This Volume" = "Don't Warn About Free Space on This Volume";
+"Warn About Free Space on This Volume" = "Warn About Free Space on This Volume";

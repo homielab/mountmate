@@ -632,3 +632,6 @@
 "“%@” is still being mounted, unmounted or unlocked. Try again when it is done." = "“%@” vẫn đang được gắn, tháo hoặc mở khoá. Hãy thử lại khi xong.";
 "A volume on this disk is protected. Turn off Protect to eject it." = "Ổ này có phân vùng được bảo vệ. Tắt Bảo vệ để đẩy ra.";
 "Shortcut %@ is off: it needs ⌘ or ⌃. Record a new one in Settings → General → Keyboard Shortcuts." = "Phím tắt %@ đang tắt: cần ⌘ hoặc ⌃. Hãy ghi phím mới trong Cài đặt → Chung → Phím tắt.";
+
+"Don't Warn About Free Space on This Volume" = "Không cảnh báo dung lượng trống của phân vùng này";
+"Warn About Free Space on This Volume" = "Cảnh báo dung lượng trống của phân vùng này";

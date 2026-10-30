@@ -91,6 +91,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **No more endless "Almost full" warnings on small partitions**: volumes under 1 GB (Ventoy's VTOYEFI, a Raspberry Pi bootfs) are full by design and no longer get the orange ring or a notification. Right-click any volume and choose "Don't Warn About Free Space on This Volume" to silence it; the same menu turns it back on.
+- **Menu fits small screens**: with many drives and shares the list now scrolls inside the menu instead of running off a 13-inch screen.
+
 - **Mount All skips system partitions**: Preboot, Recovery, VM, Update and other APFS helper volumes, Apple_Boot, Microsoft Reserved, Windows Recovery and Linux swap partitions now count as system volumes like EFI, so they no longer show as normal rows, and Mount All and the Mount All Volumes shortcut stop failing with "Could not mount" on drives that hold macOS, Windows or Linux.
 - **Eject respects Protect**: the Eject button on a disk is greyed out when one of its volumes is protected, and Eject refuses a disk whose volume is still being mounted, unmounted or unlocked, the same as Eject All and Shortcuts.
 - **Shortcuts that stopped working after an update**: a saved shortcut without ⌘ or ⌃ is no longer silently ignored. MountMate says once per launch that it is off and where to record a new one; the saved keys stay in Settings.

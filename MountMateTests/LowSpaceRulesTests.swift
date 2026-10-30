@@ -54,6 +54,33 @@ final class LowSpaceRulesTests: XCTestCase {
     XCTAssertNil(LowSpaceRules.warning(for: volume("1", used: nil), on: .physical, threshold: 0.9))
   }
 
+  func testSmallVolumesNeverWarn() {
+    var bootPartition = volume("1", used: 1)
+    bootPartition.totalBytes = 32 * 1_048_576
+    XCTAssertNil(LowSpaceRules.warning(for: bootPartition, on: .physical, threshold: 0.9))
+    var big = volume("2", used: 0.97)
+    big.totalBytes = 64_000_000_000
+    XCTAssertEqual(
+      LowSpaceRules.warning(for: big, on: .physical, threshold: 0.9)?.percentUsed, 97)
+  }
+
+  func testMutedVolumeHasNoBadgeOrNotificationUntilUnmuted() {
+    var full = volume("1", used: 0.97)
+    full.totalBytes = 64_000_000_000
+    full.isLowSpaceMuted = true
+    var tracker = LowSpaceAlertTracker()
+    XCTAssertNil(LowSpaceRules.warning(for: full, on: .physical, threshold: 0.9))
+    XCTAssertTrue(tracker.newWarnings(in: [disk([full])], threshold: 0.9).isEmpty)
+    full.isLowSpaceMuted = false
+    XCTAssertNotNil(LowSpaceRules.warning(for: full, on: .physical, threshold: 0.9))
+    XCTAssertEqual(tracker.newWarnings(in: [disk([full])], threshold: 0.9).map(\.volume.id), ["1"])
+  }
+
+  func testPopoverListIsCappedAtSeventyPercentOfTheScreen() {
+    XCTAssertEqual(PopoverHeightRules.maxListHeight(visibleFrameHeight: 1000), 700, accuracy: 0.01)
+    XCTAssertEqual(PopoverHeightRules.maxListHeight(visibleFrameHeight: nil), 560, accuracy: 0.01)
+  }
+
   func testThresholdReadsTheSettings() {
     let suite = "LowSpaceRulesTests-\(UUID().uuidString)"
     let defaults = UserDefaults(suiteName: suite)!

@@ -9,6 +9,9 @@ enum LowSpaceRules {
   static let thresholdKey = "lowSpaceWarningPercent"
   static let defaultPercent = 90
   static let percentChoices = [80, 90, 95]
+  /// Volumes smaller than this (boot partitions such as VTOYEFI or a
+  /// Raspberry Pi bootfs) are full by design, so they never warn.
+  static let minimumTotalBytes: Int64 = 1_000_000_000
 
   /// What the user sees for one volume.
   struct Warning: Equatable, Sendable {
@@ -30,12 +33,14 @@ enum LowSpaceRules {
   }
 
   /// A warning when `volume` is mounted, writable, a user volume (not a
-  /// system one) outside a disk image, and at least `threshold` full.
+  /// system one) outside a disk image, at least `minimumTotalBytes` big, not
+  /// muted by the user, and at least `threshold` full.
   static func warning(
     for volume: Volume, on diskType: PhysicalDiskType, threshold: Double?
   ) -> Warning? {
     guard let threshold, diskType != .diskImage, volume.isMounted, !volume.isReadOnly,
-      volume.category == .user, volume.storageError == nil,
+      volume.category == .user, volume.storageError == nil, !volume.isLowSpaceMuted,
+      volume.totalBytes.map({ $0 >= minimumTotalBytes }) ?? true,
       let used = volume.usagePercentage
     else { return nil }
     // Half a percent of slack: 89.6% shows as "90%", so it must warn at 90.
@@ -128,6 +133,8 @@ enum LowSpaceRules {
         storageError: nil)
       updated.isReadOnly = volume.isReadOnly
       updated.isTimeMachine = volume.isTimeMachine
+      updated.totalBytes = volume.totalBytes
+      updated.isLowSpaceMuted = volume.isLowSpaceMuted
       updated.mountedFileSystemType = volume.mountedFileSystemType
       return updated
     }
