@@ -2,8 +2,8 @@
 
 import Foundation
 
-/// The `diskutil` lookups a new /etc/fstab rule needs: the file-system type
-/// of a volume and whether it may get a startup-block rule. The decisions
+/// The `diskutil` lookups a new /etc/fstab rule needs: whether a volume may
+/// get a custom mount point or a startup-block rule, and its file-system type. The decisions
 /// themselves are in `FstabRules`. Not thread-safe: `PersistenceManager`
 /// only uses it on the startup-block queue.
 final class FstabVolumeLookup {
@@ -42,11 +42,11 @@ final class FstabVolumeLookup {
       plist: plist, bootAPFSContainer: cachedBootAPFSContainer, apfsRoles: roles)
   }
 
-  /// The file-system type to write in `volume`'s /etc/fstab rule, or nil
-  /// when it cannot be determined.
-  func fstabFileSystemType(for volume: Volume) -> String? {
+  /// Whether `volume` may get a custom mount point rule, and the file-system
+  /// type to write in it.
+  func customMountPointFileSystem(for volume: Volume) -> FstabRules.CustomMountPointFileSystem {
     let plist = diskInfo(for: volume.deviceIdentifier)
-    return FstabRules.fstabFileSystemType(plist: plist, fallback: volume.fileSystemType)
+    return FstabRules.customMountPointFileSystem(plist: plist, fallback: volume.fileSystemType)
   }
 
   /// APFS roles of a volume, or nil when they cannot be determined.

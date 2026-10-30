@@ -165,4 +165,39 @@ final class VolumeMenuRulesTests: XCTestCase {
     XCTAssertTrue(busyUnmounted.disablesVolumeOperations)
     XCTAssertTrue(busyUnmounted.showsMountActions)
   }
+
+  // MARK: - Custom mount point
+
+  private func volume(contentType: String?, mountedType: String?) -> Volume {
+    var volume = Volume(
+      id: "v1", deviceIdentifier: "disk2s1", diskUUID: nil, name: "Data",
+      isMounted: mountedType != nil, mountPoint: "/Volumes/Data", freeSpace: nil,
+      totalSize: nil, usedSpace: nil, usedBytes: nil, fileSystemType: contentType,
+      usagePercentage: nil, category: .user, isProtected: false, snapshots: [],
+      storageError: nil)
+    volume.mountedFileSystemType = mountedType
+    return volume
+  }
+
+  func testCustomMountPointIsOffForKnownNTFSVolumes() {
+    for (content, mounted) in [
+      ("Windows_NTFS", nil), ("Microsoft Basic Data", "ufsd_NTFS"),
+      ("Microsoft Basic Data", "ntfs"),
+    ] as [(String, String?)] {
+      let reason = rules(volume(contentType: content, mountedType: mounted))
+        .customMountPointDisabledReason
+      XCTAssertTrue(reason?.contains("NTFS") ?? false, "\(content) \(mounted ?? "-")")
+    }
+  }
+
+  func testCustomMountPointStaysOnForBuiltInOrUnknownFileSystems() {
+    XCTAssertNil(
+      rules(volume(contentType: "Apple_APFS", mountedType: "apfs")).customMountPointDisabledReason)
+    XCTAssertNil(
+      rules(volume(contentType: "Microsoft Basic Data", mountedType: "exfat"))
+        .customMountPointDisabledReason)
+    XCTAssertNil(
+      rules(volume(contentType: "Microsoft Basic Data", mountedType: nil))
+        .customMountPointDisabledReason)
+  }
 }

@@ -105,6 +105,11 @@ struct Volume: Identifiable, Hashable, Sendable {
   /// A Time Machine backup volume; see `DiskTopology.isTimeMachineVolume`.
   var isTimeMachine: Bool = false
 
+  /// The kernel's file system type of a mounted volume ("apfs", "ufsd_NTFS"…;
+  /// `MountEntry.fileSystemType`), nil while unmounted. `fileSystemType` is
+  /// the partition content instead, which can be vague ("Microsoft Basic Data").
+  var mountedFileSystemType: String?
+
   /// The volume's UUID, or nil when the volume has none. DriveManager
   /// falls back to the BSD device identifier (e.g. "disk4s1") for `id`,
   /// which another volume can get later, so it must never be used to save

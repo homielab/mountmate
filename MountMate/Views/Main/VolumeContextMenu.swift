@@ -157,6 +157,8 @@ struct VolumeContextMenu: View {
           comment: "Volume context menu custom mount point action"),
         systemImage: "folder.badge.gearshape")
     }
+    .disabled(rules.customMountPointDisabledReason != nil)
+    .help(rules.customMountPointDisabledReason ?? "")
     Divider()
     Button(role: .destructive) {
       if !persistence.ignore(volume: volume) {

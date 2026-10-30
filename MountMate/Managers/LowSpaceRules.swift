@@ -128,6 +128,7 @@ enum LowSpaceRules {
         storageError: nil)
       updated.isReadOnly = volume.isReadOnly
       updated.isTimeMachine = volume.isTimeMachine
+      updated.mountedFileSystemType = volume.mountedFileSystemType
       return updated
     }
     return disks.map { disk in

@@ -196,4 +196,124 @@ final class FstabRulesTests: XCTestCase {
           volumeUUID: otherUUID, fileSystemType: "apfs", identifier: "DISK-\(otherUUID)")!)
     XCTAssertEqual(result.skipped.map(\.uuid), [unsafe.uuid])
   }
+
+  // MARK: - Custom mount point file systems
+
+  private func customFileSystem(
+    _ plist: [String: Any]?, fallback: String? = nil
+  ) -> FstabRules.CustomMountPointFileSystem {
+    FstabRules.customMountPointFileSystem(plist: plist, fallback: fallback)
+  }
+
+  func testBuiltInFileSystemsMayGetACustomMountPoint() {
+    for type in ["apfs", "hfs", "exfat", "msdos"] {
+      XCTAssertEqual(customFileSystem(["FilesystemType": type]), .supported(type))
+    }
+    XCTAssertEqual(customFileSystem(["FilesystemType": "APFS"]), .supported("apfs"))
+  }
+
+  func testNTFSAndThirdPartyNTFSDriversAreRefusedAsNTFS() {
+    for type in ["ntfs", "ufsd_NTFS", "tuxera_ntfs"] {
+      XCTAssertEqual(
+        customFileSystem(["FilesystemType": type, "FilesystemName": "Some Driver"]),
+        .unsupported(name: "NTFS"), type)
+    }
+  }
+
+  func testOtherDriversAreRefusedByTheirName() {
+    XCTAssertEqual(
+      customFileSystem(["FilesystemType": "fuse_ext4", "FilesystemName": "ext4"]),
+      .unsupported(name: "ext4"))
+    XCTAssertEqual(customFileSystem(["FilesystemType": "macfuse"]), .unsupported(name: "macfuse"))
+  }
+
+  func testRawTypeDecidesOverTheMappedOne() {
+    // "ufsd_hfs" would map to "hfs", but a third-party driver mounts it.
+    XCTAssertEqual(customFileSystem(["FilesystemType": "ufsd_hfs"]), .unsupported(name: "ufsd_hfs"))
+  }
+
+  func testFallbackWithoutDiskutilInfo() {
+    XCTAssertEqual(customFileSystem(nil, fallback: "Apple_HFS"), .supported("hfs"))
+    XCTAssertEqual(customFileSystem(nil, fallback: "Windows_NTFS"), .unsupported(name: "NTFS"))
+    XCTAssertEqual(customFileSystem(nil, fallback: nil), .unknown)
+  }
+
+  func testRuleIsNeverBuiltForAnUnsupportedType() {
+    for type in ["ntfs", "ufsdntfs", "tuxerantfs", "macfuse"] {
+      XCTAssertEqual(
+        errorCode { _ = try customEntry("/Volumes/A", fileSystemType: type) },
+        FstabRules.fstabUnsupportedFileSystemErrorCode, type)
+    }
+  }
+
+  func testKnownUnsupportedFileSystemForTheMenu() {
+    typealias Rules = FstabRules
+    XCTAssertEqual(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Windows_NTFS", mountedType: nil),
+      "NTFS")
+    XCTAssertEqual(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Microsoft Basic Data", mountedType: "ufsd_NTFS"), "NTFS")
+    XCTAssertEqual(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Microsoft Basic Data", mountedType: "tuxera_ntfs"), "NTFS")
+    XCTAssertEqual(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Microsoft Basic Data", mountedType: "macfuse"), "macfuse")
+    // Unknown until diskutil is asked: applyCustomMountPoint decides.
+    XCTAssertNil(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Microsoft Basic Data", mountedType: nil))
+    XCTAssertNil(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Microsoft Basic Data", mountedType: "exfat"))
+    XCTAssertNil(
+      Rules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: "Apple_APFS", mountedType: "apfs"))
+  }
+
+  func testRefusalMessageNamesTheFileSystem() {
+    XCTAssertTrue(FstabRules.unsupportedFileSystemMessage(name: "NTFS").contains("NTFS"))
+  }
+
+  // MARK: - Custom mount rules already in /etc/fstab
+
+  func testCustomMountRulesAreParsedWithTheirFields() {
+    let contents = """
+      # MountMate custom mount: DISK-\(uuid)
+      UUID=\(uuid) /Volumes/My\\040Disk ntfs rw
+      # MountMate block: X-\(otherUUID)
+      UUID=\(otherUUID) none apfs rw,noauto
+      """
+    XCTAssertEqual(
+      FstabRules.customMountRules(in: contents),
+      [
+        FstabRules.CustomMountRule(
+          identifier: "DISK-\(uuid)", volumeUUID: uuid, mountPoint: "/Volumes/My Disk",
+          fileSystemType: "ntfs")
+      ])
+  }
+
+  func testOnlyRulesOfRefusedFileSystemsAreUnsupported() {
+    let contents = """
+      UUID=\(otherUUID) /Volumes/Hand ntfs rw
+      # MountMate custom mount: A
+      UUID=\(uuid) /Volumes/A ntfs rw
+      # MountMate custom mount: B
+      UUID=\(otherUUID) /Volumes/B apfs rw
+      # MountMate custom mount: orphaned comment
+      LABEL=Foo /Volumes/C ntfs rw
+      """
+    XCTAssertEqual(
+      FstabRules.unsupportedCustomMountRules(in: contents).map(\.identifier), ["A"],
+      "hand-written lines, allowed types and comments without a UUID rule are left alone")
+  }
+
+  func testUnescapingReversesEscaping() {
+    for value in ["/Volumes/A B", "/Volumes/A\tB", "/Volumes/A\\040B", "/Volumes/A\\"] {
+      XCTAssertEqual(
+        FstabRules.fstabUnescapedField(FstabRules.fstabEscapedField(value)), value)
+    }
+  }
 }

@@ -171,6 +171,17 @@ final class DiskListParserTests: XCTestCase {
     XCTAssertFalse(normal.isTimeMachine)
   }
 
+  func testMountedVolumeGetsTheMountTableFileSystemType() throws {
+    var withTypes = parser()
+    withTypes.mountedFileSystemTypes = ["/Volumes/Samsung_T5": "ufsd_NTFS"]
+    let marked = try XCTUnwrap(
+      parse(withTypes).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertEqual(marked.mountedFileSystemType, "ufsd_NTFS")
+
+    let normal = try XCTUnwrap(parse(parser()).disks.first { $0.id == "disk6" }?.partitions.first)
+    XCTAssertNil(normal.mountedFileSystemType)
+  }
+
   func testMountCommandMatchesDiskutilSyntax() throws {
     let volume = try XCTUnwrap(
       parse(parser()).disks.first { $0.id == "disk6" }?.partitions.first)

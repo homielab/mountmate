@@ -621,3 +621,9 @@
 "Mount Point" = "Point de montage";
 "Mount Point Used By Volume" = "Déjà utilisé par le volume « %@ ».";
 "Mount Point Used By Share" = "Déjà utilisé par le partage réseau « %@ ».";
+"Custom Mount Point File System Not Allowed" = "MountMate ne peut pas déplacer les volumes %@ : un point de montage personnalisé changerait la façon dont macOS monte le disque.";
+"Unsafe Custom Mount Rules" = "Règles de montage personnalisé dangereuses";
+"Unsafe Custom Mount Rules Explanation" = "Une ancienne version de MountMate a ajouté ces règles de point de montage personnalisé à /etc/fstab. Pour les disques NTFS et ceux d'autres pilotes (Paragon, Tuxera, macFUSE), elles peuvent activer l'écriture NTFS expérimentale d'Apple ou retirer le disque à votre pilote, ce qui peut endommager des fichiers. Supprimez-les ; MountMate demande votre mot de passe administrateur.";
+"File System: %@" = "Système de fichiers : %@";
+"Remove Rule" = "Supprimer la règle";
+"Custom mount rule removed." = "Règle de montage personnalisé supprimée.";

@@ -24,6 +24,9 @@ struct VolumeMenuRules: Equatable {
   let isBusy: Bool
   let isReadOnly: Bool
   let category: DriveCategory
+  /// The volume's file system when it is known to get no custom mount point
+  /// ("NTFS"); see `FstabRules.knownUnsupportedCustomMountPointFileSystem`.
+  let customMountPointUnsupportedFileSystem: String?
 
   init(volume: Volume, state: VolumeRowState) {
     isMounted = volume.isMounted
@@ -40,6 +43,9 @@ struct VolumeMenuRules: Equatable {
     isBusy = state.isBusy
     isReadOnly = volume.isReadOnly
     category = volume.category
+    customMountPointUnsupportedFileSystem =
+      FstabRules.knownUnsupportedCustomMountPointFileSystem(
+        contentType: volume.fileSystemType, mountedType: volume.mountedFileSystemType)
   }
 
   /// "Reconnect Now": Keep Alive is waiting to bring this volume back.
@@ -72,6 +78,12 @@ struct VolumeMenuRules: Equatable {
   /// Mount, Mount Read-Only, Unmount, Verify and Rename are off while another
   /// operation runs on the volume.
   var disablesVolumeOperations: Bool { isBusy }
+
+  /// "Custom Mount Point…" is off, with the reason as its tooltip, for a
+  /// volume whose file system may not get one (NTFS, third-party drivers).
+  var customMountPointDisabledReason: String? {
+    customMountPointUnsupportedFileSystem.map(FstabRules.unsupportedFileSystemMessage(name:))
+  }
 
   /// "Unmount When Idle" submenu: external physical disks only.
   var showsIdleUnmount: Bool { canUnmountWhenIdle }

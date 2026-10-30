@@ -621,3 +621,9 @@
 "Mount Point" = "Точка монтирования";
 "Mount Point Used By Volume" = "Уже используется томом «%@».";
 "Mount Point Used By Share" = "Уже используется сетевым ресурсом «%@».";
+"Custom Mount Point File System Not Allowed" = "MountMate не может переносить тома %@: пользовательская точка монтирования изменила бы то, как macOS монтирует диск.";
+"Unsafe Custom Mount Rules" = "Небезопасные правила монтирования";
+"Unsafe Custom Mount Rules Explanation" = "Старая версия MountMate добавила эти правила пользовательских точек монтирования в /etc/fstab. Для дисков NTFS и дисков других драйверов (Paragon, Tuxera, macFUSE) они могут включить экспериментальную запись NTFS от Apple или отобрать диск у вашего драйвера, что может повредить файлы. Удалите их; MountMate запросит пароль администратора.";
+"File System: %@" = "Файловая система: %@";
+"Remove Rule" = "Удалить правило";
+"Custom mount rule removed." = "Правило монтирования удалено.";

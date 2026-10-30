@@ -75,23 +75,29 @@ class PersistenceManager: ObservableObject {
   /// and publishing would redraw every observer of this manager.
   private(set) var fstabBlockedVolumeUUIDs: Set<String> = []
 
-  /// diskutil lookups for new rules. Only used in fstab jobs (`startupBlock.enqueueFstabJob`), one at a time.
-  let volumeLookup: FstabVolumeLookup
+  /// Custom mount point rules in /etc/fstab for a file system that may no
+  /// longer get one (NTFS, third-party drivers), written by an older
+  /// version. Read at launch and after each custom mount point update;
+  /// Settings shows them with a Remove Rule button. Never removed without
+  /// the user, because removing asks for the administrator password.
+  @Published var unsupportedCustomMountRules: [FstabRules.CustomMountRule]
+
   /// Keeps /etc/fstab in step with `blockedVolumes` (see the type's notes).
   /// Its queue also serializes custom mount point updates.
   lazy var startupBlock = StartupBlockCoordinator(
     defaults: defaults, access: fstabAccess, host: self)
-  private let fstabAccess: StartupBlockFstabAccess
+  /// /etc/fstab and its `diskutil` lookups. Only used in fstab jobs
+  /// (`startupBlock.enqueueFstabJob`), one at a time, apart from the read
+  /// in `init`.
+  let fstabAccess: StartupBlockFstabAccess
 
   /// - Parameters:
   ///   - defaults: Where lists and settings are stored.
   ///   - fstabAccess: /etc/fstab and `diskutil` access for the startup-block
   ///     rules; defaults to the real system.
   init(defaults: UserDefaults = .standard, fstabAccess: StartupBlockFstabAccess? = nil) {
-    let volumeLookup = FstabVolumeLookup()
-    let fstabAccess = fstabAccess ?? SystemFstabAccess(lookup: volumeLookup)
+    let fstabAccess = fstabAccess ?? SystemFstabAccess(lookup: FstabVolumeLookup())
     self.defaults = defaults
-    self.volumeLookup = volumeLookup
     self.fstabAccess = fstabAccess
     self.blockAtStartup = defaults.bool(forKey: Self.blockAtStartupKey)
     self.protectedVolumes = Self.droppingNonUUIDEntries(
@@ -111,8 +117,10 @@ class PersistenceManager: ObservableObject {
       (entry: IdleUnmountVolume) in
       entry.minutes > 0 && Self.normalizedSystemVolumeUUID(entry.volumeUUID) != nil
     }
+    let fstabContents = fstabAccess.readContents()
     self.fstabBlockedVolumeUUIDs = FstabRules.managedFstabVolumeUUIDs(
-      kinds: [FstabRules.mountMateBlockPrefix], in: fstabAccess.readContents())
+      kinds: [FstabRules.mountMateBlockPrefix], in: fstabContents)
+    self.unsupportedCustomMountRules = FstabRules.unsupportedCustomMountRules(in: fstabContents)
     // Same for pins ("<diskUUID or NONE>-<volume UUID>"). Property observers
     // do not run in init, so this only takes effect with the next pin change.
     self.pinnedVolumeIDs = (defaults.stringArray(forKey: Self.pinnedVolumeIDsKey) ?? []).filter {

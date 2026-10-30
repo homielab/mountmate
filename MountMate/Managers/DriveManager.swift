@@ -661,6 +661,7 @@ class DriveManager: ObservableObject {
         showInternalDisks: UserDefaults.standard.bool(forKey: "showInternalDisks"),
         fileSystemUsage: { FileSystemUsage.read(atPath: $0) },
         readOnlyMountPoints: MountTable.readOnlyMountPoints(in: mountEntries),
+        mountedFileSystemTypes: MountTable.fileSystemTypes(in: mountEntries),
         timeMachineMountPoints: TimeMachineDetector.mountPoints(in: mountEntries),
         classifyDisksWithoutInfo: DiskListParser.classifyWithSystem)
       completion(

@@ -75,6 +75,17 @@ final class MountTableTests: XCTestCase {
     XCTAssertEqual(MountTable.readOnlyMountPoints(in: entries), ["/", "/Volumes/Backup"])
   }
 
+  func testFileSystemTypesByMountPointKeepTheTopmostEntry() {
+    let entries = [
+      MountEntry(source: "/dev/disk4s1", mountPoint: "/Volumes/Win", fileSystemType: "ntfs"),
+      MountEntry(source: "/dev/disk5s1", mountPoint: "/Volumes/Data", fileSystemType: "exfat"),
+      MountEntry(source: "/dev/disk4s1", mountPoint: "/Volumes/Win", fileSystemType: "ufsd_NTFS"),
+    ]
+    XCTAssertEqual(
+      MountTable.fileSystemTypes(in: entries),
+      ["/Volumes/Win": "ufsd_NTFS", "/Volumes/Data": "exfat"])
+  }
+
   func testEntryKeepsNonASCIIMountPoints() {
     var stat = statfs()
     write("//nas/ảnh", into: &stat.f_mntfromname)

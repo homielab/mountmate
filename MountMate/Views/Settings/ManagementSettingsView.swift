@@ -91,6 +91,14 @@ struct ManagementSettingsView: View {
             onDelete: { persistence.unpin(id: entry.id) })
         }
 
+        if !persistence.unsupportedCustomMountRules.isEmpty {
+          UnsupportedCustomMountRulesView(
+            rules: persistence.unsupportedCustomMountRules,
+            savedEntries: persistence.customMountPoints,
+            removingIDs: removingCustomMountPointIDs,
+            onRemove: removeUnsupportedRule)
+        }
+
         ManagementSectionView(
           title: "Custom Mount Points",
           iconName: "folder.badge.gearshape",
@@ -133,6 +141,31 @@ struct ManagementSettingsView: View {
     (driveManager.physicalDisks ?? []).flatMap(\.allVolumes)
       .first { $0.compositeId == id }?.name
       ?? NSLocalizedString("Volume Not Connected", comment: "Name shown for a disconnected volume")
+  }
+
+  /// Like `removeCustomMountPoint`, for a rule of a file system that may
+  /// no longer get one. The volume is remounted at its default location.
+  private func removeUnsupportedRule(_ rule: FstabRules.CustomMountRule) {
+    guard !removingCustomMountPointIDs.contains(rule.id) else { return }
+    removingCustomMountPointIDs.insert(rule.id)
+    persistence.removeUnsupportedCustomMountRule(rule) { result in
+      removingCustomMountPointIDs.remove(rule.id)
+      switch result {
+      case .success:
+        FeedbackHUD.show(
+          NSLocalizedString("Custom mount rule removed.", comment: "Unsafe fstab rule removed"))
+        if let volume = (DriveManager.shared.physicalDisks ?? []).flatMap(\.allVolumes)
+          .first(where: { $0.id.caseInsensitiveCompare(rule.volumeUUID) == .orderedSame }),
+          volume.isMounted
+        {
+          DriveManager.shared.remount(volume: volume)
+        }
+      case .cancelled:
+        break
+      case .failure(let message):
+        removalErrorMessage = message
+      }
+    }
   }
 
   private func removeCustomMountPoint(_ info: VolumeCustomMountPoint) {

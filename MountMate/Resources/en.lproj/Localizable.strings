@@ -621,3 +621,9 @@
 "Mount Point" = "Mount Point";
 "Mount Point Used By Volume" = "Already used by volume “%@”.";
 "Mount Point Used By Share" = "Already used by network share “%@”.";
+"Custom Mount Point File System Not Allowed" = "MountMate can't move %@ volumes: a custom mount point would change how macOS mounts the disk.";
+"Unsafe Custom Mount Rules" = "Unsafe Custom Mount Rules";
+"Unsafe Custom Mount Rules Explanation" = "An older version of MountMate added these custom mount point rules to /etc/fstab. For NTFS disks and disks of other drivers (Paragon, Tuxera, macFUSE) they can turn on Apple's experimental NTFS writing or take the disk away from your driver, which can damage files. Remove them; MountMate asks for your administrator password.";
+"File System: %@" = "File System: %@";
+"Remove Rule" = "Remove Rule";
+"Custom mount rule removed." = "Custom mount rule removed.";

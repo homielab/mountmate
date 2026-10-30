@@ -621,3 +621,9 @@
 "Mount Point" = "挂载点";
 "Mount Point Used By Volume" = "已被卷“%@”使用。";
 "Mount Point Used By Share" = "已被网络共享“%@”使用。";
+"Custom Mount Point File System Not Allowed" = "MountMate 无法移动 %@ 卷宗：自定义挂载点会改变 macOS 挂载该磁盘的方式。";
+"Unsafe Custom Mount Rules" = "不安全的自定义挂载规则";
+"Unsafe Custom Mount Rules Explanation" = "旧版 MountMate 在 /etc/fstab 中添加了这些自定义挂载点规则。对于 NTFS 磁盘和使用其他驱动程序（Paragon、Tuxera、macFUSE）的磁盘，它们可能开启 Apple 实验性的 NTFS 写入，或让磁盘不再由你的驱动程序挂载，从而损坏文件。请移除它们；MountMate 会要求输入管理员密码。";
+"File System: %@" = "文件系统：%@";
+"Remove Rule" = "移除规则";
+"Custom mount rule removed." = "已移除自定义挂载规则。";

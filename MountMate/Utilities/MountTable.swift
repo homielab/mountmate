@@ -69,6 +69,13 @@ enum MountTable {
     Set(entries.filter(\.isReadOnly).map(\.mountPoint))
   }
 
+  /// File system type by mount point ("apfs", "ufsd_NTFS"…). A mount point
+  /// listed twice keeps its last (topmost) entry.
+  static func fileSystemTypes(in entries: [MountEntry]) -> [String: String] {
+    Dictionary(
+      entries.map { ($0.mountPoint, $0.fileSystemType) }, uniquingKeysWith: { _, last in last })
+  }
+
   /// A NUL-terminated UTF-8 string stored in a fixed-size C array (imported
   /// as a tuple). Never reads past the array, even without a terminator.
   static func string<Characters>(fromCharacters characters: Characters) -> String {

@@ -21,6 +21,10 @@ enum FstabRules {
   /// UUID or file-system type). Never worth a password prompt.
   static let fstabInvalidFieldErrorCode = 5
 
+  /// The volume's file system may not get a custom mount point rule (see
+  /// `customMountPointFileSystemTypes`). Never worth a password prompt.
+  static let fstabUnsupportedFileSystemErrorCode = 7
+
   // MARK: - Custom Mount Points
 
   /// `contents` with the custom mount point rule of `volumeUUID` replaced by
@@ -53,6 +57,16 @@ enum FstabRules {
             comment: "Fallback custom mount point system configuration error")
         ])
     }
+    // `rw` for any other type would change how macOS mounts the disk (see
+    // `customMountPointFileSystemTypes`), so such a rule is never built.
+    guard customMountPointFileSystemTypes.contains(fileSystemType) else {
+      throw NSError(
+        domain: "MountMate", code: fstabUnsupportedFileSystemErrorCode,
+        userInfo: [
+          NSLocalizedDescriptionKey: unsupportedFileSystemMessage(
+            name: unsupportedFileSystemName(rawType: fileSystemType, displayName: nil))
+        ])
+    }
 
     let withoutManagedEntry = removingCustomMountEntry(volumeUUID: volumeUUID, from: contents)
     let activeLines = withoutManagedEntry.components(separatedBy: .newlines)
@@ -77,6 +91,152 @@ enum FstabRules {
       "UUID=\(volumeUUID) \(fstabEscapedField(mountPoint)) \(fileSystemType) rw"
     normalized += "\(managedFstabComment(identifier: identifier))\n\(entryLine)\n"
     return normalized
+  }
+
+  /// File systems that may get a custom mount point rule: the built-in
+  /// macOS drivers of `startupBlockFileSystemTypes`, for the same reasons.
+  /// `rw` for NTFS turns on Apple's experimental NTFS write support, which
+  /// can corrupt the disk, and a rule for a disk of a third-party driver
+  /// (Paragon `ufsd_NTFS`, Tuxera `tuxera_ntfs`, macFUSE…) would hand it to
+  /// the built-in driver instead.
+  static var customMountPointFileSystemTypes: Set<String> { startupBlockFileSystemTypes }
+
+  enum CustomMountPointFileSystem: Equatable {
+    /// The type to write in the rule.
+    case supported(String)
+    /// Refused; the name to show the user ("NTFS", "ext4"…).
+    case unsupported(name: String)
+    /// No file system type could be read.
+    case unknown
+  }
+
+  /// Whether a volume may get a custom mount point, from its `diskutil info
+  /// -plist` output (nil when that failed) and, as a fallback, the
+  /// partition content or file system name of the disk list. The raw
+  /// `FilesystemType` decides when present, so a third-party driver's type
+  /// such as `ufsd_NTFS` is refused even though it maps to "ntfs".
+  static func customMountPointFileSystem(plist: [String: Any]?, fallback: String?)
+    -> CustomMountPointFileSystem
+  {
+    let displayName = (plist?["FilesystemName"] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    if let rawType = (plist?["FilesystemType"] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines), !rawType.isEmpty
+    {
+      let type = rawType.lowercased()
+      return customMountPointFileSystemTypes.contains(type)
+        ? .supported(type)
+        : .unsupported(name: unsupportedFileSystemName(rawType: rawType, displayName: displayName))
+    }
+    guard let mapped = fstabFileSystemType(plist: plist, fallback: fallback) else {
+      return .unknown
+    }
+    if customMountPointFileSystemTypes.contains(mapped) { return .supported(mapped) }
+    return .unsupported(
+      name: unsupportedFileSystemName(rawType: fallback ?? mapped, displayName: displayName))
+  }
+
+  /// For the menu, before any `diskutil` call: the name of the volume's file
+  /// system when it is known to be refused, else nil. `mountedType` is the
+  /// mount table's type of a mounted volume (exact: "ufsd_NTFS", "apfs");
+  /// `contentType` the partition content of the disk list, which only
+  /// tells NTFS apart when it says so ("Windows_NTFS"; "Microsoft Basic
+  /// Data" can be NTFS, exFAT or FAT, so `applyCustomMountPoint` decides).
+  static func knownUnsupportedCustomMountPointFileSystem(
+    contentType: String?, mountedType: String?
+  ) -> String? {
+    if let mountedType, !mountedType.isEmpty {
+      return customMountPointFileSystemTypes.contains(mountedType.lowercased())
+        ? nil : unsupportedFileSystemName(rawType: mountedType, displayName: nil)
+    }
+    if let contentType, contentType.lowercased().contains("ntfs") { return "NTFS" }
+    return nil
+  }
+
+  /// "NTFS" for every NTFS driver's type, else the file system's own name.
+  static func unsupportedFileSystemName(rawType: String, displayName: String?) -> String {
+    if rawType.lowercased().contains("ntfs") { return "NTFS" }
+    if let displayName, !displayName.isEmpty { return displayName }
+    return rawType
+  }
+
+  /// Why a volume of file system `name` gets no custom mount point.
+  static func unsupportedFileSystemMessage(name: String) -> String {
+    String(
+      format: NSLocalizedString(
+        "Custom Mount Point File System Not Allowed",
+        comment: "Custom mount point refused for a file system such as NTFS; %@ = its name"),
+      name)
+  }
+
+  /// A MountMate custom mount point rule found in /etc/fstab.
+  struct CustomMountRule: Equatable, Identifiable {
+    /// The `VolumeCustomMountPoint.id` written in the comment line.
+    let identifier: String
+    let volumeUUID: String
+    /// As written in the rule (fstab escapes decoded).
+    let mountPoint: String
+    let fileSystemType: String
+    var id: String { identifier }
+  }
+
+  /// Every MountMate custom mount point rule in `contents`, in file order.
+  /// A comment whose next line is not a `UUID=` rule is skipped.
+  static func customMountRules(in contents: String) -> [CustomMountRule] {
+    let lines = contents.components(separatedBy: .newlines)
+    var rules: [CustomMountRule] = []
+    for index in lines.indices.dropLast() {
+      let comment = lines[index].trimmingCharacters(in: .whitespaces)
+      guard comment.hasPrefix(mountMateFstabPrefix) else { continue }
+      let fields = lines[index + 1].split(whereSeparator: { $0 == " " || $0 == "\t" })
+      guard fields.count >= 3, fields[0].hasPrefix("UUID="), fields[0].count > 5 else { continue }
+      rules.append(
+        CustomMountRule(
+          identifier: comment.dropFirst(mountMateFstabPrefix.count)
+            .trimmingCharacters(in: .whitespaces),
+          volumeUUID: String(fields[0].dropFirst("UUID=".count)),
+          mountPoint: fstabUnescapedField(String(fields[1])),
+          fileSystemType: String(fields[2])))
+    }
+    return rules
+  }
+
+  /// Custom mount point rules an older MountMate wrote for a file system
+  /// that may no longer get one (NTFS, third-party drivers). They are never
+  /// changed automatically: the user removes them from Settings.
+  static func unsupportedCustomMountRules(in contents: String) -> [CustomMountRule] {
+    customMountRules(in: contents).filter {
+      !customMountPointFileSystemTypes.contains($0.fileSystemType.lowercased())
+    }
+  }
+
+  /// Reverses `fstabEscapedField` in one pass, so an escaped backslash
+  /// followed by "040" stays a backslash and "040".
+  static func fstabUnescapedField(_ value: String) -> String {
+    var result = ""
+    var rest = Substring(value)
+    while let first = rest.first {
+      if first == "\\" {
+        if rest.hasPrefix("\\\\") {
+          result.append("\\")
+          rest = rest.dropFirst(2)
+          continue
+        }
+        if rest.hasPrefix("\\040") {
+          result.append(" ")
+          rest = rest.dropFirst(4)
+          continue
+        }
+        if rest.hasPrefix("\\011") {
+          result.append("\t")
+          rest = rest.dropFirst(4)
+          continue
+        }
+      }
+      result.append(first)
+      rest = rest.dropFirst()
+    }
+    return result
   }
 
   /// `contents` without MountMate's custom mount point rule for `volumeUUID`.

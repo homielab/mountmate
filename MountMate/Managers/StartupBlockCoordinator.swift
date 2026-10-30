@@ -10,6 +10,8 @@ protocol StartupBlockFstabAccess {
   func loadSnapshot() throws -> FstabWriter.Snapshot
   func install(_ contents: String, expectedCurrent: Data) async throws
   func startupBlockEligibility(forVolumeUUID uuid: String) -> FstabRules.StartupBlockEligibility
+  /// Whether `volume` may get a custom mount point rule (runs `diskutil`).
+  func customMountPointFileSystem(for volume: Volume) -> FstabRules.CustomMountPointFileSystem
 }
 
 /// The real /etc/fstab (`FstabWriter`) and `diskutil` (`FstabVolumeLookup`).
@@ -23,6 +25,9 @@ struct SystemFstabAccess: StartupBlockFstabAccess {
   }
   func startupBlockEligibility(forVolumeUUID uuid: String) -> FstabRules.StartupBlockEligibility {
     lookup.startupBlockEligibility(forVolumeUUID: uuid)
+  }
+  func customMountPointFileSystem(for volume: Volume) -> FstabRules.CustomMountPointFileSystem {
+    lookup.customMountPointFileSystem(for: volume)
   }
 }
 

@@ -63,6 +63,9 @@ final class StartupBlockCoordinatorTests: XCTestCase {
     func startupBlockEligibility(forVolumeUUID uuid: String) -> FstabRules.StartupBlockEligibility {
       eligibility
     }
+    func customMountPointFileSystem(for volume: Volume) -> FstabRules.CustomMountPointFileSystem {
+      .supported("apfs")
+    }
   }
 
   private final class FakeHost: StartupBlockHost {
