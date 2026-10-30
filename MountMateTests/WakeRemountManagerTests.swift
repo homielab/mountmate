@@ -419,4 +419,30 @@ final class WakeRemountManagerTests: XCTestCase {
 
     XCTAssertEqual(manager.plan?.entries.map(\.name), ["A"])
   }
+
+  func testUnmountAllForgetsOnlyTheVolumesThatLeft() {
+    let manager = WakeRemountManager(defaults: defaults, schedule: { _, _ in })
+    let a = volume(uuidA, name: "A", id: "disk9s1")
+    let b = volume(uuidB, name: "B", id: "disk8s1")
+    let c = volume("33333333-3333-3333-3333-333333333333", name: "C", id: "disk7s1")
+    manager.begin(volumes: [a, b, c])
+
+    DriveManager.forgetWakeRemount(afterBulk: [a, b, c], failed: [b], wakeRemount: manager)
+
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
+  }
+
+  func testEjectAllKeepsTheVolumesOfDisksThatFailed() {
+    let manager = WakeRemountManager(defaults: defaults, schedule: { _, _ in })
+    let a = volume(uuidA, name: "A", id: "disk9s1")
+    let b = volume(uuidB, name: "B", id: "disk8s1")
+    manager.begin(volumes: [a, b])
+
+    DriveManager.forgetWakeRemount(
+      afterBulk: disk([a]).allVolumes + [b], failed: [b], wakeRemount: manager)
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
+
+    DriveManager.forgetWakeRemount(afterBulk: [b], failed: [b], wakeRemount: manager)
+    XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
+  }
 }

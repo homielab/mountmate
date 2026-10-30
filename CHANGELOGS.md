@@ -91,6 +91,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Unmount All and Eject All keep busy volumes in Mount Again on Wake**: a volume that could not be unmounted or ejected (in use) is still mounted again after the next wake; only the ones that really left are forgotten. Pressing the Unmount All shortcut again while it is running no longer shows a wrong "Nothing to unmount".
 - **Imported shares no longer take a drive’s mount folder**: Import Shares from File, Import Mounted and dropping a mounted share now skip a share whose mount folder is already used by a volume’s custom mount point or another share, and say which one (“Media” not added: Already used by volume “Media Disk”.), instead of failing later with a “not empty” error.
 - **Custom mount points are refused for NTFS volumes**: an NTFS volume (also one mounted by Paragon or Tuxera) or a disk of another third-party driver no longer gets a custom mount point, because its `/etc/fstab` rule turned on Apple's experimental NTFS writing, which can damage the disk, or took the disk away from your driver. The menu item is off with the reason, and Save explains it. Rules an older version already wrote are listed in Settings → Management under "Unsafe Custom Mount Rules" with a Remove Rule button; MountMate never changes them on its own.
 - A custom mount point or network share folder already saved for another volume or share is now refused at Save, naming the volume or share that uses it, instead of the later mount failing with a "not empty" error.

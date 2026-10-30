@@ -425,7 +425,6 @@ class DriveManager: ObservableObject {
     let volumes = disks.flatMap(\.allVolumes)
     let wasSuppressed = KeepAliveManager.shared.suppressedVolumes(among: volumes)
     KeepAliveManager.shared.suppress(volumes: volumes)
-    WakeRemountManager.shared.forget(volumes)
     for disk in disks { setEjecting(disk.id, true) }
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -434,6 +433,8 @@ class DriveManager: ObservableObject {
         guard let self else { return }
         KeepAliveManager.shared.unsuppress(
           volumes: failures.flatMap(\.disk.allVolumes), keeping: wasSuppressed)
+        Self.forgetWakeRemount(
+          afterBulk: volumes, failed: failures.flatMap(\.disk.allVolumes))
         if reportFailures, let alert = self.ejectFailureAlert(failures) {
           self.userActionError = alert
         }
@@ -505,8 +506,6 @@ class DriveManager: ObservableObject {
       ? KeepAliveManager.shared.suppressedVolumes(among: drivesToUnmount) : []
     if suppressReconnect {
       KeepAliveManager.shared.suppress(volumes: drivesToUnmount)
-      // The user chose this: the volumes stay unmounted after a wake.
-      WakeRemountManager.shared.forget(drivesToUnmount)
     }
     unmountAllRunCount += 1
     isUnmountingAll = true
@@ -518,6 +517,8 @@ class DriveManager: ObservableObject {
       DispatchQueue.main.async {
         if suppressReconnect {
           KeepAliveManager.shared.unsuppress(volumes: failures, keeping: wasSuppressed)
+          // The user chose this: the volumes stay unmounted after a wake.
+          Self.forgetWakeRemount(afterBulk: drivesToUnmount, failed: failures)
         }
         unmountResult?(failures)
         completion?()

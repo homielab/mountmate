@@ -90,4 +90,13 @@ final class HotkeyFeedbackTests: XCTestCase {
     XCTAssertEqual(HotkeyFeedback.tint(succeeded: 1, failed: 1), .warning)
     XCTAssertEqual(HotkeyFeedback.tint(succeeded: 0, failed: 1), .warning)
   }
+
+  func testASecondPressWhileTheActionRunsIsSkipped() {
+    XCTAssertTrue(
+      HotkeyFeedback.skipsPress(of: .unmountAll, unmountingAll: true, mountingAll: false))
+    XCTAssertFalse(
+      HotkeyFeedback.skipsPress(of: .unmountAll, unmountingAll: false, mountingAll: true))
+    XCTAssertTrue(HotkeyFeedback.skipsPress(of: .mountAll, unmountingAll: false, mountingAll: true))
+    XCTAssertFalse(HotkeyFeedback.skipsPress(of: .ejectAll, unmountingAll: true, mountingAll: true))
+  }
 }

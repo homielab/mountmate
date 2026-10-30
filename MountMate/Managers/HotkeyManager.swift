@@ -491,6 +491,10 @@ class HotkeyManager: ObservableObject {
           "Triggered Unmount All (\(self.unmountShortcut.displayString, privacy: .public))")
       #endif
       let drives = DriveManager.shared
+      guard
+        !HotkeyFeedback.skipsPress(
+          of: action, unmountingAll: drives.isUnmountingAll, mountingAll: drives.isMountingAll)
+      else { return }
       let attempted = drives.unmountAllCandidates.count
       drives.unmountAllDrives(finished: { failed in
         Self.showFeedback(for: action, attempted: attempted, failed: failed.count)
@@ -501,8 +505,10 @@ class HotkeyManager: ObservableObject {
           "Triggered Mount All (\(self.mountShortcut.displayString, privacy: .public))")
       #endif
       let drives = DriveManager.shared
-      // A Mount All already running reports nothing new: no HUD.
-      guard !drives.isMountingAll else { return }
+      guard
+        !HotkeyFeedback.skipsPress(
+          of: action, unmountingAll: drives.isUnmountingAll, mountingAll: drives.isMountingAll)
+      else { return }
       let attempted = drives.mountAllCandidates.count
       drives.mountAllVolumes { failed in
         Self.showFeedback(for: action, attempted: attempted, failed: failed.count)

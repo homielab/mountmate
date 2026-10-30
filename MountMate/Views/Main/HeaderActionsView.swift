@@ -59,7 +59,10 @@ struct HeaderActionsView: View {
             ? Text("Expand All") : Text("Collapse All"))
 
         // Unmount All Button
-        Button(action: { driveManager.unmountAllDrives() }) {
+        Button(action: {
+          guard !driveManager.isUnmountingAll else { return }
+          driveManager.unmountAllDrives()
+        }) {
           Group {
             if driveManager.isUnmountingAll {
               ProgressView().controlSize(.small)

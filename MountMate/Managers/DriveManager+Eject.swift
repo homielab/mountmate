@@ -144,6 +144,19 @@ extension DriveManager {
     wakeRemount.forget(disk.allVolumes)
   }
 
+  /// After Unmount All or Eject All: only the volumes that really left drop
+  /// out of the wake-remount plan. A busy volume that stayed mounted keeps
+  /// its place, so it is still mounted again after the next wake.
+  static func forgetWakeRemount(
+    afterBulk volumes: [Volume], failed: [Volume],
+    wakeRemount: WakeRemountManager = .shared
+  ) {
+    let failedIDs = Set(failed.map(\.id))
+    let gone = volumes.filter { !failedIDs.contains($0.id) }
+    guard !gone.isEmpty else { return }
+    wakeRemount.forget(gone)
+  }
+
   /// The common end of Eject, Force Eject and Force Unmount, on the main
   /// thread. On failure: let Keep Alive watch the volumes again, end the
   /// progress state, report the translated error and refresh. On success the

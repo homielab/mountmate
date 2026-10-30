@@ -9,6 +9,17 @@ import Foundation
 /// same as one that worked. Pure: `bundle` and `locale` let tests pick a
 /// language.
 enum HotkeyFeedback {
+  /// A press of Unmount All or Mount All while that action already runs does
+  /// nothing and shows no HUD: its candidates are busy, so the count would
+  /// wrongly say "Nothing to unmount".
+  static func skipsPress(of action: HotkeyAction, unmountingAll: Bool, mountingAll: Bool) -> Bool {
+    switch action {
+    case .unmountAll: return unmountingAll
+    case .mountAll: return mountingAll
+    default: return false
+    }
+  }
+
   /// "Unmounted 3 volumes", "Nothing to mount", "Ejected 1 disk, 1 failed"…
   /// - Parameter succeeded: volumes (disks for Eject All, shares for the
   ///   network share actions) the action handled.
