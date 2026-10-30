@@ -129,8 +129,47 @@ final class DiskListParserTests: XCTestCase {
     let system = container.volumes[0]
     XCTAssertEqual(system.snapshots.count, 1)
     XCTAssertFalse(system.isMounted)
+    XCTAssertEqual(
+      container.volumes.map(\.category), [.user, .system, .system, .system, .user, .system])
     XCTAssertEqual(container.volumes[4].mountPoint, "/System/Volumes/Data")
     XCTAssertEqual(container.volumes[4].usedBytes, 413_704_962_048)
+  }
+
+  func testHelperPartitionsAreSystemAndUserVolumesStayUser() {
+    for content in [
+      "EFI", "Apple_Boot", "Apple_APFS_Recovery", "Apple_APFS_ISC",
+      "Microsoft Reserved", "Linux Swap", "Windows Recovery", "BIOS Boot",
+    ] {
+      XCTAssertEqual(
+        DiskListParser.category(
+          contentType: content, volumeName: nil, isAPFSVolume: false, isOSInternal: false),
+        .system, content)
+    }
+    for content in ["Windows_NTFS", "Microsoft Basic Data", "Apple_HFS", "Linux Filesystem"] {
+      XCTAssertEqual(
+        DiskListParser.category(
+          contentType: content, volumeName: "Recovery", isAPFSVolume: false, isOSInternal: false),
+        .user, content)
+    }
+    for name in ["Preboot", "Recovery", "VM", "Update", "xART", "Hardware"] {
+      XCTAssertEqual(
+        DiskListParser.category(
+          contentType: nil, volumeName: name, isAPFSVolume: true, isOSInternal: false),
+        .system, name)
+    }
+    XCTAssertEqual(
+      DiskListParser.category(
+        contentType: nil, volumeName: "Photos", isAPFSVolume: true, isOSInternal: true), .system)
+    XCTAssertEqual(
+      DiskListParser.category(
+        contentType: nil, volumeName: "Data", isAPFSVolume: true, isOSInternal: false), .user)
+  }
+
+  func testMountAllSkipsDiskWithOnlyHelperVolumes() throws {
+    let internalDisk = try XCTUnwrap(parse(parser(showInternalDisks: true)).disks.first)
+    let candidates = BulkVolumeActions.mountCandidates(in: [internalDisk]) { _ in false }
+    let names = Set(candidates.map(\.name))
+    XCTAssertTrue(names.isDisjoint(with: ["Preboot", "Recovery", "Update", "VM"]), "\(names)")
   }
 
   func testMountedNTFSVolumeUsesFileSystemUsage() throws {

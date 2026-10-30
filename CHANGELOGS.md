@@ -91,6 +91,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Mount All skips system partitions**: Preboot, Recovery, VM, Update and other APFS helper volumes, Apple_Boot, Microsoft Reserved, Windows Recovery and Linux swap partitions now count as system volumes like EFI, so they no longer show as normal rows, and Mount All and the Mount All Volumes shortcut stop failing with "Could not mount" on drives that hold macOS, Windows or Linux.
 - **Eject respects Protect**: the Eject button on a disk is greyed out when one of its volumes is protected, and Eject refuses a disk whose volume is still being mounted, unmounted or unlocked, the same as Eject All and Shortcuts.
 - **Shortcuts that stopped working after an update**: a saved shortcut without ⌘ or ⌃ is no longer silently ignored. MountMate says once per launch that it is off and where to record a new one; the saved keys stay in Settings.
 - **Unmount All and Eject All keep busy volumes in Mount Again on Wake**: a volume that could not be unmounted or ejected (in use) is still mounted again after the next wake; only the ones that really left are forgotten. Pressing the Unmount All shortcut again while it is running no longer shows a wrong "Nothing to unmount".

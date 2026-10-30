@@ -369,7 +369,7 @@ struct DiskListParser {
       if let volume = createVolume(
         from: apfsVolumeData,
         snapshotsData: apfsVolumeData["MountedSnapshots"] as? [[String: Any]],
-        usage: &usage)
+        isAPFSVolume: true, usage: &usage)
       {
         volumes.append(volume)
       }
@@ -408,8 +408,33 @@ struct DiskListParser {
     }
   }
 
+  /// Partition types that hold boot, recovery or swap data, never user files.
+  static let systemContentTypes: Set<String> = [
+    "EFI", "Apple_Boot", "Apple_APFS_Recovery", "Apple_APFS_ISC", "Microsoft Reserved",
+    "Windows Recovery", "Linux Swap", "Linux_Swap", "BIOS Boot", "BIOS_Boot",
+  ]
+
+  /// Names macOS gives the helper volumes of an APFS container (roles
+  /// Preboot, Recovery, VM, Update, xART, Hardware, Backup/ISC).
+  static let systemAPFSVolumeNames: Set<String> = [
+    "Preboot", "Recovery", "VM", "Update", "xART", "Hardware", "iSCPreboot",
+  ]
+
+  /// `.system` volumes are hidden with EFI and skipped by Mount All, Keep
+  /// Alive and the low-space poll: diskutil cannot mount them for the user.
+  static func category(
+    contentType: String?, volumeName: String?, isAPFSVolume: Bool, isOSInternal: Bool
+  ) -> DriveCategory {
+    if let contentType, systemContentTypes.contains(contentType) { return .system }
+    if isAPFSVolume, isOSInternal || systemAPFSVolumeNames.contains(volumeName ?? "") {
+      return .system
+    }
+    return .user
+  }
+
   private func createVolume(
-    from volumeData: [String: Any], snapshotsData: [[String: Any]]?, usage: inout UsagePass
+    from volumeData: [String: Any], snapshotsData: [[String: Any]]?, isAPFSVolume: Bool = false,
+    usage: inout UsagePass
   ) -> Volume? {
     guard let deviceIdentifier = volumeData["DeviceIdentifier"] as? String else { return nil }
 
@@ -442,7 +467,10 @@ struct DiskListParser {
     let isProtected = compositeId.map { filters.protectedIDs.contains($0) } ?? false
     let snapshots = snapshotsData?.compactMap { Self.createSnapshot(from: $0) } ?? []
 
-    let category: DriveCategory = contentType == "EFI" ? .system : .user
+    let category = Self.category(
+      contentType: contentType, volumeName: volumeData["VolumeName"] as? String,
+      isAPFSVolume: isAPFSVolume,
+      isOSInternal: volumeData["OSInternal"] as? Bool ?? false)
 
     let mountPoint: String?
     if let path = volumeData["MountPoint"] as? String {
