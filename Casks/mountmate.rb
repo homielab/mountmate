@@ -1,11 +1,11 @@
 cask "mountmate" do
-  version "6.3"
-  sha256 "8aac53d570af2606f509039e0e65b9850479ad9d97d0a9b1e8a75d393e9f6e18"
+  version "6.4"
+  sha256 "52e24db7595976f9968c464b36b0ace92601f7790ef0cdd22aad57d2b9ad2328"
 
   url "https://github.com/homielab/mountmate/releases/download/v#{version}/MountMate_#{version}.dmg"
   name "MountMate"
   desc "Menubar app to easily manage external drives"
-  homepage "https://homielab.com/en/page/mountmate"
+  homepage "https://mountmate.homielab.com"
 
   livecheck do
     url "https://mountmate.homielab.com/appcast.xml"
@@ -17,5 +17,10 @@ cask "mountmate" do
 
   app "MountMate.app"
 
-  zap trash: "~/Library/Preferences/com.homielab.mountmate.plist"
+  zap trash: [
+    "~/Library/Caches/com.homielab.mountmate",
+    "~/Library/HTTPStorages/com.homielab.mountmate",
+    "~/Library/Preferences/com.homielab.mountmate.plist",
+    "~/Library/Saved Application State/com.homielab.mountmate.savedState",
+  ]
 end

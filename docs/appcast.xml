@@ -3,6 +3,398 @@
     <channel>
         <title>MountMate</title>
         <item>
+            <title>6.4</title>
+            <pubDate>Fri, 30 Oct 2026 22:09:11 +0000</pubDate>
+            <sparkle:version>44</sparkle:version>
+            <sparkle:shortVersionString>6.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<h3>Added</h3>
+<ul>
+<li><strong>Shortcuts that pass results on</strong>: Mount Volume and Mount Network Share now return the mount point ("/Volumes/Backup"), so a shortcut can mount a NAS, run rsync on that folder and unmount it without guessing the path. New actions Get Mounted Volumes (the mounted external volumes, in menu order), Get Network Shares (every saved share, with whether it is mounted and where) and Is Volume Mounted (true or false; an unplugged drive is not mounted) let a shortcut check what is mounted before it acts.
+</li>
+<li><strong>Read-only network shares</strong>: the network share sheet has a "Mount Read-Only" switch (off by default), so a NAS backup share can be opened and copied from but nothing on it can be changed or deleted by mistake. It applies from the next mount, including at login and Keep Alive reconnects, the share shows a "Read-only" badge in the menu and in Settings, and Export/Import Shares keeps the setting. Shares saved before stay writable.
+</li>
+<li><strong>Keyboard shortcuts for network shares</strong>: Settings → General → Keyboard Shortcuts has Mount All Network Shares and Unmount All Network Shares (no keys until you record them), so a NAS can be mounted or unmounted from the keyboard like your disks. A small message says what happened ("Mounted 2 network shares", "No network shares to unmount"), shares that fail get the usual alert (with Force Unmount when it may help), and a key already used by another MountMate action is refused.
+</li>
+<li><strong>Export and import network shares</strong>: Settings → Network Shares has a menu (⇅) with "Export Shares…" and "Import Shares from File…", so moving to a new Mac no longer means typing every NAS share again. The JSON file keeps each share's name, protocol, server, path, username, login and Keep Alive switches and custom mount point, but never a password. Importing skips shares that are already saved or not valid (unknown protocol, missing server, mount point in use) and says "Imported 5 shares. Skipped 2".
+</li>
+<li><strong>Network shares in Copy Diagnostics</strong>: the report now counts your saved network shares by protocol (SMB, NFS, AFP) and says how many are mounted, use Keep Alive, mount at login and are almost full, so a bug report about a share that does not reconnect carries what is needed. Share names, servers, paths and usernames are never included.
+</li>
+<li><strong>Almost-full warning for network shares</strong>: a mounted network share at or above your almost-full limit (for example a NAS with 100 GB free of 2 TB at 95%) now gets the same orange ring and "Almost full" badge as a local volume, with "Almost full: 95% used, 100 GB free" in its tooltip and VoiceOver. With Notifications on you get one notification, and another only after the share drops 5 points below the limit and fills up again. It follows the same on/off switch and limit in Settings → General → Behavior; a share that reports no size gets no warning.
+</li>
+<li><strong>Disk pulled out without ejecting</strong> (Settings → General → Behavior, shown with Notifications on, off by default): when a USB drive or memory card is unplugged while one of its volumes is still mounted, a notification says “Backup” was disconnected without being ejected, so you can check that your copies finished. Volumes that were unmounted or ejected first (also from Finder), disk images, internal disks, Time Machine volumes and disks that vanish around sleep and wake are not reported.
+</li>
+<li><strong>Unmount All Disks When the Screen Locks</strong> (Settings → General → Behavior, off by default): every removable disk is unmounted as soon as the screen locks, so a drive with private files is not left open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted, nothing is forced and no alert appears. With Mount Again on Wake on, the disks come back when you unlock, also after the Mac slept while locked.
+</li>
+<li><strong>Keyboard shortcut feedback</strong>: after Unmount All, Mount All or Eject All External Disks runs from its global keyboard shortcut, a small message at the top of the screen says what happened ("Unmounted 3 volumes", "Nothing to mount", "Ejected 1 disk, 1 failed"), so a press is never silent while the menu is closed. The buttons in the menu are unchanged and failures still get their alert.
+</li>
+<li><strong>Mount All / Unmount All for saved network shares</strong>: the "Saved Network Shares" header has a Mount All button (when a saved share is not mounted) and an Unmount All button (when one is mounted) that act on every saved share at once, and the Shortcuts app gets Mount All Network Shares and Unmount All Network Shares. One alert, or the shortcut's error, lists each share that failed with its reason; Unmount All offers Force Unmount when that may help.
+</li>
+<li><strong>Open in Finder after mounting</strong> (Settings → General → Behavior, off by default): a volume or network share you mount from the popover, with Mount All or with a Shortcuts action opens in a Finder window once it is ready. Automatic mounts (plugging in, login, Keep Alive, Mount Again on Wake), failed mounts and blocked disks never open a window.
+</li>
+<li><strong>Rename Volume…</strong>: right-click a mounted, writable external volume (not protected, not a disk image) and choose "Rename Volume…" to give it a new name. The name is checked as you type (not empty, no "/" or ":", at most 11 characters on FAT/exFAT), the row updates once diskutil is done, and a translated alert explains failures such as a busy volume or a file system macOS cannot rename (NTFS). Mount points and fstab entries are left alone.
+</li>
+<li><strong>Verify Volume</strong>: right-click a mounted external volume and choose "Verify Volume" to verify its file system data structures with <code>diskutil verifyVolume</code> in the background (never repairs). A "Verifying…" status and spinner appear while the check runs, and an alert reports whether the volume is OK or has problems, with a recommendation to use First Aid in Disk Utility if repairs are needed.
+</li>
+<li><strong>Browse Network</strong>: the network share sheet has a "Browse Network…" button next to the server address that lists the servers announcing SMB or NFS on the local network (Bonjour); picking one fills the address and the protocol. A server that goes offline drops out of the list while it is open, and reopening the list starts fresh. If nothing is found or the local-network permission is denied, a clear message says so and typing the address by hand works as before. No password is involved.
+</li>
+<li><strong>Almost-full warning</strong>: a mounted volume that is 90% full or more (Settings → General → Behavior: on or off, and 80%, 90% or 95%) gets an orange "Almost full" badge and ring, and its tooltip and VoiceOver say "Almost full: 94% used, 12 GB free". With Notifications on you get one notification per volume each time it is mounted; Copy Diagnostics counts the volumes (no names). Disk images, system and read-only volumes are skipped, and nothing is unmounted or deleted.
+</li>
+<li><strong>SMART warning</strong>: a drive whose SMART health status is "Failing" now shows a red warning triangle next to its name (VoiceOver and the tooltip say "SMART status: failing — back up this disk"). With Notifications on you get one notification per failing disk, not one per refresh, and Copy Diagnostics counts the failing disks (no names). Drives that report Verified, Not Supported or nothing show nothing, and nothing is unmounted or ejected for you.
+</li>
+<li><strong>Eject Volume in Shortcuts</strong>: pick a volume or type its name (case ignored) and the Shortcuts action ejects the external disk that holds it, so you can unplug just that drive. Internal disks are never found, a disk with a protected volume is refused, nothing is forced, and a failure is shown as the shortcut's error.
+</li>
+<li><strong>More Shortcuts actions</strong>: Unmount Network Share, Mount Volume and Unmount Volume join the Shortcuts app, so a shortcut can act on one saved share or one volume (pick it or type its name, case ignored) instead of all of them. A name that matches no volume is reported as the shortcut's error, a protected volume is not unmounted, and nothing is forced or ejected.
+</li>
+<li><strong>Eject All External Disks</strong>: a button in the popover header (next to Unmount All), an optional keyboard shortcut (Settings → General → Keyboard Shortcuts, none by default) and a Shortcuts action unmount and eject every external disk at once so you can unplug them. Internal disks, disk images and disks with a protected volume are left alone, nothing is forced, and one alert names any disk that could not be ejected.
+</li>
+<li><strong>Notification actions</strong>: the "Cannot Reconnect" notification now has a "Reconnect Now" button that retries right away, and clicking any MountMate notification opens the MountMate popover.
+</li>
+<li><strong>Reconnect Now</strong>: a share or volume that Keep Alive is waiting to reconnect now shows "Retrying in N seconds" under "Reconnecting…", with a "Reconnect Now" button (also in the right-click menu) that retries right away instead of waiting out the backoff. The countdown only updates while the popover is open.
+</li>
+<li><strong>Reconnecting icon</strong>: while Keep Alive is reconnecting a share or volume, the menu bar icon shows a Wi-Fi badge (VoiceOver says "Reconnecting") and returns to normal once everything is connected.
+</li>
+<li><strong>Copy Diagnostics</strong>: Settings → General → Logs has a "Copy Diagnostics" button that puts the MountMate and macOS versions, your on/off settings and the last hour of MountMate's log on the clipboard, ready to paste into a bug report. Passwords, paths, and disk and share names are left out.
+</li>
+<li><strong>Mount Again on Wake</strong>: with "Unmount All Disks on Sleep" on, a new switch (Settings → General → Behavior, on by default) mounts the unmounted disks again when the Mac wakes up. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted. If a disk could not be unmounted before sleep in time, a notification (when notifications are on) names it after wake.
+</li>
+<li><strong>Shortcuts</strong>: the Shortcuts app now has three MountMate actions: Mount All Volumes, Unmount All Volumes and Mount Network Share (choose one of your saved shares). Use them in automations, for example mounting a NAS when you arrive home or unmounting everything before bed. A volume or share that cannot be mounted or unmounted is reported as the shortcut's error instead of an alert, and no popover opens.
+</li>
+<li><strong>Mount Read-Only</strong>: right-click a volume that is not mounted and choose "Mount Read-Only" to mount it without write access (useful for backup drives, NTFS drives and damaged drives). Volumes mounted read-only show a "Read-only" badge in their row. Unmount works as usual; a normal Mount, Keep Alive and auto-mount are unchanged.
+</li>
+<li><strong>Notifications</strong> (Settings → General, off by default): MountMate can notify you when Keep Alive cannot reconnect a share or volume and when it is back, when a blocked disk mounted before MountMate started could not be unmounted, and when "Unmount All Disks on Sleep" had not finished before the Mac slept. A mount that stays down gives one notification, not one per retry. With notifications on, the "Unmount When Idle" notice also goes to Notification Center instead of the short on-screen message. macOS asks for permission only when you turn the setting on.
+</li>
+<li><strong>Unmount When Idle</strong>: Right-click a volume on an external drive and choose "Unmount When Idle" to unmount it automatically after 1, 5, 15, 30 or 60 minutes without reads or writes on the drive. The unmount is never forced: a volume that is still in use stays mounted and is tried again later. Volumes kept mounted, internal disks, disk images and network shares are never affected. Manage the list under Settings → Management.
+</li>
+<li><strong>Forget Saved Password</strong>: Encrypted APFS volumes with a password saved in the Keychain get a "Forget Saved Password" item in their right-click menu.
+</li>
+<li><strong>Copy Path and Open in Terminal</strong>: The right-click menu of a mounted volume or network share now has "Copy Path" (puts the mount path on the clipboard) and "Open in Terminal" (opens a Terminal window in that folder). They are not shown for volumes that are not mounted.
+</li>
+<li><strong>Quiet update reminders</strong>: An update found by an automatic check no longer opens a window on top of other apps. The menu bar icon gets a small dot (VoiceOver says "Update available") and the popover shows "MountMate X.Y is available" with a "View…" button that opens the update window. "Check for Updates..." still shows the window right away.
+</li>
+<li><strong>Updates</strong>: Settings → About &amp; Updates has an "Automatically check for updates" switch, automatic checks are on from the first launch (no more question at the second launch), and the popover header has a "Check for Updates..." button.
+</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li><strong>Almost-full notice for drives that stay plugged in</strong>: with Notifications and the almost-full warning on, MountMate checks the free space of mounted external volumes every 15 minutes, so a backup drive that fills up overnight gets its notification within 15 minutes instead of only when you open the menu. It only reads the space macOS already knows (no <code>diskutil</code> run), skips internal disks, disk images and network shares, and stops checking when no external volume is mounted or the setting is off.
+</li>
+<li><strong>Faster disk list with a hung drive</strong>: when several exFAT or NTFS drives stop answering, plugging or unplugging a disk now waits about 2 seconds in total instead of 2 seconds per drive before the list updates; their space is read at the same time.
+</li>
+<li><strong>Website search results and link previews</strong> now describe what MountMate does (network shares, Keep Alive, Homebrew), and the screenshots have descriptive text for screen readers that tells the light and dark versions apart.
+</li>
+<li>Internal: two translations no screen used any more were removed from all 7 languages, and a test now fails when a Shortcuts phrase, intent title or description is missing from the translation files (Siri would not recognize such a phrase).
+</li>
+<li><strong>Faster list after plugging in a disk</strong>: the disk list now refreshes at a higher priority when a disk is mounted, appears or vanishes, at launch and after waking, so macOS no longer delays it like background work when the Mac is busy or on battery. Unmount refreshes run at a normal priority; the refresh itself is unchanged.
+</li>
+<li>Internal: the decision to allow or refuse a disk mount (disk images, mounts MountMate asked for, Block USB Auto-Mount for USB drives and SD cards, the blocked volumes list, Allow Requested Mounts) is now a separate, unit-tested <code>MountApprovalDecision</code> covering every combination. No change in behavior.
+</li>
+<li>Internal: the step that lets the Mac sleep after Unmount All Disks on Sleep is now a separate, unit-tested <code>SleepAllowGate</code> (sleep is allowed exactly once, when the unmount finishes or after 20 seconds, whichever comes first). No change in behavior.
+</li>
+<li>Internal: the number next to the menu bar icon (also read by VoiceOver) is now counted by a separate, unit-tested <code>MountedCount</code> (mounted, unprotected user volumes plus mounted saved shares and manually connected shares). No change in behavior.
+</li>
+<li>Internal: the rule that decides when the mount point folder of a failed network mount is removed is now a separate, unit-tested function (refactor, no behaviour change; the guard from #71 that keeps a live share's files safe is unchanged).
+</li>
+<li>Internal: unit tests for the volume list row state (default state for a volume without settings, and the custom mount point editor opening only on the pinned or the disk row of a volume, never both) and for resetting the custom mount point editor. No change in behavior.
+</li>
+<li><strong>Keep Alive lets a NAS sleep</strong>: its periodic checks of network shares no longer ask each server for its capacity, so they no longer keep a NAS from spinning down. The capacity ring is read when you open the popover or Settings (at most once a minute) and when a share mounts.
+</li>
+<li><strong>AFP deprecation</strong>: new network shares now only offer SMB and NFS because Apple has removed AFP client support in modern macOS versions. Existing saved AFP shares continue to be editable, removable and mountable, show a "Deprecated" badge (announced by VoiceOver), and any mount failure explains that AFP is deprecated rather than suggesting SMB settings.
+</li>
+<li><strong>README</strong>: Quick Start and screenshots now come first, the feature list is 12 one-line items, and the full descriptions moved to a "Feature Details" section (README-vi.md follows).
+</li>
+<li>Internal: saving or removing a network share's Keychain password moved out of <code>EditNetworkShareSheet</code> into <code>NetworkSharePasswordSync</code>, and the share validation into <code>NetworkShareValidation</code>, unit-tested with a fake password store (new share, unchanged, changed or cleared password, switching to NFS, Keychain errors); the sheet shrinks from 374 to under 300 lines. No change in behavior.
+</li>
+<li>Internal: the pure decisions of a network-share mount moved out of <code>NetworkShareMounter</code> into <code>NetworkMountPlan</code> (may the attempt start, the preflight checks, how a result maps to the message and clean-up, the NetFS connection URL, user placement and options, the NFS arguments and failure classification, finding a share's own mount in the mount table), unit-tested for every branch; the file shrinks from 623 to under 400 lines. No change in behavior.
+</li>
+<li>Internal: the startup sweep that unmounts blocked volumes moved out of <code>DiskMounter</code> into <code>BlockedVolumeSweep</code> (reading the mounted device from <code>diskutil info</code>, skipping empty and "Not Mounted" mount points, up to three attempts with the retry delay injected, the notification after the last failure), unit-tested with an in-memory runner — no real sleeps or diskutil runs in tests. No change in behavior.
+</li>
+<li>Internal: mounting, unmounting and remounting one volume moved out of <code>DriveManager</code> into <code>DriveManager+Mount</code>, and the decision to retry a failed mount into <code>MountRetryRules</code> (unit-tested for every branch); the disk-change notification handling has its own file too. No change in behavior.
+</li>
+<li>Keep Alive's network-change handling is split out of <code>KeepAliveManager</code>: <code>NetworkChangeMonitor</code> wraps the system path monitor and <code>NetworkChangeRules</code> holds the remount decisions (Wi-Fi → Ethernet, a lost interface, VPN tunnels ignored), now unit-tested with an injected monitor. The behaviour is unchanged.
+</li>
+<li>The volume right-click menu is split out of <code>VolumeRowView</code> into <code>VolumeContextMenu</code>, with the show/hide conditions in <code>VolumeMenuRules</code> (unit-tested). The menu itself is unchanged.
+</li>
+<li><strong>Force Eject</strong> now stops when the force unmount fails and shows that error (for example the process holding the disk), instead of ejecting anyway and showing the eject error. If the unmount works, it ejects as before.
+</li>
+<li>Internal: the rules that decide which mounts of blocked volumes are allowed (one-time approvals that expire after 60 seconds, matching by device name or volume/disk UUID, the 15 second auto-mount window) moved into <code>MountApprovalLedger</code> with unit tests. No change in behavior.
+</li>
+<li>Internal: unit tests for the administrator-password flow (<code>PrivilegedShell</code>), the startup-block volume lookup (<code>FstabVolumeLookup</code>, with <code>diskutil</code> plist fixtures), the login-item state mapping and the statfs in-flight guard; the commands they run are unchanged. No change in behavior.
+</li>
+<li>Internal: the "Block at Startup" logic (keeping the rules in /etc/fstab in step with the blocked list) moved out of <code>PersistenceManager</code> into <code>StartupBlockCoordinator</code>, and custom mount point updates into their own file; <code>PersistenceManager</code> can now use a separate <code>UserDefaults</code> and a fake /etc/fstab, so unit tests cover the reconcile, retry and "declined" behavior without a password prompt. The commands that write /etc/fstab are unchanged.
+</li>
+<li>Internal: mounting a network share moved out of <code>NetworkMountManager</code> into <code>NetworkShareMounter</code>, with unit tests for the stalled-mount rule, the connection URL and how a mount result becomes a message. No change in behavior.
+</li>
+<li>Internal: unlocking encrypted APFS volumes (saved password, password prompt, saving and forgetting the Keychain item) moved out of <code>DriveManager</code> into <code>EncryptedVolumeUnlocker</code>, with unit tests for the decision to ask for the password again or show an error. The password still reaches <code>diskutil</code> only through stdin. No change in behavior.
+</li>
+<li><strong>Keep Alive</strong> now waits for a volume's remount to really finish instead of checking after 3 seconds, so a slow USB drive that needs up to 30 seconds to spin up is no longer counted as a failed reconnect (no backoff, no false "could not reconnect" notification).
+</li>
+<li><strong>Accessibility</strong>: with "Reduce motion" on, the usage rings and the disk expand arrow no longer animate. Volume and share rows can be focused with Tab (Up/Down move between rows; Return or Space mounts or unmounts on macOS 14+), and VoiceOver offers Mount/Unmount, Open in Finder, Copy Path and Open in Terminal as actions on each row.
+</li>
+<li><strong>Full Disk Access</strong> now shows in Settings → General → Permissions as "Granted" or "Not Granted", with an "Open System Settings" button when it is missing. It updates when you come back from System Settings, so declining the one-time prompt no longer hides the problem.
+</li>
+<li>Network share status is now read straight from the system mount table instead of running <code>/sbin/mount</code> and parsing its text on every refresh, so Keep Alive checks start no process and mount folders whose names contain " on " or parentheses can no longer confuse it. A share connected in Finder whose server or share name cannot be read now shows "Unknown Server" / "Shared Folder" in your language, and NFS shares on an IPv6 server are imported with the right server and path.
+</li>
+<li>A busy network share no longer gets a pointless second mount attempt after a network change: if the unmount fails and the share is still mounted, MountMate keeps it and logs why. Mount All and the error alerts now agree on what a locked encrypted volume looks like.
+</li>
+<li>The update window now shows what is new in the offered version (its notes from this changelog), and the update feed keeps the last three versions instead of only the newest one.
+</li>
+<li>Release scripts: <code>scripts/3-release.sh</code> is removed (the release workflow tags and publishes), <code>scripts/0-run-all.sh</code> only builds locally, and <code>scripts/2-build.sh --dry-run</code> builds the zip and update feed without a DMG, signing or notarization.
+</li>
+<li>The <code>/etc/fstab</code> code is split out of the settings store into <code>FstabRules</code> (pure text rules), <code>FstabVolumeLookup</code> and <code>FstabWriter</code>, with new unit tests for custom mount point rules (escaped paths, conflicts, replacing and removing an entry). The behaviour and the administrator command are unchanged.
+</li>
+<li><code>brew uninstall --zap mountmate</code> now also removes the app's cache, HTTP storage and saved window state, not only its preferences file.
+</li>
+<li>README and README-vi now describe the same features and match the app: the default shortcuts (Unmount All <code>⌘⌥⇧U</code>, Mount All <code>⌘⇧M</code>), the admin password asked only for <code>/etc/fstab</code> (Block at Startup, custom mount points), Sparkle as the update mechanism, and the newer features; README-vi also gains the network share errors and development sections.
+</li>
+<li>VoiceOver now reads the icon-only buttons (Expand/Collapse All, Unmount All, Settings, Refresh, Quit, Eject) by name and reports when they are busy, and the menu bar icon is announced as "MountMate" with the number of mounted volumes (and whether an action is running or failed).
+</li>
+<li>MountMate now writes its diagnostics to the macOS unified log (subsystem <code>com.homielab.mountmate</code>) instead of standard output, so they can be viewed in Console.app or collected with <code>log show</code> when reporting a problem (see "Sending Logs" in the README). Passwords are never logged and names, paths and error details are private.
+</li>
+<li>Keyboard shortcut labels in Settings now follow the current keyboard layout (for example AZERTY, Dvorak or Cyrillic), so the key shown is the key you press, and they update when you switch the input source. Special keys keep their symbols.
+</li>
+<li>Passwords MountMate saves in the Keychain are now labeled "MountMate – &lt;volume or share name&gt;" with the kind "APFS volume" or "Network share", so they are easy to find in Keychain Access. Passwords saved by earlier versions keep working and get the label the next time they are saved.
+</li>
+<li>The sample <code>diskutil</code> output used during development (<code>testDisks.plist</code>) is no longer shipped inside the app; it is now a test fixture, and the disk-list parsing it exercises has its own unit tests.
+</li>
+<li>The localization test now also checks that every language keeps the same format placeholders (<code>%@</code>, <code>%d</code>, <code>%1$@</code>…) as English; three unused strings were removed from all languages.
+</li>
+<li>Added a CI workflow that runs the unit tests and a swift-format check on every pull request and push to main; the Xcode scheme is now shared so the same test command works anywhere.
+</li>
+<li>Release builds now generate the update feed with the same Sparkle version the app ships with (2.10.0), so update signatures and feed format always match the built-in updater.
+</li>
+<li>Docs: the website and README now show <code>brew install mountmate</code> (with a copy button on the site), the macOS 13 requirement and first-launch notes; the Homebrew cask points to mountmate.homielab.com.
+</li>
+<li>Website: added <code>robots.txt</code>, <code>sitemap.xml</code> and SoftwareApplication structured data so search engines describe MountMate correctly, a line listing the seven interface languages, and an Encrypted volumes feature card.
+</li>
+<li>Docs: added a CONTRIBUTING guide, GitHub issue forms (bug reports ask for the version and the error code) and a pull request template; both READMEs now list the display options (menu bar count, internal disks, only volumes) and Ignore, Protect and Pin, and the Vietnamese README has a Quick Start.
+</li>
+<li>Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
+</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li><strong>Free space with an ignored volume</strong>: a volume sharing its APFS container with an ignored volume now shows the container's real free space (the ignored volume's data counted), and so does the disk row, so the Almost-full warning comes on time.
+</li>
+<li><strong>SD card in a MacBook's card slot</strong>: a card in the built-in reader is now treated as an external disk (diskutil calls the reader internal): it is shown by default and included in Eject All, unmount on sleep and Shortcuts.
+</li>
+<li><strong>Custom mount points</strong>: cancelling the administrator password prompt (or a failed save) no longer leaves the empty folder MountMate just created behind; folders that existed before or that have files in them are never touched. A rule you wrote by hand in <code>/etc/fstab</code> with a lowercase UUID now counts as one for that volume, so MountMate refuses to add a second rule for it instead of writing two.
+</li>
+<li><strong>Custom mount rules MountMate lost track of</strong>: rules MountMate wrote to <code>/etc/fstab</code> but no longer has in its settings (after a settings reset or moving to a new Mac) still move the volume; they now appear in Settings → Management → Custom Mount Points marked "Not tracked by MountMate" with a Remove button. Nothing is changed until you click it.
+</li>
+<li><strong>Blocked drives with a cloned twin</strong>: the check at launch no longer unmounts a drive that only shares its volume UUID with a blocked one (a clone); when two connected volumes share the UUID it leaves both alone. Unlocking an encrypted APFS volume that shares its UUID with another now targets the right device, so the correct password works.
+</li>
+<li><strong>Shortcut keys on extended keyboards</strong>: shortcuts using F13–F20, Help or keypad keys now show as "⌘F13" or "⌃Keypad 1" in Settings (and VoiceOver reads them right) instead of "Key 105" or a stray symbol.
+</li>
+<li><strong>Reduce Motion</strong>: the small message after a keyboard shortcut now appears and disappears without fading when Reduce Motion is on.
+</li>
+<li><strong>Volumes with the same UUID</strong> (two SD cards flashed from one image, a cloned drive): the volume name explains on hover and in VoiceOver that another volume has the same UUID, Copy Diagnostics counts such volumes, and blocking one card no longer stops the other card from mounting automatically.
+</li>
+<li><strong>Could Not Mount at Login</strong> is shown again for a share that mounted and later failed again, instead of once per session.
+</li>
+<li>The menu bar icon while a disk operation runs no longer looks like Time Machine is backing up.
+</li>
+<li><strong>Keep Alive reconnects shares that stopped responding</strong>: a share still listed as mounted after the NAS restarted, the Wi-Fi or VPN changed, used to stay "mounted", hang Finder and never come back. Keep Alive now checks that each mounted share answers (giving it up to 10 seconds) and unmounts and mounts again one that does not; with Notifications on, a share that still cannot reconnect gets the usual "Cannot Reconnect" message. In Low Power Mode Keep Alive checks half as often, and Copy Diagnostics counts the stale mounts it found.
+</li>
+<li><strong>Network share address and password</strong>: two shares on different ports of one server (<code>nas:445/data</code> and <code>nas:4450/data</code>) are no longer refused as "already saved", and a mounted share is no longer taken for the one on another port. The server field now refuses addresses that cannot work ("my nas", "nas:abc", "nas:99999") with a translated message, and keeps an IPv6 link-local zone (<code>fe80::1%en0</code>). The Password field is off until a username is entered, since a password without one was saved but never used; renaming a share also updates its Keychain item's name.
+</li>
+<li><strong>Browse Network fills in a real address</strong>: picking a server such as "My NAS" or "John's MacBook Pro" used to put that name, spaces and all, into the Server field, so the share was "unreachable" or refused as an invalid configuration. MountMate now looks up the host name the server announces ("Johns-MacBook-Pro.local", with the port when it is not the usual one) and shows it under the name in the list; if the lookup fails it uses the name as macOS would turn it into a host name ("my-nas.local").
+</li>
+<li><strong>Disks with the same volume UUID</strong>: two SD cards flashed from one image (Raspberry Pi, Ventoy) or a clone no longer share one row, busy spinner or low-space state. Their Protect, Ignore and Keep Alive settings are not saved for them, so one card never inherits the other's. Disks with a unique UUID keep their settings.
+</li>
+<li><strong>Unmount Volume in Shortcuts on a disk image</strong>: the action now waits until the image is detached, reports a failed detach as an error and shows no alert.
+</li>
+<li><strong>No more endless "Almost full" warnings on small partitions</strong>: volumes under 1 GB (Ventoy's VTOYEFI, a Raspberry Pi bootfs) are full by design and no longer get the orange ring or a notification. Right-click any volume and choose "Don't Warn About Free Space on This Volume" to silence it; the same menu turns it back on.
+</li>
+<li><strong>Menu fits small screens</strong>: with many drives and shares the list now scrolls inside the menu instead of running off a 13-inch screen.
+</li>
+<li><strong>Mount All skips system partitions</strong>: Preboot, Recovery, VM, Update and other APFS helper volumes, Apple_Boot, Microsoft Reserved, Windows Recovery and Linux swap partitions now count as system volumes like EFI, so they no longer show as normal rows, and Mount All and the Mount All Volumes shortcut stop failing with "Could not mount" on drives that hold macOS, Windows or Linux.
+</li>
+<li><strong>Eject respects Protect</strong>: the Eject button on a disk is greyed out when one of its volumes is protected, and Eject refuses a disk whose volume is still being mounted, unmounted or unlocked, the same as Eject All and Shortcuts.
+</li>
+<li><strong>Shortcuts that stopped working after an update</strong>: a saved shortcut without ⌘ or ⌃ is no longer silently ignored. MountMate says once per launch that it is off and where to record a new one; the saved keys stay in Settings.
+</li>
+<li><strong>Unmount All and Eject All keep busy volumes in Mount Again on Wake</strong>: a volume that could not be unmounted or ejected (in use) is still mounted again after the next wake; only the ones that really left are forgotten. Pressing the Unmount All shortcut again while it is running no longer shows a wrong "Nothing to unmount".
+</li>
+<li><strong>Imported shares no longer take a drive’s mount folder</strong>: Import Shares from File, Import Mounted and dropping a mounted share now skip a share whose mount folder is already used by a volume’s custom mount point or another share, and say which one (“Media” not added: Already used by volume “Media Disk”.), instead of failing later with a “not empty” error.
+</li>
+<li><strong>Custom mount points are refused for NTFS volumes</strong>: an NTFS volume (also one mounted by Paragon or Tuxera) or a disk of another third-party driver no longer gets a custom mount point, because its <code>/etc/fstab</code> rule turned on Apple's experimental NTFS writing, which can damage the disk, or took the disk away from your driver. The menu item is off with the reason, and Save explains it. Rules an older version already wrote are listed in Settings → Management under "Unsafe Custom Mount Rules" with a Remove Rule button; MountMate never changes them on its own.
+</li>
+<li>A custom mount point or network share folder already saved for another volume or share is now refused at Save, naming the volume or share that uses it, instead of the later mount failing with a "not empty" error.
+</li>
+<li><strong>Read-only network shares</strong>: a read-only share no longer gets the orange "Almost full" ring, notification or Copy Diagnostics count, since nothing can be freed on it. The "Read-only" badge now shows how the share is actually mounted (also for shares mounted read-only in Finder), and Import Mounted keeps a read-only mount read-only. Chinese texts no longer have a stray space after "。".
+</li>
+<li><strong>Time Machine disks recognized more reliably</strong>: HFS+ backup disks (with a Backups.backupdb folder) and disks chosen as a backup destination in Time Machine settings now count as Time Machine disks, so unmounting on sleep, screen lock or idle leaves them mounted and they are not reported as disconnected without ejecting. A slow disk is checked for at most a second.
+</li>
+<li><strong>Slow hubs and hard disks after wake</strong>: Mount Again on Wake now looks for the disks a third time, about 45 seconds after wake, so a hub or hard disk that takes long to spin up is mounted again too. Disks that are still missing or fail to mount after that are no longer skipped silently: with Notifications on you get one "Disks Were Not Mounted Again" notification naming them.
+</li>
+<li><strong>Shortcuts with two volumes of the same name</strong>: with two drives both named "Untitled", Mount Volume, Unmount Volume and Eject Volume always failed with "More than one volume is named" and the picker showed only one. The picker now lists each volume with its size and device (and mount point), and a shortcut acts on the volume you picked even when another has the same name. Shortcuts made before keep working by name; when the name is shared, the error now asks you to choose the volume again.
+</li>
+<li><strong>No more account lockouts after a password change</strong>: when a NAS or Windows-domain server rejects a share's saved password (wrong password, expired password, locked or restricted account), Keep Alive and the retries at login stop reconnecting that share instead of signing in with the old password every few minutes until the account is locked. The share shows "Password Rejected" in Settings → Network Shares, you get one "Password Rejected" notification (with Notifications on) instead of "Cannot Reconnect", and Copy Diagnostics counts such shares. Editing the share (for example to enter the new password) or mounting it yourself makes Keep Alive try again.
+</li>
+<li><strong>Ejected disk mounted again after wake</strong>: a disk you eject from the menu (Eject or Force Eject) is no longer mounted again by Mount Again on Wake or after unlocking the screen if you plug it back in before then. A failed eject keeps the disk in the plan.
+</li>
+<li>A "Mount at login" share that was still waiting to retry when Keep Alive was turned on is retried again once Keep Alive is turned off, instead of never mounting.
+</li>
+<li><strong>Mount at login with Keep Alive off</strong>: a network share set to mount at login that fails because the Mac started before Wi-Fi was connected, or before a NAS that lost power with it had finished booting, is now tried again after 15 seconds, 30 seconds, 1 minute, 2 minutes and 2 minutes, and each time the network comes up, up to 5 times in all or until it mounts. A share you unmount in MountMate meanwhile is left alone; with Keep Alive on, its reconnects work as before.
+</li>
+<li><strong>Login mount gave up silently</strong>: with Keep Alive off and Notifications on, a network share that still fails to mount at login after its last try now shows one "Could Not Mount at Login" notification with the share name and the reason (for example a wrong password or a server that is off), instead of only writing to the log.
+</li>
+<li><strong>Keep Alive after wake or a network drop</strong>: when the Mac wakes or the network comes back while Keep Alive is still waiting on a server that was offline, the reconnect now runs as soon as that check ends instead of waiting for the next retry, so NAS shares come back without remounting them by hand.
+</li>
+<li>The address under each share in Settings → Network Shares is now the one MountMate really connects to, the same as the Preview in the share sheet: NFS shares show <code>nas:/volume1/media</code>, IPv6 servers get brackets (<code>smb://[fd00::2]/share</code>) and spaces in paths are encoded. Hover it to see the full address.
+</li>
+<li>Importing shares from a hand-written file whose server is a full address (<code>smb://admin@nas.local/Public</code>, <code>\\nas\Public</code>) now splits it into server, share path and username instead of saving a share that never mounts.
+</li>
+<li><strong>Renaming exFAT drives</strong>: exFAT volumes now accept names up to 15 characters (such as "Photos Backup") instead of being cut off at 11; FAT32 stays at 11.
+</li>
+<li><strong>Duplicate keyboard shortcuts</strong>: recording a shortcut that another MountMate action already uses is refused with “Already used by Unmount All Volumes” (or the action’s name) instead of being saved, so no shortcut is left dead and Settings no longer blames another app. Duplicates saved by older versions are shown the same way.
+</li>
+<li><strong>Free space on disks with several APFS volumes</strong>: volumes that share one APFS container now show the container's free space and fill level, as Finder does, so "Almost full" warns when the disk is really filling up instead of judging each volume alone.
+</li>
+<li><strong>Keyboard shortcut feedback colours</strong>: the message after a keyboard shortcut now shows an orange icon when something failed ("Ejected 1 disk, 1 failed") and a grey one when there was nothing to do; green is kept for success only.
+</li>
+<li><strong>Volume Almost Full</strong> is shown again when a volume fills up again after you freed space (it drops at least 5 points below the warning level first), not only after it is unmounted and mounted again. A volume hovering around the level still gets one notification.
+</li>
+<li><strong>Network share sizes with an unreachable server</strong>: a share whose server does not answer no longer makes every opening of the menu or Settings ask all your shares for their size again (up to 2 seconds each time); sizes are refreshed at most once a minute, and a share you just mounted still gets its size right away.
+</li>
+<li><strong>Share preview shows the real address</strong>: the "Preview" line in Add/Edit Share now shows exactly what MountMate connects to: IPv6 hosts in brackets, the port, encoded spaces, and for NFS the <code>server:/export</code> target (with <code>-o port=N</code>) instead of a made-up <code>nfs://</code> URL.
+</li>
+<li><strong>Remount and Force Unmount while a volume is busy</strong>: Remount (after changing or removing a custom mount point) and Force Unmount no longer start while a mount or unmount is still running on the same volume, which made two diskutil commands race, hid the spinner too early and showed a wrong error. They are skipped like a second Mount or Unmount; a new mount point then takes effect the next time the volume mounts.
+</li>
+<li><strong>Network share onto a folder with files</strong>: a share is no longer mounted onto a folder that already holds files (for example a custom mount point set to ~/Documents), which hid those files until the share was unmounted. The mount is refused with a message asking for an empty folder; an empty folder or one with only .DS_Store is used as before.
+</li>
+<li><strong>Network share mount point checked at Save</strong>: a custom mount point that resolves to the root folder (<code>/</code>, <code>//</code>, <code>~/../..</code>) or a path or display name with control characters such as a line break is refused in the share sheet with a clear message, instead of failing later with a NetFS error when mounting. <code>~</code> and <code>..</code> are resolved first, so <code>~/x/..</code> (your home folder) is accepted.
+</li>
+<li><strong>Protected volumes and Unmount When Idle</strong>: a volume marked Protected is no longer unmounted for being idle, like Unmount All and the sleep unmount already skip it. Its "Unmount When Idle" submenu is greyed out as "(Off While Protected)"; the chosen delay is kept and applies again once you unprotect the volume.
+</li>
+<li><strong>Recording a keyboard shortcut without the mouse</strong>: in Settings → Keyboard Shortcuts, Space or Return on a focused shortcut button, or VoiceOver's press, now starts recording, and VoiceOver names each button by its action ("Shortcut for “Mount All Volumes”") followed by the current shortcut, instead of three identical "Keyboard Shortcut" buttons.
+</li>
+<li><strong>Pasting a share address with spaces</strong>: an address copied from Finder's Connect to Server such as <code>smb://nas/My%20Share</code> now saves the share path as <code>My Share</code> and mounts, instead of failing because the path was encoded twice (<code>My%2520Share</code>). A share path typed in its own field is kept as typed.
+</li>
+<li><strong>Editing a saved share into a copy of another</strong>: changing the server or share path of a saved network share to one another saved share already uses is now refused with "This share is already saved as …", so two saved shares can no longer mount the same folder (mounting one showed both as mounted, unmounting one unmounted both). Edits that keep the address stay allowed.
+</li>
+<li><strong>Mount Again on Wake after a quick sleep or a failed first attempt</strong>: sleeping and waking the Mac again within 13 seconds (for example closing and reopening the lid, or after a Power Nap dark wake) no longer discards the new wake plan or lets the earlier wake overwrite it, and a volume whose mount fails at the 3-second check stays in the plan and is tried again at 10 seconds.
+</li>
+<li><strong>Pasting <code>//nas/Public</code> or <code>\\nas\Public</code> into the server address</strong>: an address copied from <code>mount</code> output (<code>//admin@nas:445/Public</code>) or a Windows UNC path is now split into the server, share path and username like an <code>smb://</code> URL, instead of leaving the server empty and Save disabled.
+</li>
+<li><strong>Custom mount point</strong>: a path that means the root folder, such as <code>//</code>, <code>/.</code> or <code>/x/..</code>, is now refused with "Cannot Be Root", and <code>..</code> and <code>.</code> in a valid path are resolved before it is checked and used.
+</li>
+<li><strong>Importing a mounted share keeps its port</strong>: an SMB or AFP share connected on another port (<code>smb://user@nas:8445/share</code>) is now imported as server <code>nas:8445</code> (<code>[fd00::2]:8445</code> for an IPv6 address) instead of <code>nas</code>, so it mounts again on the same port.
+</li>
+<li><strong>Network share names are trimmed</strong>: spaces around a share's display name are removed when you save it, and a name of only spaces falls back to the share path's last part (like an empty name), so a share can no longer get an invisible mount folder such as <code>~/mountmate/   </code>.
+</li>
+<li><strong>Adding shares found on the network no longer skips distinct shares</strong>: an NFS export whose path differs only in case from a saved one (<code>/export/Data</code> and <code>/export/data</code>), or an SMB and an NFS share on the same server and path, are now added as separate shares instead of being treated as duplicates. SMB and AFP share names still match case-insensitively, and a server written with a port (<code>nas:445</code>) matches the same server without one.
+</li>
+<li><strong>Expand and collapse a disk with the keyboard or VoiceOver</strong>: a disk's header row now takes keyboard focus and Return or Space (macOS 14+) shows or hides its volumes; VoiceOver reads it as a button with the value "Expanded" or "Collapsed" and toggles it with its default action. Before, only a mouse click or Expand All worked.
+</li>
+<li><strong>NFS export paths are case-sensitive</strong>: two NFS shares whose export paths differ only in case (<code>/export/Data</code> and <code>/export/data</code>) are no longer rejected as duplicates, and each mounted export is shown on the share with the exact same path. SMB and AFP share names are still compared without case.
+</li>
+<li><strong>NFS shares with a port or IPv6 server</strong>: an NFS share whose server is an IPv6 address (<code>fd00::2</code>, <code>[fd00::2]</code>) or has a port (<code>nas:2049</code>, <code>[fd00::2]:2049</code>) now mounts; before, the address went to <code>mount_nfs</code> as typed and the mount always failed.
+</li>
+<li><strong>Copy Diagnostics hides share mount points</strong>: paths of mounted network shares (the default <code>~/mountmate/&lt;share name&gt;</code> folder and any custom mount point you set) are replaced with <code>&lt;share&gt;</code> or <code>&lt;mountpoint&gt;</code>, so the report no longer shows share names.
+</li>
+<li><strong>VoiceOver skips decorative icons</strong>: the error banner, the error screen and "Loading Disks..." are each read as one element, without "exclamation mark triangle" or a separate "in progress" first, and the icons in the empty states and the network share sheets are no longer read aloud.
+</li>
+<li><strong>Network share texts name every protocol</strong>: the Network Shares settings (Import Mounted tooltip, login note, empty-import message, empty-list hint) said "SMB" only, although SMB, NFS and AFP shares are accepted. They now say "SMB, NFS or AFP" in all seven languages.
+</li>
+<li><strong>Encrypted volumes with a saved password reconnect on their own</strong>: Keep Alive, Mount Again on Wake, Mount All and the Mount Volume shortcut now unlock a locked APFS volume with its password saved in the Keychain instead of staying on "Reconnecting…" or "Cannot Reconnect". They never show a password prompt; if the saved password is rejected, MountMate stops trying it until you unlock the volume yourself.
+</li>
+<li><strong>Share addresses with a user or port</strong>: an SMB or AFP address such as <code>smb://admin@nas:445/Public</code> in the Server field now mounts: the user fills the Username field when it is empty (a password in the address is dropped), the port is used for the connection, and IPv6 addresses (<code>fe80::1</code> or <code>[fe80::1]:445</code>) work too. Before, such a share always failed with "Invalid share configuration". Opening and saving a share saved this way fixes it.
+</li>
+<li><strong>Pasted share URLs</strong>: pasting a full address such as <code>smb://nas.local/Public</code> into the Server field of the network share sheet now saves the host <code>nas.local</code> and the share path <code>Public</code> (used when the Share field is empty) instead of the host "nas.local/Public", which could not mount. Leading and trailing slashes in the share path (<code>/Public/</code>) are dropped too. Shares saved before are not changed.
+</li>
+<li><strong>Faster retry after a slow disk list</strong>: when listing disks fails after plugging in a drive or waking the Mac (for example a one-off <code>diskutil</code> timeout), the retry 5 seconds later now runs at the same priority as the original refresh instead of as low-priority background work, so the new drive appears without an extra delay, also on battery.
+</li>
+<li><strong>Keep Alive skips an outdated drive list</strong>: when MountMate could not refresh the disk list, or could not confirm a disk's details, Keep Alive now waits for fresh data instead of trying to remount drives that may be gone and reporting "Cannot Reconnect" for them.
+</li>
+<li><strong>Back-to-back confirmations stay on screen</strong>: when a second keyboard shortcut or Unmount When Idle shows its message while the previous one is fading out, the new message now stays for its full few seconds instead of disappearing with the old one.
+</li>
+<li><strong>Translated busy and time-out errors</strong>: "Another operation on this volume is running", "Timed out waiting for the mount to finish" and "This disk is already being ejected", shown by Shortcuts actions and Keep Alive, now appear in your language instead of always in English.
+</li>
+<li><strong>VoiceOver names the share on Open in Finder</strong>: the Open in Finder button of each saved network share in Settings now says which share it opens ("Open in Finder “NAS”") in all seven languages, instead of the same "Open in Finder" on every row.
+</li>
+<li><strong>Traditional Chinese name in the language picker</strong>: the picker's source label for Traditional Chinese is now written in Traditional script (中文（繁體）) instead of mixing in the Simplified 繁体.
+</li>
+<li><strong>Permission prompts in your language</strong>: the macOS prompts asking for access to removable volumes and to the local network are now shown in French, Russian, Ukrainian, Vietnamese and Chinese (Simplified and Traditional) instead of always in English.
+</li>
+<li><strong>Mount All and Unmount All skip busy volumes</strong>: a volume that is already being mounted, unmounted or unlocked is left out of Mount All, Unmount All (button, shortcut and unmount on sleep), so two operations no longer collide with a spurious "busy" error or end the other's spinner early. Unmount All now shows a spinner on each row it works on.
+</li>
+<li><strong>Changing a custom mount point</strong> no longer leaves the volume unmounted with a spinner that never stops: the volume is mounted again at the new location once the change is saved.
+</li>
+<li><strong>Eject All External Disks</strong>: a disk that fails to eject (for example a hard drive still spinning up) is now tried a second time after 2 seconds, like a single Eject, and the alert and the Shortcuts error say why for each disk (busy, in use by an app, timed out) instead of only listing names. When Force Eject may help, the alert offers it.
+</li>
+<li><strong>Ejecting a disk twice</strong>: choosing Eject again (from the right-click menu, which is now greyed out while the disk ejects) or running Eject All External Disks a second time no longer starts a second eject of the same disk. Before, if the eject then failed, Keep Alive could stay off for the still-mounted volumes and the spinner stopped too early. Eject All also skips a disk while one of its volumes is mounting or unmounting.
+</li>
+<li><strong>Renamed volumes keep their new name everywhere</strong>: after Rename Volume… or a rename in Finder, Settings → Management (Protected, Blocked, Keep Alive, Unmount When Idle, Ignored) and the "blocked disk still mounted" notification show the current name instead of the one the volume had when you saved the setting.
+</li>
+<li><strong>Eject All Manually Connected Shares</strong>: the shares are now ejected at the same time, so one share on a server that does not answer no longer keeps the others (and the spinner) waiting. The alert says why each share could not be ejected (busy, timed out, no longer mounted) and offers Force Unmount when that may help.
+</li>
+<li><strong>Busy volumes</strong>: while a volume is mounting, unmounting or being verified, its right-click menu no longer offers Mount, Mount Read-Only, Unmount, Verify or Rename, and a second mount or unmount started meanwhile (for example by Keep Alive or a shortcut) is skipped instead of running a second <code>diskutil</code> and clearing the spinner early.
+</li>
+<li><strong>Keep Alive backoff for volumes</strong>: automatic reconnect attempts (Keep Alive sweep, Mount Again on Wake) no longer reset a volume's retry backoff, so a broken or unplugged volume is retried less and less often and shows "Retrying in N s" instead of being retried every 30 seconds forever. Mounting it yourself still starts over.
+</li>
+<li><strong>VoiceOver reads what a button acts on</strong>: the Eject button of a disk row, the Mount/Eject button of a network share row and the Mount/Unmount, Edit and Delete buttons of a share in Settings now announce "Eject “Backup”" instead of just "Eject" or "Edit Share", in all seven languages, so rows no longer sound identical when several drives or shares are listed.
+</li>
+<li><strong>Mount All</strong>: each volume now shows its spinner while it mounts, a second Mount All is ignored until the first one is done, a freshly plugged-in volume that fails to mount is retried once like a single mount, and the one-time approval for a "Block auto-mount" volume is withdrawn as soon as the mount ends instead of lingering for a minute.
+</li>
+<li><strong>Network shares: Force Unmount</strong>: ejecting a share from the popover that is busy, whose server went away or whose unmount timed out now offers a confirmed "Force Unmount" (<code>umount -f</code>) instead of a raw <code>umount</code> message, and unmount errors are translated in all seven languages.
+</li>
+<li><strong>Read-only after changing the mount point</strong>: a volume mounted read-only (for example a backup or a damaged disk) stays read-only when you set, change or remove its custom mount point. It used to be mounted again with write access.
+</li>
+<li><strong>Language change</strong>: choosing another language in Settings → General now asks again to restart MountMate (Restart Now / Later), and says so if it cannot restart itself. The prompt had stopped appearing, so nothing seemed to happen after picking a language.
+</li>
+<li><strong>SMART warning notification</strong>: with Notifications on, a failing drive plugged in after another failing drive was unplugged (macOS reuses names like disk4) is now announced too, and a drive that recovers and fails again is announced again.
+</li>
+<li><strong>Keep Alive after a failed unmount or eject</strong>: when Unmount, Eject, Force Unmount/Eject, Unmount All or Eject All fails (for example "Resource busy"), the volume is no longer left excluded from Keep Alive, so it is remounted if the drive is disconnected later. Successful unmounts and a volume you had already unmounted before are unchanged.
+</li>
+<li><strong>Translations</strong>: "Could not eject: %@" was declared twice in every language file; the duplicate is gone and a new test fails when a language file declares a key twice.
+</li>
+<li><strong>Unit tests</strong>: <code>NotificationManagerTests</code> no longer fails at random in a full test run (the permission check that asks again takes two main-queue hops, the test waited for one); the manager now takes its main-thread scheduler and app-activation notification center as parameters.
+</li>
+<li>VoiceOver no longer reads the decorative icons in snapshot and container rows.
+</li>
+<li>Mounting, unmounting or reconnecting (Keep Alive) a network share no longer re-reads all disks, so the menu updates with less background work.
+</li>
+<li>A failure to save a setting, to keep the Mount Again on Wake plan or to build Copy Diagnostics is now written to the log, and if MountMate cannot restart itself after a language change, it says so and asks you to open it again.
+</li>
+<li>The drive and share lists refresh when the Mac wakes from sleep, so they no longer show disks or shares that changed while it slept.
+</li>
+<li>A drive whose APFS container spans several physical disks (for example a Fusion drive) is listed once instead of under each disk, and its used space is no longer counted twice.
+</li>
+<li>The drive list now updates within a second when a disk is plugged in or removed even if it never mounts (blocked or not formatted), without reopening the popover.
+</li>
+<li>If "Start MountMate at Login" cannot be changed, Settings shows the reason with an "Open Login Items" button instead of the switch silently flipping back.
+</li>
+<li><strong>Encrypted volumes</strong>: unlocking now stops after three wrong passwords with a message about what to check (Caps Lock, keyboard layout, Disk Utility) instead of asking forever. The password field has focus when the prompt opens and Unlock stays disabled until you type something. If a saved Keychain password is rejected and the one you type works, it replaces the saved one when "Remember" is ticked, or you can choose "Forget the saved password" (ticked by default); it is never deleted silently or after a timeout.
+</li>
+<li><strong>Custom mount point</strong>: saving a folder on a network share that no longer answers no longer freezes MountMate; the check runs in the background and stops after 2 seconds with a message.
+</li>
+<li><strong>VoiceOver</strong>: each volume, disk and network share row is now read as one item, and the usage ring ("42% used"), the warning triangle (with the error text) and the "Reconnecting…" spinner have spoken labels. The dot on a network share is filled when mounted and hollow when not, instead of relying on colour.
+</li>
+<li>When reading the disk list fails (for example a slow or unresponsive disk), MountMate keeps showing the last known disks with the error banner instead of an empty list, and a slow network share check can no longer overwrite a newer one with outdated mount status.
+</li>
+<li>Share passwords are now hidden in every kind of share URL shown in error messages (also <code>//user:password@server/share</code>), "Mount All" no longer skips a volume just because it is named "EFI", and the remaining English-only network share errors and the "Could not eject" alert are translated.
+</li>
+<li>Counts and durations in the interface (blocked disks, imported shares, retry intervals, the idle-unmount notice) now use proper plural forms, including the three forms Russian and Ukrainian need ("1 диск", "2 диска", "5 дисков") and "Every 1 minute" instead of "Every 1 minutes". Failed mount, unmount and eject alerts are now complete translated sentences instead of a sentence with a translated verb inserted, which read wrongly in French, Russian, Ukrainian and Vietnamese.
+</li>
+<li>Refreshing the drive list no longer starts a <code>diskutil info</code> process for every disk each time: information about disks that are still attached unchanged is reused for 30 seconds, so refreshes use less CPU and wake sleeping hard drives less often. Newly attached or reformatted disks are still read immediately.
+</li>
+<li>Clearer messages when an SMB or AFP share fails to mount: MountMate now tells apart a wrong password, an expired or restricted account, a share the account may not use, an unsupported sign-in method or SMB version and a refused connection, hints how to enter a Windows domain login (<code>DOMAIN\user</code> or <code>user@domain</code>), and shows the original error code (for example <code>Error code: 80 (EAUTH)</code>). The code is also written to the log.
+</li>
+<li>"Remember password in Keychain" for an encrypted APFS volume now saves the password only after it unlocks the volume, so a mistyped password is no longer stored; if saving fails, MountMate tells you instead of failing silently.
+</li>
+<li>Hardened the Disk Arbitration mount-approval callback against unexpected disk description data: an unexpected description or UUID type no longer risks a crash (mounts proceed and the volume is simply not blocked).
+</li>
+<li>Custom mount points whose path contains control characters (like line breaks) are rejected with a clear message instead of being written into the root-managed /etc/fstab, where a break could forge extra rule lines; every rule field (path, volume UUID, file-system type, identifiers) is now validated before anything is staged.
+</li>
+<li>The privileged shell reads the staged copy of /etc/fstab exactly once, checks those bytes against their SHA-256 digest and writes the same bytes, so swapping the file in the temporary directory either aborts the update or has no effect; there is no gap between the check and the write anymore. The current /etc/fstab is compared by digest, without a second staged file.
+</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.4/MountMate_6.4.zip" length="5577365" type="application/octet-stream" sparkle:edSignature="e1q0H1NhJsjV8ZKDu/jQN/z23dr/Wpgcb8i92Q6+kBSQyXg91VQQLxW62/Kt/PfKVZwpEl8sim55R5Aa6ypNCg=="/>
+        </item>
+        <item>
             <title>6.3</title>
             <pubDate>Fri, 23 Oct 2026 14:32:57 +0000</pubDate>
             <sparkle:version>43</sparkle:version>
