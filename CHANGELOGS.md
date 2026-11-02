@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- **Shortcuts no longer act on the wrong drive**: a Mount, Unmount or Eject Volume action that picked a drive which is not plugged in now fails with "not connected" instead of acting on another drive with the same name (such as "Untitled"). Shortcuts that hold only a name match by name as before.
+- **Browse Network with local-network access denied** now says the permission is missing instead of "no servers found".
+- **Import Shares from another Mac**: custom mount points in your home folder are exported as `~/…` (no user name in the file) and imported for the current user; a mount point under another user's home or in a missing folder is reset to the default, and the import message counts those shares.
+
+- **Rename Volume** checks the name against the mounted file system, so a FAT32 or exFAT drive on a GPT disk now gets the 11 (FAT, letters without accents only) or 15 (exFAT) character limit as you type instead of a misleading diskutil error.
+- **Verify Volume** only says "Problems were found" when diskutil reports damage. NTFS, a busy or unplugged volume now get "Could Not Verify Volume" with the reason (diskutil's raw output is in Copy Diagnostics). A running check can be stopped with "Cancel Verify" in the context menu, and quitting MountMate stops it too.
+- **Safer /etc/fstab edits**: an fstab with Windows line endings (CRLF) is read line by line again instead of gaining blank lines and being rewritten in full, and MountMate keeps the previous file as `/etc/fstab.mountmate.bak` before every change (also shown in Copy Diagnostics).
+- **Time Machine backups**: Unmount, Eject, Unmount All and Eject All External Disks ask first ("Unmount Anyway" or "Skip") when Time Machine is backing up to one of the volumes.
+- **Open in Terminal** shows an alert when Terminal cannot be opened instead of doing nothing.
+
+- **Encrypted volumes and a locked Keychain**: when the Keychain is locked or denies access to a saved APFS password, the password prompt now says so (with the Keychain error) instead of asking again with no reason, and a password deleted in Keychain Access no longer shows as saved.
+- **Keyboard shortcut recorder**: system combinations (⌘C, ⌘V, ⌘Q, ⌘W, ⌘Tab, ⌘Space, ⌘⇧4, ⌃Space, ⌘⌥Esc…) are refused with a "reserved by macOS" message, and pressing ⌘Q or ⌘W while recording no longer quits MountMate or closes Settings.
+- **Key names in shortcuts** (Space, Esc, Help, keypad keys) are now translated.
+
+---
+
 ## 6.4
 
 ### Added
@@ -90,20 +110,6 @@ All notable changes to this project will be documented in this file.
 - Docs: the website no longer advertises AFP as a supported protocol (existing AFP shares keep working with a deprecation notice) and now lists Rename Volume, Verify Volume, Browse Network, Open in Finder after mounting and Force Unmount for shares.
 
 ### Fixed
-
-- **Shortcuts no longer act on the wrong drive**: a Mount, Unmount or Eject Volume action that picked a drive which is not plugged in now fails with "not connected" instead of acting on another drive with the same name (such as "Untitled"). Shortcuts that hold only a name match by name as before.
-- **Browse Network with local-network access denied** now says the permission is missing instead of "no servers found".
-- **Import Shares from another Mac**: custom mount points in your home folder are exported as `~/…` (no user name in the file) and imported for the current user; a mount point under another user's home or in a missing folder is reset to the default, and the import message counts those shares.
-
-- **Rename Volume** checks the name against the mounted file system, so a FAT32 or exFAT drive on a GPT disk now gets the 11 (FAT, letters without accents only) or 15 (exFAT) character limit as you type instead of a misleading diskutil error.
-- **Verify Volume** only says "Problems were found" when diskutil reports damage. NTFS, a busy or unplugged volume now get "Could Not Verify Volume" with the reason (diskutil's raw output is in Copy Diagnostics). A running check can be stopped with "Cancel Verify" in the context menu, and quitting MountMate stops it too.
-- **Safer /etc/fstab edits**: an fstab with Windows line endings (CRLF) is read line by line again instead of gaining blank lines and being rewritten in full, and MountMate keeps the previous file as `/etc/fstab.mountmate.bak` before every change (also shown in Copy Diagnostics).
-- **Time Machine backups**: Unmount, Eject, Unmount All and Eject All External Disks ask first ("Unmount Anyway" or "Skip") when Time Machine is backing up to one of the volumes.
-- **Open in Terminal** shows an alert when Terminal cannot be opened instead of doing nothing.
-
-- **Encrypted volumes and a locked Keychain**: when the Keychain is locked or denies access to a saved APFS password, the password prompt now says so (with the Keychain error) instead of asking again with no reason, and a password deleted in Keychain Access no longer shows as saved.
-- **Keyboard shortcut recorder**: system combinations (⌘C, ⌘V, ⌘Q, ⌘W, ⌘Tab, ⌘Space, ⌘⇧4, ⌃Space, ⌘⌥Esc…) are refused with a "reserved by macOS" message, and pressing ⌘Q or ⌘W while recording no longer quits MountMate or closes Settings.
-- **Key names in shortcuts** (Space, Esc, Help, keypad keys) are now translated.
 
 - **Free space with an ignored volume**: a volume sharing its APFS container with an ignored volume now shows the container's real free space (the ignored volume's data counted), and so does the disk row, so the Almost-full warning comes on time.
 - **SD card in a MacBook's card slot**: a card in the built-in reader is now treated as an external disk (diskutil calls the reader internal): it is shown by default and included in Eject All, unmount on sleep and Shortcuts.
