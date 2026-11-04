@@ -6,5 +6,5 @@
 
 - [ ] Unit tests pass (`xcodebuild test`, see CONTRIBUTING.md) and new logic has tests
 - [ ] `swift format lint --strict -r MountMate MountMateTests` is clean
-- [ ] `CHANGELOGS.md` has an entry under `## Unreleased` for user-visible changes
+- [ ] `CHANGELOG.md` has an entry under `## [Unreleased]` for user-visible changes
 - [ ] New user-facing strings are in all 7 languages (and `Localizable.stringsdict` for plurals)

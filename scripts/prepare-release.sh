@@ -2,7 +2,7 @@
 # Sets the version (from the release tag) and the next build number on the app
 # target in the Xcode project, updates softwareVersion in the site's JSON-LD
 # (docs/index.html), and extracts that version's notes from
-# CHANGELOGS.md.
+# CHANGELOG.md.
 #
 # Usage: scripts/prepare-release.sh v5.20     (or 5.20)
 #
@@ -15,7 +15,7 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 PBXPROJ="MountMate.xcodeproj/project.pbxproj"
-CHANGELOG="CHANGELOGS.md"
+CHANGELOG="CHANGELOG.md"
 REPO="${GITHUB_REPOSITORY:-homielab/mountmate}"
 
 read_setting() { # $1 = setting, $2 = file content source (path or git object)
@@ -55,22 +55,23 @@ if [[ -f "$APPCAST" ]]; then
 fi
 BUILD="$((BASE_BUILD + 1))"
 
-# --- Release notes from CHANGELOGS.md ---
-# Use "## <version>"; if missing, use "## Unreleased" and rename it to the
-# version (committed with the release).
-if ! grep -qxF "## ${VERSION}" "$CHANGELOG" && grep -qxF "## Unreleased" "$CHANGELOG"; then
-  perl -pi -e "s/^## Unreleased\$/## ${VERSION}/ && \$done++ if !\$done" "$CHANGELOG"
-  echo "📝 Renamed \"## Unreleased\" to \"## ${VERSION}\" in ${CHANGELOG}"
+# --- Release notes from CHANGELOG.md ---
+# Use "## [<version>] - <date>"; if missing, use "## [Unreleased]" and rename it
+# to the version with today's date (committed with the release).
+if ! grep -q "^## \[${VERSION//./\\.}\]" "$CHANGELOG" && grep -qxF "## [Unreleased]" "$CHANGELOG"; then
+  TODAY="$(date +%Y-%m-%d)"
+  perl -pi -e "s/^## \[Unreleased\]\$/## [${VERSION}] - ${TODAY}/ && \$done++ if !\$done" "$CHANGELOG"
+  echo "📝 Renamed \"## [Unreleased]\" to \"## [${VERSION}] - ${TODAY}\" in ${CHANGELOG}"
 fi
 NOTES_BODY="$(awk -v ver="$VERSION" '
-  $0 == "## " ver { found = 1; next }
-  found && (/^## / || /^---/) { exit }
+  index($0, "## [" ver "]") == 1 { found = 1; next }
+  found && /^## / { exit }
   found { print }
 ' "$CHANGELOG" | sed -e '/./,$!d')"   # drop leading blank lines
 # grep, not ${NOTES_BODY//[[:space:]]/}: bash 3.2 (macOS runners) takes hours
 # on a long changelog section.
 if ! grep -q '[^[:space:]]' <<< "$NOTES_BODY"; then
-  echo "❌ No \"## ${VERSION}\" or \"## Unreleased\" section in ${CHANGELOG}. Add the release notes first." >&2
+  echo "❌ No \"## [${VERSION}]\" or \"## [Unreleased]\" section in ${CHANGELOG}. Add the release notes first." >&2
   exit 1
 fi
 {

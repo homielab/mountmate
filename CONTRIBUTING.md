@@ -37,7 +37,7 @@ Every user-facing string exists in all 7 languages under `MountMate/Resources/<l
 
 - Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): summary`, imperative, lower-case, no trailing period (for example `fix(network): keep shares after wake`).
 - Keep a pull request focused on one change.
-- Add a line for user-visible changes under `## Unreleased` in `CHANGELOGS.md` (`### Added`, `Changed` or `Fixed`), written for users of the app.
+- Add a line for user-visible changes under `## [Unreleased]` in `CHANGELOG.md` (`### Added`, `Changed` or `Fixed`), written for users of the app.
 - CI runs the unit tests and the style check on every pull request.
 
 ## Releases

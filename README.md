@@ -199,7 +199,7 @@ CI runs both on every pull request and push to `main`; the style check is strict
 
 ### Releasing
 
-Push a version tag (`git tag v6.4 && git push origin v6.4`, or `scripts/create-draft-release.sh`): the release workflow sets the version and build number, builds, signs and notarizes the app and DMG, updates `docs/appcast.xml` and the Homebrew cask on `main`, and publishes the GitHub release with the version's `CHANGELOGS.md` section. Write that section for users: `scripts/2-build.sh` turns it into HTML (`scripts/changelog-to-html.sh`) and embeds it in the new appcast item, so Sparkle's update window shows it. The appcast keeps the newest three versions.
+Push a version tag (`git tag v6.4 && git push origin v6.4`, or `scripts/create-draft-release.sh`): the release workflow sets the version and build number, builds, signs and notarizes the app and DMG, updates `docs/appcast.xml` and the Homebrew cask on `main`, and publishes the GitHub release with the version's `CHANGELOG.md` section. Write that section for users: `scripts/2-build.sh` turns it into HTML (`scripts/changelog-to-html.sh`) and embeds it in the new appcast item, so Sparkle's update window shows it. The appcast keeps the newest three versions.
 
 To check the zip and appcast locally without a DMG, signing or notarization (`docs/appcast.xml` stays unchanged; output in `Dist/Final/`):
 

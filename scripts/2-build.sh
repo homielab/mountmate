@@ -5,7 +5,7 @@
 # Usage: scripts/2-build.sh [--dry-run]
 #
 # The feed keeps the existing items of docs/appcast.xml (the newest 3 versions)
-# and embeds the new version's CHANGELOGS.md section as its release notes.
+# and embeds the new version's CHANGELOG.md section as its release notes.
 #
 # --dry-run builds only the zip and the feed into Dist/Final: no DMG, no code
 # signing or notarization, and docs/appcast.xml is left untouched. It still
@@ -78,7 +78,7 @@ mv "${ZIP_NAME}" "${FINAL_DIR}/"
 # embeds them in the new item's <description>.
 echo "📝 Writing release notes..."
 if "${PROJECT_ROOT}/scripts/changelog-to-html.sh" "${VERSION}" > "${FINAL_DIR}/${NOTES_NAME}"; then
-  echo "   ${NOTES_NAME} from the \"## ${VERSION}\" section of CHANGELOGS.md"
+  echo "   ${NOTES_NAME} from the \"## ${VERSION}\" section of CHANGELOG.md"
 else
   echo "⚠️ No release notes for ${VERSION}; the update will show none."
   rm -f "${FINAL_DIR}/${NOTES_NAME}"

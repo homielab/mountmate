@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [Unreleased]
 
 ### Fixed
 
@@ -20,9 +20,7 @@ All notable changes to this project will be documented in this file.
 - **Keyboard shortcut recorder**: system combinations (⌘C, ⌘V, ⌘Q, ⌘W, ⌘Tab, ⌘Space, ⌘⇧4, ⌃Space, ⌘⌥Esc…) are refused with a "reserved by macOS" message, and pressing ⌘Q or ⌘W while recording no longer quits MountMate or closes Settings.
 - **Key names in shortcuts** (Space, Esc, Help, keypad keys) are now translated.
 
----
-
-## 6.4
+## [6.4] - 2026-10-31
 
 ### Added
 
@@ -72,35 +70,27 @@ All notable changes to this project will be documented in this file.
 - Security improvements.
 - Squashed many more small bugs that liked to hide in the menu.
 
----
-
-## 6.3
+## [6.3] - 2026-10-23
 
 ### Added
 
 - Mounted network shares show how much space is used and free, with the same ring as local drives.
 - Hide EFI Partitions in Settings → General → Display.
 
----
-
-## 6.2.2
+## [6.2.2] - 2026-10-20
 
 ### Changed
 
 - After you enter your administrator password, a short message confirms what was done.
 
----
-
-## 6.2.1
+## [6.2.1] - 2026-10-20
 
 ### Fixed
 
 - Automatic unmounts no longer touch Time Machine disks or disk images.
 - Block at Startup and custom mount points work again on macOS 27.
 
----
-
-## 6.2
+## [6.2] - 2026-10-19
 
 ### Changed
 
@@ -124,9 +114,7 @@ All notable changes to this project will be documented in this file.
 - Several messages that were only in English are now translated.
 - Fixed many more small bugs.
 
----
-
-## 6.1
+## [6.1] - 2026-10-19
 
 ### Added
 
@@ -137,9 +125,7 @@ All notable changes to this project will be documented in this file.
 - Mounting a blocked volume works when the disk was asleep.
 - The Accessibility alert no longer appears every time Settings opens.
 
----
-
-## 6.0
+## [6.0] - 2026-10-11
 
 ### Changed
 
@@ -153,9 +139,7 @@ All notable changes to this project will be documented in this file.
 - Encrypted volumes unlock automatically with the password saved in Keychain, without freezing the menu.
 - Mount All and Unmount All now tell you which volume failed instead of failing silently.
 
----
-
-## 5.20
+## [5.20] - 2026-10-11
 
 ### Added
 
@@ -172,9 +156,7 @@ All notable changes to this project will be documented in this file.
 - A failed mount could delete files on a network share. This no longer happens.
 - Ejecting a disk that was asleep no longer leaves it unmounted but not ejected.
 
----
-
-## 5.19
+## [5.19] - 2026-09-04
 
 ### Added
 
@@ -195,9 +177,7 @@ All notable changes to this project will be documented in this file.
 - The boot volume no longer appears twice, and its space is no longer counted twice.
 - Mount All Volumes no longer fails on EFI partitions.
 
----
-
-## 5.17
+## [5.17] - 2026-08-21
 
 ### Added
 
@@ -207,17 +187,13 @@ All notable changes to this project will be documented in this file.
 
 - Better French, Russian, Ukrainian, Vietnamese and Chinese translations.
 
----
-
-## 5.16
+## [5.16] - 2026-08-09
 
 ### Fixed
 
 - More reliable updates and Homebrew installs.
 
----
-
-## 5.15
+## [5.15] - 2026-08-09
 
 ### Added
 
@@ -230,9 +206,7 @@ All notable changes to this project will be documented in this file.
 - A refreshed look for the menu bar, drive list and Settings.
 - The drive list refreshes faster.
 
----
-
-## 5.13
+## [5.13] - 2026-08-08
 
 ### Added
 
@@ -242,9 +216,7 @@ All notable changes to this project will be documented in this file.
 
 - Some APFS disks were treated as the main disk by mistake.
 
----
-
-## 5.12
+## [5.12] - 2026-08-08
 
 ### Added
 
@@ -255,50 +227,38 @@ All notable changes to this project will be documented in this file.
 - USB drives and SD cards are recognized more reliably for Block USB Auto-Mount.
 - A blocked volume can still be mounted by hand later.
 
----
-
-## 5.11
+## [5.11] - 2026-07-26
 
 ### Added
 
 - Drives that keep their files directly on the whole disk now work.
 
----
-
-## 5.10
+## [5.10] - 2026-07-26
 
 ### Changed
 
 - Volumes you allowed to mount are recognized more reliably.
 
----
-
-## 5.9
+## [5.9] - 2026-07-26
 
 ### Changed
 
 - Better VoiceOver support for the main controls.
 
----
-
-## 5.8
+## [5.8] - 2026-07-26
 
 ### Fixed
 
 - Apple RAID members are recognized more reliably.
 
----
-
-## 5.7
+## [5.7] - 2026-07-14
 
 ### Added
 
 - Detect and manage Apple RAID sets.
 - Eject all manually connected network shares at once.
 
----
-
-## 5.6
+## [5.6] - 2026-07-12
 
 ### Added
 
@@ -311,9 +271,7 @@ All notable changes to this project will be documented in this file.
 - Mounted shares are matched more reliably.
 - A redesigned MountMate website.
 
----
-
-## 5.5
+## [5.5] - 2026-03-26
 
 ### Added
 
@@ -328,17 +286,13 @@ All notable changes to this project will be documented in this file.
 
 - Share passwords no longer appear in error messages.
 
----
-
-## 5.4
+## [5.4] - 2026-03-22
 
 ### Changed
 
 - Open in Finder selects the mounted folder directly.
 
----
-
-## 5.3
+## [5.3] - 2026-03-22
 
 ### Added
 
@@ -350,9 +304,7 @@ All notable changes to this project will be documented in this file.
 - Open in Finder selects the volume or share directly.
 - A new app icon.
 
----
-
-## 5.2
+## [5.2] - 2026-02-14
 
 ### Added
 
@@ -368,9 +320,7 @@ All notable changes to this project will be documented in this file.
 
 - Lower CPU use and battery drain from network share checks.
 
----
-
-## 5.1
+## [5.1] - 2026-02-05
 
 ### Added
 
@@ -381,9 +331,7 @@ All notable changes to this project will be documented in this file.
 - The menu bar icon shows when MountMate is mounting or hit an error.
 - Clearer mount and unmount icons.
 
----
-
-## 5.0
+## [5.0] - 2025-12-04
 
 ### Added
 

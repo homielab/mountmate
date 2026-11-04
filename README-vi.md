@@ -197,7 +197,7 @@ CI chạy cả hai trên mỗi pull request và mỗi push vào `main`; kiểm t
 
 ### Phát hành
 
-Push một tag phiên bản (`git tag v6.4 && git push origin v6.4`, hoặc `scripts/create-draft-release.sh`): workflow release đặt version và build number, build, ký và notarize app và DMG, cập nhật `docs/appcast.xml` và cask Homebrew trên `main`, rồi đăng GitHub release với mục của phiên bản đó trong `CHANGELOGS.md`. Hãy viết mục đó cho người dùng: `scripts/2-build.sh` chuyển nó sang HTML (`scripts/changelog-to-html.sh`) và nhúng vào item mới của appcast, nên cửa sổ cập nhật của Sparkle hiện nó. Appcast giữ ba phiên bản mới nhất.
+Push một tag phiên bản (`git tag v6.4 && git push origin v6.4`, hoặc `scripts/create-draft-release.sh`): workflow release đặt version và build number, build, ký và notarize app và DMG, cập nhật `docs/appcast.xml` và cask Homebrew trên `main`, rồi đăng GitHub release với mục của phiên bản đó trong `CHANGELOG.md`. Hãy viết mục đó cho người dùng: `scripts/2-build.sh` chuyển nó sang HTML (`scripts/changelog-to-html.sh`) và nhúng vào item mới của appcast, nên cửa sổ cập nhật của Sparkle hiện nó. Appcast giữ ba phiên bản mới nhất.
 
 Kiểm zip và appcast trên máy mà không tạo DMG, không ký, không notarize (`docs/appcast.xml` giữ nguyên; kết quả ở `Dist/Final/`):
 

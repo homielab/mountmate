@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Prints the "## <version>" section of CHANGELOGS.md as an HTML fragment for
+# Prints the "## [<version>]" section of CHANGELOG.md as an HTML fragment for
 # Sparkle's update dialog (no <html>/<body>, so generate_appcast embeds it).
 #
 # Usage: scripts/changelog-to-html.sh <version> [changelog]
 #
-# Handles the Markdown CHANGELOGS.md uses: ###/#### headings, "-"/"*" lists
+# Handles the Markdown CHANGELOG.md uses: ###/#### headings, "-"/"*" lists
 # with one nested level, paragraphs, **bold**, `code` and [links](url).
 # Uses only perl, which ships with macOS. Exits 1 if the section is missing.
 
@@ -12,11 +12,11 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:?Usage: $0 <version> [changelog]}"
-CHANGELOG="${2:-${PROJECT_ROOT}/CHANGELOGS.md}"
+CHANGELOG="${2:-${PROJECT_ROOT}/CHANGELOG.md}"
 
 SECTION="$(awk -v ver="$VERSION" '
-  $0 == "## " ver { found = 1; next }
-  found && (/^## / || /^---/) { exit }
+  index($0, "## [" ver "]") == 1 { found = 1; next }
+  found && /^## / { exit }
   found { print }
 ' "$CHANGELOG")"
 
