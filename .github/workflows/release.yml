@@ -23,7 +23,7 @@ jobs:
 
   build:
     needs: test
-    runs-on: macos-latest
+    runs-on: macos-26
     permissions:
       contents: write # commit the version bump, move the tag, publish the release
 
