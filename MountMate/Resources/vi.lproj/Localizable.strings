@@ -447,6 +447,8 @@
 "Read-only" = "Chỉ đọc";
 "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Có thể mở và sao chép file trên ổ mạng nhưng không thể sửa hay xoá. Áp dụng từ lần mount tiếp theo.";
 "Mounts read-only: files on the share cannot be changed or deleted" = "Mount chỉ đọc: không thể sửa hay xoá file trên ổ mạng";
+"Don’t Wait for an Unreachable Server (Soft Mount)" = "Không chờ server không phản hồi (soft mount)";
+"If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts." = "Khi server ngừng phản hồi, Finder và các ứng dụng nhận lỗi thay vì bị treo đến khi server trở lại, và ổ mạng bị ngắt sau khoảng 30 giây. File đang được lưu lúc đó có thể không lưu được. Áp dụng từ lần mount tiếp theo.";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mount mọi phân vùng ngoài chưa được mount.";

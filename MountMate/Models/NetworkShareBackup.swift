@@ -51,10 +51,11 @@ enum NetworkShareBackup {
     var keepMounted: Bool
     var customMountPoint: String?
     var readOnly: Bool
+    var softMount: Bool
 
     private enum CodingKeys: String, CodingKey {
       case name, server, sharePath, username, mountAtLogin, keepMounted, customMountPoint,
-        readOnly
+        readOnly, softMount
       case shareProtocol = "protocol"
     }
 
@@ -70,6 +71,7 @@ enum NetworkShareBackup {
         NetworkShareBackup.portableMountPoint($0, homeDirectory: homeDirectory)
       }
       readOnly = share.readOnly
+      softMount = share.softMount
     }
 
     init(from decoder: Decoder) throws {
@@ -85,6 +87,8 @@ enum NetworkShareBackup {
       customMountPoint = try container.decodeIfPresent(String.self, forKey: .customMountPoint)
       // Missing in files from MountMate versions without read-only shares.
       readOnly = try container.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
+      // Missing in files from versions without soft mounts: hard, as before.
+      softMount = try container.decodeIfPresent(Bool.self, forKey: .softMount) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -98,6 +102,7 @@ enum NetworkShareBackup {
       try container.encode(keepMounted, forKey: .keepMounted)
       try container.encodeIfPresent(customMountPoint, forKey: .customMountPoint)
       try container.encode(readOnly, forKey: .readOnly)
+      try container.encode(softMount, forKey: .softMount)
     }
 
     /// A new saved share (new ID) with the fields cleaned like the share
@@ -128,7 +133,8 @@ enum NetworkShareBackup {
         username: shareProtocol.supportsUserCredentials
           ? cleanedUser : "",
         mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
-        customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil, readOnly: readOnly)
+        customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil, readOnly: readOnly,
+        softMount: shareProtocol == .nfs && softMount)
     }
   }
 

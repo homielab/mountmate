@@ -145,7 +145,7 @@ final class DiagnosticsReportTests: XCTestCase {
       name: "Family Photos", server: "nas.local", sharePath: "photos", username: "alice")
     let idle = NetworkShare(
       name: "Backup", server: "10.0.0.5", sharePath: "/export/backup", username: "",
-      mountAtLogin: false, keepMounted: false, shareProtocol: .nfs)
+      mountAtLogin: false, keepMounted: false, shareProtocol: .nfs, softMount: true)
     let full = NetworkShare(
       name: "Media", server: "nas.local", sharePath: "media", username: "", mountAtLogin: false)
     let tb: Int64 = 1_000_000_000_000
@@ -163,6 +163,7 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertEqual(summary.keepAlive, 2)
     XCTAssertEqual(summary.mountAtLogin, 1)
     XCTAssertEqual(summary.almostFull, 1)
+    XCTAssertEqual(summary.nfsSoftMount, 1)
     let readOnly = DiagnosticsReport.shareSummary(
       of: [mounted, idle, full], mountedIDs: [mounted.id, full.id],
       usage: [full.id: ShareUsage(totalBytes: tb, freeBytes: tb / 100)],
@@ -182,6 +183,7 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertTrue(report.contains("  Almost full: 1\n"))
     XCTAssertTrue(report.contains("  Password rejected: 1\n"))
     XCTAssertTrue(report.contains("  Stale mounts detected: 3\n"))
+    XCTAssertTrue(report.contains("  NFS soft mount: 1\n"))
     for secret in ["Family", "Backup", "Media", "nas.local", "10.0.0.5", "photos", "alice"] {
       XCTAssertFalse(report.contains(secret), secret)
     }

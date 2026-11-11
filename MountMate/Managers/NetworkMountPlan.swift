@@ -314,7 +314,8 @@ enum NetworkMountPlan {
   /// in front of `:/export`, an IPv6 one in brackets (`[fd00::2]:/export`, as
   /// mount_nfs parses it), and the port becomes the `port=N` option
   /// (`man mount_nfs`: "Connect to an NFS server at the given port number").
-  /// A read-only share adds `rdonly` (`man mount`).
+  /// A read-only share adds `rdonly` (`man mount`), a soft-mount share
+  /// `nfsSoftMountOptions`.
   static func nfsArguments(share: NetworkShare, mountPoint: String) -> [String] {
     let exportPath =
       "/"
@@ -329,8 +330,20 @@ enum NetworkMountPlan {
     if share.readOnly {
       options.append("rdonly")
     }
+    if share.softMount {
+      options += nfsSoftMountOptions
+    }
     return ["-o", options.joined(separator: ","), "\(host):\(exportPath)", mountPoint]
   }
+
+  /// `mount_nfs` options for a share that must not hang on a dead server
+  /// (`man mount_nfs`): `soft` makes file calls fail after `retrans`
+  /// retransmissions instead of retrying forever; `intr` lets a stuck call
+  /// be interrupted; `timeo` is the first retransmit timeout in tenths of a
+  /// second (1 s); `deadtimeout` marks a mount still unresponsive after
+  /// that many seconds as dead, so the system unmounts it (Keep Alive
+  /// mounts it again once the server is back).
+  static let nfsSoftMountOptions = ["soft", "intr", "timeo=10", "retrans=3", "deadtimeout=30"]
 
   /// After NetFS reports the share as already mounted (EEXIST) or our folder
   /// as busy (EBUSY), finds the mount that is this share. At our own folder,

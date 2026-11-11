@@ -329,6 +329,35 @@ final class NetworkMountPlanTests: XCTestCase {
     XCTAssertEqual(arguments("nas", readOnly: false), ["-o", "resvport", "nas:/export", "/mp"])
   }
 
+  func testNFSArgumentsMountSoftWithTimeoutsOnlyForASoftMountShare() {
+    func arguments(_ server: String, softMount: Bool, readOnly: Bool = false) -> [String] {
+      let share = NetworkShare(
+        name: "s", server: server, sharePath: "export", username: "", shareProtocol: .nfs,
+        readOnly: readOnly, softMount: softMount)
+      return NetworkMountPlan.nfsArguments(share: share, mountPoint: "/mp")
+    }
+    XCTAssertEqual(
+      NetworkMountPlan.nfsSoftMountOptions,
+      ["soft", "intr", "timeo=10", "retrans=3", "deadtimeout=30"])
+    XCTAssertEqual(
+      arguments("nas", softMount: true),
+      ["-o", "resvport,soft,intr,timeo=10,retrans=3,deadtimeout=30", "nas:/export", "/mp"])
+    XCTAssertEqual(
+      arguments("nas:2049", softMount: true, readOnly: true),
+      [
+        "-o", "resvport,port=2049,rdonly,soft,intr,timeo=10,retrans=3,deadtimeout=30",
+        "nas:/export", "/mp",
+      ])
+    XCTAssertEqual(arguments("nas", softMount: false), ["-o", "resvport", "nas:/export", "/mp"])
+  }
+
+  func testSoftMountDoesNotChangeThePreview() {
+    let share = NetworkShare(
+      name: "s", server: "nas:2049", sharePath: "export", username: "", shareProtocol: .nfs,
+      softMount: true)
+    XCTAssertEqual(NetworkMountPlan.connectionPreview(for: share), "nas:/export -o port=2049")
+  }
+
   // MARK: Keychain failure
 
   func testKeychainFailureNamesTheShareAndStatus() {

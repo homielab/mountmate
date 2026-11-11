@@ -31,6 +31,8 @@ enum DiagnosticsReport {
     /// Times Keep Alive found a mounted share not responding and reconnected
     /// it this session.
     var staleDetected = 0
+    /// NFS shares mounted soft (they fail instead of hanging on a dead server).
+    var nfsSoftMount = 0
 
     var saved: Int { savedByProtocol.values.reduce(0, +) }
   }
@@ -49,6 +51,7 @@ enum DiagnosticsReport {
       if share.keepMounted { summary.keepAlive += 1 }
       if share.mountAtLogin { summary.mountAtLogin += 1 }
       if passwordRejectedIDs.contains(share.id) { summary.passwordRejected += 1 }
+      if share.shareProtocol == .nfs && share.softMount { summary.nfsSoftMount += 1 }
       if isMounted, let shareUsage = usage[share.id],
         LowSpaceRules.warning(
           for: shareUsage, isReadOnly: share.readOnly || readOnlyIDs.contains(share.id),
@@ -191,6 +194,7 @@ enum DiagnosticsReport {
       "  Almost full: \(shares.almostFull)",
       "  Password rejected: \(shares.passwordRejected)",
       "  Stale mounts detected: \(shares.staleDetected)",
+      "  NFS soft mount: \(shares.nfsSoftMount)",
     ]
     out += [
       "",

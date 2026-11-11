@@ -447,6 +447,8 @@
 "Read-only" = "Lecture seule";
 "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Les fichiers du partage peuvent être ouverts et copiés, mais pas modifiés ni supprimés. S'applique au prochain montage du partage.";
 "Mounts read-only: files on the share cannot be changed or deleted" = "Monté en lecture seule : les fichiers du partage ne peuvent pas être modifiés ni supprimés";
+"Don’t Wait for an Unreachable Server (Soft Mount)" = "Ne pas attendre un serveur injoignable (montage souple)";
+"If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts." = "Si le serveur ne répond plus, le Finder et les apps reçoivent une erreur au lieu de se figer jusqu'à son retour, et le partage est déconnecté après environ 30 secondes. Un fichier en cours d'enregistrement à ce moment risque de ne pas être enregistré. S'applique au prochain montage du partage.";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Monte tous les volumes externes qui ne sont pas encore montés.";

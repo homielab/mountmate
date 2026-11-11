@@ -64,6 +64,17 @@ final class NetworkShareCodableTests: XCTestCase {
     let decoded = try JSONDecoder().decode([NetworkShare].self, from: Data(json.utf8))
     XCTAssertEqual(decoded.count, 1)
     XCTAssertFalse(decoded[0].readOnly)
+    // Shares saved before soft mounts keep mounting hard.
+    XCTAssertFalse(decoded[0].softMount)
+  }
+
+  func testSoftMountSurvivesEncoding() throws {
+    let share = NetworkShare(
+      name: "Exports", server: "nas", sharePath: "export", username: "", shareProtocol: .nfs,
+      softMount: true)
+    let decoded = try JSONDecoder().decode(
+      [NetworkShare].self, from: JSONEncoder().encode([share]))
+    XCTAssertTrue(decoded[0].softMount)
   }
 
   func testNFSExportPathRoundTripsThroughURL() throws {

@@ -15,6 +15,9 @@ struct EditNetworkShareSheet: View {
   @State private var mountAtLogin = true
   @State private var keepMounted = true
   @State private var readOnly = false
+  /// On for a new share; an edited share loads its saved value. Saved only
+  /// for NFS.
+  @State private var softMount = true
   @State private var shareProtocol: ShareProtocol = .smb
   @State private var customMountPoint = ""
   /// The password read from the Keychain when editing, or nil when none was
@@ -203,6 +206,22 @@ struct EditNetworkShareSheet: View {
             .fixedSize(horizontal: false, vertical: true)
           }
 
+          if shareProtocol == .nfs {
+            VStack(alignment: .leading, spacing: 4) {
+              Toggle(isOn: $softMount) {
+                Label(
+                  "Don’t Wait for an Unreachable Server (Soft Mount)",
+                  systemImage: "bolt.horizontal.circle")
+              }
+              Text(
+                "If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts."
+              )
+              .font(.caption2)
+              .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+            }
+          }
+
           VStack(alignment: .leading, spacing: 6) {
             Text("Custom Mount Point")
               .font(.caption)
@@ -304,6 +323,7 @@ struct EditNetworkShareSheet: View {
     mountAtLogin = share.mountAtLogin
     keepMounted = share.keepMounted
     readOnly = share.readOnly
+    softMount = share.softMount
     shareProtocol = share.shareProtocol
     customMountPoint = share.customMountPoint ?? ""
 
@@ -330,7 +350,8 @@ struct EditNetworkShareSheet: View {
       keepMounted: keepMounted,
       shareProtocol: shareProtocol,
       customMountPoint: trimmedMountPoint.isEmpty ? nil : trimmedMountPoint,
-      readOnly: readOnly
+      readOnly: readOnly,
+      softMount: shareProtocol == .nfs && softMount
     )
   }
 

@@ -447,6 +447,8 @@
 "Read-only" = "只读";
 "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "可以打开和复制共享上的文件，但无法修改或删除。下次装载该共享时生效。";
 "Mounts read-only: files on the share cannot be changed or deleted" = "以只读方式装载：无法修改或删除共享上的文件";
+"Don’t Wait for an Unreachable Server (Soft Mount)" = "不等待无法访问的服务器（软装载）";
+"If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts." = "服务器停止响应时，访达和 App 会收到错误，而不是一直卡住直到服务器恢复；约 30 秒后共享会被断开。此时正在存储的文件可能无法存储。下次装载该共享时生效。";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "挂载所有尚未挂载的外置卷宗。";

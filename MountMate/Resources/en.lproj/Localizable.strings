@@ -447,6 +447,8 @@
 "Read-only" = "Read-only";
 "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts.";
 "Mounts read-only: files on the share cannot be changed or deleted" = "Mounts read-only: files on the share cannot be changed or deleted";
+"Don’t Wait for an Unreachable Server (Soft Mount)" = "Don’t Wait for an Unreachable Server (Soft Mount)";
+"If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts." = "If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts.";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Mounts every external volume that is not mounted yet.";

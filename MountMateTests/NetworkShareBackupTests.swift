@@ -29,7 +29,7 @@ final class NetworkShareBackupTests: XCTestCase {
     NetworkShare(
       name: "Exports", server: "[fd00::2]", sharePath: "volume1/Exports", username: "",
       mountAtLogin: true, keepMounted: false, shareProtocol: .nfs,
-      customMountPoint: "/Volumes/Exports", readOnly: true),
+      customMountPoint: "/Volumes/Exports", readOnly: true, softMount: true),
     NetworkShare(
       name: "Old", server: "mac.local", sharePath: "Old", username: "admin", shareProtocol: .afp),
   ]
@@ -39,7 +39,7 @@ final class NetworkShareBackupTests: XCTestCase {
     [
       share.name, share.server, share.sharePath, share.username, "\(share.mountAtLogin)",
       "\(share.keepMounted)", share.shareProtocol.rawValue, share.customMountPoint ?? "-",
-      "\(share.readOnly)",
+      "\(share.readOnly)", "\(share.softMount)",
     ]
   }
 
@@ -67,7 +67,7 @@ final class NetworkShareBackupTests: XCTestCase {
     XCTAssertEqual(entries.count, 3)
     let allowed: Set<String> = [
       "name", "protocol", "server", "sharePath", "username", "mountAtLogin", "keepMounted",
-      "customMountPoint", "readOnly",
+      "customMountPoint", "readOnly", "softMount",
     ]
     for entry in entries {
       XCTAssertTrue(Set(entry.keys).isSubset(of: allowed), "\(entry.keys)")
@@ -161,6 +161,18 @@ final class NetworkShareBackupTests: XCTestCase {
     XCTAssertNil(share.customMountPoint)
     // Files from versions without read-only shares mount writable.
     XCTAssertFalse(share.readOnly)
+    // Files from versions without soft mounts mount hard.
+    XCTAssertFalse(share.softMount)
+  }
+
+  func testSoftMountIsKeptOnlyForNFS() throws {
+    let plan = try plan(
+      file(
+        """
+        {"protocol": "nfs", "server": "nas", "sharePath": "export", "softMount": true},
+        {"protocol": "smb", "server": "nas", "sharePath": "Public", "softMount": true}
+        """))
+    XCTAssertEqual(plan.shares.map(\.softMount), [true, false])
   }
 
   func testSplitsAURLInTheServerField() throws {

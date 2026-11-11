@@ -447,6 +447,8 @@
 "Read-only" = "Лише читання";
 "Files on the share can be opened and copied but not changed or deleted. Applies the next time the share mounts." = "Файли на ресурсі можна відкривати й копіювати, але не можна змінювати чи видаляти. Застосовується під час наступного монтування ресурсу.";
 "Mounts read-only: files on the share cannot be changed or deleted" = "Монтується лише для читання: файли на ресурсі не можна змінити чи видалити";
+"Don’t Wait for an Unreachable Server (Soft Mount)" = "Не чекати на недоступний сервер (м’яке монтування)";
+"If the server stops responding, Finder and apps get an error instead of freezing until it is back, and the share is disconnected after about 30 seconds. A file being saved at that moment may not be saved. Applies the next time the share mounts." = "Якщо сервер перестає відповідати, Finder і програми отримують помилку, а не зависають до його повернення, і приблизно за 30 секунд ресурс від’єднується. Файл, що зберігається в цей момент, може не зберегтися. Застосовується під час наступного монтування ресурсу.";
 
 // MARK: - Shortcuts
 "Mounts every external volume that is not mounted yet." = "Підключає всі зовнішні томи, які ще не підключено.";

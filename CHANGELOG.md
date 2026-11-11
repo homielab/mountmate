@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **NFS shares no longer freeze Finder when the NAS goes away**: new shares give up on an unreachable server instead of waiting forever. Turn it on for older shares in their settings.
+
 ## [6.5] - 2026-11-03
 
 ### Fixed
