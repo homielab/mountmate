@@ -39,7 +39,7 @@ final class NetworkShareBackupTests: XCTestCase {
     [
       share.name, share.server, share.sharePath, share.username, "\(share.mountAtLogin)",
       "\(share.keepMounted)", share.shareProtocol.rawValue, share.customMountPoint ?? "-",
-      "\(share.readOnly)", "\(share.softMount)",
+      "\(share.readOnly)", "\(share.softMount)", "\(share.secure)",
     ]
   }
 

@@ -21,11 +21,21 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
   /// answering makes file calls fail instead of hanging Finder and apps
   /// (`NetworkMountPlan.nfsSoftMountOptions`). Ignored for SMB/AFP.
   var softMount: Bool
+  /// WebDAV only: connect over HTTPS (default) instead of plain HTTP. Ignored
+  /// for the other protocols.
+  var secure: Bool
+
+  /// The URL scheme this share connects with: `smb`, `nfs`, `afp`, or
+  /// `https` / `http` for WebDAV.
+  var urlScheme: String {
+    shareProtocol == .webdav && !secure ? "http" : shareProtocol.urlScheme
+  }
 
   init(
     id: UUID = UUID(), name: String, server: String, sharePath: String, username: String,
     mountAtLogin: Bool = true, keepMounted: Bool = true, shareProtocol: ShareProtocol = .smb,
-    customMountPoint: String? = nil, readOnly: Bool = false, softMount: Bool = false
+    customMountPoint: String? = nil, readOnly: Bool = false, softMount: Bool = false,
+    secure: Bool = true
   ) {
     self.id = id
     self.name = name
@@ -38,11 +48,12 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
     self.customMountPoint = customMountPoint
     self.readOnly = readOnly
     self.softMount = softMount
+    self.secure = secure
   }
 
   private enum CodingKeys: String, CodingKey {
     case id, name, server, sharePath, username, mountAtLogin, keepMounted, shareProtocol,
-      customMountPoint, readOnly, softMount
+      customMountPoint, readOnly, softMount, secure
   }
 
   /// Keeps shares saved before 5.18 decodable: missing flags fall back to the
@@ -64,6 +75,7 @@ struct NetworkShare: Identifiable, Codable, Hashable, Sendable {
     readOnly = try container.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
     // Shares saved before soft mounts existed keep mounting hard, as before.
     softMount = try container.decodeIfPresent(Bool.self, forKey: .softMount) ?? false
+    secure = try container.decodeIfPresent(Bool.self, forKey: .secure) ?? true
   }
 }
 
@@ -89,7 +101,7 @@ extension NetworkShare {
     if server.hasPrefix("\\\\") {
       server = server.replacingOccurrences(of: "\\", with: "/")
     }
-    let prefixes = ShareProtocol.allCases.map { "\($0.urlScheme)://" } + ["//"]
+    let prefixes = ShareProtocol.allCases.map { "\($0.urlScheme)://" } + ["http://", "//"]
     if let prefix = prefixes.first(where: { server.lowercased().hasPrefix($0) }) {
       server = String(server.dropFirst(prefix.count))
     }
@@ -114,6 +126,15 @@ extension NetworkShare {
       server.trimmingCharacters(in: .whitespacesAndNewlines), sharePath,
       username.trimmingCharacters(in: .whitespacesAndNewlines)
     )
+  }
+
+  /// Whether a pasted address names plain HTTP (`false`) or HTTPS (`true`);
+  /// nil for anything else. Lets a pasted WebDAV URL set the HTTPS choice.
+  static func pastedWebDAVSecurity(_ raw: String) -> Bool? {
+    let lowered = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    if lowered.hasPrefix("https://") { return true }
+    if lowered.hasPrefix("http://") { return false }
+    return nil
   }
 
   /// Splits a saved server field into the host and port to connect to:

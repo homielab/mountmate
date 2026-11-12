@@ -162,7 +162,7 @@ final class NetworkShareMounter {
     switch share.shareProtocol {
     case .nfs:
       outcome = runNFSMount(share: share, mountPoint: mountPoint)
-    case .smb, .afp:
+    case .smb, .afp, .webdav:
       // Read the Keychain only now that a mount really happens, so shares
       // that are already mounted never trigger a Keychain access prompt.
       let password: String?
@@ -302,7 +302,7 @@ final class NetworkShareMounter {
         share: share, mountPoint: mountPoint))
   }
 
-  /// Mounts an SMB or AFP share through the NetFS framework.
+  /// Mounts an SMB, AFP or WebDAV share through the NetFS framework.
   ///
   /// The password is handed to NetFS directly. It is never part of a
   /// process' arguments (as with `mount_smbfs smb://user:pass@…`), where any

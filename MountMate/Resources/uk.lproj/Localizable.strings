@@ -710,3 +710,6 @@
 "macOS file tracking" = "Відстеження файлів macOS";
 "Malware scan" = "Перевірка на шкідливе ПЗ";
 "Disk check" = "Перевірка диска";
+"Use HTTPS" = "Використовувати HTTPS";
+"Plain HTTP sends the password unencrypted. Use it only on a network you trust." = "Звичайний HTTP передає пароль у відкритому вигляді. Використовуйте його лише в довіреній мережі.";
+"remote.php/dav/files/me" = "remote.php/dav/files/me";

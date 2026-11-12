@@ -7,6 +7,8 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
   case smb
   case nfs
   case afp
+  /// WebDAV over HTTP(S), mounted by NetFS through macOS's `webdavfs`.
+  case webdav
 
   var id: String { rawValue }
 
@@ -15,6 +17,7 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     case .smb: return "SMB"
     case .nfs: return "NFS"
     case .afp: return "AFP"
+    case .webdav: return "WebDAV"
     }
   }
 
@@ -24,6 +27,7 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     case .smb: return "smb"
     case .nfs: return "nfs"
     case .afp: return "afp"
+    case .webdav: return "https"
     }
   }
 
@@ -33,35 +37,39 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     case .smb: return "smbfs"
     case .nfs: return "nfs"
     case .afp: return "afpfs"
+    case .webdav: return "webdav"
     }
   }
 
-  /// The port a server listens on when its address names none.
+  /// The port a server listens on when its address names none. WebDAV: the
+  /// HTTPS port; the HTTP port 80 counts as a default too
+  /// (`MountedNetworkShare.nonDefaultPort`).
   var defaultPort: Int {
     switch self {
     case .smb: return 445
     case .nfs: return 2049
     case .afp: return 548
+    case .webdav: return 443
     }
   }
 
   /// Whether the protocol uses a username and password (passed to NetFS).
   var supportsUserCredentials: Bool {
     switch self {
-    case .smb, .afp: return true
+    case .smb, .afp, .webdav: return true
     case .nfs: return false
     }
   }
 
   /// Protocols offered when creating a new share. AFP is omitted because Apple
   /// has removed AFP client support in modern macOS versions.
-  static let creationCases: [ShareProtocol] = [.smb, .nfs]
+  static let creationCases: [ShareProtocol] = [.smb, .nfs, .webdav]
 
   /// Whether this protocol is deprecated on modern macOS versions.
   var isDeprecated: Bool {
     switch self {
     case .afp: return true
-    case .smb, .nfs: return false
+    case .smb, .nfs, .webdav: return false
     }
   }
 
@@ -70,6 +78,7 @@ enum ShareProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
     case "smbfs": return .smb
     case "nfs": return .nfs
     case "afpfs": return .afp
+    case "webdav": return .webdav
     default: return nil
     }
   }

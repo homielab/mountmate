@@ -161,6 +161,7 @@ enum NetworkMountTable {
     var username = ""
     var server = ""
     var sharePath = ""
+    var secure = true
 
     switch mountedShare.shareProtocol {
     case .nfs:
@@ -178,6 +179,13 @@ enum NetworkMountTable {
       }
       if rest.hasPrefix(":") { rest = rest.dropFirst() }
       sharePath = rest.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    case .webdav:
+      if let url = URL(string: mountedShare.source) {
+        username = url.user ?? ""
+        server = Self.serverField(host: url.host ?? "", port: url.port)
+        sharePath = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        secure = url.scheme?.lowercased() != "http"
+      }
     case .smb, .afp:
       let urlString = mountedShare.source.replacingOccurrences(
         of: "//", with: "\(mountedShare.shareProtocol.urlScheme)://")
@@ -212,7 +220,8 @@ enum NetworkMountTable {
       // /Volumes/public, which needs admin rights). The current location is
       // tracked in `mountPointsByShareID`.
       customMountPoint: nil,
-      readOnly: mountedShare.isReadOnly
+      readOnly: mountedShare.isReadOnly,
+      secure: secure
     )
   }
 }

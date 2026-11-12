@@ -28,7 +28,7 @@ final class NetworkShareParsingTests: XCTestCase {
     XCTAssertFalse(ShareProtocol.nfs.supportsUserCredentials)
     XCTAssertTrue(ShareProtocol.smb.supportsUserCredentials)
     XCTAssertTrue(ShareProtocol.afp.supportsUserCredentials)
-    XCTAssertEqual(ShareProtocol.creationCases, [.smb, .nfs])
+    XCTAssertEqual(ShareProtocol.creationCases, [.smb, .nfs, .webdav])
     XCTAssertTrue(ShareProtocol.afp.isDeprecated)
     XCTAssertFalse(ShareProtocol.smb.isDeprecated)
     XCTAssertFalse(ShareProtocol.nfs.isDeprecated)

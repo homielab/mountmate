@@ -19,6 +19,8 @@ struct EditNetworkShareSheet: View {
   /// for NFS.
   @State private var softMount = true
   @State private var shareProtocol: ShareProtocol = .smb
+  /// WebDAV only: HTTPS (on) or plain HTTP.
+  @State private var secure = true
   @State private var customMountPoint = ""
   /// The password read from the Keychain when editing, or nil when none was
   /// saved or it could not be read. Lets saving tell "the user cleared the
@@ -122,12 +124,26 @@ struct EditNetworkShareSheet: View {
           HStack {
             Image(systemName: "server.rack").frame(width: 20)
             TextField("Server Address", text: $server, prompt: Text("192.168.1.100"))
-            Button("Browse Network…") {
-              showBrowser = true
+            if shareProtocol != .webdav {
+              Button("Browse Network…") {
+                showBrowser = true
+              }
+              .buttonStyle(.bordered)
+              .controlSize(.small)
+              .help(Text("Find servers on this network"))
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help(Text("Find servers on this network"))
+          }
+
+          if shareProtocol == .webdav {
+            Toggle(isOn: $secure) {
+              Label("Use HTTPS", systemImage: "lock.shield")
+            }
+            if !secure {
+              Text("Plain HTTP sends the password unencrypted. Use it only on a network you trust.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
           }
 
           HStack {
@@ -137,7 +153,10 @@ struct EditNetworkShareSheet: View {
               prompt: Text(
                 shareProtocol == .nfs
                   ? NSLocalizedString("exports/public", comment: "NFS share path prompt")
-                  : NSLocalizedString("public", comment: "Share path prompt")))
+                  : shareProtocol == .webdav
+                    ? NSLocalizedString(
+                      "remote.php/dav/files/me", comment: "WebDAV share path prompt")
+                    : NSLocalizedString("public", comment: "Share path prompt")))
           }
         } header: {
           Label("Connection", systemImage: "network")
@@ -280,6 +299,12 @@ struct EditNetworkShareSheet: View {
     .onAppear {
       loadExistingData()
     }
+    .onChange(of: server) { newValue in
+      // A pasted http:// or https:// address sets the WebDAV protocol and its HTTPS choice.
+      guard let pasted = NetworkShare.pastedWebDAVSecurity(newValue) else { return }
+      shareProtocol = .webdav
+      secure = pasted
+    }
     .sheet(isPresented: $showBrowser) {
       NetworkServicePickerSheet(isPresented: $showBrowser) { service in
         server = service.serverAddress
@@ -325,6 +350,7 @@ struct EditNetworkShareSheet: View {
     readOnly = share.readOnly
     softMount = share.softMount
     shareProtocol = share.shareProtocol
+    secure = share.secure
     customMountPoint = share.customMountPoint ?? ""
 
     // NFS has no password: don't touch the Keychain (avoids access prompts).
@@ -351,7 +377,8 @@ struct EditNetworkShareSheet: View {
       shareProtocol: shareProtocol,
       customMountPoint: trimmedMountPoint.isEmpty ? nil : trimmedMountPoint,
       readOnly: readOnly,
-      softMount: shareProtocol == .nfs && softMount
+      softMount: shareProtocol == .nfs && softMount,
+      secure: shareProtocol == .webdav ? secure : true
     )
   }
 

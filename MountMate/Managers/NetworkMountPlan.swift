@@ -217,9 +217,10 @@ enum NetworkMountPlan {
   /// - SMB: `smb://[user@]server/share`
   /// - AFP: `afp://server/share`
   /// - NFS: `nfs://server/export/path`
+  /// - WebDAV: `https://server[:port]/path` (`http://` without TLS)
   static func connectionURL(for share: NetworkShare, user: String? = nil) -> URL? {
     var urlComponents = URLComponents()
-    urlComponents.scheme = share.shareProtocol.urlScheme
+    urlComponents.scheme = share.urlScheme
     urlComponents.user = user
     // `admin@nas:445` or `[fe80::1]` in the server field: the host alone
     // goes in `host` (IPv6 in brackets, or the URL is nil), the port apart.
@@ -246,7 +247,7 @@ enum NetworkMountPlan {
     }
     let user = netFSUserPlacement(for: share).urlUser
     return connectionURL(for: share, user: user)?.absoluteString
-      ?? "\(share.shareProtocol.urlScheme)://\(share.server)/\(share.sharePath)"
+      ?? "\(share.urlScheme)://\(share.server)/\(share.sharePath)"
   }
 
   /// The address a saved share shows in the Settings list: the same as

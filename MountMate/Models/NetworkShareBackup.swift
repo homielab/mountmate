@@ -52,10 +52,11 @@ enum NetworkShareBackup {
     var customMountPoint: String?
     var readOnly: Bool
     var softMount: Bool
+    var secure: Bool
 
     private enum CodingKeys: String, CodingKey {
       case name, server, sharePath, username, mountAtLogin, keepMounted, customMountPoint,
-        readOnly, softMount
+        readOnly, softMount, secure
       case shareProtocol = "protocol"
     }
 
@@ -72,6 +73,7 @@ enum NetworkShareBackup {
       }
       readOnly = share.readOnly
       softMount = share.softMount
+      secure = share.secure
     }
 
     init(from decoder: Decoder) throws {
@@ -89,6 +91,8 @@ enum NetworkShareBackup {
       readOnly = try container.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
       // Missing in files from versions without soft mounts: hard, as before.
       softMount = try container.decodeIfPresent(Bool.self, forKey: .softMount) ?? false
+      // Missing in files from versions without WebDAV: HTTPS.
+      secure = try container.decodeIfPresent(Bool.self, forKey: .secure) ?? true
     }
 
     func encode(to encoder: Encoder) throws {
@@ -103,6 +107,7 @@ enum NetworkShareBackup {
       try container.encodeIfPresent(customMountPoint, forKey: .customMountPoint)
       try container.encode(readOnly, forKey: .readOnly)
       try container.encode(softMount, forKey: .softMount)
+      if shareProtocol == .webdav { try container.encode(secure, forKey: .secure) }
     }
 
     /// A new saved share (new ID) with the fields cleaned like the share
@@ -117,6 +122,7 @@ enum NetworkShareBackup {
       // A hand-written file may hold a whole URL or UNC path as the server;
       // its path and username fill the entry's fields only when those are empty.
       let parsed = NetworkShare.cleanedServerInput(server)
+      let pastedSecure = NetworkShare.pastedWebDAVSecurity(server)
       let cleanedServer = parsed.server
       let ownPath = NetworkShare.cleanedSharePathInput(sharePath)
       let cleanedPath = ownPath.isEmpty ? parsed.sharePath : ownPath
@@ -134,7 +140,8 @@ enum NetworkShareBackup {
           ? cleanedUser : "",
         mountAtLogin: mountAtLogin, keepMounted: keepMounted, shareProtocol: shareProtocol,
         customMountPoint: mountPoint?.isEmpty == false ? mountPoint : nil, readOnly: readOnly,
-        softMount: shareProtocol == .nfs && softMount)
+        softMount: shareProtocol == .nfs && softMount,
+        secure: shareProtocol == .webdav ? (pastedSecure ?? secure) : true)
     }
   }
 

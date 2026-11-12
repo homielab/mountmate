@@ -710,3 +710,6 @@
 "macOS file tracking" = "macOS 檔案追蹤";
 "Malware scan" = "惡意軟體掃描";
 "Disk check" = "磁碟檢查";
+"Use HTTPS" = "使用 HTTPS";
+"Plain HTTP sends the password unencrypted. Use it only on a network you trust." = "一般 HTTP 會以明文傳送密碼。請僅在可信任的網路中使用。";
+"remote.php/dav/files/me" = "remote.php/dav/files/me";

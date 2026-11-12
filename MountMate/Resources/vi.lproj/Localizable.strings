@@ -710,3 +710,6 @@
 "macOS file tracking" = "Theo dõi tệp của macOS";
 "Malware scan" = "Quét phần mềm độc hại";
 "Disk check" = "Kiểm tra ổ đĩa";
+"Use HTTPS" = "Dùng HTTPS";
+"Plain HTTP sends the password unencrypted. Use it only on a network you trust." = "HTTP thường gửi mật khẩu không mã hóa. Chỉ dùng trên mạng bạn tin cậy.";
+"remote.php/dav/files/me" = "remote.php/dav/files/me";

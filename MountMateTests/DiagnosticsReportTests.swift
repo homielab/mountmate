@@ -226,7 +226,7 @@ final class DiagnosticsReportTests: XCTestCase {
       appVersion: "1", build: "1", macOS: "x", flags: [], shares: summary, lines: [],
       generatedAt: now, timeZone: utc)
     XCTAssertTrue(report.contains("Network shares (saved): 3\n"))
-    XCTAssertTrue(report.contains("  By protocol: SMB 2, NFS 1, AFP 0\n"))
+    XCTAssertTrue(report.contains("  By protocol: SMB 2, NFS 1, AFP 0, WebDAV 0\n"))
     XCTAssertTrue(report.contains("  Mounted: 2\n"))
     XCTAssertTrue(report.contains("  Keep Alive: 2\n"))
     XCTAssertTrue(report.contains("  Mount at login: 1\n"))

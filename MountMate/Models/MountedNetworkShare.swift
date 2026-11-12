@@ -91,6 +91,13 @@ struct MountedNetworkShare: Equatable, Sendable {
       return Endpoint(
         host: normalizedHost(String(host)), port: nil,
         path: normalizedPath(String(rest), shareProtocol: .nfs))
+    case .webdav:
+      // `https://user@host[:port]/path/` (webdavfs prints the URL).
+      guard let url = URL(string: source), let host = url.host, !host.isEmpty else { return nil }
+      return Endpoint(
+        host: normalizedHost(host),
+        port: nonDefaultPort(url.port, shareProtocol: .webdav),
+        path: normalizedPath(url.path, shareProtocol: .webdav))
     case .smb, .afp:
       var rest = Substring(source)
       while rest.hasPrefix("/") { rest = rest.dropFirst() }
@@ -124,7 +131,9 @@ struct MountedNetworkShare: Equatable, Sendable {
 
   /// `port`, or nil when it is missing or the protocol's default port.
   static func nonDefaultPort(_ port: Int?, shareProtocol: ShareProtocol) -> Int? {
-    port == shareProtocol.defaultPort ? nil : port
+    // WebDAV: the HTTP and the HTTPS port both count as the default.
+    if shareProtocol == .webdav, port == 80 { return nil }
+    return port == shareProtocol.defaultPort ? nil : port
   }
 
   /// Reduces a host (as typed by the user or printed in a mount source) to a
@@ -175,7 +184,7 @@ struct MountedNetworkShare: Equatable, Sendable {
     let trimmed = decoded.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     switch shareProtocol {
     case .smb, .afp: return trimmed.lowercased()
-    case .nfs: return trimmed
+    case .nfs, .webdav: return trimmed
     }
   }
 }
