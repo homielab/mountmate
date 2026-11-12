@@ -16,3 +16,4 @@ Dist/
 .build/
 
 RELEASE_NOTES.md
+.mimosa/
