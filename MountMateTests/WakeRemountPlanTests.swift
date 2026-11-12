@@ -82,4 +82,46 @@ final class WakeRemountPlanTests: XCTestCase {
     XCTAssertTrue(merged.sleepTimedOut)
     XCTAssertFalse(first.adding(WakeRemountPlan(volumes: [])).sleepTimedOut)
   }
+
+  private func share(_ name: String) -> NetworkShare {
+    NetworkShare(name: name, server: "nas.local", sharePath: name, username: "u")
+  }
+
+  func testSharesAreRecordedByIdentityOnce() {
+    let a = share("A")
+    let plan = WakeRemountPlan(shares: [a, a, share("B")])
+    XCTAssertEqual(plan.shares.map(\.shareID).first, a.id)
+    XCTAssertEqual(plan.shares.count, 2)
+    XCTAssertTrue(plan.entries.isEmpty)
+    XCTAssertFalse(plan.isEmpty)
+  }
+
+  func testExcludingAndRemainingSharesLeaveVolumesAlone() {
+    let a = share("A")
+    let b = share("B")
+    let plan = WakeRemountPlan(shares: [a, b], volumes: [volume(uuidA, name: "V")])
+    XCTAssertEqual(plan.excludingShares([a.id]).shares.map(\.name), ["B"])
+    XCTAssertEqual(plan.remainingShares(afterMounted: [b.id]).shares.map(\.name), ["A"])
+    XCTAssertEqual(plan.excludingShares([a.id, b.id]).entries.map(\.name), ["V"])
+  }
+
+  func testAddingMergesSharesOnce() {
+    let a = share("A")
+    let b = share("B")
+    let merged = WakeRemountPlan(shares: [a]).adding(WakeRemountPlan(shares: [a, b]))
+    XCTAssertEqual(merged.shares.map(\.name), ["A", "B"])
+  }
+
+  func testPlanSavedBeforeSharesStillDecodes() throws {
+    let json = #"{"entries":[{"volumeUUID":"\#(uuidA)","name":"A"}],"sleepTimedOut":false}"#
+    let plan = try JSONDecoder().decode(WakeRemountPlan.self, from: Data(json.utf8))
+    XCTAssertEqual(plan.entries.map(\.name), ["A"])
+    XCTAssertTrue(plan.shares.isEmpty)
+  }
+
+  func testSharesSurviveEncoding() throws {
+    let plan = WakeRemountPlan(shares: [share("A")])
+    let data = try JSONEncoder().encode(plan)
+    XCTAssertEqual(try JSONDecoder().decode(WakeRemountPlan.self, from: data), plan)
+  }
 }

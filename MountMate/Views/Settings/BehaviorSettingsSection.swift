@@ -10,6 +10,7 @@ struct BehaviorSettingsSection: View {
 
   @AppStorage("ejectOnSleepEnabled") private var ejectOnSleepEnabled = false
   @AppStorage(ScreenLockRules.enabledKey) private var unmountOnLockEnabled = false
+  @AppStorage(NetworkShareSleepRules.enabledKey) private var unmountSharesEnabled = false
   @AppStorage(WakeRemountManager.enabledKey) private var remountOnWakeEnabled = true
   @AppStorage(LowSpaceRules.enabledKey) private var lowSpaceEnabled = true
   @AppStorage(UnexpectedRemovalTracker.enabledKey) private var unexpectedRemovalEnabled = false
@@ -116,12 +117,19 @@ struct BehaviorSettingsSection: View {
       .help(
         "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted."
       )
+      Toggle(isOn: $unmountSharesEnabled) {
+        Label("Also Unmount Network Shares", systemImage: "network")
+      }
+      .disabled(!ejectOnSleepEnabled && !unmountOnLockEnabled)
+      .help(
+        "Also unmounts your network shares when the Mac sleeps or the screen locks, so none goes stale across sleep or a Wi-Fi change. Shares kept mounted by Keep Alive and shares in use stay mounted. Nothing is forced. Works with the two settings above."
+      )
       if ejectOnSleepEnabled || unmountOnLockEnabled {
         Toggle(isOn: $remountOnWakeEnabled) {
           Label("Mount Again on Wake", systemImage: "sunrise")
         }
         .help(
-          "Mounts the disks that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted."
+          "Mounts the disks and shares that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Ones you unmounted yourself, disks that are not connected and blocked disks stay unmounted."
         )
       }
       Toggle(isOn: $notificationManager.isEnabled) {

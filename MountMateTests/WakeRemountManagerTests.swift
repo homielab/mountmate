@@ -445,4 +445,109 @@ final class WakeRemountManagerTests: XCTestCase {
     DriveManager.forgetWakeRemount(afterBulk: [b], failed: [b], wakeRemount: manager)
     XCTAssertEqual(manager.plan?.entries.map(\.name), ["B"])
   }
+
+  private func share(_ name: String) -> NetworkShare {
+    NetworkShare(name: name, server: "nas.local", sharePath: name, username: "u")
+  }
+
+  func testWakeMountsTheSameSharesAndNothingElse() {
+    let a = share("A")
+    let b = share("B")
+    var mountedIDs: [UUID] = []
+    var mountedVolumes: [String] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      isBusy: { _ in false },
+      mount: { volume, completion in
+        mountedVolumes.append(volume.name)
+        completion(true)
+      },
+      mountShare: { id, completion in
+        mountedIDs.append(id)
+        completion(true)
+      },
+      mountedShareIDs: { [] })
+
+    manager.begin(volumes: [], shares: [a, b])
+    // B could not be unmounted, so the plan only owes A.
+    manager.settle(failedShareIDs: [b.id])
+    manager.handleWake()
+    scheduler.fireNext()
+
+    XCTAssertEqual(mountedIDs, [a.id])
+    XCTAssertTrue(mountedVolumes.isEmpty)
+    XCTAssertNil(manager.plan)
+    XCTAssertFalse(manager.isRunning)
+  }
+
+  func testShareUnmountedByHandAfterSleepIsForgotten() {
+    let a = share("A")
+    var mountedIDs: [UUID] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      mountShare: { id, completion in
+        mountedIDs.append(id)
+        completion(true)
+      },
+      mountedShareIDs: { [] })
+    manager.begin(volumes: [], shares: [a])
+    manager.forget(shareIDs: [a.id])
+    manager.handleWake()
+    XCTAssertNil(manager.plan)
+    XCTAssertTrue(mountedIDs.isEmpty)
+  }
+
+  func testFailedShareMountIsRetriedAndAnnouncedAfterTheLastAttempt() {
+    let a = share("A")
+    var attempts = 0
+    var announced: [String] = []
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      mountShare: { _, completion in
+        attempts += 1
+        completion(false)
+      },
+      mountedShareIDs: { [] },
+      notifyNotRemounted: { announced = $0 })
+    manager.begin(volumes: [], shares: [a])
+    manager.handleWake()
+    scheduler.fireNext()
+    scheduler.fireNext()
+    scheduler.fireNext()
+    XCTAssertEqual(attempts, 3)
+    XCTAssertEqual(announced, ["A"])
+    XCTAssertNil(manager.plan)
+  }
+
+  func testShareAlreadyMountedAtWakeIsNotMountedAgain() {
+    let a = share("A")
+    var attempts = 0
+    let manager = WakeRemountManager(
+      defaults: defaults,
+      schedule: { [scheduler] delay, work in scheduler!.schedule(delay, work) },
+      refreshVolumes: { completion in completion([]) },
+      mountShare: { _, completion in
+        attempts += 1
+        completion(true)
+      },
+      mountedShareIDs: { [a.id] })
+    manager.begin(volumes: [], shares: [a])
+    manager.handleWake()
+    scheduler.fireNext()
+    XCTAssertEqual(attempts, 0)
+    XCTAssertNil(manager.plan)
+  }
+
+  func testMountAgainOffRecordsNoShares() {
+    defaults.set(false, forKey: WakeRemountManager.enabledKey)
+    let manager = WakeRemountManager(defaults: defaults)
+    manager.begin(volumes: [], shares: [share("A")])
+    XCTAssertNil(manager.plan)
+  }
 }

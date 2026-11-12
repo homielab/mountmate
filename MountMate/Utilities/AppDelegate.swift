@@ -146,14 +146,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // The unmount is not a user decision — keep-alive targets reconnect on
     // wake, so pass suppressReconnect: false.
     let volumes = DriveManager.shared.automaticUnmountCandidates
-    WakeRemountManager.shared.begin(volumes: volumes, merging: waitsForUnlock)
+    let shares = shareCandidates()
+    WakeRemountManager.shared.begin(volumes: volumes, shares: shares, merging: waitsForUnlock)
+    let group = DispatchGroup()
+    group.enter()
     DriveManager.shared.unmountAllDrives(
       volumes: volumes, suppressReconnect: false, reportFailures: false,
-      completion: { [weak self] in
-        self?.sleepUnmountRuns -= 1
-        completion?()
-      },
+      completion: { group.leave() },
       unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
+    unmountShares(shares, in: group)
+    group.notify(queue: .main) { [weak self] in
+      self?.sleepUnmountRuns -= 1
+      completion?()
+    }
+  }
+
+  /// Saved shares that "Also Unmount Network Shares" takes away right now.
+  private func shareCandidates() -> [NetworkShare] {
+    NetworkShareSleepRules.candidates(
+      isEnabled: NetworkShareSleepRules.isEnabled(),
+      shares: PersistenceManager.shared.networkShares,
+      mountedIDs: NetworkMountManager.shared.mountedShareIDs)
+  }
+
+  /// Unmounts `shares` like a manual unmount; failures are logged and never
+  /// hold back the disks.
+  private func unmountShares(_ shares: [NetworkShare], in group: DispatchGroup) {
+    guard !shares.isEmpty else { return }
+    group.enter()
+    NetworkMountManager.shared.unmountForSleep(shares: shares) { failedIDs in
+      WakeRemountManager.shared.settle(failedShareIDs: failedIDs)
+      group.leave()
+    }
   }
 
   private func screenDidLock() {
@@ -162,8 +186,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let volumes = ScreenLockRules.candidates(
       fromAutomatic: drives.automaticUnmountCandidates,
       isKeepAlive: PersistenceManager.shared.isVolumeKeepAlive)
+    let shares = ScreenLockRules.isEnabled() ? shareCandidates() : []
     let decision = ScreenLockRules.decision(
-      isEnabled: ScreenLockRules.isEnabled(), candidateCount: volumes.count,
+      isEnabled: ScreenLockRules.isEnabled(), candidateCount: volumes.count + shares.count,
       isSleepUnmountRunning: sleepUnmountRuns > 0)
     switch decision {
     case .off:
@@ -173,13 +198,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     case .sleepUnmountRunning:
       Log.app.info("Screen locked while the sleep unmount runs. Leaving it to the sleep unmount.")
     case .unmount:
-      Log.app.notice("Screen locked. Unmounting \(volumes.count, privacy: .public) volume(s).")
+      Log.app.notice(
+        "Screen locked. Unmounting \(volumes.count, privacy: .public) volume(s) and \(shares.count, privacy: .public) share(s)."
+      )
       // Not a user decision: the volumes come back at unlock with "Mount
       // Again on Wake"; no alert while nobody is at the Mac.
-      WakeRemountManager.shared.begin(volumes: volumes, merging: true)
+      WakeRemountManager.shared.begin(volumes: volumes, shares: shares, merging: true)
       drives.unmountAllDrives(
         volumes: volumes, suppressReconnect: false, reportFailures: false,
         unmountResult: { WakeRemountManager.shared.settle(failed: $0) })
+      unmountShares(shares, in: DispatchGroup())
     }
   }
 

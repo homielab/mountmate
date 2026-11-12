@@ -354,6 +354,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
 
   func unmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
     attemptUnmount(share: share, force: false) { failure in
+      if failure == nil { WakeRemountManager.shared.forget(shareIDs: [share.id]) }
       completion(failure == nil, failure?.message)
     }
   }
@@ -361,6 +362,7 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// `umount -f`: only after the user confirmed it (busy share, dead server).
   func forceUnmount(share: NetworkShare, completion: @escaping (Bool, String?) -> Void) {
     attemptUnmount(share: share, force: true) { failure in
+      if failure == nil { WakeRemountManager.shared.forget(shareIDs: [share.id]) }
       completion(failure == nil, failure?.message)
     }
   }
@@ -538,7 +540,32 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
   /// Unmounts every mounted saved share in parallel and reports the ones that
   /// failed, with their reasons. Main thread.
   func unmountAllShares(completion: @escaping ([ShareUnmountFailure]) -> Void) {
-    unmountSavedShares(savedShareCandidates.unmount, force: false, completion: completion)
+    let shares = savedShareCandidates.unmount
+    unmountSavedShares(shares, force: false) { failures in
+      self.forgetWakeRemount(of: shares, failed: failures)
+      completion(failures)
+    }
+  }
+
+  /// Unmounts `shares` before sleep or a screen lock (never forced, no
+  /// alerts) and reports the ids that stayed mounted. Same path as a manual
+  /// unmount; the caller records the rest for "Mount Again on Wake". Main
+  /// thread.
+  func unmountForSleep(shares: [NetworkShare], completion: @escaping (Set<UUID>) -> Void) {
+    unmountSavedShares(shares, force: false) { failures in
+      for failure in failures {
+        Log.network.error(
+          "Could not unmount a share before sleep: \(failure.target.name, privacy: .private)")
+      }
+      completion(Set(failures.compactMap(\.target.shareID)))
+    }
+  }
+
+  /// The user unmounted these shares: they stay unmounted after a wake.
+  private func forgetWakeRemount(of shares: [NetworkShare], failed: [ShareUnmountFailure]) {
+    let failedIDs = Set(failed.compactMap(\.target.shareID))
+    WakeRemountManager.shared.forget(
+      shareIDs: Set(shares.map(\.id)).subtracting(failedIDs))
   }
 
   /// `umount -f` for saved shares that failed to unmount: only after the
@@ -547,7 +574,10 @@ class NetworkMountManager: ObservableObject, NetworkShareMounterHost {
     withIDs ids: Set<UUID>, completion: @escaping ([ShareUnmountFailure]) -> Void
   ) {
     let shares = PersistenceManager.shared.networkShares.filter { ids.contains($0.id) }
-    unmountSavedShares(shares, force: true, completion: completion)
+    unmountSavedShares(shares, force: true) { failures in
+      self.forgetWakeRemount(of: shares, failed: failures)
+      completion(failures)
+    }
   }
 
   private func unmountSavedShares(

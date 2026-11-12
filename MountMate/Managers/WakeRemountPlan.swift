@@ -11,7 +11,15 @@ struct WakeRemountPlan: Codable, Equatable, Sendable {
     let name: String
   }
 
+  /// A saved network share, by its saved identity (never its mount path).
+  struct ShareEntry: Codable, Equatable, Sendable {
+    let shareID: UUID
+    let name: String
+  }
+
   private(set) var entries: [Entry]
+  /// Network shares unmounted with the disks ("Also unmount network shares").
+  private(set) var shares: [ShareEntry] = []
   /// The unmount before sleep hit its time limit, so some volumes may still
   /// have been mounted when the Mac slept.
   private(set) var sleepTimedOut = false
@@ -26,7 +34,24 @@ struct WakeRemountPlan: Codable, Equatable, Sendable {
     }
   }
 
-  var isEmpty: Bool { entries.isEmpty }
+  /// A plan for network shares only.
+  init(shares: [NetworkShare], volumes: [Volume] = []) {
+    self.init(volumes: volumes)
+    var seen = Set<UUID>()
+    self.shares = shares.compactMap { share in
+      seen.insert(share.id).inserted ? ShareEntry(shareID: share.id, name: share.name) : nil
+    }
+  }
+
+  // Plans saved before shares were recorded have no `shares` key.
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    entries = try container.decode([Entry].self, forKey: .entries)
+    shares = try container.decodeIfPresent([ShareEntry].self, forKey: .shares) ?? []
+    sleepTimedOut = try container.decodeIfPresent(Bool.self, forKey: .sleepTimedOut) ?? false
+  }
+
+  var isEmpty: Bool { entries.isEmpty && shares.isEmpty }
 
   /// This plan with `other`'s volumes added (each volume once). A sleep
   /// time-out mark from either plan is kept.
@@ -34,6 +59,8 @@ struct WakeRemountPlan: Codable, Equatable, Sendable {
     var copy = self
     let known = Set(entries.map(\.volumeUUID))
     copy.entries += other.entries.filter { !known.contains($0.volumeUUID) }
+    let knownShares = Set(shares.map(\.shareID))
+    copy.shares += other.shares.filter { !knownShares.contains($0.shareID) }
     copy.sleepTimedOut = sleepTimedOut || other.sleepTimedOut
     return copy
   }
@@ -45,6 +72,19 @@ struct WakeRemountPlan: Codable, Equatable, Sendable {
     let uuids = Set(volumes.compactMap(\.stableVolumeUUID))
     copy.entries.removeAll { uuids.contains($0.volumeUUID) }
     return copy
+  }
+
+  /// The plan without the shares `ids` (unmounts that failed, or that the
+  /// user did themselves).
+  func excludingShares(_ ids: Set<UUID>) -> WakeRemountPlan {
+    var copy = self
+    copy.shares.removeAll { ids.contains($0.shareID) }
+    return copy
+  }
+
+  /// The shares still to mount: not mounted yet (`mountedIDs`).
+  func remainingShares(afterMounted mountedIDs: Set<UUID>) -> WakeRemountPlan {
+    excludingShares(mountedIDs)
   }
 
   func markingSleepTimedOut() -> WakeRemountPlan {

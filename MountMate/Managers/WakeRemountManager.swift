@@ -13,6 +13,9 @@ final class WakeRemountManager {
   typealias VolumeRefresher = (_ completion: @escaping ([Volume]) -> Void) -> Void
   /// Mounts `volume` for wake and reports whether the mount succeeded.
   typealias Mounter = (_ volume: Volume, _ completion: @escaping (Bool) -> Void) -> Void
+  /// Mounts the saved share with this id for wake and reports whether it is
+  /// mounted now (a share that was deleted meanwhile counts as done).
+  typealias ShareMounter = (_ shareID: UUID, _ completion: @escaping (Bool) -> Void) -> Void
 
   static let shared = WakeRemountManager()
 
@@ -49,11 +52,27 @@ final class WakeRemountManager {
     }
   }
 
+  static let liveShareMounter: ShareMounter = { shareID, completion in
+    let manager = NetworkMountManager.shared
+    guard let share = PersistenceManager.shared.networkShares.first(where: { $0.id == shareID })
+    else {
+      completion(true)
+      return
+    }
+    // The unmount before sleep paused Keep Alive for this share; a user
+    // mount lifts that (credentials come from the Keychain as always).
+    manager.mount(share: share, userInitiated: true) { success, _ in
+      DispatchQueue.main.async { completion(success) }
+    }
+  }
+
   private let defaults: UserDefaults
   private let schedule: Scheduler
   private let refreshVolumes: VolumeRefresher
   private let isBusy: (String) -> Bool
   private let mount: Mounter
+  private let mountShare: ShareMounter
+  private let mountedShareIDs: () -> Set<UUID>
   private let notifyLeftover: ([String]) -> Void
   private let notifyNotRemounted: ([String]) -> Void
   private var wakeToken: NSObjectProtocol?
@@ -69,6 +88,8 @@ final class WakeRemountManager {
     refreshVolumes: @escaping VolumeRefresher = WakeRemountManager.liveVolumeRefresher,
     isBusy: @escaping (String) -> Bool = { DriveManager.shared.isBusy($0) },
     mount: @escaping Mounter = WakeRemountManager.liveMounter,
+    mountShare: @escaping ShareMounter = WakeRemountManager.liveShareMounter,
+    mountedShareIDs: @escaping () -> Set<UUID> = { NetworkMountManager.shared.mountedShareIDs },
     notifyLeftover: @escaping ([String]) -> Void = {
       NotificationManager.shared.sleepUnmountLeftoverMounted(names: $0)
     },
@@ -81,6 +102,8 @@ final class WakeRemountManager {
     self.refreshVolumes = refreshVolumes
     self.isBusy = isBusy
     self.mount = mount
+    self.mountShare = mountShare
+    self.mountedShareIDs = mountedShareIDs
     self.notifyLeftover = notifyLeftover
     self.notifyNotRemounted = notifyNotRemounted
   }
@@ -139,14 +162,14 @@ final class WakeRemountManager {
   /// drops an old plan) when the setting is off.
   /// - Parameter merging: add the volumes to the current plan instead of
   ///   replacing it (the plan kept from a screen lock).
-  func begin(volumes: [Volume], merging: Bool = false) {
+  func begin(volumes: [Volume], shares: [NetworkShare] = [], merging: Bool = false) {
     generation &+= 1
     isRunning = false
     guard isEnabled else {
       plan = nil
       return
     }
-    let new = WakeRemountPlan(volumes: volumes)
+    let new = WakeRemountPlan(shares: shares, volumes: volumes)
     plan = merging ? (plan?.adding(new) ?? new) : new
   }
 
@@ -154,6 +177,18 @@ final class WakeRemountManager {
   /// not part of the plan.
   func settle(failed: [Volume]) {
     plan = plan?.excluding(failed)
+  }
+
+  /// The unmount of the shares finished: shares that could not be unmounted
+  /// are not part of the plan.
+  func settle(failedShareIDs: Set<UUID>) {
+    plan = plan?.excludingShares(failedShareIDs)
+  }
+
+  /// The user unmounted these shares on purpose: never mount them again.
+  func forget(shareIDs: Set<UUID>) {
+    guard let current = plan else { return }
+    plan = current.excludingShares(shareIDs)
   }
 
   func sleepTimedOut() {
@@ -227,10 +262,12 @@ final class WakeRemountManager {
     }
 
     let entries = current.volumesToMount(presentUUIDs: present, mountedUUIDs: mounted)
-    // Drop only the volumes that are already mounted; volumes being mounted
-    // below stay in the plan until their mount succeeds, so a failed mount is
-    // retried on the next attempt.
-    plan = current.remaining(afterMounted: mounted)
+    let mountedShares = mountedShareIDs()
+    let shareEntries = current.shares.filter { !mountedShares.contains($0.shareID) }
+    // Drop only the volumes and shares that are already mounted; the ones
+    // being mounted below stay in the plan until their mount succeeds, so a
+    // failed mount is retried on the next attempt.
+    plan = current.remaining(afterMounted: mounted).remainingShares(afterMounted: mountedShares)
     let byUUID = Dictionary(
       volumes.compactMap { volume in volume.stableVolumeUUID.map { ($0, volume) } },
       uniquingKeysWith: { first, _ in first })
@@ -255,6 +292,21 @@ final class WakeRemountManager {
         }
       }
     }
+    for entry in shareEntries {
+      pendingMounts += 1
+      mountShare(entry.shareID) { [weak self] succeeded in
+        guard let self, self.isRunning, self.generation == generation else { return }
+        if succeeded {
+          self.plan = self.plan?.remainingShares(afterMounted: [entry.shareID])
+        }
+        pendingMounts -= 1
+        if self.plan == nil {
+          self.finish()
+        } else if isLast, !dispatching, pendingMounts == 0 {
+          self.finishAnnouncingLeftover()
+        }
+      }
+    }
     dispatching = false
 
     guard isRunning, self.generation == generation else { return }
@@ -269,7 +321,7 @@ final class WakeRemountManager {
   /// The last attempt is over: tells the user which disks stay unmounted
   /// (not connected yet, or the mount failed), then ends the plan.
   private func finishAnnouncingLeftover() {
-    let names = plan?.entries.map(\.name) ?? []
+    let names = (plan?.entries.map(\.name) ?? []) + (plan?.shares.map(\.name) ?? [])
     finish()
     if !names.isEmpty {
       Log.drive.notice(

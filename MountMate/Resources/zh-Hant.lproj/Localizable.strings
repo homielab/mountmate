@@ -71,6 +71,8 @@
 "Blocked disks are only stopped from mounting automatically when plugged in or at login. Apps such as backup tools can still mount them when needed." = "已阻止的磁碟僅在插入或登入時不會自動掛載。備份工具等 App 仍可在需要時掛載它們。";
 "Unmount All Disks on Sleep" = "進入睡眠模式時卸載所有磁碟";
 "Unmount All Disks When the Screen Locks" = "鎖定螢幕時卸載所有磁碟";
+"Also Unmount Network Shares" = "同時退出網路共享";
+"Also unmounts your network shares when the Mac sleeps or the screen locks, so none goes stale across sleep or a Wi-Fi change. Shares kept mounted by Keep Alive and shares in use stay mounted. Nothing is forced. Works with the two settings above." = "Mac 睡眠或鎖定螢幕時，同時退出您的網路共享，避免它們在睡眠或切換 Wi-Fi 後失效。由「保持作用中」維持的共享和正在使用的共享會維持掛載。不會強制退出。需搭配上面兩項設定使用。";
 "Unmounts every removable disk when the screen locks, so no drive stays open while you are away. Protected volumes, volumes kept mounted by Keep Alive and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "螢幕鎖定時卸載所有可移除磁碟，避免您離開時仍有磁碟處於開啟狀態。受保護的磁碟卷、由「保持作用中」維持掛載的磁碟卷以及正在使用的磁碟卷會維持掛載。不會強制卸載。Time Machine 磁碟和磁碟映像檔會維持掛載。";
 "Unmounts every external disk before the Mac sleeps. Protected volumes and volumes in use stay mounted. Nothing is forced. Time Machine disks and disk images stay mounted." = "Mac 睡眠前卸載所有外接磁碟。受保護的磁碟卷和正在使用的磁碟卷會維持掛載。不會強制卸載。Time Machine 磁碟和磁碟映像檔會維持掛載。";
 
@@ -467,7 +469,7 @@
 "The password was not accepted %d times. Check that Caps Lock is off and the keyboard layout is the one you used when you set the password, or try unlocking the volume in Disk Utility." = "密碼已被拒絕 %d 次。請檢查大寫鎖定是否關閉、鍵盤配置是否與設定密碼時相同，或嘗試在「磁碟工具」中解鎖此檔案卷宗。";
 "Login Item Error" = "無法更改登入時啟動：%@";
 "Mount Again on Wake" = "喚醒時重新掛載";
-"Mounts the disks that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Disks you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 喚醒或您解鎖螢幕時，重新掛載睡眠前或鎖定螢幕時已退出的磁碟。您手動退出的磁碟、未連線的磁碟和已封鎖的磁碟會維持退出狀態。";
+"Mounts the disks and shares that were unmounted before sleep or when the screen locked again when the Mac wakes up or you unlock it. Ones you unmounted yourself, disks that are not connected and blocked disks stay unmounted." = "Mac 喚醒或您解鎖螢幕時，重新掛載睡眠前或鎖定螢幕時已退出的磁碟和共享。您手動退出的項目、未連線的磁碟和已封鎖的磁碟會維持退出狀態。";
 "Open in Finder after mounting" = "掛載後在 Finder 中打開";
 "Opens a Finder window when a volume or share you mount from the menu, with Mount All or with a Shortcuts action is ready. Disks mounted automatically, by Keep Alive or after wake do not open a window." = "當您從選單、透過「全部掛載」或捷徑動作掛載的卷宗或共享就緒時，打開一個 Finder 視窗。自動掛載、由 Keep Alive 或喚醒後掛載的磁碟不會打開視窗。";
 "Disks Were Not Unmounted Before Sleep" = "睡眠前未能退出的磁碟";
