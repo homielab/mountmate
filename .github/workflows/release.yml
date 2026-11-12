@@ -15,15 +15,55 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The tag's commit was usually tested already by the push to main: reuse
+  # that green run (waiting for it if it is still running) instead of a second
+  # macOS run. No green run for this commit -> run the tests here.
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      actions: read
+    outputs:
+      need_tests: ${{ steps.check.outputs.need_tests }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          runs() {
+            gh api "repos/${REPO}/actions/workflows/test.yml/runs?head_sha=${SHA}&event=push" \
+              --jq '[.workflow_runs[] | select(.head_branch == "main")]'
+          }
+          for _ in $(seq 1 70); do
+            R="$(runs)"
+            if [[ "$(jq '[.[] | select(.conclusion == "success")] | length' <<<"$R")" -gt 0 ]]; then
+              echo "Tests already passed on main for ${SHA}."
+              echo "need_tests=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            if [[ "$(jq '[.[] | select(.status != "completed")] | length' <<<"$R")" -eq 0 ]]; then
+              break
+            fi
+            echo "Test run on main still running; waiting."
+            sleep 30
+          done
+          echo "No green test run for ${SHA}; running tests in the release."
+          echo "need_tests=true" >> "$GITHUB_OUTPUT"
+
   # Unit tests and the style check; nothing is built or signed if they fail.
   test:
+    needs: ci
+    if: needs.ci.outputs.need_tests == 'true'
     permissions:
       contents: read
     uses: ./.github/workflows/test.yml
 
   build:
-    needs: test
+    needs: [ci, test]
+    if: ${{ !cancelled() && needs.ci.result == 'success' && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
     runs-on: macos-26
+    timeout-minutes: 90
     permissions:
       contents: write # commit the version bump, move the tag, publish the release
 
@@ -172,6 +212,7 @@ jobs:
   # downloads exist, so Sparkle never offers an update that can't download.
   pages:
     needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     permissions:
       contents: read
       pages: write

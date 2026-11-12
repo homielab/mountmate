@@ -1,12 +1,23 @@
 name: test
 
-# Unit tests and code-style check for every pull request and push to main,
-# and as a gate that the release workflow runs before it builds anything.
+# Unit tests and code-style check for pull requests, pushes to main and
+# ci/** branches (to try workflow changes), and as the release gate.
+# Site, docs and cask edits don't touch the app, so they don't run it.
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "Casks/**"
+      - ".github/workflows/pages.yml"
   push:
-    branches: [main]
+    branches: [main, "ci/**"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "Casks/**"
+      - ".github/workflows/pages.yml"
   workflow_call:
 
 concurrency:
@@ -25,6 +36,12 @@ jobs:
 
       - name: Lint (swift-format)
         run: swift format lint --strict -r MountMate MountMateTests
+
+      # Swift packages (Sparkle) resolved once per Package.resolved.
+      - uses: actions/cache@v4
+        with:
+          path: build/DerivedData/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('MountMate.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
 
       - name: Unit tests
         run: >
