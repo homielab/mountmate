@@ -46,4 +46,6 @@ struct AppAlert: Identifiable {
   let message: String
   let kind: AppAlertKind
   var style: Style = .warning
+  /// The process keeping a disk busy; the alert shows its icon.
+  var blocker: BlockingProcess? = nil
 }

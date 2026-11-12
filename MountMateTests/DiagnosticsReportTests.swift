@@ -30,6 +30,56 @@ final class DiagnosticsReportTests: XCTestCase {
     XCTAssertTrue(report.contains("[drive] info: Refreshed 3 disks"))
   }
 
+  func testReportHasDiskCountsKeepAliveIntervalAndThreshold() {
+    func volume(_ id: String, fs: String?, mounted: String? = nil) -> Volume {
+      var volume = Volume(
+        id: id, deviceIdentifier: "disk\(id)", diskUUID: nil, name: "Secret \(id)",
+        isMounted: mounted != nil, mountPoint: nil, freeSpace: nil, totalSize: nil,
+        usedSpace: nil, usedBytes: nil, fileSystemType: fs, usagePercentage: nil,
+        category: .user, isProtected: false, snapshots: [], storageError: nil)
+      volume.mountedFileSystemType = mounted
+      return volume
+    }
+    func disk(
+      _ id: String, bus: String, type: PhysicalDiskType = .physical, raid: Bool = false,
+      volumes: [Volume]
+    ) -> PhysicalDisk {
+      PhysicalDisk(
+        id: id, diskUUID: nil, connectionType: bus, name: "Secret Disk", totalSize: nil,
+        freeSpace: nil, usedSpace: nil, usagePercentage: nil, type: type, isRAIDSet: raid,
+        partitions: volumes, containers: [], storageError: nil)
+    }
+    let disks = DiagnosticsReport.diskSummary(of: [
+      disk("disk2", bus: "USB", volumes: [volume("1", fs: "ExFAT", mounted: "exfat")]),
+      disk(
+        "disk3", bus: "USB",
+        volumes: [volume("2", fs: "Microsoft Basic Data", mounted: "ufsd_NTFS")]),
+      disk("disk4", bus: "Thunderbolt", volumes: [volume("3", fs: "APFS"), volume("4", fs: nil)]),
+      disk("disk5", bus: "Disk Image", type: .diskImage, volumes: []),
+      disk("disk6", bus: "SATA", raid: true, volumes: []),
+    ])
+    XCTAssertEqual(disks.disksByBus, ["USB": 2, "Thunderbolt": 1, "Disk Image": 1, "RAID": 1])
+    XCTAssertEqual(
+      disks.volumesByFileSystem, ["exfat": 1, "ufsd_NTFS": 1, "APFS": 1, "unknown": 1])
+
+    let report = DiagnosticsReport.format(
+      appVersion: "1", build: "1", macOS: "x", flags: [], keepAliveInterval: 60,
+      lowSpaceThreshold: 0.95, disks: disks, lines: [], generatedAt: now, timeZone: utc)
+    XCTAssertTrue(report.contains("  Keep Alive interval: 60 s"))
+    XCTAssertTrue(report.contains("  Low-space warning threshold: 95 %"))
+    XCTAssertTrue(report.contains("Disks by bus: Disk Image 1, RAID 1, Thunderbolt 1, USB 2"))
+    XCTAssertTrue(
+      report.contains("Volumes by file system: APFS 1, exfat 1, ufsd_NTFS 1, unknown 1"))
+    XCTAssertFalse(report.contains("Secret"))
+
+    let empty = DiagnosticsReport.format(
+      appVersion: "1", build: "1", macOS: "x", flags: [], lines: [], generatedAt: now,
+      timeZone: utc)
+    XCTAssertTrue(empty.contains("  Low-space warning threshold: off"))
+    XCTAssertFalse(empty.contains("Keep Alive interval"))
+    XCTAssertTrue(empty.contains("Disks by bus: none"))
+  }
+
   func testEmptyLogIsSaidSo() {
     let report = DiagnosticsReport.format(
       appVersion: "1", build: "1", macOS: "x", flags: [], lines: [], generatedAt: now,

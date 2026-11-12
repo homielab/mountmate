@@ -703,3 +703,8 @@
 "diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil зупинився до завершення перевірки. Подробиці — у «Скопіювати діагностику».";
 "Could Not Verify Volume" = "Не вдалося перевірити том";
 "“%@” was not checked. %@" = "«%@» не перевірено. %@";
+"Spotlight indexing" = "Індексування Spotlight";
+"Terminal shell" = "Оболонка в Терміналі";
+"macOS file tracking" = "Відстеження файлів macOS";
+"Malware scan" = "Перевірка на шкідливе ПЗ";
+"Disk check" = "Перевірка диска";

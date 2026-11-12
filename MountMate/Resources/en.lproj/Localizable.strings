@@ -703,3 +703,8 @@
 "diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil stopped before the check finished. Details are in Copy Diagnostics.";
 "Could Not Verify Volume" = "Could Not Verify Volume";
 "“%@” was not checked. %@" = "“%@” was not checked. %@";
+"Spotlight indexing" = "Spotlight indexing";
+"Terminal shell" = "Terminal shell";
+"macOS file tracking" = "macOS file tracking";
+"Malware scan" = "Malware scan";
+"Disk check" = "Disk check";

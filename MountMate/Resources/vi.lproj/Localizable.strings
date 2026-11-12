@@ -703,3 +703,8 @@
 "diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil dừng trước khi kiểm tra xong. Chi tiết có trong Sao chép chẩn đoán.";
 "Could Not Verify Volume" = "Không thể kiểm tra ổ";
 "“%@” was not checked. %@" = "“%@” chưa được kiểm tra. %@";
+"Spotlight indexing" = "Spotlight đang lập chỉ mục";
+"Terminal shell" = "Shell trong Terminal";
+"macOS file tracking" = "Theo dõi tệp của macOS";
+"Malware scan" = "Quét phần mềm độc hại";
+"Disk check" = "Kiểm tra ổ đĩa";

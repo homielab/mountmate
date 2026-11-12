@@ -28,7 +28,7 @@ final class DiskUtilErrorClassifierTests: XCTestCase {
       ),
       (
         "Unmount of Backup failed: Resource busy (/usr/libexec/mds)",
-        "Backup", .unmount, .inUse(process: "mds")
+        "Backup", .unmount, .inUse(process: "Spotlight indexing")
       ),
       (
         "Volume is in use by another application",

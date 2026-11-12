@@ -8,7 +8,8 @@ enum DiskUtilError: Equatable, Sendable {
   case mountEFIVolume
   /// "At least one volume could not be unmounted" while ejecting a disk.
   case unmountBusyVolume
-  /// Busy or in use; carries the name of the blocking process when diskutil named one.
+  /// Busy or in use; carries the friendly name of the blocking process when
+  /// diskutil named one (see `BlockingProcessNames`).
   case inUse(process: String?)
   case mountLockedVolume
   case other
@@ -59,7 +60,7 @@ enum DiskUtilErrorClassifier {
     }
 
     if mentionsBusy(lowerCaseError) {
-      return .inUse(process: blockingProcessName(in: rawError))
+      return .inUse(process: blockingProcess(in: rawError)?.displayName)
     }
 
     if mentionsLockedVolume(lowerCaseError) {
@@ -101,6 +102,16 @@ enum DiskUtilErrorClassifier {
   /// Last path component of the executable diskutil names as the blocker,
   /// e.g. `(/usr/bin/foo)` or `dissented by PID 12 (/usr/bin/foo)`.
   static func blockingProcessName(in rawError: String) -> String? {
+    blockingProcessPath(in: rawError).map { URL(fileURLWithPath: $0.path).lastPathComponent }
+  }
+
+  /// The blocker diskutil names, with its friendly name and icon kind.
+  static func blockingProcess(in rawError: String) -> BlockingProcess? {
+    guard let found = blockingProcessPath(in: rawError) else { return nil }
+    return BlockingProcessNames.describe(path: found.path, pid: found.pid)
+  }
+
+  private static func blockingProcessPath(in rawError: String) -> (path: String, pid: Int32?)? {
     guard
       let range = rawError.range(
         of: "(dissented by PID \\d+ )?\\((/[^)]+)\\)",
@@ -111,7 +122,10 @@ enum DiskUtilErrorClassifier {
       return nil
     }
     let path = String(match[match.index(after: start)..<end])
-    return URL(fileURLWithPath: path).lastPathComponent
+    let pid = match.range(of: "\\d+", options: .regularExpression).flatMap {
+      match.lowercased().hasPrefix("dissented") ? Int32(match[$0]) : nil
+    }
+    return (path, pid)
   }
 
   /// Alert title and message for a failure that is shown as a plain alert

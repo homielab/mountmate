@@ -703,3 +703,8 @@
 "diskutil stopped before the check finished. Details are in Copy Diagnostics." = "diskutil 在檢查完成前停止。詳細資訊請見「拷貝診斷資訊」。";
 "Could Not Verify Volume" = "無法驗證卷宗";
 "“%@” was not checked. %@" = "「%@」未被檢查。%@";
+"Spotlight indexing" = "Spotlight 索引";
+"Terminal shell" = "終端機 Shell";
+"macOS file tracking" = "macOS 檔案追蹤";
+"Malware scan" = "惡意軟體掃描";
+"Disk check" = "磁碟檢查";

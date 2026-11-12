@@ -268,11 +268,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   // MARK: - UI
 
+  /// The app's own icon for an app, an SF Symbol for a macOS service, nil
+  /// (the default alert icon) for an unknown process. Labelled for VoiceOver.
+  static func icon(for blocker: BlockingProcess) -> NSImage? {
+    let image: NSImage?
+    switch blocker.kind {
+    case .system(let symbol):
+      image = NSImage(systemSymbolName: symbol, accessibilityDescription: blocker.displayName)?
+        .withSymbolConfiguration(.init(pointSize: 40, weight: .regular))
+    case .app(let bundlePath):
+      if let bundlePath, FileManager.default.fileExists(atPath: bundlePath) {
+        image = NSWorkspace.shared.icon(forFile: bundlePath)
+      } else {
+        image = blocker.pid.flatMap { NSRunningApplication(processIdentifier: $0)?.icon }
+      }
+    case .unknown:
+      image = blocker.pid.flatMap { pid in
+        NSRunningApplication(processIdentifier: pid).flatMap { $0.bundleURL == nil ? nil : $0.icon }
+      }
+    }
+    image?.accessibilityDescription = blocker.displayName
+    return image
+  }
+
   private func showAlert(_ appAlert: AppAlert) {
     let alert = NSAlert()
     alert.messageText = appAlert.title
     alert.informativeText = appAlert.message
     alert.alertStyle = appAlert.style == .informational ? .informational : .warning
+    if let blocker = appAlert.blocker, let icon = Self.icon(for: blocker) {
+      alert.icon = icon
+    }
 
     switch appAlert.kind {
     case .basic:

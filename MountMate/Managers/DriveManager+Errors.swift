@@ -43,6 +43,10 @@ extension DriveManager {
     default:
       kind = .basic
     }
-    userActionError = AppAlert(title: text.title, message: text.message, kind: kind)
+    var alert = AppAlert(title: text.title, message: text.message, kind: kind)
+    if case .inUse = parsedError {
+      alert.blocker = DiskUtilErrorClassifier.blockingProcess(in: error)
+    }
+    userActionError = alert
   }
 }

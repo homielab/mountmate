@@ -3,7 +3,7 @@ import Foundation
 import OSLog
 
 /// A text report users can paste into a bug report: app and macOS version,
-/// on/off settings, network share counts and the last hour of MountMate's own log. It never holds
+/// on/off settings, disk and network share counts and the last hour of MountMate's own log. It never holds
 /// paths, volume or share names, or passwords.
 enum DiagnosticsReport {
   struct LogLine: Equatable {
@@ -61,6 +61,41 @@ enum DiagnosticsReport {
       }
     }
     return summary
+  }
+
+  /// Counts about the listed disks: bus and file system names only.
+  struct DiskSummary: Equatable {
+    var disksByBus: [String: Int] = [:]
+    var volumesByFileSystem: [String: Int] = [:]
+  }
+
+  /// Counts `disks` by bus (USB, Thunderbolt…) and their volumes by file
+  /// system (the mounted one when known, else the partition's).
+  static func diskSummary(of disks: [PhysicalDisk]) -> DiskSummary {
+    var summary = DiskSummary()
+    for disk in disks {
+      let bus: String
+      if disk.isRAIDSet {
+        bus = "RAID"
+      } else if disk.type == .diskImage {
+        bus = "Disk Image"
+      } else {
+        bus = disk.connectionType.isEmpty ? "Unknown" : disk.connectionType
+      }
+      summary.disksByBus[bus, default: 0] += 1
+      for volume in disk.allVolumes {
+        let fileSystem = volume.mountedFileSystemType ?? volume.fileSystemType ?? ""
+        summary.volumesByFileSystem[fileSystem.isEmpty ? "unknown" : fileSystem, default: 0] += 1
+      }
+    }
+    return summary
+  }
+
+  /// "USB 2, apfs 1" sorted by name, or "none".
+  static func countList(_ counts: [String: Int]) -> String {
+    guard !counts.isEmpty else { return "none" }
+    return counts.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
+      .map { "\($0.key) \($0.value)" }.joined(separator: ", ")
   }
 
   static let maxLines = 2000
@@ -152,6 +187,9 @@ enum DiagnosticsReport {
     build: String,
     macOS: String,
     flags: [Flag],
+    keepAliveInterval: Double? = nil,
+    lowSpaceThreshold: Double? = nil,
+    disks: DiskSummary = DiskSummary(),
     failingDiskCount: Int = 0,
     almostFullVolumeCount: Int = 0,
     lowSpaceMutedVolumeCount: Int = 0,
@@ -174,8 +212,16 @@ enum DiagnosticsReport {
       "Settings:",
     ]
     out += flags.map { "  \($0.name): \($0.isOn ? "on" : "off")" }
+    if let keepAliveInterval {
+      out.append("  Keep Alive interval: \(Int(keepAliveInterval)) s")
+    }
+    out.append(
+      "  Low-space warning threshold: "
+        + (lowSpaceThreshold.map { "\(Int(($0 * 100).rounded())) %" } ?? "off"))
     out += [
-      "", "Disks reporting SMART failing: \(failingDiskCount)",
+      "", "Disks by bus: \(countList(disks.disksByBus))",
+      "Volumes by file system: \(countList(disks.volumesByFileSystem))",
+      "Disks reporting SMART failing: \(failingDiskCount)",
       "Volumes almost full: \(almostFullVolumeCount)",
       "Volumes with the free space warning off: \(lowSpaceMutedVolumeCount)",
       "Volumes sharing a UUID with another volume: \(duplicateUUIDVolumeCount)",
@@ -249,6 +295,8 @@ enum DiagnosticsReport {
 
   /// The whole report for this run. Slow: call it off the main thread.
   static func build(
+    keepAliveInterval: Double? = nil, lowSpaceThreshold: Double? = nil,
+    disks: DiskSummary = DiskSummary(),
     failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, lowSpaceMutedVolumeCount: Int = 0,
     duplicateUUIDVolumeCount: Int = 0,
     shares: ShareSummary = ShareSummary(), mountPoints: [String] = [], now: Date = Date()
@@ -259,6 +307,9 @@ enum DiagnosticsReport {
       build: info?["CFBundleVersion"] as? String ?? "?",
       macOS: ProcessInfo.processInfo.operatingSystemVersionString,
       flags: flags(),
+      keepAliveInterval: keepAliveInterval,
+      lowSpaceThreshold: lowSpaceThreshold,
+      disks: disks,
       failingDiskCount: failingDiskCount,
       almostFullVolumeCount: almostFullVolumeCount,
       lowSpaceMutedVolumeCount: lowSpaceMutedVolumeCount,
@@ -272,6 +323,8 @@ enum DiagnosticsReport {
   /// Builds the report in the background and puts it on the pasteboard.
   /// Returns false when the log could not be read.
   static func copyToPasteboard(
+    keepAliveInterval: Double? = nil, lowSpaceThreshold: Double? = nil,
+    disks: DiskSummary = DiskSummary(),
     failingDiskCount: Int = 0, almostFullVolumeCount: Int = 0, lowSpaceMutedVolumeCount: Int = 0,
     duplicateUUIDVolumeCount: Int = 0,
     shares: ShareSummary = ShareSummary(), mountPoints: [String] = []
@@ -279,6 +332,8 @@ enum DiagnosticsReport {
     let report = await Task.detached(priority: .userInitiated) { () -> String? in
       do {
         return try build(
+          keepAliveInterval: keepAliveInterval, lowSpaceThreshold: lowSpaceThreshold,
+          disks: disks,
           failingDiskCount: failingDiskCount, almostFullVolumeCount: almostFullVolumeCount,
           lowSpaceMutedVolumeCount: lowSpaceMutedVolumeCount,
           duplicateUUIDVolumeCount: duplicateUUIDVolumeCount, shares: shares,

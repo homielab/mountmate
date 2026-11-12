@@ -66,8 +66,12 @@ struct LogsSettingsSection: View {
       readOnlyIDs: shareManager.readOnlyShareIDs)
     shares.staleDetected = KeepAliveManager.shared.staleMountsDetected
     let mountPoints = DiagnosticsReport.customMountPoints(of: savedShares)
+    let disks = DiagnosticsReport.diskSummary(of: DriveManager.shared.physicalDisks ?? [])
+    let keepAliveInterval = KeepAliveManager.shared.retryInterval
     Task {
       let copied = await DiagnosticsReport.copyToPasteboard(
+        keepAliveInterval: keepAliveInterval, lowSpaceThreshold: LowSpaceRules.threshold(),
+        disks: disks,
         failingDiskCount: failing.count, almostFullVolumeCount: almostFull,
         lowSpaceMutedVolumeCount: PersistenceManager.shared.lowSpaceMutedVolumeIDs.count,
         duplicateUUIDVolumeCount: duplicateUUIDs, shares: shares, mountPoints: mountPoints)

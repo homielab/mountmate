@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - **NFS shares no longer freeze Finder when the NAS goes away**: new shares give up on an unreachable server instead of waiting forever. Turn it on for older shares in their settings.
+- **Clearer "in use" alerts**: when a drive can't be ejected, the alert names what is using it in plain words, such as "Spotlight indexing" or "Quick Look" instead of "mds", and shows its icon.
+- **Copy Diagnostics** now also lists how many disks are connected by type and file system, the Keep Alive interval and the low-space warning threshold.
 
 ## [6.5] - 2026-11-03
 
