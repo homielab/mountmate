@@ -3,6 +3,28 @@
     <channel>
         <title>MountMate</title>
         <item>
+            <title>6.6</title>
+            <pubDate>Fri, 13 Nov 2026 19:19:13 +0000</pubDate>
+            <sparkle:version>46</sparkle:version>
+            <sparkle:shortVersionString>6.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<h3>Added</h3>
+<ul>
+<li>Mount WebDAV shares, such as Nextcloud or Synology, next to SMB, NFS and AFP.
+</li>
+<li>Optionally unmount network shares too when your Mac sleeps or locks, and mount them again on wake.
+</li>
+<li><strong>NFS shares no longer freeze Finder when the NAS goes away</strong>: new shares give up on an unreachable server instead of waiting forever. Turn it on for older shares in their settings.
+</li>
+<li><strong>Clearer "in use" alerts</strong>: when a drive can't be ejected, the alert names what is using it in plain words, such as "Spotlight indexing" or "Quick Look" instead of "mds", and shows its icon.
+</li>
+<li><strong>Copy Diagnostics</strong> now also lists how many disks are connected by type and file system, the Keep Alive interval and the low-space warning threshold.
+</li>
+</ul>
+]]></description>
+            <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.6/MountMate_6.6.zip" length="5730040" type="application/octet-stream" sparkle:edSignature="Kf+EmK0m9M8JCTQBjlouf9klYJZyGKiLcjD5a2wLNnwg+v+Y+TrVa5ge4Xap7KGp7vMGRUUPTh6WWcSeSV+9CQ=="/>
+        </item>
+        <item>
             <title>6.5</title>
             <pubDate>Thu, 05 Nov 2026 03:56:28 +0000</pubDate>
             <sparkle:version>45</sparkle:version>
@@ -427,14 +449,6 @@
 </ul>
 ]]></description>
             <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.4/MountMate_6.4.zip" length="5577365" type="application/octet-stream" sparkle:edSignature="e1q0H1NhJsjV8ZKDu/jQN/z23dr/Wpgcb8i92Q6+kBSQyXg91VQQLxW62/Kt/PfKVZwpEl8sim55R5Aa6ypNCg=="/>
-        </item>
-        <item>
-            <title>6.3</title>
-            <pubDate>Fri, 23 Oct 2026 14:32:57 +0000</pubDate>
-            <sparkle:version>43</sparkle:version>
-            <sparkle:shortVersionString>6.3</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/homielab/mountmate/releases/download/v6.3/MountMate_6.3.zip" length="4412444" type="application/octet-stream" sparkle:edSignature="ZHDvm8SyR0kULCuZdZ9k/ujCL0VLNKShRU7u0IuRwNuPSI82cPzRqm1Y25VRxXcJCtsOooppBbgG1bzKBRMNCA=="/>
         </item>
     </channel>
 </rss>
