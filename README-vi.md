@@ -37,7 +37,7 @@ Hoặc [tải `.dmg` mới nhất](https://github.com/homielab/mountmate/release
 - Tự động hoá bằng 10 hành động Shortcuts (cả Spotlight, Siri, Automator).
 - 100% native (không Electron), 7 ngôn ngữ, hỗ trợ bàn phím và VoiceOver; phụ thuộc duy nhất là Sparkle để cập nhật.
 
-Xem [Chi tiết tính năng](#-chi-tiết-tính-năng) để biết từng mục làm gì.
+Xem [FEATURES-vi.md](FEATURES-vi.md) để biết từng mục làm gì.
 
 ## 🧩 MountMate là gì?
 
@@ -76,45 +76,6 @@ MountMate hoạt động **hoàn toàn ngoại tuyến**, sử dụng lệnh và
 - **Không chạy với quyền root**: chỉ hỏi mật khẩu quản trị khi ghi `/etc/fstab` (điểm mount tuỳ chỉnh của phân vùng, Block at Startup)
 
 Chỉ là một tiện ích nhỏ gọn, làm đúng một việc – và làm tốt.
-
-## 📖 Chi tiết tính năng
-
-Đầy đủ các tính năng trong danh sách trên:
-
-- Xem tất cả ổ đĩa ngoài đang kết nối
-- Biết được ổ nào đang được **mount**
-- **Mount/unmount** nhanh chóng chỉ với 1 cú click
-- **Mount chỉ đọc**: chuột phải một volume chưa mount để mount ở chế độ chỉ đọc (bảo vệ ổ backup, đọc ổ NTFS hoặc ổ hỏng); hàng volume hiện nhãn "Chỉ đọc"
-- **Kiểm tra phân vùng (Verify Volume)**: chuột phải một phân vùng ngoài đang mount để kiểm tra cấu trúc hệ thống tập tin bằng diskutil chạy nền (chỉ kiểm tra, không bao giờ tự sửa); hiện trạng thái "Đang kiểm tra…" và thông báo kết quả kèm gợi ý dùng First Aid trong Disk Utility nếu có sự cố
-- **Đổi tên phân vùng (Rename Volume…)**: chuột phải một phân vùng ngoài đang mount, ghi được để đặt tên mới (`diskutil rename`); tên được kiểm trước (không chứa `/` hoặc `:`, tối đa 11 ký tự với FAT/exFAT), hệ thống tập tin macOS không đổi tên được (như NTFS) sẽ báo lỗi rõ ràng
-- Hiển thị **dung lượng** của ổ đĩa và của network share đã mount (đã dùng / tổng)
-- **Eject All External Disks**: một nút (cạnh Unmount All), phím tắt tuỳ chọn (mặc định không gán) hoặc hành động Shortcuts để unmount và eject mọi ổ ngoài rồi rút ra; bỏ qua ổ trong, ổ ảnh đĩa, ổ có phân vùng được Protect và ổ đang eject hoặc có phân vùng đang mount/unmount, không ép buộc, lỗi được liệt kê trong một thông báo
-- **Phím tắt**: mặc định Unmount All là `⌘⌥⇧U`, Mount All là `⌘⇧M` (Eject All External Disks không có phím mặc định); đổi được trong Settings (phím hiển thị theo bố cục bàn phím hiện tại). Một thông báo nhỏ ở đầu màn hình cho biết phím tắt vừa làm gì ("Đã tháo 3 phân vùng", "Không có gì để gắn", "Đã đẩy ra 1 ổ đĩa, 1 lỗi")
-- **Bàn phím và VoiceOver**: các hàng trong popover nhận focus bàn phím (Tab, Lên/Xuống; Return hoặc Space để mount/unmount phân vùng, hoặc mở rộng/thu gọn ổ đĩa, trên macOS 14+), VoiceOver có action cho từng hàng, animation tắt khi bật Reduce motion
-- **Chặn tự mount USB**: ngăn các ổ đã chọn tự mount khi cắm hoặc khi đăng nhập; **Block at Startup** (tuỳ chọn) ghi thêm một rule vào `/etc/fstab` và hỏi mật khẩu quản trị
-- **Điểm mount tuỳ chỉnh**: mount phân vùng tại đường dẫn bạn chọn (chuột phải → Custom Mount Point…), hoặc network share vào thư mục trống bạn chọn (thư mục đã có file bị từ chối để không che file)
-- **Ổ APFS mã hoá**: mở khoá ngay trong MountMate, có thể lưu mật khẩu vào Keychain ("Forget Saved Password" trong menu chuột phải để xoá); Keep Alive, Mount Again on Wake và Mount All tự dùng mật khẩu đã lưu, không hỏi
-- **RAID**: Apple RAID hiện thành một ổ thay vì từng thành viên
-- **Tuỳ chọn hiển thị** (Settings → General → Display): **Show Count in Menu Bar** hiện số phân vùng và share đang mount (không tính phân vùng được bảo vệ) cạnh biểu tượng; **Show Internal Disks** hiện cả ổ trong của máy; **Show Only Volumes** ẩn dòng ổ đĩa, chỉ liệt kê phân vùng; **Hide EFI Partitions** ẩn phân vùng EFI
-- **Ignore, Protect, Pin**: chuột phải một phân vùng để **Ignore** (ẩn đi, ví dụ phân vùng hệ thống), **Protect** (không bị "Unmount All" và unmount khi ngủ) hoặc **Pin to Top** (xếp lên đầu); xem lại các danh sách trong Settings → Management
-- **Network Shares**: tự mount SMB và NFS khi đăng nhập (share AFP cũ có nhãn không còn hỗ trợ); nút "Browse Network…" trong sheet share liệt kê server SMB và NFS trong mạng nội bộ và điền sẵn địa chỉ. Import Mounted thêm mọi share SMB, NFS hoặc AFP đang mount trong Finder. Tiêu đề mục "Saved Network Shares" có nút Mount All và Unmount All (mỗi nút chỉ hiện khi có share đã lưu cần đến) để mount/unmount mọi share đã lưu cùng lúc; một thông báo liệt kê từng share lỗi kèm lý do và đề nghị Force Unmount khi có thể giúp
-- **Keep Alive**: tự kết nối lại share và ổ khi bị rớt, sau khi đổi mạng, khi máy thức dậy và khi đăng nhập; share hoặc ổ đang chờ sẽ hiện lúc thử lại kế tiếp và nút "Reconnect Now" (kết nối lại ngay, có cả trong menu chuột phải) để thử lại ngay. Trong lúc chờ kết nối lại, biểu tượng thanh menu có thêm huy hiệu Wi-Fi (VoiceOver đọc "Reconnecting"). Share vẫn còn mount nhưng không phản hồi nữa (NAS khởi động lại, đổi Wi-Fi hoặc VPN) sẽ được unmount rồi mount lại thay vì làm Finder treo; Keep Alive chờ mỗi share trả lời tối đa 10 giây, và ở Chế độ nguồn điện thấp thì kiểm tra thưa gấp đôi
-- **Copy Path / Open in Terminal**: chuột phải một phân vùng hoặc chia sẻ mạng đã gắn để sao chép đường dẫn hoặc mở cửa sổ Terminal tại thư mục đó
-- **Tự ngắt khi không dùng**: chọn cho từng phân vùng trên ổ ngoài (chuột phải → Unmount When Idle) để tự unmount sau 1–60 phút ổ không đọc/ghi; không bao giờ ép buộc, phân vùng đang dùng sẽ được giữ nguyên và thử lại sau; tắt khi phân vùng đang được bảo vệ (Protect) hoặc giữ gắn kết (Keep Mounted)
-- **Unmount All Disks on Sleep** (Settings → General → Behavior): unmount mọi ổ tháo được trước khi máy ngủ. **Mount Again on Wake** (mặc định bật, chỉ hiện khi bật unmount khi ngủ) mount lại các ổ đó sau khi thức dậy; ổ bạn tự unmount, ổ đã rút và ổ bị chặn vẫn không được mount. Khi bật thông báo, app báo những ổ không kịp unmount trước khi ngủ
-- **Open in Finder after mounting** (Settings → General → Behavior, mặc định tắt): volume hoặc share bạn mount từ popover (Mount, Mount Read-Only), bằng Mount All hoặc bằng tác vụ Shortcuts sẽ mở trong một cửa sổ Finder ngay khi mount xong. Ổ được mount lúc cắm vào, lúc đăng nhập, bởi Keep Alive hoặc sau khi thức dậy không bao giờ mở cửa sổ; mount thất bại và ổ bị chặn cũng vậy.
-- **Cảnh báo gần đầy** (Settings → General → Behavior; mặc định bật, ngưỡng 80%, 90% hoặc 95%): phân vùng đã mount dùng từ ngưỡng trở lên có nhãn "Almost full" và vòng tròn màu cam (rê chuột hoặc VoiceOver: "Almost full: 94% used, 12 GB free"); khi bật Thông báo, bạn nhận một thông báo cho mỗi phân vùng sau mỗi lần mount. Phân vùng trên ổ ngoài đang mount được kiểm tra mỗi 15 phút, nên ổ cắm thường trực đầy dần vẫn được báo dù bạn không mở menu. Ổ ảnh đĩa, phân vùng hệ thống và phân vùng chỉ đọc không tính, và MountMate không tự unmount hay xoá gì.
-- **Cảnh báo SMART**: ổ có kết quả kiểm tra sức khoẻ SMART (từ `diskutil`) là "Failing" sẽ có tam giác cảnh báo đỏ cạnh tên (rê chuột hoặc VoiceOver: "SMART status: failing — back up this disk"); khi bật Thông báo, bạn còn nhận một thông báo cho mỗi ổ. Ổ báo Verified, Not Supported hoặc không báo gì thì không hiện gì, và MountMate không bao giờ tự unmount hay eject vì cảnh báo này.
-- **Thông báo** (tuỳ chọn, mặc định tắt; Settings → General → Behavior): báo khi Keep Alive không kết nối lại được và khi đã nối lại (một lần mỗi đợt mất kết nối), khi không unmount được ổ bị chặn, khi unmount trước lúc ngủ không kịp, và khi một phân vùng bị unmount vì không dùng. Bấm vào thông báo sẽ mở MountMate, và thông báo "Cannot Reconnect" có nút "Reconnect Now" để thử lại ngay.
-- **Shortcuts**: ứng dụng Shortcuts (cùng Spotlight, Siri, Automator qua "Run Shortcut") có 10 hành động: Mount All Volumes, Unmount All Volumes, Eject All External Disks, Mount All Network Shares và Unmount All Network Shares (mọi share đã lưu), Mount Network Share và Unmount Network Share (chọn một share đã lưu), Mount Volume và Unmount Volume (chọn phân vùng hoặc gõ tên, không phân biệt hoa thường; tên không có là lỗi, phân vùng được Protect không bị unmount), cùng Eject Volume (eject ổ ngoài chứa phân vùng bạn chọn hoặc gõ tên; ổ có phân vùng được Protect bị từ chối, không ép buộc). Dùng để tự động hoá kiểu "về nhà → mount NAS" hoặc "trước khi ngủ → unmount all"; lỗi hiện thành lỗi của shortcut. MountMate cần được cài; app tự chạy nền khi shortcut chạy
-- **Force Eject**: ép eject ổ đang được sử dụng
-- **Force Unmount cho network share**: nếu eject một share thất bại vì share đang bận hoặc server không còn, MountMate giải thích lý do (đã dịch) và đề nghị Force Unmount sau khi bạn xác nhận
-- **VoiceOver**: các nút chỉ có biểu tượng và biểu tượng thanh menu được đọc tên; nút phím tắt trong Settings đọc theo tên hành động và bắt đầu ghi bằng Space, Return hoặc thao tác nhấn của VoiceOver
-- **Đa ngôn ngữ**: 7 ngôn ngữ, đúng dạng số nhiều
-- Chạy gọn nhẹ trên **thanh menu**
-- **Sao chép chẩn đoán** (Cài đặt → Chung → Nhật ký): chép phiên bản MountMate và macOS, các cài đặt bật/tắt và nhật ký 1 giờ gần nhất của MountMate vào clipboard để dán vào báo lỗi; không có mật khẩu, đường dẫn, tên ổ đĩa hay tên thư mục chia sẻ (xem [Gửi log khi báo lỗi](#-gửi-log-khi-báo-lỗi))
-- **Nhắc cập nhật không làm phiền**: bản cập nhật tìm thấy khi kiểm tra tự động không bật cửa sổ đè lên việc đang làm: icon menu bar có chấm nhỏ (VoiceOver đọc "Update available") và popover hiện dòng "MountMate X.Y is available — View…"; bấm View… mới mở cửa sổ cập nhật. Check for Updates… vẫn mở cửa sổ ngay
-- 100% native – không dùng Electron; phụ thuộc duy nhất là [Sparkle](https://sparkle-project.org) để tự cập nhật (Settings → About & Updates, nơi tắt được kiểm tra tự động; header popover có nút Check for Updates)
 
 ## 🛠️ Hướng dẫn cài đặt
 
@@ -169,44 +130,7 @@ Xem trực tiếp khi mount/unmount: `log stream --predicate 'subsystem == "com.
 
 ## 🧑‍💻 Phát triển
 
-Mở `MountMate.xcodeproj` trong Xcode, hoặc dùng dòng lệnh:
-
-```bash
-# Unit test (ký ad-hoc, cùng lệnh với CI)
-xcodebuild test -project MountMate.xcodeproj -scheme MountMate \
-  -destination 'platform=macOS' -derivedDataPath build/DerivedData \
-  -only-testing:MountMateTests CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO
-
-# Kiểm tra code style (cấu hình trong .swift-format)
-swift format lint -r MountMate MountMateTests
-```
-
-App build ở chế độ ngôn ngữ Swift 5 với strict concurrency `targeted`; unit test dùng chế độ Swift 6. Kiểu giá trị mới trong `Models/` và `Utilities/` được truyền giữa các queue thì đánh dấu `Sendable`, và giữ build không có cảnh báo concurrency.
-
-Ghi log bằng `Log.<category>` (`MountMate/Utilities/Log.swift`), không dùng `print()`. Tên share/ổ, đường dẫn và nội dung lỗi dùng `privacy: .private`, không bao giờ ghi mật khẩu, và dòng lệnh đi qua `redactedArguments`; `LoggingHygieneTests` kiểm tra điều này.
-
-Mỗi lần làm mới chỉ chạy `diskutil list` một lần và `diskutil info` cho những ổ mới, ổ đổi dung lượng hoặc bố cục phân vùng, hoặc ổ có thông tin cũ hơn 30 giây (`WholeDiskInfoCache`); các lệnh chạy song song, không chặn thread. Số lần chạy `diskutil info` được ghi ở mức debug: `log stream --predicate 'subsystem == "com.homielab.mountmate" AND category == "drive"' --level debug`.
-
-Danh sách ổ được dựng bởi `DiskListParser` (`MountMate/Managers/DiskListParser.swift`), vốn không tự chạy tiến trình nào: statfs và phương án dự phòng Disk Arbitration được truyền vào. `DiskListParserTests` chạy nó trên một bản `diskutil list -plist` ghi sẵn trong `MountMateTests/Fixtures/`; cần kiểm một bố cục ổ mới thì thêm fixture vào đó.
-
-Mã cho `/etc/fstab` chia làm ba: `FstabRules` (`MountMate/Managers/FstabRules.swift`) dựng, tìm, xoá các dòng của MountMate và kiểm từng trường, toàn hàm thuần không đụng file; `FstabVolumeLookup` hỏi `diskutil` định dạng của volume và volume có được chặn lúc khởi động không; `FstabWriter` đọc `/etc/fstab` và ghi nó qua hộp thoại mật khẩu quản trị. Kiểm thay đổi quy tắc trong `FstabRulesTests` và `BlockedFstabRuleTests`; lệnh đặc quyền được kiểm trên một file tạm, không bao giờ trên `/etc/fstab` thật.
-
-Share mạng được đọc từ bảng mount của kernel bởi `MountTable` (`MountMate/Utilities/MountTable.swift`, `getfsstat` với `MNT_NOWAIT`: không chạy tiến trình, không bao giờ chờ server). `MountedNetworkShare` (`MountMate/Models/`) là một mục SMB/NFS/AFP và biết nó là share đã lưu nào; `NetworkMountManager.importedShare(from:)` biến share kết nối trong Finder thành `NetworkShare` để nhập, còn câu lỗi NetFS nằm ở `MountMate/Utilities/NetFSErrorMessages.swift`. Test: `MountTableTests` và `NetworkShareParsingTests`.
-
-CI chạy cả hai trên mỗi pull request và mỗi push vào `main`; kiểm tra style ở chế độ strict. Xem quy ước trong [CONTRIBUTING.md](CONTRIBUTING.md) (bằng tiếng Anh).
-
-### Phát hành
-
-Push một tag phiên bản (`git tag v6.4 && git push origin v6.4`, hoặc `scripts/create-draft-release.sh`): workflow release đặt version và build number, build, ký và notarize app và DMG, cập nhật `docs/appcast.xml` và cask Homebrew trên `main`, rồi đăng GitHub release với mục của phiên bản đó trong `CHANGELOG.md`. Hãy viết mục đó cho người dùng: `scripts/2-build.sh` chuyển nó sang HTML (`scripts/changelog-to-html.sh`) và nhúng vào item mới của appcast, nên cửa sổ cập nhật của Sparkle hiện nó. Appcast giữ ba phiên bản mới nhất.
-
-Kiểm zip và appcast trên máy mà không tạo DMG, không ký, không notarize (`docs/appcast.xml` giữ nguyên; kết quả ở `Dist/Final/`):
-
-```bash
-# Dist/Release/MountMate.app = một bản build Release bất kỳ trên máy; dùng một file khoá EdDSA thử
-SPARKLE_PRIVATE_KEY=/path/to/test_key scripts/2-build.sh --dry-run
-```
-
-`scripts/0-run-all.sh` chạy toàn bộ bước build trên máy (cần `.env.local` có chứng chỉ ký, notary profile và khoá Sparkle) và không đăng gì cả.
+Build, test, kiến trúc và phát hành: xem [DEVELOPMENT.md](DEVELOPMENT.md) (tiếng Anh). Quy ước: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📫 Đóng góp & phản hồi
 
