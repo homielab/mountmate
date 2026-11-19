@@ -517,6 +517,8 @@
 "Almost full: %d%% used" = "Почти заполнен: занято %d%%";
 "Disconnected Without Ejecting" = "Отключён без извлечения";
 "“%@” was disconnected without being ejected. Check your files." = "«%@» отключён без извлечения. Проверьте свои файлы.";
+"Volume Mounted at a Different Path" = "Том смонтирован в другом месте";
+"“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point." = "Том «%1$@» смонтирован в «%2$@», потому что «%3$@» — это обычная папка, а не точка монтирования.";
 "Notify when a disk is disconnected without ejecting" = "Уведомлять, если диск отключён без извлечения";
 "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Сообщает, когда USB-накопитель или карту памяти вынули, пока один из его томов ещё смонтирован, чтобы вы проверили, что копирование завершилось. Образы дисков, внутренние диски и тома Time Machine не отслеживаются.";
 

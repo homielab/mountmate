@@ -517,6 +517,8 @@
 "Almost full: %d%% used" = "Almost full: %d%% used";
 "Disconnected Without Ejecting" = "Disconnected Without Ejecting";
 "“%@” was disconnected without being ejected. Check your files." = "“%@” was disconnected without being ejected. Check your files.";
+"Volume Mounted at a Different Path" = "Volume Mounted at a Different Path";
+"“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point." = "“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point.";
 "Notify when a disk is disconnected without ejecting" = "Notify when a disk is disconnected without ejecting";
 "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched.";
 

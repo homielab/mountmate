@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Shadowed mount warning**: when a keep-alive volume's usual path (`/Volumes/<Name>`) is taken by an ordinary folder, macOS mounts it at `/Volumes/<Name> 1` instead. MountMate now warns you once so you can move the folder and get the volume back to its expected path.
+
 ## [6.6] - 2026-11-13
 
 ### Added

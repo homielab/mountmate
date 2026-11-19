@@ -230,6 +230,33 @@ final class NotificationManagerTests: XCTestCase {
     XCTAssertEqual(center.added.count, 2)
   }
 
+  func testShadowedMountIsAnnouncedOncePerOccurrence() {
+    defaults.set(true, forKey: NotificationManager.enabledKey)
+    let uuid = "11111111-1111-1111-1111-111111111111"
+    let volume = Volume(
+      id: uuid, deviceIdentifier: "disk6s1", diskUUID: nil, name: "Backup", isMounted: true,
+      mountPoint: "/Volumes/Backup 1", freeSpace: nil, totalSize: nil, usedSpace: nil,
+      usedBytes: nil, fileSystemType: "apfs", usagePercentage: nil, category: .user,
+      isProtected: false, snapshots: [])
+    var card = disk("disk6", smart: .verified)
+    card.partitions = [volume]
+    let registered = ManagedVolumeInfo(volumeUUID: uuid, diskUUID: "NONE", name: "Backup")
+    mountedPaths = ["/Volumes/Backup 1"]
+    let manager = NotificationManager(
+      center: center, defaults: defaults, activationNotifications: activation,
+      workspaceNotifications: workspace, performOnMain: { $0() },
+      mountedPaths: { self.mountedPaths },
+      pathExists: { $0 == "/Volumes/Backup" },
+      now: { self.clock })
+
+    manager.mountShadows(in: [card], registeredVolumes: [registered])
+    manager.mountShadows(in: [card], registeredVolumes: [registered])
+    XCTAssertEqual(
+      center.added.map(\.identifier),
+      ["mountShadow.\(uuid)|/Volumes/Backup 1"])
+    XCTAssertEqual(center.added.first?.content.title, "Volume Mounted at a Different Path")
+  }
+
   func testIsOffByDefaultAndReadsTheSavedSetting() {
     XCTAssertFalse(makeManager().isEnabled)
     defaults.set(true, forKey: NotificationManager.enabledKey)
