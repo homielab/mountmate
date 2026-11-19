@@ -517,6 +517,8 @@
 "Almost full: %d%% used" = "Presque plein : %d %% utilisés";
 "Disconnected Without Ejecting" = "Déconnecté sans éjection";
 "“%@” was disconnected without being ejected. Check your files." = "« %@ » a été déconnecté sans être éjecté. Vérifiez vos fichiers.";
+"Volume Mounted at a Different Path" = "Volume monté à un autre emplacement";
+"“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point." = "« %1$@ » est monté à « %2$@ » parce que « %3$@ » est un dossier ordinaire, pas un point de montage.";
 "Notify when a disk is disconnected without ejecting" = "Avertir quand un disque est déconnecté sans être éjecté";
 "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Vous prévient quand une clé USB ou une carte mémoire est retirée alors qu’un de ses volumes est encore monté, pour vérifier que les copies sont terminées. Les images disque, les disques internes et les volumes Time Machine ne sont pas surveillés.";
 

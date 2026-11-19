@@ -273,6 +273,8 @@ class DriveManager: ObservableObject {
       NotificationManager.shared.disksRefreshed(
         disks, unverifiedDiskIDs: unverifiedDiskIDs, ejectingDiskIDs: self.busyEjectingDiskIDs,
         busyVolumeIDs: self.busyVolumeIDs)
+      NotificationManager.shared.mountShadows(
+        in: disks, registeredVolumes: PersistenceManager.shared.keepAliveVolumes)
       self.lastUsageRead = Date()
       self.scheduleLowSpacePoll()
       self.isFetchInProgress = false

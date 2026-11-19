@@ -517,6 +517,8 @@
 "Almost full: %d%% used" = "Gần đầy: đã dùng %d%%";
 "Disconnected Without Ejecting" = "Ổ bị ngắt khi chưa eject";
 "“%@” was disconnected without being ejected. Check your files." = "“%@” bị ngắt khi chưa eject. Kiểm tra lại tệp.";
+"Volume Mounted at a Different Path" = "Ổ được mount ở một đường dẫn khác";
+"“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point." = "“%1$@” được mount tại “%2$@” vì “%3$@” là một thư mục thường, không phải điểm mount.";
 "Notify when a disk is disconnected without ejecting" = "Báo khi ổ bị rút mà chưa eject";
 "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "Báo cho bạn khi ổ USB hay thẻ nhớ bị rút ra lúc một phân vùng của nó vẫn đang mount, để bạn kiểm tra việc chép đã xong chưa. Không theo dõi ảnh đĩa, ổ trong và phân vùng Time Machine.";
 

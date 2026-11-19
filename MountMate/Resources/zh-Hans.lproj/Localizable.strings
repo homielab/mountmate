@@ -517,6 +517,8 @@
 "Almost full: %d%% used" = "快满了：已使用 %d%%";
 "Disconnected Without Ejecting" = "未推出即断开";
 "“%@” was disconnected without being ejected. Check your files." = "“%@”未推出就被断开。请检查你的文件。";
+"Volume Mounted at a Different Path" = "卷挂载到了其他位置";
+"“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point." = "“%1$@”挂载到了“%2$@”，因为“%3$@”是一个普通文件夹，不是挂载点。";
 "Notify when a disk is disconnected without ejecting" = "磁盘未推出就断开时通知";
 "Tells you when a USB drive or memory card is pulled out while one of its volumes is still mounted, so you can check that copies finished. Disk images, internal disks and Time Machine volumes are not watched." = "当 U 盘或存储卡在其中某个卷仍处于挂载状态时被拔出，会通知你，以便检查复制是否已完成。不监视磁盘映像、内置磁盘和 Time Machine 卷。";
 

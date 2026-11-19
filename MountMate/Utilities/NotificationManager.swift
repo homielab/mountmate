@@ -181,6 +181,7 @@ final class NotificationManager: NSObject, ObservableObject {
   private var lowSpaceTracker = LowSpaceAlertTracker()
   private var shareLowSpaceTracker = LowSpaceAlertTracker()
   private var removalTracker = UnexpectedRemovalTracker()
+  private var mountShadowTracker = MountShadowAlertTracker()
   /// Login shares already announced as failed this session.
   private var loginMountFailures = Set<UUID>()
   private var cancellables = Set<AnyCancellable>()
@@ -191,6 +192,7 @@ final class NotificationManager: NSObject, ObservableObject {
   private let workspaceNotifications: NotificationCenter
   private let performOnMain: (@escaping () -> Void) -> Void
   private let mountedPaths: () -> Set<String>?
+  private let pathExists: (String) -> Bool
   private let now: () -> Date
 
   /// What the notification buttons do; replaced in tests.
@@ -218,6 +220,9 @@ final class NotificationManager: NSObject, ObservableObject {
     mountedPaths: @escaping () -> Set<String>? = {
       MountTable.entries().map { Set($0.map(\.mountPoint)) }
     },
+    pathExists: @escaping (String) -> Bool = {
+      FileManager.default.fileExists(atPath: $0)
+    },
     now: @escaping () -> Date = Date.init
   ) {
     self.center = center
@@ -226,6 +231,7 @@ final class NotificationManager: NSObject, ObservableObject {
     self.workspaceNotifications = workspaceNotifications
     self.performOnMain = performOnMain
     self.mountedPaths = mountedPaths
+    self.pathExists = pathExists
     self.now = now
     isEnabled = defaults.bool(forKey: Self.enabledKey)
     super.init()
@@ -492,6 +498,62 @@ final class NotificationManager: NSObject, ObservableObject {
             comment: "Notification: a volume is almost full"),
           name, warning.percentUsed))
     }
+  }
+
+  /// A keep-alive volume whose `/Volumes/<Name>` is occupied by an ordinary
+  /// folder mounts at `/Volumes/<Name> 1` instead. Announces each such
+  /// shadow once per occurrence (UUID + actual mount path), reusing the
+  /// alert-tracker pattern of the low-space and SMART warnings. Called from
+  /// `DriveManager` after every disk list refresh.
+  func mountShadows(in disks: [PhysicalDisk], registeredVolumes: [ManagedVolumeInfo]) {
+    guard isEnabled else { return }
+    let records = Self.shadowRecords(
+      for: registeredVolumes, in: disks, mountPaths: mountedPaths() ?? [],
+      pathExists: pathExists)
+    for shadow in mountShadowTracker.newlyShadowed(
+      MountShadowRules.shadows(for: registeredVolumes, records: records))
+    {
+      let expectedPath = MountShadowRules.expectedMountPath(for: shadow.name)
+      Log.keepAlive.notice(
+        "Volume \(shadow.name, privacy: .private) mounted at \(shadow.actualMountPath, privacy: .private) because \(expectedPath, privacy: .private) is an ordinary folder."
+      )
+      post(
+        id: "mountShadow.\(shadow.occurrenceKey)",
+        title: NSLocalizedString(
+          "Volume Mounted at a Different Path", comment: "Notification title"),
+        body: String(
+          format: NSLocalizedString(
+            "“%1$@” mounted at “%2$@” because “%3$@” is an ordinary folder, not a mount point.",
+            comment: "Notification: a volume mounted at a different path"),
+          shadow.name, shadow.actualMountPath, expectedPath))
+    }
+  }
+
+  /// Mount records for the shadow decision: every mounted volume's mount
+  /// point (with its UUID), plus the expected path of each registered name
+  /// when it exists. `isMountPoint` comes from the kernel mount table, so a
+  /// plain folder and a real mount are told apart.
+  private static func shadowRecords(
+    for registeredVolumes: [ManagedVolumeInfo], in disks: [PhysicalDisk],
+    mountPaths: Set<String>, pathExists: (String) -> Bool
+  ) -> [MountShadowRules.MountRecord] {
+    var records: [MountShadowRules.MountRecord] = []
+    for volume in disks.flatMap(\.allVolumes) {
+      guard let mountPoint = volume.mountPoint, let uuid = volume.stableVolumeUUID else {
+        continue
+      }
+      records.append(
+        MountShadowRules.MountRecord(
+          path: mountPoint, uuid: uuid, isMountPoint: mountPaths.contains(mountPoint)))
+    }
+    for name in Set(registeredVolumes.map(\.name)) {
+      let path = MountShadowRules.expectedMountPath(for: name)
+      guard pathExists(path) else { continue }
+      records.append(
+        MountShadowRules.MountRecord(
+          path: path, uuid: nil, isMountPoint: mountPaths.contains(path)))
+    }
+    return records
   }
 
   /// Nothing is remembered while the warning is off: turning it on starts
